@@ -19,6 +19,7 @@ import (
 	dbf "github.com/mindersec/minder/internal/db/fixtures"
 	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/flags"
 	"github.com/mindersec/minder/pkg/ruletypes"
 )
 
@@ -34,6 +35,7 @@ func TestRuleTypeService(t *testing.T) {
 		ExpectedError  string
 		TestMethod     method
 		SubscriptionID uuid.UUID
+		FeatureFlags   map[string]any
 	}{
 		{
 			Name:          "CreateRuleType rejects nil rule",
@@ -313,22 +315,46 @@ func TestRuleTypeService(t *testing.T) {
 			TestMethod: update,
 		},
 		{
-			Name:          "CreateRuleType rejects Rego V0",
+			Name:     "CreateRuleType accepts Rego V0 during migration",
+			RuleType: newRuleType(withBasicStructure, withV0OnlyRego),
+			DBSetup: dbf.NewDBMock(withHierarchyGet, withNotFoundGet,
+				withSuccessfulCreateForRegoVersion("v0"), withSuccessfulDeleteRuleTypeDataSource),
+			TestMethod: create,
+		},
+		{
+			Name:     "UpdateRuleType accepts Rego V0 during migration",
+			RuleType: newRuleType(withBasicStructure, withV0OnlyRego),
+			DBSetup: dbf.NewDBMock(withHierarchyGet, withSuccessfulGet,
+				withSuccessfulUpdateForRegoVersion("v0"), withSuccessfulDeleteRuleTypeDataSource),
+			TestMethod: update,
+		},
+		{
+			Name:          "CreateRuleType rejects Rego V0 when refusal is enabled",
 			RuleType:      newRuleType(withBasicStructure, withV0OnlyRego),
 			ExpectedError: "opa fmt --v0-v1",
 			TestMethod:    create,
+			FeatureFlags:  map[string]any{string(flags.RegoV1RefuseV0): true},
 		},
 		{
-			Name:          "UpdateRuleType rejects Rego V0",
+			Name:          "UpdateRuleType rejects Rego V0 when refusal is enabled",
 			RuleType:      newRuleType(withBasicStructure, withV0OnlyRego),
 			ExpectedError: "opa fmt --v0-v1",
 			TestMethod:    update,
+			FeatureFlags:  map[string]any{string(flags.RegoV1RefuseV0): true},
 		},
 		{
-			Name:     "CreateRuleType without Rego stores V1 version",
-			RuleType: newRuleType(withBasicStructure),
+			Name:     "CreateRuleType accepts V1-compatible Rego when refusal is enabled",
+			RuleType: newRuleType(withBasicStructure, withRegoCompatibleWithV1),
 			DBSetup: dbf.NewDBMock(withHierarchyGet, withNotFoundGet,
 				withSuccessfulCreateForRegoVersion("v1"), withSuccessfulDeleteRuleTypeDataSource),
+			TestMethod:   create,
+			FeatureFlags: map[string]any{string(flags.RegoV1RefuseV0): true},
+		},
+		{
+			Name:     "CreateRuleType without Rego stores default version",
+			RuleType: newRuleType(withBasicStructure),
+			DBSetup: dbf.NewDBMock(withHierarchyGet, withNotFoundGet,
+				withSuccessfulCreateForRegoVersion("v0"), withSuccessfulDeleteRuleTypeDataSource),
 			TestMethod: create,
 		},
 		{
@@ -357,9 +383,14 @@ func TestRuleTypeService(t *testing.T) {
 				store = scenario.DBSetup(ctrl)
 			}
 
+			var featureFlags flags.Interface
+			if scenario.FeatureFlags != nil {
+				featureFlags = &flags.FakeClient{Data: scenario.FeatureFlags}
+			}
+
 			var err error
 			var res *pb.RuleType
-			svc := ruletypes.NewRuleTypeService()
+			svc := ruletypes.NewRuleTypeService(featureFlags)
 			switch scenario.TestMethod {
 			case create:
 				res, err = svc.CreateRuleType(
@@ -511,6 +542,18 @@ func withRegoV1(ruleType *pb.RuleType) {
 		Rego: &pb.RuleType_Definition_Eval_Rego{
 			Type: "deny",
 			Def:  "package minder\n\nimport rego.v1\n\nviolations contains msg if {\n    msg := \"something bad\"\n}\n",
+		},
+	}
+}
+
+// withRegoCompatibleWithV1 is valid under the V1 parser without requiring
+// syntax that is exclusive to either dialect.
+func withRegoCompatibleWithV1(ruleType *pb.RuleType) {
+	ruleType.Def.Eval = &pb.RuleType_Definition_Eval{
+		Type: "rego",
+		Rego: &pb.RuleType_Definition_Eval_Rego{
+			Type: "deny-by-default",
+			Def:  "package minder\n\ndefault allow := false\n",
 		},
 	}
 }

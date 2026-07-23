@@ -123,7 +123,10 @@ func validateRegoRule(ctx context.Context, r *minderv1.RuleType_Definition_Eval_
 
 	inputs, err := rules.InputFromTextWithOptions(path, r.Def, ast.ParserOptions{RegoVersion: ast.RegoV1})
 	if err != nil {
-		return fmt.Errorf("failed parsing rego rule: %s: %w", rego.V1RequiredMessage, err)
+		if _, v0Err := ast.ParseModuleWithOpts(path, r.Def, ast.ParserOptions{RegoVersion: ast.RegoV0}); v0Err == nil {
+			return fmt.Errorf("%s", rego.V0MigrationMessage)
+		}
+		return fmt.Errorf("failed parsing rego rule: %w", err)
 	}
 
 	lint := linter.NewLinter().WithInputModules(&inputs)

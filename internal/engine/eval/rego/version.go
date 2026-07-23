@@ -3,6 +3,42 @@
 
 package rego
 
-// V1RequiredMessage explains how to convert a legacy policy to Rego V1.
-const V1RequiredMessage = "policy must use Rego V1 syntax; run 'opa fmt --v0-v1' to upgrade " +
+import (
+	"github.com/open-policy-agent/opa/v1/ast"
+)
+
+// V0MigrationMessage explains how to convert a V0-only policy to Rego V1.
+const V0MigrationMessage = "policy uses Rego V0 syntax; run 'opa fmt --v0-v1' to upgrade " +
 	"before creating or updating the rule type"
+
+// DetectRegoVersion attempts to parse the Rego source with the V1 parser first.
+// If V1 parsing succeeds, it returns ast.RegoV1. If V1 parsing fails, it falls
+// back to ast.RegoV0. This allows the system to accept both V0 and V1 policies
+// without requiring any user-facing changes.
+func DetectRegoVersion(def string) ast.RegoVersion {
+	_, err := ast.ParseModuleWithOpts(MinderRegoFile, def,
+		ast.ParserOptions{RegoVersion: ast.RegoV1})
+	if err == nil {
+		return ast.RegoV1
+	}
+
+	return ast.RegoV0
+}
+
+// VersionToString converts an ast.RegoVersion to the string stored in the
+// database.
+func VersionToString(v ast.RegoVersion) string {
+	if v == ast.RegoV1 {
+		return "v1"
+	}
+	return "v0"
+}
+
+// VersionFromString converts a stored database string back to an
+// ast.RegoVersion.
+func VersionFromString(s string) ast.RegoVersion {
+	if s == "v1" {
+		return ast.RegoV1
+	}
+	return ast.RegoV0
+}

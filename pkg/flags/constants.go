@@ -14,4 +14,7 @@ const (
 	ProjectCreateDelete Experiment = "project_create_delete"
 	// AuthenticatedDataSources enables provider authentication for data sources.
 	AuthenticatedDataSources Experiment = "authenticated_datasources"
+	// RegoV1RefuseV0 rejects V0-only Rego when creating or updating rule
+	// types.
+	RegoV1RefuseV0 Experiment = "rego_v1_refuse_v0"
 )

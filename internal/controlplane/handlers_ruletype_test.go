@@ -39,6 +39,25 @@ const ruleDefJSON = `
 }
 `
 
+const (
+	regoV0Definition = "package minder\n\ndefault allow = false\n\nallow {\n\tinput.allowed\n}\n"
+	regoV1Definition = "package minder\n\nimport rego.v1\n\ndefault allow := false\n\nallow if {\n\tinput.allowed\n}\n"
+)
+
+func ruleTypeWithRego(def string) *minderv1.RuleType {
+	return &minderv1.RuleType{
+		Def: &minderv1.RuleType_Definition{
+			Eval: &minderv1.RuleType_Definition_Eval{
+				Type: "rego",
+				Rego: &minderv1.RuleType_Definition_Eval_Rego{
+					Type: "deny-by-default",
+					Def:  def,
+				},
+			},
+		},
+	}
+}
+
 func TestCreateRuleType(t *testing.T) {
 	t.Parallel()
 
@@ -49,6 +68,7 @@ func TestCreateRuleType(t *testing.T) {
 		ruleTypeServiceFunc    sf.RuleTypeSvcMockBuilder
 		dataSourcesServiceFunc dsf.DataSourcesSvcMockBuilder
 		request                *minderv1.CreateRuleTypeRequest
+		expectedWarnings       []string
 		error                  bool
 	}{
 		{
@@ -62,6 +82,33 @@ func TestCreateRuleType(t *testing.T) {
 			),
 			request: &minderv1.CreateRuleTypeRequest{
 				RuleType: &minderv1.RuleType{},
+			},
+		},
+		{
+			name: "warns when creating a V0 rule type",
+			mockStoreFunc: df.NewMockStore(
+				df.WithTransaction(),
+				WithSuccessfulGetProjectByID(projectID),
+			),
+			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(
+				sf.WithSuccessfulCreateRuleType,
+			),
+			request: &minderv1.CreateRuleTypeRequest{
+				RuleType: ruleTypeWithRego(regoV0Definition),
+			},
+			expectedWarnings: []string{regoV0DeprecationWarning},
+		},
+		{
+			name: "does not warn when creating a V1 rule type",
+			mockStoreFunc: df.NewMockStore(
+				df.WithTransaction(),
+				WithSuccessfulGetProjectByID(projectID),
+			),
+			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(
+				sf.WithSuccessfulCreateRuleType,
+			),
+			request: &minderv1.CreateRuleTypeRequest{
+				RuleType: ruleTypeWithRego(regoV1Definition),
 			},
 		},
 		{
@@ -147,6 +194,7 @@ func TestCreateRuleType(t *testing.T) {
 
 			require.NoError(t, err)
 			require.NotNil(t, resp)
+			require.Equal(t, tt.expectedWarnings, resp.GetWarnings())
 		})
 	}
 }
@@ -161,6 +209,7 @@ func TestUpdateRuleType(t *testing.T) {
 		ruleTypeServiceFunc    sf.RuleTypeSvcMockBuilder
 		dataSourcesServiceFunc dsf.DataSourcesSvcMockBuilder
 		request                *minderv1.UpdateRuleTypeRequest
+		expectedWarnings       []string
 		error                  bool
 	}{
 		{
@@ -175,6 +224,20 @@ func TestUpdateRuleType(t *testing.T) {
 			request: &minderv1.UpdateRuleTypeRequest{
 				RuleType: &minderv1.RuleType{},
 			},
+		},
+		{
+			name: "warns when updating a V0 rule type",
+			mockStoreFunc: df.NewMockStore(
+				df.WithTransaction(),
+				WithSuccessfulGetProjectByID(projectID),
+			),
+			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(
+				sf.WithSuccessfulUpdateRuleType,
+			),
+			request: &minderv1.UpdateRuleTypeRequest{
+				RuleType: ruleTypeWithRego(regoV0Definition),
+			},
+			expectedWarnings: []string{regoV0DeprecationWarning},
 		},
 		{
 			name: "guidance sanitize error",
@@ -259,6 +322,7 @@ func TestUpdateRuleType(t *testing.T) {
 
 			require.NoError(t, err)
 			require.NotNil(t, resp)
+			require.Equal(t, tt.expectedWarnings, resp.GetWarnings())
 		})
 	}
 }

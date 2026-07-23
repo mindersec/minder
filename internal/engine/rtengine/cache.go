@@ -13,6 +13,7 @@ import (
 
 	datasourceservice "github.com/mindersec/minder/internal/datasources/service"
 	"github.com/mindersec/minder/internal/db"
+	regoeval "github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/engine/ingestcache"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
@@ -163,6 +164,8 @@ func cacheRuleEngine(
 	}
 
 	opts = append(opts, eoptions.WithDataSources(dsreg), eoptions.WithFlagsClient(featureFlags))
+	opts = append(opts, regoeval.WithRegoVersion(
+		regoeval.VersionFromString(ruleType.RegoVersion)))
 
 	// Create the rule type engine
 	ruleEngine, err := rtengine2.NewRuleTypeEngine(ctx, pbRuleType, provider, opts...)

@@ -22,6 +22,7 @@ import (
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/schemaupdate"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/flags"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -70,11 +71,13 @@ type RuleTypeService interface {
 	) error
 }
 
-type ruleTypeService struct{}
+type ruleTypeService struct {
+	featureFlags flags.Interface
+}
 
 // NewRuleTypeService creates a new instance of RuleTypeService
-func NewRuleTypeService() RuleTypeService {
-	return &ruleTypeService{}
+func NewRuleTypeService(featureFlags flags.Interface) RuleTypeService {
+	return &ruleTypeService{featureFlags: featureFlags}
 }
 
 var (
@@ -91,7 +94,7 @@ var (
 	uuidLike = regexp.MustCompile(`^[[:alnum:]]{8}-([[:alnum:]]{4}-){3}[[:alnum:]]{12}$`)
 )
 
-func (*ruleTypeService) CreateRuleType(
+func (s *ruleTypeService) CreateRuleType(
 	ctx context.Context,
 	projectID uuid.UUID,
 	subscriptionID uuid.UUID,
@@ -105,7 +108,7 @@ func (*ruleTypeService) CreateRuleType(
 		return nil, errors.Join(ErrRuleTypeInvalid, err)
 	}
 
-	regoVersion, err := validateRegoVersion(ruleType)
+	regoVersion, err := s.validateAndDetectRegoVersion(ctx, ruleType)
 	if err != nil {
 		return nil, errors.Join(ErrRuleTypeInvalid, err)
 	}
@@ -187,7 +190,7 @@ func (*ruleTypeService) CreateRuleType(
 	return rt, nil
 }
 
-func (*ruleTypeService) UpdateRuleType(
+func (s *ruleTypeService) UpdateRuleType(
 	ctx context.Context,
 	projectID uuid.UUID,
 	subscriptionID uuid.UUID,
@@ -201,7 +204,7 @@ func (*ruleTypeService) UpdateRuleType(
 		return nil, errors.Join(ErrRuleTypeInvalid, err)
 	}
 
-	regoVersion, err := validateRegoVersion(ruleType)
+	regoVersion, err := s.validateAndDetectRegoVersion(ctx, ruleType)
 	if err != nil {
 		return nil, errors.Join(ErrRuleTypeInvalid, err)
 	}
@@ -311,21 +314,35 @@ func (s *ruleTypeService) UpsertRuleType(
 	return nil
 }
 
-// validateRegoVersion validates Rego definitions using the V1 parser and
-// returns the version persisted with the rule type.
-func validateRegoVersion(ruleType *pb.RuleType) (string, error) {
+// validateAndDetectRegoVersion validates the Rego definition using both
+// dialects and returns the version persisted with the rule type. V0-only
+// policies remain accepted until the refusal flag is enabled.
+func (s *ruleTypeService) validateAndDetectRegoVersion(ctx context.Context, ruleType *pb.RuleType) (string, error) {
 	def := ruleType.GetDef().GetEval().GetRego().GetDef()
 	if def == "" {
-		return "v1", nil
+		return "v0", nil
 	}
 
-	_, err := ast.ParseModuleWithOpts("minder-ruletype-def.rego", def,
+	var errV0 error
+	if flags.Bool(ctx, s.featureFlags, flags.RegoV1RefuseV0) {
+		errV0 = errors.New(regoeval.V0MigrationMessage)
+	} else {
+		_, errV0 = ast.ParseModuleWithOpts("minder-ruletype-def.rego", def,
+			ast.ParserOptions{RegoVersion: ast.RegoV0})
+	}
+	_, errV1 := ast.ParseModuleWithOpts("minder-ruletype-def.rego", def,
 		ast.ParserOptions{RegoVersion: ast.RegoV1})
-	if err != nil {
-		return "", fmt.Errorf("rego definition is invalid: %s: %w", regoeval.V1RequiredMessage, err)
-	}
 
-	return "v1", nil
+	switch {
+	case errV0 == nil && errV1 == nil:
+		return "v1", nil
+	case errV0 == nil:
+		return "v0", nil
+	case errV1 == nil:
+		return "v1", nil
+	default:
+		return "", fmt.Errorf("rego definition is invalid: %w", errV0)
+	}
 }
 
 func getRuleTypeSeverity(severity *pb.Severity) (*db.Severity, error) {
