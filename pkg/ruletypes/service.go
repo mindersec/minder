@@ -14,7 +14,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/open-policy-agent/opa/v1/ast"
-	"github.com/rs/zerolog"
 
 	"github.com/mindersec/minder/internal/db"
 	regoeval "github.com/mindersec/minder/internal/engine/eval/rego"
@@ -315,25 +314,17 @@ func (s *ruleTypeService) UpsertRuleType(
 	return nil
 }
 
-// validateAndDetectRegoVersion validates the rego definition syntax, gates
-// V1-only policies behind the feature flag, and returns the detected version
-// string ("v0" or "v1") for database storage. This avoids parsing the rego
-// definition multiple times across separate validation and detection steps.
+// validateAndDetectRegoVersion validates the Rego definition using both
+// dialects and returns the version persisted with the rule type. V0-only
+// policies remain accepted until the refusal flag is enabled.
 func (s *ruleTypeService) validateAndDetectRegoVersion(ctx context.Context, ruleType *pb.RuleType) (string, error) {
 	def := ruleType.GetDef().GetEval().GetRego().GetDef()
 	if def == "" {
 		return "v0", nil
 	}
 
-	dualParse := flags.Bool(ctx, s.featureFlags, flags.RegoV1DualParse)
-	refuseV0 := flags.Bool(ctx, s.featureFlags, flags.RegoV1RefuseV0)
-	if refuseV0 && !dualParse {
-		zerolog.Ctx(ctx).Error().Msg(
-			"invalid Rego feature flag configuration: rego_v1_refuse_v0 requires rego_v1_dual_parse")
-	}
-
 	var errV0 error
-	if refuseV0 {
+	if flags.Bool(ctx, s.featureFlags, flags.RegoV1RefuseV0) {
 		errV0 = errors.New(regoeval.V0MigrationMessage)
 	} else {
 		_, errV0 = ast.ParseModuleWithOpts("minder-ruletype-def.rego", def,
@@ -344,23 +335,12 @@ func (s *ruleTypeService) validateAndDetectRegoVersion(ctx context.Context, rule
 
 	switch {
 	case errV0 == nil && errV1 == nil:
-		// Valid in both dialects — store as V1 when flag is on.
-		if dualParse {
-			return "v1", nil
-		}
-		return "v0", nil
+		return "v1", nil
 	case errV0 == nil:
-		// V0 only. Refusal mode always supplies a V0 migration error above.
 		return "v0", nil
 	case errV1 == nil:
-		// V1 only — gate behind feature flag.
-		if !dualParse {
-			return "", fmt.Errorf("rego definition uses V1-only syntax which is not yet enabled")
-		}
 		return "v1", nil
 	default:
-		// Invalid in both dialects — return V0 error as it's the more
-		// likely intent for authors not yet on V1.
 		return "", fmt.Errorf("rego definition is invalid: %w", errV0)
 	}
 }

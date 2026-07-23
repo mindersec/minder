@@ -164,14 +164,8 @@ func cacheRuleEngine(
 	}
 
 	opts = append(opts, eoptions.WithDataSources(dsreg), eoptions.WithFlagsClient(featureFlags))
-
-	// Pass the stored Rego version to the evaluator when the dual-parse
-	// feature flag is enabled. When the flag is off, the evaluator defaults
-	// to Rego V0 (the zero value of ast.RegoVersion).
-	if flags.Bool(ctx, featureFlags, flags.RegoV1DualParse) {
-		opts = append(opts, regoeval.WithRegoVersion(
-			regoeval.VersionFromString(ruleType.RegoVersion)))
-	}
+	opts = append(opts, regoeval.WithRegoVersion(
+		regoeval.VersionFromString(ruleType.RegoVersion)))
 
 	// Create the rule type engine
 	ruleEngine, err := rtengine2.NewRuleTypeEngine(ctx, pbRuleType, provider, opts...)

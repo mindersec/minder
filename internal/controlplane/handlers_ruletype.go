@@ -28,7 +28,6 @@ import (
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	"github.com/mindersec/minder/pkg/flags"
 	"github.com/mindersec/minder/pkg/ruletypes"
 )
 
@@ -197,7 +196,7 @@ func (s *Server) CreateRuleType(
 
 	return &minderv1.CreateRuleTypeResponse{
 		RuleType: newRuleType,
-		Warnings: s.regoVersionWarnings(ctx, crt.GetRuleType()),
+		Warnings: regoVersionWarnings(crt.GetRuleType()),
 	}, nil
 }
 
@@ -238,25 +237,17 @@ func (s *Server) UpdateRuleType(
 
 	return &minderv1.UpdateRuleTypeResponse{
 		RuleType: updatedRuleType,
-		Warnings: s.regoVersionWarnings(ctx, urt.GetRuleType()),
+		Warnings: regoVersionWarnings(urt.GetRuleType()),
 	}, nil
 }
 
-func (s *Server) regoVersionWarnings(ctx context.Context, ruleType *minderv1.RuleType) []string {
-	if !flags.Bool(ctx, s.featureFlags, flags.RegoV1WarnV0) {
-		return nil
-	}
-
+func regoVersionWarnings(ruleType *minderv1.RuleType) []string {
 	eval := ruleType.GetDef().GetEval()
 	if eval.GetType() != regoeval.RegoEvalType || eval.GetRego().GetDef() == "" {
 		return nil
 	}
 
-	version := ast.RegoV0
-	if flags.Bool(ctx, s.featureFlags, flags.RegoV1DualParse) {
-		version = regoeval.DetectRegoVersion(eval.GetRego().GetDef())
-	}
-	if version != ast.RegoV0 {
+	if regoeval.DetectRegoVersion(eval.GetRego().GetDef()) != ast.RegoV0 {
 		return nil
 	}
 

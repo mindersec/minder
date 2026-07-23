@@ -4,7 +4,6 @@
 package ruletypes_test
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"errors"
@@ -12,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -38,7 +36,6 @@ func TestRuleTypeService(t *testing.T) {
 		TestMethod     method
 		SubscriptionID uuid.UUID
 		FeatureFlags   map[string]any
-		ExpectedLog    string
 	}{
 		{
 			Name:          "CreateRuleType rejects nil rule",
@@ -304,114 +301,61 @@ func TestRuleTypeService(t *testing.T) {
 			TestMethod: update,
 		},
 		{
-			Name:          "CreateRuleType rejects V1-only rego when flag is off",
-			RuleType:      newRuleType(withBasicStructure, withV1OnlyRego),
-			ExpectedError: "V1-only syntax",
-			TestMethod:    create,
-		},
-		{
-			Name:          "UpdateRuleType rejects V1-only rego when flag is off",
-			RuleType:      newRuleType(withBasicStructure, withV1OnlyRego),
-			ExpectedError: "V1-only syntax",
-			TestMethod:    update,
-		},
-		{
-			Name:         "CreateRuleType allows V1-only rego when flag is on",
-			RuleType:     newRuleType(withBasicStructure, withV1OnlyRego),
-			DBSetup:      dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreate, withSuccessfulDeleteRuleTypeDataSource),
-			TestMethod:   create,
-			FeatureFlags: map[string]any{string(flags.RegoV1DualParse): true},
-		},
-		{
-			Name:         "UpdateRuleType allows V1-only rego when flag is on",
-			RuleType:     newRuleType(withBasicStructure, withV1OnlyRego),
-			DBSetup:      dbf.NewDBMock(withHierarchyGet, withSuccessfulGet, withSuccessfulUpdate, withSuccessfulDeleteRuleTypeDataSource),
-			TestMethod:   update,
-			FeatureFlags: map[string]any{string(flags.RegoV1DualParse): true},
-		},
-		{
-			Name:          "CreateRuleType refuses V0-only rego when refusal flag is on",
-			RuleType:      newRuleType(withBasicStructure, withV0OnlyRego),
-			ExpectedError: "opa fmt --v0-v1",
-			TestMethod:    create,
-			FeatureFlags: map[string]any{
-				string(flags.RegoV1DualParse): true,
-				string(flags.RegoV1RefuseV0):  true,
-			},
-		},
-		{
-			Name:          "UpdateRuleType refuses V0-only rego when refusal flag is on",
-			RuleType:      newRuleType(withBasicStructure, withV0OnlyRego),
-			ExpectedError: "opa fmt --v0-v1",
-			TestMethod:    update,
-			FeatureFlags: map[string]any{
-				string(flags.RegoV1DualParse): true,
-				string(flags.RegoV1RefuseV0):  true,
-			},
-		},
-		{
-			Name:       "CreateRuleType allows V1-only rego when refusal flag is on",
-			RuleType:   newRuleType(withBasicStructure, withV1OnlyRego),
-			DBSetup:    dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreate, withSuccessfulDeleteRuleTypeDataSource),
-			TestMethod: create,
-			FeatureFlags: map[string]any{
-				string(flags.RegoV1DualParse): true,
-				string(flags.RegoV1RefuseV0):  true,
-			},
-		},
-		{
-			Name:          "CreateRuleType logs and rejects invalid refusal configuration when dual parse is off",
-			RuleType:      newRuleType(withBasicStructure, withDualParseRego),
-			ExpectedError: "V1-only syntax",
-			TestMethod:    create,
-			FeatureFlags:  map[string]any{string(flags.RegoV1RefuseV0): true},
-			ExpectedLog:   "rego_v1_refuse_v0 requires rego_v1_dual_parse",
-		},
-		{
-			Name:     "CreateRuleType allows dual-parsed rego without rego.v1 import when refusal flag is on",
-			RuleType: newRuleType(withBasicStructure, withDualParseRego),
+			Name:     "CreateRuleType accepts Rego V1",
+			RuleType: newRuleType(withBasicStructure, withRegoV1),
 			DBSetup: dbf.NewDBMock(withHierarchyGet, withNotFoundGet,
 				withSuccessfulCreateForRegoVersion("v1"), withSuccessfulDeleteRuleTypeDataSource),
 			TestMethod: create,
-			FeatureFlags: map[string]any{
-				string(flags.RegoV1DualParse): true,
-				string(flags.RegoV1RefuseV0):  true,
-			},
 		},
 		{
-			Name:         "CreateRuleType stores detected V0 rego version",
-			RuleType:     newRuleType(withBasicStructure, withRegoEval("package minder\n\ndefault allow = false\n\nallow {\n    input.allowed\n}\n")),
-			DBSetup:      dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreateForRegoVersion("v0"), withSuccessfulDeleteRuleTypeDataSource),
+			Name:     "UpdateRuleType accepts Rego V1",
+			RuleType: newRuleType(withBasicStructure, withRegoV1),
+			DBSetup: dbf.NewDBMock(withHierarchyGet, withSuccessfulGet,
+				withSuccessfulUpdateForRegoVersion("v1"), withSuccessfulDeleteRuleTypeDataSource),
+			TestMethod: update,
+		},
+		{
+			Name:     "CreateRuleType accepts Rego V0 during migration",
+			RuleType: newRuleType(withBasicStructure, withV0OnlyRego),
+			DBSetup: dbf.NewDBMock(withHierarchyGet, withNotFoundGet,
+				withSuccessfulCreateForRegoVersion("v0"), withSuccessfulDeleteRuleTypeDataSource),
+			TestMethod: create,
+		},
+		{
+			Name:     "UpdateRuleType accepts Rego V0 during migration",
+			RuleType: newRuleType(withBasicStructure, withV0OnlyRego),
+			DBSetup: dbf.NewDBMock(withHierarchyGet, withSuccessfulGet,
+				withSuccessfulUpdateForRegoVersion("v0"), withSuccessfulDeleteRuleTypeDataSource),
+			TestMethod: update,
+		},
+		{
+			Name:          "CreateRuleType rejects Rego V0 when refusal is enabled",
+			RuleType:      newRuleType(withBasicStructure, withV0OnlyRego),
+			ExpectedError: "opa fmt --v0-v1",
+			TestMethod:    create,
+			FeatureFlags:  map[string]any{string(flags.RegoV1RefuseV0): true},
+		},
+		{
+			Name:          "UpdateRuleType rejects Rego V0 when refusal is enabled",
+			RuleType:      newRuleType(withBasicStructure, withV0OnlyRego),
+			ExpectedError: "opa fmt --v0-v1",
+			TestMethod:    update,
+			FeatureFlags:  map[string]any{string(flags.RegoV1RefuseV0): true},
+		},
+		{
+			Name:     "CreateRuleType accepts V1-compatible Rego when refusal is enabled",
+			RuleType: newRuleType(withBasicStructure, withRegoCompatibleWithV1),
+			DBSetup: dbf.NewDBMock(withHierarchyGet, withNotFoundGet,
+				withSuccessfulCreateForRegoVersion("v1"), withSuccessfulDeleteRuleTypeDataSource),
 			TestMethod:   create,
-			FeatureFlags: map[string]any{string(flags.RegoV1DualParse): true},
+			FeatureFlags: map[string]any{string(flags.RegoV1RefuseV0): true},
 		},
 		{
-			Name:         "CreateRuleType stores detected V1 rego version",
-			RuleType:     newRuleType(withBasicStructure, withRegoEval("package minder\n\ndefault allow := false\n\nallow if {\n    input.allowed\n}\n")),
-			DBSetup:      dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreateForRegoVersion("v1"), withSuccessfulDeleteRuleTypeDataSource),
-			TestMethod:   create,
-			FeatureFlags: map[string]any{string(flags.RegoV1DualParse): true},
-		},
-		{
-			Name:         "CreateRuleType without rego stores V0 rego version",
-			RuleType:     newRuleType(withBasicStructure),
-			DBSetup:      dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreateForRegoVersion("v0"), withSuccessfulDeleteRuleTypeDataSource),
-			TestMethod:   create,
-			FeatureFlags: map[string]any{string(flags.RegoV1DualParse): true},
-		},
-		{
-			Name:         "UpdateRuleType stores detected V0 rego version",
-			RuleType:     newRuleType(withBasicStructure, withRegoEval("package minder\n\ndefault allow = false\n\nallow {\n    input.allowed\n}\n")),
-			DBSetup:      dbf.NewDBMock(withHierarchyGet, withSuccessfulGet, withSuccessfulUpdateForRegoVersion("v0"), withSuccessfulDeleteRuleTypeDataSource),
-			TestMethod:   update,
-			FeatureFlags: map[string]any{string(flags.RegoV1DualParse): true},
-		},
-		{
-			Name:         "UpdateRuleType stores detected V1 rego version",
-			RuleType:     newRuleType(withBasicStructure, withRegoEval("package minder\n\ndefault allow := false\n\nallow if {\n    input.allowed\n}\n")),
-			DBSetup:      dbf.NewDBMock(withHierarchyGet, withSuccessfulGet, withSuccessfulUpdateForRegoVersion("v1"), withSuccessfulDeleteRuleTypeDataSource),
-			TestMethod:   update,
-			FeatureFlags: map[string]any{string(flags.RegoV1DualParse): true},
+			Name:     "CreateRuleType without Rego stores default version",
+			RuleType: newRuleType(withBasicStructure),
+			DBSetup: dbf.NewDBMock(withHierarchyGet, withNotFoundGet,
+				withSuccessfulCreateForRegoVersion("v0"), withSuccessfulDeleteRuleTypeDataSource),
+			TestMethod: create,
 		},
 		{
 			Name:          "CreateRuleType rejects invalid rego syntax",
@@ -433,11 +377,6 @@ func TestRuleTypeService(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 			ctx := context.Background()
-			var logOutput bytes.Buffer
-			if scenario.ExpectedLog != "" {
-				log := zerolog.New(&logOutput)
-				ctx = log.WithContext(ctx)
-			}
 
 			var store db.Store
 			if scenario.DBSetup != nil {
@@ -497,10 +436,6 @@ func TestRuleTypeService(t *testing.T) {
 			} else {
 				require.Nil(t, res)
 				require.ErrorContains(t, err, scenario.ExpectedError)
-			}
-			if scenario.ExpectedLog != "" {
-				require.Contains(t, logOutput.String(), `"level":"error"`)
-				require.Contains(t, logOutput.String(), scenario.ExpectedLog)
 			}
 		})
 	}
@@ -601,8 +536,19 @@ func withV0OnlyRego(ruleType *pb.RuleType) {
 	}
 }
 
-// withDualParseRego is valid under both Rego V0 and V1 without importing rego.v1.
-func withDualParseRego(ruleType *pb.RuleType) {
+func withRegoV1(ruleType *pb.RuleType) {
+	ruleType.Def.Eval = &pb.RuleType_Definition_Eval{
+		Type: "rego",
+		Rego: &pb.RuleType_Definition_Eval_Rego{
+			Type: "deny",
+			Def:  "package minder\n\nimport rego.v1\n\nviolations contains msg if {\n    msg := \"something bad\"\n}\n",
+		},
+	}
+}
+
+// withRegoCompatibleWithV1 is valid under the V1 parser without requiring
+// syntax that is exclusive to either dialect.
+func withRegoCompatibleWithV1(ruleType *pb.RuleType) {
 	ruleType.Def.Eval = &pb.RuleType_Definition_Eval{
 		Type: "rego",
 		Rego: &pb.RuleType_Definition_Eval_Rego{
@@ -612,32 +558,8 @@ func withDualParseRego(ruleType *pb.RuleType) {
 	}
 }
 
-// withV1OnlyRego sets a Rego definition that uses V1-only syntax (the
-// `contains` keyword), which parses under V1 but fails under V0.
-func withV1OnlyRego(ruleType *pb.RuleType) {
-	ruleType.Def.Eval = &pb.RuleType_Definition_Eval{
-		Type: "rego",
-		Rego: &pb.RuleType_Definition_Eval_Rego{
-			Type: "deny",
-			Def:  "package minder\n\nviolations contains msg if {\n    msg := \"something bad\"\n}\n",
-		},
-	}
-}
-
-func withRegoEval(def string) func(*pb.RuleType) {
-	return func(ruleType *pb.RuleType) {
-		ruleType.Def.Eval = &pb.RuleType_Definition_Eval{
-			Type: "rego",
-			Rego: &pb.RuleType_Definition_Eval_Rego{
-				Type: "deny-by-default",
-				Def:  def,
-			},
-		}
-	}
-}
-
 // withInvalidRego sets a Rego definition with a syntax error that is
-// invalid in both V0 and V1.
+// invalid in Rego V1.
 func withInvalidRego(ruleType *pb.RuleType) {
 	ruleType.Def.Eval = &pb.RuleType_Definition_Eval{
 		Type: "rego",
