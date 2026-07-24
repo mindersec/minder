@@ -183,7 +183,7 @@ Remediation actions have access to:
 
 ### Remediation Types
 
-Minder supports three remediation actions:
+Minder supports four remediation actions:
 
 1. **Pull Request** (`pull_request`)
 
@@ -268,6 +268,32 @@ API-driven remediations (`rest` and `gh_branch_protect`) will generally take
 effect immediately on the targeted entity; `pull_request` remediations will need
 to be merged before they take effect. Minder will ensure that at most one pull
 request is open at a time for a particular rule applied to a specific entity.
+
+4. **Issue** (`issue`)
+
+   The [issue remediation](https://mindersec.github.io/ref/proto#minder-v1-RuleType-Definition-Remediate-IssueRemediation)
+   creates issues when rule evaluation fails. The remediation supports 
+   configuring the issue title, body, labels, and assignees.
+
+   The issue supports the following fields:
+
+   - `title`: issue title
+   - `body`: issue description
+   - `labels`: labels to apply when creating the issue
+   - `assignees`: assignees for the created issue
+
+   The `title` and `body` fields support Go template parameters, with the
+   following data:
+
+   - `Entity` contains the same entity information available during rule
+     evaluation
+   - `Profile` contains the profile data supplied in the `def` field
+   - `Params` contains the profile data supplied in the `params` field
+   - `EvalResultOutput` contains the output data from the rule evaluation step
+
+   Minder ensures that at most one issue is open at a time for a particular rule
+   applied to a specific entity. The issue is automatically closed when the rule
+   evaluation succeeds.
 
 ## Alert Types
 
