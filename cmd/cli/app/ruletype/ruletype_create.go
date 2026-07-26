@@ -43,7 +43,7 @@ var createCmd = &cobra.Command{
 func createCommand(cmd *cobra.Command, _ []string) error {
 	fileFlag, _ := cmd.Flags().GetStringArray("file")
 
-	files, err := util.ExpandFileArgs(fileFlag...)
+	files, err := util.ExpandFileArgs(nil, fileFlag...)
 	if err != nil {
 		return cli.MessageAndError("Error expanding file args", err)
 	}
