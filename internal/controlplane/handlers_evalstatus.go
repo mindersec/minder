@@ -411,7 +411,7 @@ func (s *Server) sortEntitiesEvaluationStatus(
 				continue
 			}
 
-			efp, err := psc.EntityWithPropertiesByID(ctx, e.EntityID, nil)
+			efp, err := psc.EntityWithPropertiesByID(ctx, e.EntityID, p.Profile.ProjectID, e.ProviderID, nil)
 			if err != nil {
 				zerolog.Ctx(ctx).Error().
 					Str("entity_id", e.EntityID.String()).

@@ -234,7 +234,11 @@ func (ehs *evaluationHistoryService) ListEvaluationHistory(
 
 	data := make([]*OneEvalHistoryAndEntity, 0, len(rows))
 	for _, row := range rows {
-		ewp, err := psc.EntityWithPropertiesByID(ctx, row.EntityID,
+		ewp, err := psc.EntityWithPropertiesByID(
+			ctx,
+			row.EntityID,
+			row.ProjectID,
+			row.ProviderID,
 			propertiessvc.CallBuilder().WithStoreOrTransaction(qtx))
 		if err != nil {
 			return nil, fmt.Errorf("error fetching entity for properties: %w", err)

@@ -41,6 +41,8 @@ type HandleEntityAndDoMessage struct {
 	// use-case is to include the hook ID in the MatchProps to match against
 	// the entity's hook ID to avoid forwading the message to the wrong entity.
 	MatchProps map[string]any `json:"match_props"`
+	ProjectID  uuid.UUID      `json:"project_id"`
+	ProviderID uuid.UUID      `json:"provider_id"`
 }
 
 // NewEntityRefreshAndDoMessage creates a new HandleEntityAndDoMessage struct.
@@ -71,6 +73,18 @@ func (e *HandleEntityAndDoMessage) WithOriginator(
 // WithEntityID sets the entity ID for the entity that will be used when looking up the entity.
 func (e *HandleEntityAndDoMessage) WithEntityID(entityID uuid.UUID) *HandleEntityAndDoMessage {
 	e.Entity.EntityID = entityID
+	return e
+}
+
+// WithProjectID sets the project ID for the entity.
+func (e *HandleEntityAndDoMessage) WithProjectID(projectID uuid.UUID) *HandleEntityAndDoMessage {
+	e.ProjectID = projectID
+	return e
+}
+
+// WithProviderID sets the provider ID for the entity.
+func (e *HandleEntityAndDoMessage) WithProviderID(providerID uuid.UUID) *HandleEntityAndDoMessage {
+	e.ProviderID = providerID
 	return e
 }
 

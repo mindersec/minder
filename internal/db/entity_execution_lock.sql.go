@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -46,12 +47,24 @@ func (q *Queries) EnqueueFlush(ctx context.Context, arg EnqueueFlushParams) (Flu
 
 const flushCache = `-- name: FlushCache :one
 DELETE FROM flush_cache
-WHERE entity_instance_id= $1
+WHERE flush_cache.entity_instance_id = $1
+    AND flush_cache.project_id = $2
+    AND EXISTS (
+        SELECT 1 FROM entity_instances ei
+        WHERE ei.id = flush_cache.entity_instance_id 
+        AND ei.provider_id = $3
+    )
 RETURNING id, entity, queued_at, project_id, entity_instance_id
 `
 
-func (q *Queries) FlushCache(ctx context.Context, entityInstanceID uuid.UUID) (FlushCache, error) {
-	row := q.db.QueryRowContext(ctx, flushCache, entityInstanceID)
+type FlushCacheParams struct {
+	EntityInstanceID uuid.UUID `json:"entity_instance_id"`
+	ProjectID        uuid.UUID `json:"project_id"`
+	ProviderID       uuid.UUID `json:"provider_id"`
+}
+
+func (q *Queries) FlushCache(ctx context.Context, arg FlushCacheParams) (FlushCache, error) {
+	row := q.db.QueryRowContext(ctx, flushCache, arg.EntityInstanceID, arg.ProjectID, arg.ProviderID)
 	var i FlushCache
 	err := row.Scan(
 		&i.ID,
@@ -64,24 +77,39 @@ func (q *Queries) FlushCache(ctx context.Context, entityInstanceID uuid.UUID) (F
 }
 
 const listFlushCache = `-- name: ListFlushCache :many
-SELECT id, entity, queued_at, project_id, entity_instance_id FROM flush_cache
+SELECT 
+    fc.entity, 
+    fc.project_id, 
+    fc.entity_instance_id, 
+    fc.queued_at, 
+    ei.provider_id
+FROM flush_cache fc
+JOIN entity_instances ei ON fc.entity_instance_id = ei.id
 `
 
-func (q *Queries) ListFlushCache(ctx context.Context) ([]FlushCache, error) {
+type ListFlushCacheRow struct {
+	Entity           Entities  `json:"entity"`
+	ProjectID        uuid.UUID `json:"project_id"`
+	EntityInstanceID uuid.UUID `json:"entity_instance_id"`
+	QueuedAt         time.Time `json:"queued_at"`
+	ProviderID       uuid.UUID `json:"provider_id"`
+}
+
+func (q *Queries) ListFlushCache(ctx context.Context) ([]ListFlushCacheRow, error) {
 	rows, err := q.db.QueryContext(ctx, listFlushCache)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []FlushCache{}
+	items := []ListFlushCacheRow{}
 	for rows.Next() {
-		var i FlushCache
+		var i ListFlushCacheRow
 		if err := rows.Scan(
-			&i.ID,
 			&i.Entity,
-			&i.QueuedAt,
 			&i.ProjectID,
 			&i.EntityInstanceID,
+			&i.QueuedAt,
+			&i.ProviderID,
 		); err != nil {
 			return nil, err
 		}

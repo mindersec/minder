@@ -137,6 +137,7 @@ func TestCreateDirectoryWithParentThatDoesntExist(t *testing.T) {
 	_, err := testQueries.CreateProject(context.Background(), CreateProjectParams{
 		Name:     t.Name(),
 		ParentID: uuid.NullUUID{UUID: uuid.New(), Valid: true},
+		Metadata: json.RawMessage("{}"),
 	})
 
 	assert.Error(t, err, "should have errored")

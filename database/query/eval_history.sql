@@ -114,6 +114,7 @@ SELECT s.id::uuid AS evaluation_id,
        -- entity id
         ere.entity_instance_id as entity_id,
        j.id as project_id,
+       ei.provider_id,
        -- rule type, name, and profile
        rt.name AS rule_type,
        ri.name AS rule_name,

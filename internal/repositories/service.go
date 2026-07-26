@@ -185,20 +185,37 @@ func (r *repositoryService) ListRepositories(
 		return nil, fmt.Errorf("error fetching repositories: %w", err)
 	}
 
+	if len(repoEnts) == 0 {
+		return nil, nil
+	}
+
+	entityIDs := make([]uuid.UUID, len(repoEnts))
+	for i, ent := range repoEnts {
+		entityIDs[i] = ent.ID
+	}
+
+	dbProps, err := qtx.GetPropertiesForEntities(ctx, db.GetPropertiesForEntitiesParams{
+		EntityIds:  entityIDs,
+		Projects:   []uuid.UUID{projectID},
+		ProviderID: providerID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error fetching bulk properties: %w", err)
+	}
+
+	propsMap := make(map[uuid.UUID][]db.Property)
+	for _, p := range dbProps {
+		propsMap[p.EntityID] = append(propsMap[p.EntityID], p)
+	}
+
 	ents = make([]*models.EntityWithProperties, 0, len(repoEnts))
 	for _, ent := range repoEnts {
-		ewp, err := r.propSvc.EntityWithPropertiesByID(ctx, ent.ID,
-			service.CallBuilder().WithStoreOrTransaction(qtx))
+		modelProps, err := models.DbPropsToModel(propsMap[ent.ID])
 		if err != nil {
-			return nil, fmt.Errorf("error fetching properties for repository: %w", err)
+			return nil, fmt.Errorf("failed to convert properties for %s: %w", ent.ID, err)
 		}
 
-		if err := r.propSvc.RetrieveAllPropertiesForEntity(ctx, ewp, r.providerManager,
-			service.ReadBuilder().WithStoreOrTransaction(qtx).TolerateStaleData()); err != nil {
-			return nil, fmt.Errorf("error fetching properties for repository: %w", err)
-		}
-
-		ents = append(ents, ewp)
+		ents = append(ents, models.NewEntityWithProperties(ent, modelProps))
 	}
 
 	// We care about commiting the transaction since the `RetrieveAllPropertiesForEntity`
@@ -215,30 +232,36 @@ func (r *repositoryService) GetRepositoryById(
 	repositoryID uuid.UUID,
 	projectID uuid.UUID,
 ) (*pb.Repository, error) {
-	ewp, err := r.propSvc.EntityWithPropertiesByID(ctx, repositoryID, nil)
+
+	ent, err := r.store.GetEntityByID(ctx, db.GetEntityByIDParams{
+		ID:        repositoryID,
+		ProjectID: projectID,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("error fetching repository: %w", err)
+		return nil, fmt.Errorf("error fetching repository instance: %w", err)
 	}
 
-	// Verify the entity belongs to the correct project
-	if ewp.Entity.ProjectID != projectID {
-		return nil, sql.ErrNoRows
+	dbProps, err := r.store.GetAllPropertiesForEntity(ctx, db.GetAllPropertiesForEntityParams{
+		EntityID:   repositoryID,
+		ProjectID:  projectID,
+		ProviderID: ent.ProviderID,
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("error fetching properties: %w", err)
 	}
 
-	// Verify it's a repository entity
-	if ewp.Entity.Type != pb.Entity_ENTITY_REPOSITORIES {
-		return nil, fmt.Errorf("entity is not a repository")
-	}
+	modelProps, _ := models.DbPropsToModel(dbProps)
+	ewp := models.NewEntityWithProperties(ent, modelProps)
 
 	// Retrieve all properties from provider
 	if err := r.propSvc.RetrieveAllPropertiesForEntity(ctx, ewp, r.providerManager, nil); err != nil {
-		return nil, fmt.Errorf("error fetching properties for repository: %w", err)
+		return nil, fmt.Errorf("error fetching properties: %w", err)
 	}
 
 	// Convert to protobuf
 	somePB, err := r.propSvc.EntityWithPropertiesAsProto(ctx, ewp, r.providerManager)
 	if err != nil {
-		return nil, fmt.Errorf("error converting entity to protobuf: %w", err)
+		return nil, fmt.Errorf("error converting entity: %w", err)
 	}
 
 	pbRepo, ok := somePB.(*pb.Repository)
@@ -291,11 +314,19 @@ func (r *repositoryService) GetRepositoryByName(
 		return nil, sql.ErrNoRows
 	}
 
-	// Use the first matching entity
-	ewp, err := r.propSvc.EntityWithPropertiesByID(ctx, entities[0].ID, nil)
-	if err != nil {
-		return nil, fmt.Errorf("error fetching repository: %w", err)
+	ent := entities[0]
+
+	dbProps, err := r.store.GetAllPropertiesForEntity(ctx, db.GetAllPropertiesForEntityParams{
+		EntityID:   ent.ID,
+		ProjectID:  ent.ProjectID,
+		ProviderID: ent.ProviderID,
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("error fetching properties: %w", err)
 	}
+
+	modelProps, _ := models.DbPropsToModel(dbProps)
+	ewp := models.NewEntityWithProperties(ent, modelProps)
 
 	// Retrieve all properties from provider
 	if err := r.propSvc.RetrieveAllPropertiesForEntity(ctx, ewp, r.providerManager, nil); err != nil {
@@ -320,10 +351,25 @@ func (r *repositoryService) DeleteByID(ctx context.Context, repositoryID uuid.UU
 	logger.BusinessRecord(ctx).Project = projectID
 	logger.BusinessRecord(ctx).Repository = repositoryID
 
-	ent, err := r.propSvc.EntityWithPropertiesByID(ctx, repositoryID, nil)
+	entInstance, err := r.store.GetEntityByID(ctx, db.GetEntityByIDParams{
+		ID:        repositoryID,
+		ProjectID: projectID,
+	})
 	if err != nil {
-		return fmt.Errorf("error fetching repository: %w", err)
+		return fmt.Errorf("error fetching repository instance: %w", err)
 	}
+
+	dbProps, err := r.store.GetAllPropertiesForEntity(ctx, db.GetAllPropertiesForEntityParams{
+		EntityID:   repositoryID,
+		ProjectID:  projectID,
+		ProviderID: entInstance.ProviderID,
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("error fetching properties: %w", err)
+	}
+
+	modelProps, _ := models.DbPropsToModel(dbProps)
+	ent := models.NewEntityWithProperties(entInstance, modelProps)
 
 	logger.BusinessRecord(ctx).ProviderID = ent.Entity.ProviderID
 
@@ -344,11 +390,9 @@ func (r *repositoryService) DeleteByName(
 ) error {
 	logger.BusinessRecord(ctx).Project = projectID
 
-	// Build the full repository name
 	fullName := fmt.Sprintf("%s/%s", repoOwner, repoName)
-
-	// Get provider ID from name if specified
 	var providerID uuid.UUID
+
 	if providerName != "" {
 		prov, err := r.store.GetProviderByName(ctx, db.GetProviderByNameParams{
 			Name:     providerName,
@@ -376,14 +420,21 @@ func (r *repositoryService) DeleteByName(
 	}
 
 	if len(entities) == 0 {
-		return fmt.Errorf("error retrieving repository %s/%s in project %s: %w", repoOwner, repoName, projectID, sql.ErrNoRows)
+		return fmt.Errorf("repository not found: %w", sql.ErrNoRows)
 	}
 
-	// Fetch the entity with properties
-	ent, err := r.propSvc.EntityWithPropertiesByID(ctx, entities[0].ID, nil)
-	if err != nil {
-		return fmt.Errorf("error fetching repository: %w", err)
+	entInstance := entities[0]
+	dbProps, err := r.store.GetAllPropertiesForEntity(ctx, db.GetAllPropertiesForEntityParams{
+		EntityID:   entInstance.ID,
+		ProjectID:  entInstance.ProjectID,
+		ProviderID: entInstance.ProviderID,
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("error fetching properties: %w", err)
 	}
+
+	modelProps, _ := models.DbPropsToModel(dbProps)
+	ent := models.NewEntityWithProperties(entInstance, modelProps)
 
 	logger.BusinessRecord(ctx).Repository = ent.Entity.ID
 
@@ -394,7 +445,6 @@ func (r *repositoryService) DeleteByName(
 
 	return r.deleteRepository(ctx, prov, ent)
 }
-
 func (r *repositoryService) deleteRepository(
 	ctx context.Context, client provifv1.Provider, repo *models.EntityWithProperties,
 ) error {
@@ -410,8 +460,9 @@ func (r *repositoryService) deleteRepository(
 	_, err = db.WithTransaction(r.store, func(t db.ExtendQuerier) (*pb.Repository, error) {
 		// Remove the entity from the DB
 		if err := t.DeleteEntity(ctx, db.DeleteEntityParams{
-			ID:        repo.Entity.ID,
-			ProjectID: repo.Entity.ProjectID,
+			ID:         repo.Entity.ID,
+			ProjectID:  repo.Entity.ProjectID,
+			ProviderID: repo.Entity.ProviderID,
 		}); err != nil {
 			return nil, fmt.Errorf("error deleting entity from DB: %w", err)
 		}

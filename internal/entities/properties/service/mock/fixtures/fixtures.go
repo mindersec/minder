@@ -64,7 +64,8 @@ func WithSuccessfulEntityWithPropertiesByID(
 	ewp *models.EntityWithProperties,
 ) MockPropertyServiceOption {
 	return func(mockPropSvc *mockSvc.MockPropertiesService) {
-		mockPropSvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), entityID, gomock.Any()).
+		mockPropSvc.EXPECT().
+			EntityWithPropertiesByID(gomock.Any(), entityID, ewp.Entity.ProjectID, ewp.Entity.ProviderID, gomock.Any()).
 			Return(ewp, nil)
 	}
 }
@@ -130,7 +131,7 @@ func WithFailedGetEntityWithPropertiesByID(
 ) MockPropertyServiceOption {
 	return func(mockPropSvc *mockSvc.MockPropertiesService) {
 		mockPropSvc.EXPECT().
-			EntityWithPropertiesByID(gomock.Any(), gomock.Any(), gomock.Any()).
+			EntityWithPropertiesByID(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(nil, err)
 	}
 }

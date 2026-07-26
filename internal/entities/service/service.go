@@ -46,6 +46,7 @@ type EntityService interface {
 		ctx context.Context,
 		entityID uuid.UUID,
 		projectID uuid.UUID,
+		providerID uuid.UUID,
 	) (*pb.EntityInstance, error)
 
 	// GetEntityByName retrieves an entity by its name
@@ -62,6 +63,7 @@ type EntityService interface {
 		ctx context.Context,
 		entityID uuid.UUID,
 		projectID uuid.UUID,
+		providerID uuid.UUID,
 	) error
 }
 
@@ -158,7 +160,7 @@ func (s *entityService) ListEntities(
 			break
 		}
 
-		ewp, err := s.propSvc.EntityWithPropertiesByID(ctx, entity.ID,
+		ewp, err := s.propSvc.EntityWithPropertiesByID(ctx, entity.ID, projectID, providerID,
 			propService.CallBuilder().WithStoreOrTransaction(qtx))
 		if err != nil {
 			return nil, "", fmt.Errorf("error fetching properties for entity: %w", err)
@@ -188,9 +190,15 @@ func (s *entityService) GetEntityByID(
 	ctx context.Context,
 	entityID uuid.UUID,
 	projectID uuid.UUID,
+	providerID uuid.UUID,
 ) (*pb.EntityInstance, error) {
 	// Get entity from database
-	entity, err := s.store.GetEntityByID(ctx, entityID)
+	_, err := s.store.GetEntityByID(ctx, db.GetEntityByIDParams{
+		ID:         entityID,
+		ProjectID:  projectID,
+		ProviderID: providerID,
+	})
+
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "entity not found")
@@ -198,13 +206,8 @@ func (s *entityService) GetEntityByID(
 		return nil, fmt.Errorf("error fetching entity: %w", err)
 	}
 
-	// Verify entity belongs to the project
-	if entity.ProjectID != projectID {
-		return nil, status.Errorf(codes.NotFound, "entity not found in project")
-	}
-
 	// Get properties
-	ewp, err := s.propSvc.EntityWithPropertiesByID(ctx, entityID, nil)
+	ewp, err := s.propSvc.EntityWithPropertiesByID(ctx, entityID, projectID, providerID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching properties for entity: %w", err)
 	}
@@ -246,7 +249,7 @@ func (s *entityService) GetEntityByName(
 	}
 
 	// Get properties
-	ewp, err := s.propSvc.EntityWithPropertiesByID(ctx, entity.ID, nil)
+	ewp, err := s.propSvc.EntityWithPropertiesByID(ctx, entity.ID, projectID, providerID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching properties for entity: %w", err)
 	}
@@ -264,19 +267,19 @@ func (s *entityService) DeleteEntityByID(
 	ctx context.Context,
 	entityID uuid.UUID,
 	projectID uuid.UUID,
+	providerID uuid.UUID,
 ) error {
 	// Get entity to verify it exists and belongs to the project
-	entity, err := s.store.GetEntityByID(ctx, entityID)
+	_, err := s.store.GetEntityByID(ctx, db.GetEntityByIDParams{
+		ID:         entityID,
+		ProjectID:  projectID,
+		ProviderID: providerID,
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return status.Errorf(codes.NotFound, "entity not found")
 		}
 		return fmt.Errorf("error fetching entity: %w", err)
-	}
-
-	// Verify entity belongs to the project
-	if entity.ProjectID != projectID {
-		return status.Errorf(codes.NotFound, "entity not found in project")
 	}
 
 	// Delete entity and its properties in a transaction
@@ -293,14 +296,19 @@ func (s *entityService) DeleteEntityByID(
 	qtx := s.store.GetQuerierWithTransaction(tx)
 
 	// Delete properties first
-	if err := qtx.DeleteAllPropertiesForEntity(ctx, entityID); err != nil {
+	if err := qtx.DeleteAllPropertiesForEntity(ctx, db.DeleteAllPropertiesForEntityParams{
+		EntityID:   entityID,
+		ProjectID:  projectID,
+		ProviderID: providerID,
+	}); err != nil {
 		return fmt.Errorf("error deleting entity properties: %w", err)
 	}
 
 	// Delete entity
 	if err := qtx.DeleteEntity(ctx, db.DeleteEntityParams{
-		ID:        entityID,
-		ProjectID: projectID,
+		ID:         entityID,
+		ProjectID:  projectID,
+		ProviderID: providerID,
 	}); err != nil {
 		return fmt.Errorf("error deleting entity: %w", err)
 	}

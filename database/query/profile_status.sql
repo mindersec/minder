@@ -90,6 +90,7 @@ SELECT
     ere.entity_instance_id as entity_id,
     ei.name as entity_name,
     ei.project_id as project_id,
+    ei.provider_id,
     rt.release_phase as rule_type_release_phase,
     eo.output AS eval_output
 FROM latest_evaluation_statuses les

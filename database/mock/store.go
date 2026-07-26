@@ -462,17 +462,17 @@ func (mr *MockStoreMockRecorder) CreateUser(ctx, identitySubject any) *gomock.Ca
 }
 
 // DeleteAllPropertiesForEntity mocks base method.
-func (m *MockStore) DeleteAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) error {
+func (m *MockStore) DeleteAllPropertiesForEntity(ctx context.Context, arg db.DeleteAllPropertiesForEntityParams) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteAllPropertiesForEntity", ctx, entityID)
+	ret := m.ctrl.Call(m, "DeleteAllPropertiesForEntity", ctx, arg)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteAllPropertiesForEntity indicates an expected call of DeleteAllPropertiesForEntity.
-func (mr *MockStoreMockRecorder) DeleteAllPropertiesForEntity(ctx, entityID any) *gomock.Call {
+func (mr *MockStoreMockRecorder) DeleteAllPropertiesForEntity(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAllPropertiesForEntity", reflect.TypeOf((*MockStore)(nil).DeleteAllPropertiesForEntity), ctx, entityID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAllPropertiesForEntity", reflect.TypeOf((*MockStore)(nil).DeleteAllPropertiesForEntity), ctx, arg)
 }
 
 // DeleteDataSource mocks base method.
@@ -837,18 +837,18 @@ func (mr *MockStoreMockRecorder) FindProviders(ctx, arg any) *gomock.Call {
 }
 
 // FlushCache mocks base method.
-func (m *MockStore) FlushCache(ctx context.Context, entityInstanceID uuid.UUID) (db.FlushCache, error) {
+func (m *MockStore) FlushCache(ctx context.Context, arg db.FlushCacheParams) (db.FlushCache, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FlushCache", ctx, entityInstanceID)
+	ret := m.ctrl.Call(m, "FlushCache", ctx, arg)
 	ret0, _ := ret[0].(db.FlushCache)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FlushCache indicates an expected call of FlushCache.
-func (mr *MockStoreMockRecorder) FlushCache(ctx, entityInstanceID any) *gomock.Call {
+func (mr *MockStoreMockRecorder) FlushCache(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FlushCache", reflect.TypeOf((*MockStore)(nil).FlushCache), ctx, entityInstanceID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FlushCache", reflect.TypeOf((*MockStore)(nil).FlushCache), ctx, arg)
 }
 
 // GetAccessTokenByEnrollmentNonce mocks base method.
@@ -912,18 +912,18 @@ func (mr *MockStoreMockRecorder) GetAccessTokenSinceDate(ctx, arg any) *gomock.C
 }
 
 // GetAllPropertiesForEntity mocks base method.
-func (m *MockStore) GetAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) ([]db.Property, error) {
+func (m *MockStore) GetAllPropertiesForEntity(ctx context.Context, arg db.GetAllPropertiesForEntityParams) ([]db.Property, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllPropertiesForEntity", ctx, entityID)
+	ret := m.ctrl.Call(m, "GetAllPropertiesForEntity", ctx, arg)
 	ret0, _ := ret[0].([]db.Property)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAllPropertiesForEntity indicates an expected call of GetAllPropertiesForEntity.
-func (mr *MockStoreMockRecorder) GetAllPropertiesForEntity(ctx, entityID any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetAllPropertiesForEntity(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllPropertiesForEntity", reflect.TypeOf((*MockStore)(nil).GetAllPropertiesForEntity), ctx, entityID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllPropertiesForEntity", reflect.TypeOf((*MockStore)(nil).GetAllPropertiesForEntity), ctx, arg)
 }
 
 // GetBundle mocks base method.
@@ -1002,18 +1002,18 @@ func (mr *MockStoreMockRecorder) GetEntitiesByProjectHierarchy(ctx, projects any
 }
 
 // GetEntitiesByProvider mocks base method.
-func (m *MockStore) GetEntitiesByProvider(ctx context.Context, providerID uuid.UUID) ([]db.EntityInstance, error) {
+func (m *MockStore) GetEntitiesByProvider(ctx context.Context, arg db.GetEntitiesByProviderParams) ([]db.EntityInstance, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEntitiesByProvider", ctx, providerID)
+	ret := m.ctrl.Call(m, "GetEntitiesByProvider", ctx, arg)
 	ret0, _ := ret[0].([]db.EntityInstance)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEntitiesByProvider indicates an expected call of GetEntitiesByProvider.
-func (mr *MockStoreMockRecorder) GetEntitiesByProvider(ctx, providerID any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetEntitiesByProvider(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntitiesByProvider", reflect.TypeOf((*MockStore)(nil).GetEntitiesByProvider), ctx, providerID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntitiesByProvider", reflect.TypeOf((*MockStore)(nil).GetEntitiesByProvider), ctx, arg)
 }
 
 // GetEntitiesByType mocks base method.
@@ -1047,18 +1047,18 @@ func (mr *MockStoreMockRecorder) GetEntitlementFeaturesByProjectID(ctx, projectI
 }
 
 // GetEntityByID mocks base method.
-func (m *MockStore) GetEntityByID(ctx context.Context, id uuid.UUID) (db.EntityInstance, error) {
+func (m *MockStore) GetEntityByID(ctx context.Context, arg db.GetEntityByIDParams) (db.EntityInstance, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEntityByID", ctx, id)
+	ret := m.ctrl.Call(m, "GetEntityByID", ctx, arg)
 	ret0, _ := ret[0].(db.EntityInstance)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEntityByID indicates an expected call of GetEntityByID.
-func (mr *MockStoreMockRecorder) GetEntityByID(ctx, id any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetEntityByID(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityByID", reflect.TypeOf((*MockStore)(nil).GetEntityByID), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityByID", reflect.TypeOf((*MockStore)(nil).GetEntityByID), ctx, arg)
 }
 
 // GetEntityByName mocks base method.
@@ -1434,6 +1434,21 @@ func (m *MockStore) GetProjectIDBySessionState(ctx context.Context, sessionState
 func (mr *MockStoreMockRecorder) GetProjectIDBySessionState(ctx, sessionState any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjectIDBySessionState", reflect.TypeOf((*MockStore)(nil).GetProjectIDBySessionState), ctx, sessionState)
+}
+
+// GetPropertiesForEntities mocks base method.
+func (m *MockStore) GetPropertiesForEntities(ctx context.Context, arg db.GetPropertiesForEntitiesParams) ([]db.Property, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPropertiesForEntities", ctx, arg)
+	ret0, _ := ret[0].([]db.Property)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPropertiesForEntities indicates an expected call of GetPropertiesForEntities.
+func (mr *MockStoreMockRecorder) GetPropertiesForEntities(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPropertiesForEntities", reflect.TypeOf((*MockStore)(nil).GetPropertiesForEntities), ctx, arg)
 }
 
 // GetProperty mocks base method.
@@ -1944,10 +1959,10 @@ func (mr *MockStoreMockRecorder) ListEvaluationHistoryStaleRecords(ctx, arg any)
 }
 
 // ListFlushCache mocks base method.
-func (m *MockStore) ListFlushCache(ctx context.Context) ([]db.FlushCache, error) {
+func (m *MockStore) ListFlushCache(ctx context.Context) ([]db.ListFlushCacheRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListFlushCache", ctx)
-	ret0, _ := ret[0].([]db.FlushCache)
+	ret0, _ := ret[0].([]db.ListFlushCacheRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

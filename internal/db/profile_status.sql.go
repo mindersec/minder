@@ -252,6 +252,7 @@ SELECT
     ere.entity_instance_id as entity_id,
     ei.name as entity_name,
     ei.project_id as project_id,
+    ei.provider_id,
     rt.release_phase as rule_type_release_phase,
     eo.output AS eval_output
 FROM latest_evaluation_statuses les
@@ -304,6 +305,7 @@ type ListRuleEvaluationsByProfileIdRow struct {
 	EntityID              uuid.UUID              `json:"entity_id"`
 	EntityName            string                 `json:"entity_name"`
 	ProjectID             uuid.UUID              `json:"project_id"`
+	ProviderID            uuid.UUID              `json:"provider_id"`
 	RuleTypeReleasePhase  ReleaseStatus          `json:"rule_type_release_phase"`
 	EvalOutput            pqtype.NullRawMessage  `json:"eval_output"`
 }
@@ -348,6 +350,7 @@ func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRu
 			&i.EntityID,
 			&i.EntityName,
 			&i.ProjectID,
+			&i.ProviderID,
 			&i.RuleTypeReleasePhase,
 			&i.EvalOutput,
 		); err != nil {

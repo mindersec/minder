@@ -46,7 +46,10 @@ func (r *refreshEntityByIDStrategy) GetEntity(
 
 	getEnt, err := db.WithTransaction(r.store, func(t db.ExtendQuerier) (*models.EntityWithProperties, error) {
 		ewp, err := r.propSvc.EntityWithPropertiesByID(
-			ctx, entMsg.Entity.EntityID,
+			ctx,
+			entMsg.Entity.EntityID,
+			entMsg.ProjectID,
+			entMsg.ProviderID,
 			propertyService.CallBuilder().WithStoreOrTransaction(t))
 		if err != nil {
 			return nil, fmt.Errorf("error getting entity: %w", err)
