@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.10.1">
 <title data-rh="true">Rule Evaluation in Depth | Minder docs</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://docs.mindersec.dev/img/Minder_darkMode.png"><meta data-rh="true" name="twitter:image" content="https://docs.mindersec.dev/img/Minder_darkMode.png"><meta data-rh="true" property="og:url" content="https://docs.mindersec.dev/ref/rule_evaluation_details"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Rule Evaluation in Depth | Minder docs"><meta data-rh="true" name="description" content="When evaluating a rule,"><meta data-rh="true" property="og:description" content="When evaluating a rule,"><link data-rh="true" rel="icon" href="/img/favicon.png"><link data-rh="true" rel="canonical" href="https://docs.mindersec.dev/ref/rule_evaluation_details"><link data-rh="true" rel="alternate" href="https://docs.mindersec.dev/ref/rule_evaluation_details" hreflang="en"><link data-rh="true" rel="alternate" href="https://docs.mindersec.dev/ref/rule_evaluation_details" hreflang="x-default"><link data-rh="true" rel="preconnect" href="https://F7OP01WFHV-dsn.algolia.net" crossorigin="anonymous"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Rule Evaluation in Depth","item":"https://docs.mindersec.dev/ref/rule_evaluation_details"}]}</script><link rel="search" type="application/opensearchdescription+xml" title="Minder docs" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.bdfa33c7.css">
-<script src="/assets/js/runtime~main.ed88e2c7.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.bb8e5255.js" defer="defer"></script>
 <script src="/assets/js/main.ef18a38d.js" defer="defer"></script>
 </head>
 <body>
@@ -177,7 +177,7 @@ determine what actions to take.</p>
 is available in <code>EvalResultOutput</code>.</li>
 </ul>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="remediation-types">Remediation Types<a href="#remediation-types" class="hash-link" aria-label="Direct link to Remediation Types" title="Direct link to Remediation Types" translate="no">​</a></h3>
-<p>Minder supports three remediation actions:</p>
+<p>Minder supports four remediation actions:</p>
 <ol>
 <li class="">
 <p><strong>Pull Request</strong> (<code>pull_request</code>)</p>
@@ -263,6 +263,33 @@ evaluation</li>
 effect immediately on the targeted entity; <code>pull_request</code> remediations will need
 to be merged before they take effect. Minder will ensure that at most one pull
 request is open at a time for a particular rule applied to a specific entity.</p>
+<ol start="4">
+<li class="">
+<p><strong>Issue</strong> (<code>issue</code>)</p>
+<p>The <a href="https://mindersec.github.io/ref/proto#minder-v1-RuleType-Definition-Remediate-IssueRemediation" target="_blank" rel="noopener noreferrer" class="">issue remediation</a>
+creates issues when rule evaluation fails. The remediation supports
+configuring the issue title, body, labels, and assignees.</p>
+<p>The issue supports the following fields:</p>
+<ul>
+<li class=""><code>title</code>: issue title</li>
+<li class=""><code>body</code>: issue description</li>
+<li class=""><code>labels</code>: labels to apply when creating the issue</li>
+<li class=""><code>assignees</code>: assignees for the created issue</li>
+</ul>
+<p>The <code>title</code> and <code>body</code> fields support Go template parameters, with the
+following data:</p>
+<ul>
+<li class=""><code>Entity</code> contains the same entity information available during rule
+evaluation</li>
+<li class=""><code>Profile</code> contains the profile data supplied in the <code>def</code> field</li>
+<li class=""><code>Params</code> contains the profile data supplied in the <code>params</code> field</li>
+<li class=""><code>EvalResultOutput</code> contains the output data from the rule evaluation step</li>
+</ul>
+<p>Minder ensures that at most one issue is open at a time for a particular rule
+applied to a specific entity. The issue is automatically closed when the rule
+evaluation succeeds.</p>
+</li>
+</ol>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="alert-types">Alert Types<a href="#alert-types" class="hash-link" aria-label="Direct link to Alert Types" title="Direct link to Alert Types" translate="no">​</a></h2>
 <p>When remediation has completed, Minder will execute any
 <a href="https://mindersec.github.io/ref/proto#minder-v1-RuleType-Definition-Alert" target="_blank" rel="noopener noreferrer" class="">alerts defined for the rule type</a>.
