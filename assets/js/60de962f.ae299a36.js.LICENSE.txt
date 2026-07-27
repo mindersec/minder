@@ -1,0 +1,6 @@
+/*!
+ * Redocusaurus
+ * https://redocusaurus.vercel.app/
+ * (c) 2025 Rohit Gohri
+ * Released under the MIT License
+ */

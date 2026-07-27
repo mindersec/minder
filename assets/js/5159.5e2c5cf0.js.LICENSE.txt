@@ -5,13 +5,6 @@
 */
 
 /*!
- * Redocusaurus
- * https://redocusaurus.vercel.app/
- * (c) 2025 Rohit Gohri
- * Released under the MIT License
- */
-
-/*!
  * Stickyfill -- `position: sticky` polyfill
  * v. 1.1.1 | https://github.com/wilddeer/stickyfill
  * Copyright Oleg Korsunsky | http://wd.dizaina.net/
