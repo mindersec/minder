@@ -4,6 +4,8 @@
 version: v1
 type: rule-type
 name: branch_protection_reviews
+context:
+  project: 00000000-0000-0000-0000-000000000000
 description: 'Ensures that branch protection requires at least two approved reviews.'
 display_name: 'Require Branch Protection Reviews'
 releasePhase: beta

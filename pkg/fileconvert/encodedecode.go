@@ -44,6 +44,8 @@ func DecoderForFile(path string) (Decoder, io.Closer) {
 		builder = func(r io.Reader) Decoder { return json.NewDecoder(r) }
 	case ".yaml", ".yml":
 		builder = func(r io.Reader) Decoder { return yaml.NewDecoder(r) }
+	case ".rego":
+		builder = func(r io.Reader) Decoder { return &regoDecoder{filename: path, file: r} }
 	default:
 		return nil, nil
 	}
