@@ -41,7 +41,7 @@ func CmdTest() *cobra.Command {
 			}
 
 			if len(results) == 0 {
-				if outputFormat == "text" {
+				if outputFormat == "text" && loadErr == nil {
 					cmd.Printf("No tests found\n")
 				}
 				return loadErr

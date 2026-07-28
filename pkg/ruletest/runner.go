@@ -216,10 +216,6 @@ func loadSingleRule(path string) (*minderv1.RuleType, error) {
 		if rt.Context == nil {
 			rt.Context = &minderv1.Context{}
 		}
-		if rt.Context.Project == nil || *rt.Context.Project == "" {
-			prjName := "rule-type-test"
-			rt.Context.Project = &prjName
-		}
 	}
 	return rt, nil
 }

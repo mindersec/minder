@@ -57,9 +57,12 @@ func (tr *testCaseRunner) builtinEval(
 		return nil, fmt.Errorf("invalid profile argument: %w", err)
 	}
 
-	paramsMap, err := dictToGoMap(paramsDict)
-	if err != nil {
-		return nil, fmt.Errorf("invalid params argument: %w", err)
+	var paramsMap map[string]any
+	if paramsDict != nil {
+		paramsMap, err = dictToGoMap(paramsDict)
+		if err != nil {
+			return nil, fmt.Errorf("invalid params argument: %w", err)
+		}
 	}
 
 	entityMap, err := dictToGoMap(entityDict)
