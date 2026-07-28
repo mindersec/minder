@@ -206,7 +206,7 @@ func loadSingleRule(path string) (*minderv1.RuleType, error) {
 	defer func(c io.Closer) {
 		_ = c.Close()
 	}(closer)
-	
+
 	rt, err := fileconvert.ReadResourceTyped[*minderv1.RuleType](decoder)
 	if err != nil {
 		return nil, err
