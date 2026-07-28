@@ -33,16 +33,18 @@ func CmdTest() *cobra.Command {
 			}
 
 			runner := ruletest.NewRunner()
+			var loadErr error
 			results, err := runner.RunPaths(args)
 			if err != nil {
 				cmd.PrintErrf("Error(s) running tests:\n%v\n", err)
+				loadErr = errors.New("one or more test files failed to load")
 			}
 
 			if len(results) == 0 {
 				if outputFormat == "text" {
 					cmd.Printf("No tests found\n")
 				}
-				return nil
+				return loadErr
 			}
 
 			if outputFormat == "junit" {
@@ -58,7 +60,7 @@ func CmdTest() *cobra.Command {
 						return errors.New("one or more tests failed")
 					}
 				}
-				return nil
+				return loadErr
 			}
 
 			hasFailures := false
@@ -78,7 +80,7 @@ func CmdTest() *cobra.Command {
 				return errors.New("one or more tests failed")
 			}
 
-			return nil
+			return loadErr
 		},
 	}
 
