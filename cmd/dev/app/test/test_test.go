@@ -13,10 +13,10 @@ func TestCmdTest_ExitCodes(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name         string
-		files        map[string]string // filename -> content
-		args         []string          // arguments to mindev test (e.g. "--output junit")
-		wantErrMsg   string            // expected error substring, or empty if success expected
+		name       string
+		files      map[string]string // filename -> content
+		args       []string          // arguments to mindev test (e.g. "--output junit")
+		wantErrMsg string            // expected error substring, or empty if success expected
 	}{
 		{
 			name: "only malformed returns non-zero",
@@ -62,7 +62,7 @@ func TestCmdTest_ExitCodes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			tmpDir := t.TempDir()
-			
+
 			var paths []string
 			for filename, content := range tt.files {
 				filePath := filepath.Join(tmpDir, filename)
