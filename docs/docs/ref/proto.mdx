@@ -962,6 +962,7 @@ used for parsing resources in ruletypes
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the entity. |
 | type | <TypeLink type="minder-v1-Entity">Entity</TypeLink> |  | type is the type of the entity. DISCUSSION: If we're aiming for a BYO entity type, we should probably have this be a string, and have the user provide the type. |
 | properties | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | properties is a map of properties of the entity. |
+| originating_id | <TypeLink type="string">string</TypeLink> |  | originating_id is the id of the entity which originated this resource. If the originating entity is cleaned up, this entity will also be removed. |
 
 
 

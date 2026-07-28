@@ -84,7 +84,11 @@ func NewEntityService(
 	}
 }
 
-//nolint:gocyclo // Let's refactor this later
+// ListEntities retrieves entities for the specific project and provider.
+// If entityType is unspecified, all entity types will be returned.
+// Pagination is supported via the cursor and limit parameters; an empty
+// input cursor will return the first page, and an empty next cursor
+// indicates the end of the list.
 func (s *entityService) ListEntities(
 	ctx context.Context,
 	projectID uuid.UUID,
@@ -99,29 +103,35 @@ func (s *entityService) ListEntities(
 		Str("entityType", entityType.String()).
 		Logger()
 
-	// Convert pb.Entity to db.Entities
-	dbEntityType, err := entities.EntityTypeToDBType(entityType)
-	if err != nil {
-		return nil, "", fmt.Errorf("failed to convert entity type: %w", err)
+	var err error
+	dbEntityType := db.NullEntities{
+		Valid: false,
+	}
+	if entityType != pb.Entity_ENTITY_UNSPECIFIED {
+		dbEntityType.Valid = true
+		// Convert pb.Entity to db.Entities
+		dbEntityType.Entities, err = entities.EntityTypeToDBType(entityType)
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to convert entity type: %w", err)
+		}
 	}
 
 	// Parse cursor if provided
+	firstElement := uuid.Nil
 	if cursor != "" {
-		_, err := uuid.Parse(cursor)
+		firstElement, err = uuid.Parse(cursor)
 		if err != nil {
 			return nil, "", util.UserVisibleError(codes.InvalidArgument, "invalid cursor format")
 		}
-		// TODO: Use lastEntityID for pagination
 	}
 
 	// Set up query parameters
-	queryLimit := sql.NullInt64{Valid: false, Int64: 0}
-	if limit > 0 {
-		const maxFetchLimit = 100
-		if limit > maxFetchLimit {
-			return nil, "", util.UserVisibleError(codes.InvalidArgument, "limit too high, max is %d", maxFetchLimit)
-		}
-		queryLimit = sql.NullInt64{Valid: true, Int64: limit + 1} // +1 to check if there are more results
+	const maxFetchLimit = 100
+	if limit <= 0 {
+		limit = maxFetchLimit
+	}
+	if limit > maxFetchLimit {
+		return nil, "", util.UserVisibleError(codes.InvalidArgument, "limit too high, max is %d", maxFetchLimit)
 	}
 
 	// Get entities from database
@@ -137,11 +147,12 @@ func (s *entityService) ListEntities(
 
 	qtx := s.store.GetQuerierWithTransaction(tx)
 
-	// TODO: Implement proper pagination with cursor
-	outentities, err := qtx.GetEntitiesByType(ctx, db.GetEntitiesByTypeParams{
+	found, err := qtx.GetEntitiesWithProps(ctx, db.GetEntitiesWithPropsParams{
 		EntityType: dbEntityType,
 		ProviderID: providerID,
 		Projects:   []uuid.UUID{projectID},
+		Cursor:     firstElement,
+		Limit:      limit + 1,
 	})
 	if err != nil {
 		return nil, "", fmt.Errorf("error fetching entities: %w", err)
@@ -151,34 +162,33 @@ func (s *entityService) ListEntities(
 	var results []*pb.EntityInstance
 	var nextCursor string
 
-	for i, entity := range outentities {
-		// Apply limit if specified
-		if queryLimit.Valid && int64(i) >= queryLimit.Int64-1 {
-			nextCursor = entity.ID.String()
-			break
-		}
+	// We fetch one extra row so that we can determine if there are more results
+	// This saves the client from doing a zero-row fetch later, at a cost of slightly
+	// more row fetches.
+	if len(found) > int(limit) {
+		nextCursor = found[limit].ID.String()
+		found = found[:limit]
+	}
 
-		ewp, err := s.propSvc.EntityWithPropertiesByID(ctx, entity.ID,
-			propService.CallBuilder().WithStoreOrTransaction(qtx))
+	for i, entity := range found {
+		ei := db.EntityInstance{
+			ID:             entity.ID,
+			EntityType:     entity.EntityType,
+			Name:           entity.Name,
+			ProjectID:      entity.ProjectID,
+			ProviderID:     entity.ProviderID,
+			CreatedAt:      entity.CreatedAt,
+			OriginatedFrom: entity.OriginatedFrom,
+		}
+		ewp, err := s.propSvc.PropertiesFromJSON(ei, found[i].Properties, propService.CallBuilder().WithStoreOrTransaction(qtx))
 		if err != nil {
 			return nil, "", fmt.Errorf("error fetching properties for entity: %w", err)
 		}
-
-		if err := s.propSvc.RetrieveAllPropertiesForEntity(ctx, ewp, s.providerManager,
-			propService.ReadBuilder().WithStoreOrTransaction(qtx).TolerateStaleData()); err != nil {
-			return nil, "", fmt.Errorf("error fetching properties for entity: %w", err)
-		}
-
 		// Convert to protobuf
 		pbEntity := entityInstanceToProto(ewp)
+		pbEntity.Context.Provider = entity.ProviderName.String // If null, will store empty string, which is fine
 
 		results = append(results, pbEntity)
-	}
-
-	// Rollback transaction
-	if err := tx.Rollback(); err != nil {
-		// This is not fatal, but we should log it
-		l.Error().Err(err).Msg("error rolling back transaction")
 	}
 
 	return results, nextCursor, nil
@@ -324,10 +334,11 @@ func entityInstanceToProto(ewp *models.EntityWithProperties) *pb.EntityInstance 
 		Id: ewp.Entity.ID.String(),
 		Context: &pb.ContextV2{
 			ProjectId: ewp.Entity.ProjectID.String(),
-			Provider:  "", // This would need to be filled in from the provider name
+			// Provider:  "", // This would need to be filled in from the provider name
 		},
-		Name:       ewp.Entity.Name,
-		Type:       ewp.Entity.Type,
-		Properties: propsStruct,
+		Name:          ewp.Entity.Name,
+		Type:          ewp.Entity.Type,
+		Properties:    propsStruct,
+		OriginatingId: ewp.Entity.OriginatedFrom.String(),
 	}
 }

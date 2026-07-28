@@ -7,7 +7,9 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -389,6 +391,89 @@ func (q *Queries) GetEntitiesByType(ctx context.Context, arg GetEntitiesByTypePa
 			&i.ProviderID,
 			&i.CreatedAt,
 			&i.OriginatedFrom,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEntitiesWithProps = `-- name: GetEntitiesWithProps :many
+
+SELECT entity_instances.id, entity_instances.entity_type, entity_instances.name, entity_instances.project_id, entity_instances.provider_id, entity_instances.created_at, entity_instances.originated_from,
+    providers.name AS provider_name,
+    providers.class AS provider_class,
+    JSON_OBJECT_AGG(
+        p.key,
+        p.value
+    ) AS properties
+FROM entity_instances
+       LEFT JOIN providers ON entity_instances.provider_id = providers.id
+       LEFT JOIN properties p ON entity_instances.id = p.entity_id
+WHERE (entity_instances.entity_type = $1 OR $1 IS NULL)
+    AND entity_instances.id >= $2::uuid
+    AND entity_instances.provider_id = $3
+    AND entity_instances.project_id = ANY($4::uuid[])
+GROUP BY entity_instances.id, providers.id
+ORDER BY entity_instances.id
+LIMIT $5::bigint
+`
+
+type GetEntitiesWithPropsParams struct {
+	EntityType NullEntities `json:"entity_type"`
+	Cursor     uuid.UUID    `json:"cursor"`
+	ProviderID uuid.UUID    `json:"provider_id"`
+	Projects   []uuid.UUID  `json:"projects"`
+	Limit      int64        `json:"limit"`
+}
+
+type GetEntitiesWithPropsRow struct {
+	ID             uuid.UUID         `json:"id"`
+	EntityType     Entities          `json:"entity_type"`
+	Name           string            `json:"name"`
+	ProjectID      uuid.UUID         `json:"project_id"`
+	ProviderID     uuid.UUID         `json:"provider_id"`
+	CreatedAt      time.Time         `json:"created_at"`
+	OriginatedFrom uuid.NullUUID     `json:"originated_from"`
+	ProviderName   sql.NullString    `json:"provider_name"`
+	ProviderClass  NullProviderClass `json:"provider_class"`
+	Properties     json.RawMessage   `json:"properties"`
+}
+
+// GetEntitiesWithProps retrieves all entities of a given type with their properties for a project or hierarchy of projects.
+func (q *Queries) GetEntitiesWithProps(ctx context.Context, arg GetEntitiesWithPropsParams) ([]GetEntitiesWithPropsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getEntitiesWithProps,
+		arg.EntityType,
+		arg.Cursor,
+		arg.ProviderID,
+		pq.Array(arg.Projects),
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetEntitiesWithPropsRow{}
+	for rows.Next() {
+		var i GetEntitiesWithPropsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.EntityType,
+			&i.Name,
+			&i.ProjectID,
+			&i.ProviderID,
+			&i.CreatedAt,
+			&i.OriginatedFrom,
+			&i.ProviderName,
+			&i.ProviderClass,
+			&i.Properties,
 		); err != nil {
 			return nil, err
 		}

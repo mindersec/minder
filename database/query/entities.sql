@@ -70,6 +70,27 @@ WHERE entity_instances.entity_type = $1
     AND entity_instances.provider_id = sqlc.arg(provider_id)
     AND entity_instances.project_id = ANY(sqlc.arg(projects)::uuid[]);
 
+-- GetEntitiesWithProps retrieves all entities of a given type with their properties for a project or hierarchy of projects.
+
+-- name: GetEntitiesWithProps :many
+SELECT entity_instances.*,
+    providers.name AS provider_name,
+    providers.class AS provider_class,
+    JSON_OBJECT_AGG(
+        p.key,
+        p.value
+    ) AS properties
+FROM entity_instances
+       LEFT JOIN providers ON entity_instances.provider_id = providers.id
+       LEFT JOIN properties p ON entity_instances.id = p.entity_id
+WHERE (entity_instances.entity_type = sqlc.narg(entity_type) OR sqlc.narg(entity_type) IS NULL)
+    AND entity_instances.id >= sqlc.arg('cursor')::uuid
+    AND entity_instances.provider_id = sqlc.arg(provider_id)
+    AND entity_instances.project_id = ANY(sqlc.arg(projects)::uuid[])
+GROUP BY entity_instances.id, providers.id
+ORDER BY entity_instances.id
+LIMIT sqlc.arg('limit')::bigint;
+
 -- ListEntitiesAfterID retrieves entities of a given type after a cursor ID, for pagination.
 -- This is used for cursor-based iteration over all entities (e.g., in the reminder service).
 

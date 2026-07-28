@@ -117,6 +117,8 @@ type Querier interface {
 	// GetEntitiesByType retrieves all entities of a given type for a project or hierarchy of projects.
 	// this is how one would get all repositories, artifacts, etc.
 	GetEntitiesByType(ctx context.Context, arg GetEntitiesByTypeParams) ([]EntityInstance, error)
+	// GetEntitiesWithProps retrieves all entities of a given type with their properties for a project or hierarchy of projects.
+	GetEntitiesWithProps(ctx context.Context, arg GetEntitiesWithPropsParams) ([]GetEntitiesWithPropsRow, error)
 	GetEntitlementFeaturesByProjectID(ctx context.Context, projectID uuid.UUID) ([]string, error)
 	// GetEntityByID retrieves an entity by its ID for a project or hierarchy of projects.
 	GetEntityByID(ctx context.Context, id uuid.UUID) (EntityInstance, error)

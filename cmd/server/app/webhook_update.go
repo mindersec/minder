@@ -33,7 +33,7 @@ import (
 )
 
 func cmdWebhookUpdate() *cobra.Command {
-	var updateCmd = &cobra.Command{
+	updateCmd := &cobra.Command{
 		Use:   "update",
 		Short: "update the webhook configuration",
 		Long:  `Command to upgrade webhook configuration`,
