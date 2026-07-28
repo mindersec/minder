@@ -96,6 +96,14 @@ func TestBuiltinEval_InvalidArgs(t *testing.T) {
 			wantErr: "got string, want dict",
 		},
 		{
+			name: "invalid params type",
+			args: starlark.Tuple{starlark.String("rule.yaml")},
+			kwargs: []starlark.Tuple{
+				{starlark.String("params"), starlark.String("not a dict")},
+			},
+			wantErr: "got string, want dict",
+		},
+		{
 			name: "invalid mock_fs type",
 			args: starlark.Tuple{starlark.String("fs_check")},
 			kwargs: []starlark.Tuple{

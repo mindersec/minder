@@ -206,7 +206,18 @@ func loadSingleRule(path string) (*minderv1.RuleType, error) {
 	defer func(c io.Closer) {
 		_ = c.Close()
 	}(closer)
-	return fileconvert.ReadResourceTyped[*minderv1.RuleType](decoder)
+
+	rt, err := fileconvert.ReadResourceTyped[*minderv1.RuleType](decoder)
+	if err != nil {
+		return nil, err
+	}
+
+	if rt != nil {
+		if rt.Context == nil {
+			rt.Context = &minderv1.Context{}
+		}
+	}
+	return rt, nil
 }
 
 // RunPaths takes a list of file or directory paths, discovering all *.star test

@@ -22,3 +22,11 @@ def test_mock_fs_fail():
     )
     assert.true(res["message"] != "")
     assert.eq(res["status"], "fail")
+
+def test_mock_fs_empty():
+    res = eval(
+        rule="mock_fs_rule",
+        entity={"owner": "test", "name": "repo", "clone_url": "https://github.com/test/repo.git"},
+        mock_fs={}
+    )
+    assert.eq(res["status"], "fail")
