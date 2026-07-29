@@ -16,7 +16,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/google/uuid"
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarktest"
 	"go.starlark.net/syntax"
@@ -180,7 +179,7 @@ func (r *Runner) runOneTest(
 // into a map of RuleTypes keyed by rule name.
 func loadRulesFromDir(dir string) (map[string]*minderv1.RuleType, error) {
 	ruleTypes := make(map[string]*minderv1.RuleType)
-	yamlFiles, err := filepath.Glob(filepath.Join(dir, "*.yaml"))
+	ruleFiles, err := filepath.Glob(filepath.Join(dir, "*.yaml"))
 	if err != nil {
 		return nil, fmt.Errorf("globbing yaml files: %w", err)
 	}
@@ -188,11 +187,15 @@ func loadRulesFromDir(dir string) (map[string]*minderv1.RuleType, error) {
 	if err != nil {
 		return nil, fmt.Errorf("globbing rego files: %w", err)
 	}
-	ruleFiles := append(yamlFiles, regoFiles...)
-	for _, yf := range ruleFiles {
-		rt, err := loadSingleRule(yf)
+	ruleFiles = append(ruleFiles, regoFiles...)
+	for _, path := range ruleFiles {
+		rt, err := loadSingleRule(path)
 		if err != nil {
-			continue // skip files that aren't valid rule types
+			// Rego files are highly likely to be intentional ruletypes, do not silently swallow errors.
+			if filepath.Ext(path) == ".rego" {
+				return nil, fmt.Errorf("error loading rego file %s: %w", path, err)
+			}
+			continue // skip YAML (and other) files that aren't valid rule types, as they might be other content.
 		}
 		if rt != nil && rt.Name != "" {
 			if _, exists := ruleTypes[rt.Name]; exists {
@@ -225,7 +228,7 @@ func loadSingleRule(path string) (*minderv1.RuleType, error) {
 		rt.Context = &minderv1.Context{}
 	}
 	if rt.Context.GetProject() == "" {
-		rt.Context.Project = ptr.Ptr(uuid.UUID{}.String())
+		rt.Context.Project = ptr.Ptr("00000000-0000-0000-0000-000000000000")
 	}
 
 	return rt, nil
