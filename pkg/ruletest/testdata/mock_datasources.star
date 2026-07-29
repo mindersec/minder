@@ -1,3 +1,6 @@
+# Note: the datasource rule also tests loading ruletypes from Rego files
+# as well as YAML.  The corresponding ruletype is in mock_datasource_rule.rego.
+
 def test_mock_datasource_passing():
     res = eval(
         rule="mock_datasource_rule",

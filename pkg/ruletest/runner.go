@@ -20,7 +20,9 @@ import (
 	"go.starlark.net/starlarktest"
 	"go.starlark.net/syntax"
 
+	"github.com/google/uuid"
 	"github.com/mindersec/minder/internal/util"
+	"github.com/mindersec/minder/internal/util/ptr"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/fileconvert"
 )
@@ -182,7 +184,12 @@ func loadRulesFromDir(dir string) (map[string]*minderv1.RuleType, error) {
 	if err != nil {
 		return nil, fmt.Errorf("globbing yaml files: %w", err)
 	}
-	for _, yf := range yamlFiles {
+	regoFiles, err := filepath.Glob(filepath.Join(dir, "*.rego"))
+	if err != nil {
+		return nil, fmt.Errorf("globbing rego files: %w", err)
+	}
+	ruleFiles := append(yamlFiles, regoFiles...)
+	for _, yf := range ruleFiles {
 		rt, err := loadSingleRule(yf)
 		if err != nil {
 			continue // skip files that aren't valid rule types
@@ -212,11 +219,15 @@ func loadSingleRule(path string) (*minderv1.RuleType, error) {
 		return nil, err
 	}
 
-	if rt != nil {
-		if rt.Context == nil {
-			rt.Context = &minderv1.Context{}
-		}
+	// Ensure that ruletypes have a project context; the Minder CLI + API tooling
+	// will automatically apply the "current project" when creating a ruletype.
+	if rt.Context == nil {
+		rt.Context = &minderv1.Context{}
 	}
+	if rt.Context.GetProject() == "" {
+		rt.Context.Project = ptr.Ptr(uuid.UUID{}.String())
+	}
+
 	return rt, nil
 }
 
