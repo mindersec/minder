@@ -16,11 +16,11 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/google/uuid"
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarktest"
 	"go.starlark.net/syntax"
 
-	"github.com/google/uuid"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/ptr"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
