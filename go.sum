@@ -956,8 +956,8 @@ github.com/open-feature/go-sdk v1.17.2 h1:pTdeNks/hgnPrlqdgtFwltnIron1oOxqg4FmLl
 github.com/open-feature/go-sdk v1.17.2/go.mod h1:kTMCquVtck18XdSCI6rBoNFEBLvkOy4Tphu2pV8bq34=
 github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.3 h1:DRX7EfwtUrh4LiccU0tIVU466TwSzKPlLXl5UU8Sttk=
 github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.3/go.mod h1:OdihJTrh2N82kqEBjUhX8k3qoegwHHyJgHbJ6503Sgg=
-github.com/open-policy-agent/opa v1.18.0 h1:UpLUsGa/dQtj+XNUw2hUkdPty2A0Kd9bE5ab0fw7tm4=
-github.com/open-policy-agent/opa v1.18.0/go.mod h1:9GY+hER4ZEXtxPlMjftVbqJJY9xLtCD3Q0oufRCfAKo=
+github.com/open-policy-agent/opa v1.18.2 h1:VBiLJpioTuk7XTW1JoQi4ILo+FVxD2/8uD8iP9/OcxY=
+github.com/open-policy-agent/opa v1.18.2/go.mod h1:9GY+hER4ZEXtxPlMjftVbqJJY9xLtCD3Q0oufRCfAKo=
 github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8Oi/yOhh5U=
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.1.1 h1:y0fUlFfIZhPF1W537XOLg0/fcx6zcHCJwooC2xJA040=
