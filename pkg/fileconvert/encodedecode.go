@@ -29,8 +29,10 @@ type Decoder interface {
 	Decode(v any) error
 }
 
-var _ Decoder = (*yaml.Decoder)(nil)
-var _ Decoder = (*json.Decoder)(nil)
+var (
+	_ Decoder = (*yaml.Decoder)(nil)
+	_ Decoder = (*json.Decoder)(nil)
+)
 
 // DecoderForFile returns a Decoder for the file at the specified path,
 // or nil if the file is not of the appropriate type.
@@ -102,7 +104,9 @@ func WriteResource(output Encoder, resource minderv1.ResourceMeta) error {
 // ReadResource reads a single resource from the specified Decoder.
 // Only known resource types are supported; others will return an error.
 // Given that multiple resources can be stored in a single file, the
-// the input may not be fully consumed.
+// the input may not be fully consumed.  ReadResource will always return
+// either a (pointer to) resource or an error; it will never return a nil
+// resource.
 //
 // The resource is returned as a proto.Message, which can be type-asserted
 // to the appropriate type (see also ReadResourceTyped).  Like
@@ -162,8 +166,11 @@ func ReadResource(input Decoder) (minderv1.ResourceMeta, error) {
 }
 
 // ReadResourceTyped reads a single resource from the specified Decoder and
-// returns it as the specified subtype of proto.Messsage.  This is a convenience
-// wrapper around ReadResource that handles the type assertion for you.
+// returns it as the specified subtype of proto.Messsage.  Given that T is
+// pointer, this will always return either a non-nil pointer or an error.
+//
+// This is a convenience wrapper around ReadResource that handles the type
+// assertion for you.
 func ReadResourceTyped[T proto.Message](input Decoder) (T, error) {
 	var zero T
 	r, err := ReadResource(input)
