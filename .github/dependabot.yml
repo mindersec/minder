@@ -34,6 +34,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      codeql:
+        patterns:
+          - "github/codeql-action/*"
     # GitHub Actions doesn't support cooldown
   - package-ecosystem: "npm"
     directory: "docs"
