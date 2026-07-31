@@ -1,0 +1,39 @@
+# SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
+version: v1
+type: rule-type
+name: check_required_setting
+context:
+  project: 00000000-0000-0000-0000-000000000000
+description: Checks whether a required setting matches the expected value.
+def:
+  in_entity: repository
+  rule_schema:
+    properties:
+      required_value:
+        type: string
+  ingest:
+    type: rest
+    rest:
+      endpoint: '/repos/{{.Entity.Owner}}/{{.Entity.Name}}/settings'
+      parse: 'json'
+  eval:
+    type: rego
+    rego:
+      type: 'deny-by-default'
+      def: |
+        package minder
+
+        import rego.v1
+
+        default allow := false
+
+        allow if {
+          input.ingested.value == input.profile.required_value
+        }
+
+        output := {
+          "actual": input.ingested.value,
+          "expected": input.profile.required_value,
+        }
