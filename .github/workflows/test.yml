@@ -65,7 +65,7 @@ jobs:
       - name: Convert go coverage to LCOV
         run: go run github.com/jandelgado/gcov2lcov@latest -infile=./coverage.out -outfile=./coverage.lcov
       - name: Coveralls GitHub Action
-        uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
+        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
       - name: Add top-level report from JUnit XML
         if: ${{ !cancelled() }}
         run: |
