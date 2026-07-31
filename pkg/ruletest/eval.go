@@ -103,16 +103,15 @@ func (tr *testCaseRunner) builtinEval(
 	}
 
 	res, err := rte.Eval(ctx, entityProto, profileMap, paramsMap, &stubResultSink{})
-	_ = res
 
-	return formatEvalResult(err), nil
+	return formatEvalResult(res, err), nil
 }
 
 type stubResultSink struct{}
 
 func (*stubResultSink) SetIngestResult(*interfaces.Ingested) {}
 
-func formatEvalResult(evalErr error) *starlark.Dict {
+func formatEvalResult(res *interfaces.EvaluationResult, evalErr error) *starlark.Dict {
 	result := starlark.NewDict(2)
 	status, msg := "", ""
 
@@ -136,7 +135,56 @@ func formatEvalResult(evalErr error) *starlark.Dict {
 
 	_ = result.SetKey(starlark.String("status"), starlark.String(status))
 	_ = result.SetKey(starlark.String("message"), starlark.String(msg))
+
+	if res != nil && res.Output != nil {
+		if slVal, err := goToStarlarkValue(res.Output); err == nil {
+			_ = result.SetKey(starlark.String("output"), slVal)
+		}
+	}
+
 	return result
+}
+
+func goToStarlarkValue(v any) (starlark.Value, error) {
+	if v == nil {
+		return starlark.None, nil
+	}
+	switch x := v.(type) {
+	case string:
+		return starlark.String(x), nil
+	case bool:
+		return starlark.Bool(x), nil
+	case int:
+		return starlark.MakeInt(x), nil
+	case int64:
+		return starlark.MakeInt64(x), nil
+	case float64:
+		return starlark.Float(x), nil
+	case map[string]any:
+		dict := starlark.NewDict(len(x))
+		for k, val := range x {
+			slVal, err := goToStarlarkValue(val)
+			if err != nil {
+				return nil, err
+			}
+			if err := dict.SetKey(starlark.String(k), slVal); err != nil {
+				return nil, err
+			}
+		}
+		return dict, nil
+	case []any:
+		var list []starlark.Value
+		for _, val := range x {
+			slVal, err := goToStarlarkValue(val)
+			if err != nil {
+				return nil, err
+			}
+			list = append(list, slVal)
+		}
+		return starlark.NewList(list), nil
+	default:
+		return starlark.String(fmt.Sprintf("%v", x)), nil
+	}
 }
 
 func parseMockFSDict(mockFSDict *starlark.Dict) (map[string]string, error) {
