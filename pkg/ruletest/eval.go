@@ -103,16 +103,15 @@ func (tr *testCaseRunner) builtinEval(
 	}
 
 	res, err := rte.Eval(ctx, entityProto, profileMap, paramsMap, &stubResultSink{})
-	_ = res
 
-	return formatEvalResult(err), nil
+	return formatEvalResult(res, err), nil
 }
 
 type stubResultSink struct{}
 
 func (*stubResultSink) SetIngestResult(*interfaces.Ingested) {}
 
-func formatEvalResult(evalErr error) *starlark.Dict {
+func formatEvalResult(res *interfaces.EvaluationResult, evalErr error) *starlark.Dict {
 	result := starlark.NewDict(2)
 	status, msg := "", ""
 
@@ -136,6 +135,13 @@ func formatEvalResult(evalErr error) *starlark.Dict {
 
 	_ = result.SetKey(starlark.String("status"), starlark.String(status))
 	_ = result.SetKey(starlark.String("message"), starlark.String(msg))
+
+	if res != nil && res.Output != nil {
+		if slVal, err := goToStarlarkValue(res.Output); err == nil {
+			_ = result.SetKey(starlark.String("output"), slVal)
+		}
+	}
+
 	return result
 }
 

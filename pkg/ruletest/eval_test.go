@@ -19,12 +19,23 @@ func TestFormatEvalResult(t *testing.T) {
 
 	tests := []struct {
 		name    string
+		res     *interfaces.EvaluationResult
 		err     error
 		wantSt  string
 		wantMsg string
+		wantOut any
 	}{
 		{
+			name:    "pass on nil error with output",
+			res:     &interfaces.EvaluationResult{Output: map[string]any{"foo": "bar"}},
+			err:     nil,
+			wantSt:  "pass",
+			wantMsg: "",
+			wantOut: map[string]any{"foo": "bar"},
+		},
+		{
 			name:    "pass on nil error",
+			res:     nil,
 			err:     nil,
 			wantSt:  "pass",
 			wantMsg: "",
@@ -52,14 +63,19 @@ func TestFormatEvalResult(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			dict := formatEvalResult(tt.err)
+			dict := formatEvalResult(tt.res, tt.err)
 
 			result, err := dictToGoMap(dict)
 			if err != nil {
 				t.Fatalf("dictToGoMap failed: %v", err)
 			}
 
-			diff := cmp.Diff(result, map[string]any{"status": tt.wantSt, "message": tt.wantMsg})
+			want := map[string]any{"status": tt.wantSt, "message": tt.wantMsg}
+			if tt.wantOut != nil {
+				want["output"] = tt.wantOut
+			}
+
+			diff := cmp.Diff(result, want)
 			if diff != "" {
 				t.Errorf("unexpected result: %s", diff)
 			}

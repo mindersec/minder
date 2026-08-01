@@ -120,3 +120,52 @@ func TestStarlarkValueToGo(t *testing.T) {
 		})
 	}
 }
+
+func TestGoToStarlarkValue(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name     string
+		input    any
+		expected any // round-tripped back via starlarkValueToGo for comparison
+		wantErr  bool
+	}{
+		{name: "nil", input: nil, expected: nil},
+		{name: "string", input: "hello", expected: "hello"},
+		{name: "bool true", input: true, expected: true},
+		{name: "bool false", input: false, expected: false},
+		// int comes back as int64 after the Starlark round-trip
+		{name: "int", input: int(42), expected: int64(42)},
+		{name: "int64", input: int64(99), expected: int64(99)},
+		{name: "float64", input: float64(3.14), expected: float64(3.14)},
+		{
+			name:     "map",
+			input:    map[string]any{"key": "val", "num": int64(1)},
+			expected: map[string]any{"key": "val", "num": int64(1)},
+		},
+		{
+			name:     "slice",
+			input:    []any{"a", int64(2)},
+			expected: []any{"a", int64(2)},
+		},
+		{
+			name:  "unknown type falls back to string",
+			input: struct{ X int }{X: 7},
+			// default case: fmt.Sprintf("%v", ...) → "{7}"
+			expected: "{7}",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			slVal, err := goToStarlarkValue(tc.input)
+			require.NoError(t, err)
+
+			got, err := starlarkValueToGo(slVal)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, got)
+		})
+	}
+}
