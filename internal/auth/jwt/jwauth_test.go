@@ -140,7 +140,6 @@ func TestParseAndValidate(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			
 			ctx := WithAuthTokenContext(context.Background(), token)
 
 			// We only have one happy path at the moment, so these are hard-coded.
