@@ -2775,6 +2775,7 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | in_entity | <TypeLink type="string">string</TypeLink> |  | in_entity is the entity in which the rule is evaluated. This can be repository, build_environment or artifact. |
+| provider_trait | <TypeLink type="minder-v1-ProviderType">ProviderType</TypeLink> |  | provider_trait declares the provider trait this rule type requires an implementation of (e.g. "github", "git", "oci"). This is an API/interface requirement, not a pin to a specific named provider registration: any provider whose implementation satisfies this trait (see ProviderType / CanImplement) may evaluate this rule type. If PROVIDER_TYPE_UNSPECIFIED (the zero value / default), the rule type is not gated by provider trait. |
 | rule_schema | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | rule_schema is the schema of the rule. This is expressed in JSON Schema. |
 | param_schema | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> | optional | param_schema is the schema of the parameters that are passed to the rule. This is expressed in JSON Schema. |
 | ingest | <TypeLink type="minder-v1-RuleType-Definition-Ingest">RuleType.Definition.Ingest</TypeLink> |  |  |
