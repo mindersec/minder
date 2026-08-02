@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"github.com/lestrrat-go/jwx/v3/jwt/openid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -133,7 +133,6 @@ func TestProvisionSelfEnrolledProjectInvalidName(t *testing.T) {
 		)
 		assert.EqualError(t, err, util.UserVisibleError(codes.InvalidArgument, "invalid project name: validation failed: %s", tc.errMsg).Error())
 	}
-
 }
 
 func TestProvisionProject(t *testing.T) {

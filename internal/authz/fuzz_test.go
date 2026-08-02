@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"github.com/lestrrat-go/jwx/v3/jwt/openid"
 
 	"github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/mindersec/minder/internal/authz"

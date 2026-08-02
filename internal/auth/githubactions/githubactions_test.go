@@ -8,7 +8,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 
 	"github.com/mindersec/minder/internal/auth"
 )

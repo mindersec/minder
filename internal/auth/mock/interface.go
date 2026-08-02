@@ -14,7 +14,7 @@ import (
 	url "net/url"
 	reflect "reflect"
 
-	jwt "github.com/lestrrat-go/jwx/v2/jwt"
+	jwt "github.com/lestrrat-go/jwx/v3/jwt"
 	auth "github.com/mindersec/minder/internal/auth"
 	gomock "go.uber.org/mock/gomock"
 )
