@@ -30,8 +30,8 @@ import (
 
 // CreateUser is a service for user self registration
 func (s *Server) CreateUser(ctx context.Context,
-	_ *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
-
+	_ *pb.CreateUserRequest,
+) (*pb.CreateUserResponse, error) {
 	tokenString, err := gauth.AuthFromMD(ctx, "bearer")
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no auth token: %v", err)
@@ -52,7 +52,7 @@ func (s *Server) CreateUser(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to get transaction")
 	}
 
-	subject := token.Subject()
+	subject, _ := token.Subject()
 
 	user, err := qtx.CreateUser(ctx, subject)
 	if err != nil {
@@ -65,11 +65,12 @@ func (s *Server) CreateUser(ctx context.Context,
 	if len(userProjects) == 0 {
 		// Set up the default project for the user
 		baseName := subject
-		if token.PreferredUsername() != "" {
+		username, exists := token.PreferredUsername()
+		if exists && username != "" {
 			// Ensure there's no existing project with that name. In case there is, we will append a
 			// random string to the project name. This is a temporary solution until we have a better
 			// way to handle this, i.e. this should happen separately from user creation.
-			baseName, err = getUniqueProjectBaseName(ctx, s.store, token.PreferredUsername())
+			baseName, err = getUniqueProjectBaseName(ctx, s.store, username)
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "failed to get unique project name: %s", err)
 			}
@@ -147,8 +148,8 @@ func (s *Server) claimGitHubInstalls(ctx context.Context, qtx db.ExtendQuerier) 
 
 // DeleteUser is a service for user self deletion
 func (s *Server) DeleteUser(ctx context.Context,
-	_ *pb.DeleteUserRequest) (*pb.DeleteUserResponse, error) {
-
+	_ *pb.DeleteUserRequest,
+) (*pb.DeleteUserResponse, error) {
 	tokenString, err := gauth.AuthFromMD(ctx, "bearer")
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "no auth token: %v", err)
@@ -159,7 +160,7 @@ func (s *Server) DeleteUser(ctx context.Context,
 		return nil, status.Errorf(codes.Unauthenticated, "failed to parse bearer token: %v", err)
 	}
 
-	subject := token.Subject()
+	subject, _ := token.Subject()
 
 	err = DeleteUser(ctx, s.store, s.authzClient, s.projectDeleter, subject)
 	if err != nil {
@@ -270,7 +271,8 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 	}
 
 	// check if user exists
-	user, err := s.store.GetUserBySubject(ctx, openIdToken.Subject())
+	sub, _ := openIdToken.Subject()
+	user, err := s.store.GetUserBySubject(ctx, sub)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "user not found")

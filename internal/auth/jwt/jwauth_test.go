@@ -4,19 +4,20 @@
 package jwt
 
 import (
+	"context"
 	crand "crypto/rand"
 	"crypto/rsa"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/lestrrat-go/jwx/v2/jwa"
-	"github.com/lestrrat-go/jwx/v2/jwk"
-	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/lestrrat-go/jwx/v3/jwa"
+	"github.com/lestrrat-go/jwx/v3/jwk"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/mock/gomock"
-
-	mockjwt "github.com/mindersec/minder/internal/auth/jwt/mock"
 )
 
 func TestParseAndValidate(t *testing.T) {
@@ -24,118 +25,99 @@ func TestParseAndValidate(t *testing.T) {
 
 	jwks := jwk.NewSet()
 	privateKey, publicKey := randomKeypair(2048)
-	privateJwk, _ := jwk.FromRaw(privateKey)
+	privateJwk, _ := jwk.Import(privateKey)
 	err := privateJwk.Set(jwk.KeyIDKey, `mykey`)
 	require.NoError(t, err, "failed to setup private key ID")
 
-	publicJwk, _ := jwk.FromRaw(publicKey)
+	publicJwk, _ := jwk.Import(publicKey)
 	err = publicJwk.Set(jwk.KeyIDKey, "mykey")
 	require.NoError(t, err, "failed to setup public key ID")
-	err = publicJwk.Set(jwk.AlgorithmKey, jwa.RS256)
+	err = publicJwk.Set(jwk.AlgorithmKey, jwa.RS256().String())
 	require.NoError(t, err, "failed to setup public key algorithm")
 
 	err = jwks.AddKey(publicJwk)
 	require.NoError(t, err, "failed to setup JWK set")
+	keySetJSON, err := json.Marshal(jwks)
+	require.NoError(t, err, "failed to marshal JWK set")
 
 	issUrl := "https://localhost/realm/foo"
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/certs", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(keySetJSON)
+	})
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
 
 	testCases := []struct {
 		name       string
 		buildToken func() string
-		checkError func(t *testing.T, err error)
+		wantErr    string
 	}{
 		{
 			name: "Valid token",
 			buildToken: func() string {
 				token, _ := jwtBuilder("123", issUrl, "minder").Expiration(time.Now().Add(time.Duration(1) * time.Minute)).Build()
-				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256, privateJwk))
+				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256(), privateJwk))
 				return string(signed)
-			},
-			checkError: func(t *testing.T, err error) {
-				t.Helper()
-
-				assert.NoError(t, err)
 			},
 		},
 		{
 			name: "Expired token",
 			buildToken: func() string {
 				token, _ := jwtBuilder("123", issUrl, "minder").Expiration(time.Now().Add(-time.Duration(1) * time.Minute)).Build()
-				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256, privateJwk))
+				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256(), privateJwk))
 				return string(signed)
 			},
-			checkError: func(t *testing.T, err error) {
-				t.Helper()
-
-				assert.Error(t, err)
-			},
+			wantErr: "token is expired",
 		},
 		{
 			name: "Invalid signature",
 			buildToken: func() string {
 				otherKey, _ := randomKeypair(2048)
-				otherJwk, _ := jwk.FromRaw(otherKey)
+				otherJwk, _ := jwk.Import(otherKey)
 				err = otherJwk.Set(jwk.KeyIDKey, `otherKey`)
 				require.NoError(t, err, "failed to setup signing key ID")
 				token, _ := jwtBuilder("123", issUrl, "minder").Expiration(time.Now().Add(time.Duration(1) * time.Minute)).Build()
-				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256, otherJwk))
+				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256(), otherJwk))
 				return string(signed)
 			},
-			checkError: func(t *testing.T, err error) {
-				t.Helper()
-
-				assert.Error(t, err)
-			},
+			wantErr: "could not verify message using any of the signatures or keys",
 		},
 		{
 			name: "Invalid token",
 			buildToken: func() string {
 				return "invalid"
 			},
-			checkError: func(t *testing.T, err error) {
-				t.Helper()
-
-				assert.Error(t, err)
-			},
+			wantErr: "failed to parse string: unknown payload type (payload is not JWT?)",
 		},
 		{
 			name: "Missing subject claim",
 			buildToken: func() string {
-				token, _ := jwtBuilder("", issUrl, "minder").Expiration(time.Now().Add(-time.Duration(1) * time.Minute)).Build()
-				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256, privateJwk))
+				token, _ := jwtBuilder("", issUrl, "minder").Expiration(time.Now().Add(time.Duration(1) * time.Minute)).Build()
+				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256(), privateJwk))
 				return string(signed)
 			},
-			checkError: func(t *testing.T, err error) {
-				t.Helper()
-
-				assert.Error(t, err)
-			},
+			wantErr: "provided token is missing required subject claim",
 		},
 		{
 			name: "Missing issuer claim",
 			buildToken: func() string {
-				token, _ := jwtBuilder("123", "", "minder").Expiration(time.Now().Add(-time.Duration(1) * time.Minute)).Build()
-				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256, privateJwk))
+				token, _ := jwtBuilder("123", "", "minder").Expiration(time.Now().Add(time.Duration(1) * time.Minute)).Build()
+				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256(), privateJwk))
 				return string(signed)
 			},
-			checkError: func(t *testing.T, err error) {
-				t.Helper()
-
-				assert.Error(t, err)
-			},
+			wantErr: `field "iss" not found`,
 		},
 		{
 			name: "Missing audience claim",
 			buildToken: func() string {
-				token, _ := jwtBuilder("123", issUrl, "").Expiration(time.Now().Add(-time.Duration(1) * time.Minute)).Build()
-				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256, privateJwk))
+				token, _ := jwtBuilder("123", issUrl, "").Expiration(time.Now().Add(time.Duration(1) * time.Minute)).Build()
+				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256(), privateJwk))
 				return string(signed)
 			},
-			checkError: func(t *testing.T, err error) {
-				t.Helper()
-
-				assert.Error(t, err)
-			},
+			wantErr: `field "aud" not found`,
 		},
 	}
 
@@ -143,19 +125,36 @@ func TestParseAndValidate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
+			jwtValidator, err := NewJwtValidator(context.Background(), server.URL+"/certs", issUrl, "minder")
+			require.NoError(t, err)
+			token, err := jwtValidator.ParseAndValidate(tc.buildToken())
+			if tc.wantErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.wantErr)
+				_, err := GetUserEmailFromContext(context.Background())
+				require.Error(t, err)
+				_, ok := GetUserClaimFromContext[string](context.Background(), "sub")
+				require.False(t, ok)
 
-			mockKeyFetcher := mockjwt.NewMockKeySetFetcher(ctrl)
-			mockKeyFetcher.EXPECT().GetKeySet().Return(jwks, nil)
-
-			jwtValidator := JwkSetJwtValidator{
-				jwksFetcher: mockKeyFetcher,
-				iss:         issUrl,
-				aud:         "minder",
+				return
 			}
-			_, err := jwtValidator.ParseAndValidate(tc.buildToken())
-			tc.checkError(t, err)
+
+			require.NoError(t, err)
+			
+			ctx := WithAuthTokenContext(context.Background(), token)
+
+			// We only have one happy path at the moment, so these are hard-coded.
+			ctxToken, err := GetUserTokenFromContext(ctx)
+			require.NoError(t, err)
+			assert.Equal(t, token, ctxToken)
+
+			id, ok := GetUserClaimFromContext[string](ctx, "sub")
+			require.True(t, ok)
+			assert.Equal(t, "123", id)
+
+			email, err := GetUserEmailFromContext(ctx)
+			require.NoError(t, err)
+			assert.Equal(t, "bob@example.com", email)
 		})
 	}
 }
@@ -183,6 +182,7 @@ func jwtBuilder(sub, iss, aud string) *jwt.Builder {
 	if aud != "" {
 		r = r.Audience([]string{aud})
 	}
+	r.Claim("email", "bob@example.com")
 
 	return r
 }

@@ -12,8 +12,8 @@ package mock_jwt
 import (
 	reflect "reflect"
 
-	jwk "github.com/lestrrat-go/jwx/v2/jwk"
-	openid "github.com/lestrrat-go/jwx/v2/jwt/openid"
+	jwk "github.com/lestrrat-go/jwx/v3/jwk"
+	openid "github.com/lestrrat-go/jwx/v3/jwt/openid"
 	gomock "go.uber.org/mock/gomock"
 )
 

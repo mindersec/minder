@@ -9,7 +9,7 @@ import (
 	"crypto/rsa"
 	"testing"
 
-	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,5 +27,6 @@ func TestCreateGitHubAppJWT(t *testing.T) {
 	if err != nil {
 		return
 	}
-	require.Equal(t, expectedAppId, parsed.Issuer())
+	iss, _ := parsed.Issuer()
+	require.Equal(t, expectedAppId, iss)
 }

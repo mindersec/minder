@@ -7,7 +7,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"github.com/lestrrat-go/jwx/v3/jwt/openid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 

@@ -7,7 +7,7 @@ package merged
 import (
 	"fmt"
 
-	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"github.com/lestrrat-go/jwx/v3/jwt/openid"
 
 	minder_jwt "github.com/mindersec/minder/internal/auth/jwt"
 )

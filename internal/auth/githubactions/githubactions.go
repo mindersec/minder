@@ -10,17 +10,18 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 
 	"github.com/mindersec/minder/internal/auth"
 )
 
 // GitHubActions is an implementation of the auth.IdentityProvider interface.
-type GitHubActions struct {
-}
+type GitHubActions struct{}
 
-var _ auth.IdentityProvider = (*GitHubActions)(nil)
-var _ auth.Resolver = (*GitHubActions)(nil)
+var (
+	_ auth.IdentityProvider = (*GitHubActions)(nil)
+	_ auth.Resolver         = (*GitHubActions)(nil)
+)
 
 var ghIssuerUrl = url.URL{
 	Scheme: "https",
@@ -58,12 +59,14 @@ func (*GitHubActions) ResolveFederated(_ context.Context, _, _ string) (*auth.Id
 // Validate implements auth.IdentityProvider.
 func (gha *GitHubActions) Validate(_ context.Context, token jwt.Token) (*auth.Identity, error) {
 	expectedUrl := gha.URL()
-	if token.Issuer() != expectedUrl.String() {
+	iss, exists := token.Issuer()
+	if !exists || iss != expectedUrl.String() {
 		return nil, errors.New("token issuer is not the expected issuer")
 	}
+	sub, _ := token.Subject()
 	return &auth.Identity{
-		UserID:    strings.ReplaceAll(token.Subject(), ":", "+"),
-		HumanName: token.Subject(),
+		UserID:    strings.ReplaceAll(sub, ":", "+"),
+		HumanName: sub,
 		Provider:  gha,
 	}, nil
 }
