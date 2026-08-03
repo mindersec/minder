@@ -19,8 +19,8 @@ import (
 // CmdRoot represents the base command when called without any subcommands
 func CmdRoot() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "mindev",
-		Short: "mindev provides developer tooling for minder",
+		Use:           "mindev",
+		Short:         "mindev provides developer tooling for minder",
 		SilenceErrors: true,
 		Long: `For more information about minder, please visit:
 https://mindersec.github.io/`,
