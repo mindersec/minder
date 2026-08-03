@@ -26,27 +26,18 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/mindersec/minder/internal/engine/interfaces"
-	"github.com/mindersec/minder/internal/providers/credentials"
-	"github.com/mindersec/minder/internal/providers/github/clients"
 	mockghclient "github.com/mindersec/minder/internal/providers/github/mock"
-	"github.com/mindersec/minder/internal/providers/github/properties"
-	"github.com/mindersec/minder/internal/providers/ratecache"
-	"github.com/mindersec/minder/internal/providers/telemetry"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/errors"
 	interfaces2 "github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/profiles/models"
-	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (
-	ghApiUrl = "https://api.github.com"
-
 	repoOwner   = "stacklok"
 	repoName    = "minder"
 	dflBranchTo = "main"
@@ -86,21 +77,6 @@ jobs:
 )
 
 var TestActionTypeValid interfaces.ActionType = "remediate-test"
-
-func testGithubProvider() (provifv1.GitHub, error) {
-	return clients.NewRestClient(
-		&pb.GitHubProviderConfig{
-			Endpoint: proto.String(ghApiUrl + "/"),
-		},
-		nil,
-		nil,
-		&ratecache.NoopRestClientCache{},
-		credentials.NewGitHubTokenCredential("token"),
-		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
-		properties.NewPropertyFetcherFactory(),
-		"",
-	)
-}
 
 func dependabotPrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation {
 	return &pb.RuleType_Definition_Remediate_PullRequestRemediation{
@@ -253,8 +229,8 @@ func resolveActionMockSetup(t *testing.T, mockGitHub *mockghclient.MockGitHub, u
 			Body:       io.NopCloser(bytes.NewBuffer(jsonCheckoutRef)),
 			StatusCode: http.StatusOK,
 		}, nil)
-
 }
+
 func mockRepoSetup(t *testing.T, postSetupHooks ...hookFunc) (*git.Repository, error) {
 	t.Helper()
 
@@ -668,7 +644,6 @@ func TestPullRequestRemediate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -742,7 +717,7 @@ func TestCheckoutToOriginallyFetchedBranch_CleansWorktree(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create an initial commit on main so we have a valid HEAD.
-	require.NoError(t, billyutil.WriteFile(mfs, "README.md", []byte("initial"), 0644))
+	require.NoError(t, billyutil.WriteFile(mfs, "README.md", []byte("initial"), 0o644))
 
 	_, err = wt.Add("README.md")
 	require.NoError(t, err)
@@ -762,10 +737,10 @@ func TestCheckoutToOriginallyFetchedBranch_CleansWorktree(t *testing.T) {
 	require.NoError(t, err)
 
 	// Dirty a tracked file (simulates remediation writing a compliant version).
-	require.NoError(t, billyutil.WriteFile(mfs, "README.md", []byte("dirty content from failed remediation"), 0644))
+	require.NoError(t, billyutil.WriteFile(mfs, "README.md", []byte("dirty content from failed remediation"), 0o644))
 
 	// Create an untracked file (simulates remediation creating a new config).
-	require.NoError(t, billyutil.WriteFile(mfs, "leftover.txt", []byte("should be removed"), 0644))
+	require.NoError(t, billyutil.WriteFile(mfs, "leftover.txt", []byte("should be removed"), 0o644))
 
 	// Verify the worktree is actually dirty before we clean it.
 	status, err := wt.Status()
