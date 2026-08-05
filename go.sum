@@ -297,8 +297,8 @@ github.com/clipperhouse/displaywidth v0.11.0 h1:lBc6kY44VFw+TDx4I8opi/EtL9m20WSE
 github.com/clipperhouse/displaywidth v0.11.0/go.mod h1:bkrFNkf81G8HyVqmKGxsPufD3JhNl3dSqnGhOoSD/o0=
 github.com/clipperhouse/uax29/v2 v2.7.0 h1:+gs4oBZ2gPfVrKPthwbMzWZDaAFPGYK72F0NJv2v7Vk=
 github.com/clipperhouse/uax29/v2 v2.7.0/go.mod h1:EFJ2TJMRUaplDxHKj1qAEhCtQPW2tJSwu5BF98AuoVM=
-github.com/cloudevents/sdk-go/observability/opentelemetry/v2 v2.16.1 h1:bm82HgAOzK9VSrVtC0lWWrrQLJaRYqqAKEIx2jdPQbU=
-github.com/cloudevents/sdk-go/observability/opentelemetry/v2 v2.16.1/go.mod h1:H46knbku1a1zLw3lAsaWdtVryvG1/QaNZRCRO69elKA=
+github.com/cloudevents/sdk-go/observability/opentelemetry/v2 v2.16.2 h1:iXVFmEH44Ty0JS0B8NqYqK4joKol+L4axc1+u/35faw=
+github.com/cloudevents/sdk-go/observability/opentelemetry/v2 v2.16.2/go.mod h1:v1jS/Cp9zkcWZqn1HCQFH0gr/3bETyp44YNYOVLJOBU=
 github.com/cloudevents/sdk-go/protocol/nats_jetstream/v2 v2.16.2 h1:nTCjZZVCbQe4qiSqrL0J18IZKPE3POfz9JRBcPUFUgE=
 github.com/cloudevents/sdk-go/protocol/nats_jetstream/v2 v2.16.2/go.mod h1:iSBDt8zEO+K8wxqQjthxGacHAaUN1WTc1RY5DM9+a6g=
 github.com/cloudevents/sdk-go/v2 v2.16.2 h1:ZYDFrYke4FD+jM8TZTJJO6JhKHzOQl2oqpFK1D+NnQM=
