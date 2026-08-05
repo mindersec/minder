@@ -31,17 +31,19 @@ import (
 type testCaseRunner struct {
 	thread      *starlark.Thread
 	fs          fs.FS
+	baseDir     string
 	predeclared starlark.StringDict
 	failures    []string
 	ruleTypes   map[string]*minderv1.RuleType
 }
 
-func (r *Runner) newTestCaseRunner(name string, fileSystem fs.FS, ruleTypes map[string]*minderv1.RuleType) *testCaseRunner {
+func (r *Runner) newTestCaseRunner(name string, fileSystem fs.FS, baseDir string, ruleTypes map[string]*minderv1.RuleType) *testCaseRunner {
 	if fileSystem == nil {
 		panic("fileSystem cannot be nil")
 	}
 	tr := &testCaseRunner{
 		fs:          fileSystem,
+		baseDir:     baseDir,
 		predeclared: starlark.StringDict{},
 		ruleTypes:   ruleTypes,
 	}
@@ -116,7 +118,7 @@ func (r *Runner) RunFile(filename string, src any, ruleTypes map[string]*minderv
 	fileSystem := os.DirFS(baseDir)
 
 	name := filepath.Base(filename)
-	tr := r.newTestCaseRunner(name, fileSystem, ruleTypes)
+	tr := r.newTestCaseRunner(name, fileSystem, baseDir, ruleTypes)
 
 	globals, err := tr.runFile(filename, src)
 	if err != nil {
@@ -144,7 +146,7 @@ func (r *Runner) RunFile(filename string, src any, ruleTypes map[string]*minderv
 	base := filepath.Base(filename)
 	var results []TestResult
 	for name, fn := range testFns {
-		result := r.runOneTest(name, fn, fileSystem, ruleTypes)
+		result := r.runOneTest(name, fn, fileSystem, baseDir, ruleTypes)
 		result.Filename = base
 		results = append(results, result)
 	}
@@ -156,9 +158,10 @@ func (r *Runner) runOneTest(
 	name string,
 	fn *starlark.Function,
 	fileSystem fs.FS,
+	baseDir string,
 	ruleTypes map[string]*minderv1.RuleType,
 ) TestResult {
-	tr := r.newTestCaseRunner(name, fileSystem, ruleTypes)
+	tr := r.newTestCaseRunner(name, fileSystem, baseDir, ruleTypes)
 	result := TestResult{Name: name}
 
 	_, err := starlark.Call(tr.thread, fn, nil, nil)
