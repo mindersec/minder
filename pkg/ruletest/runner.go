@@ -37,7 +37,9 @@ type testCaseRunner struct {
 	ruleTypes   map[string]*minderv1.RuleType
 }
 
-func (r *Runner) newTestCaseRunner(name string, fileSystem fs.FS, baseDir string, ruleTypes map[string]*minderv1.RuleType) *testCaseRunner {
+func (r *Runner) newTestCaseRunner(
+	name string, fileSystem fs.FS, baseDir string, ruleTypes map[string]*minderv1.RuleType,
+) *testCaseRunner {
 	if fileSystem == nil {
 		panic("fileSystem cannot be nil")
 	}

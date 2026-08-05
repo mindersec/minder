@@ -162,7 +162,9 @@ func parseMockFSDict(mockFSDict *starlark.Dict) (map[string]string, error) {
 	return mockFSMap, nil
 }
 
-func buildDataSourceRegistry(datasourcesList *starlark.List, tk *tkv1.TestKit, baseDir string) (*v1datasources.DataSourceRegistry, error) {
+func buildDataSourceRegistry(
+	datasourcesList *starlark.List, tk *tkv1.TestKit, baseDir string,
+) (*v1datasources.DataSourceRegistry, error) {
 	registry := v1datasources.NewDataSourceRegistry()
 	if datasourcesList == nil {
 		return registry, nil
