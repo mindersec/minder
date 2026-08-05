@@ -21,6 +21,7 @@ import (
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/selectors"
 	"github.com/mindersec/minder/pkg/ruletypes"
+	"github.com/mindersec/minder/internal/providers"
 )
 
 // Validator encapsulates the logic for validating profiles
@@ -284,6 +285,13 @@ func validateEntities(
 		return fmt.Errorf("error getting parent projects: %w", err)
 	}
 
+	// fetch providers available to this project once, used below to check
+	// rule types' provider_trait requirements
+	dbProviders, err := qtx.ListProvidersByProjectID(ctx, projects)
+	if err != nil {
+		return fmt.Errorf("error getting providers for project: %w", err)
+	}
+
 	// validate that the entities in the profile match the entities in the project
 	err = TraverseRuleTypesForEntities(profile, func(entity minderv1.Entity, rule *minderv1.Profile_Rule) error {
 		ruleType, err := qtx.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
@@ -311,6 +319,30 @@ func validateEntities(
 				Err: fmt.Sprintf("rule type %s expects entity %s, but was given entity %s",
 					ruleTypePB.Name, ruleTypePB.Def.InEntity, entity.ToString()),
 				RuleType: ruleTypePB.Name,
+			}
+		}
+
+		if trait := ruleTypePB.Def.ProviderTrait; trait != minderv1.ProviderType_PROVIDER_TYPE_UNSPECIFIED {
+			dbTraits, err := providers.PBProviderTypesToDB([]minderv1.ProviderType{trait})
+			if err != nil {
+				return fmt.Errorf("invalid provider_trait on rule type %s: %w", ruleTypePB.Name, err)
+			}
+
+			satisfied := false
+			for _, p := range dbProviders {
+				if p.CanImplement(dbTraits[0]) {
+					satisfied = true
+					break
+				}
+			}
+
+			if !satisfied {
+				return &RuleValidationError{
+					Err: fmt.Sprintf(
+						"rule type %s requires provider trait %s, but no provider in this project implements it",
+						ruleTypePB.Name, trait.String()),
+					RuleType: ruleTypePB.Name,
+				}
 			}
 		}
 
