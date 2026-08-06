@@ -176,7 +176,7 @@ type Querier interface {
 	GetRootProjectByID(ctx context.Context, id uuid.UUID) (Project, error)
 	GetRuleInstancesEntityInProjects(ctx context.Context, arg GetRuleInstancesEntityInProjectsParams) ([]RuleInstance, error)
 	GetRuleInstancesForProfile(ctx context.Context, profileID uuid.UUID) ([]RuleInstance, error)
-	GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, error)
+	GetRuleTypeByID(ctx context.Context, arg GetRuleTypeByIDParams) (RuleType, error)
 	GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNameParams) (RuleType, error)
 	// intended as a temporary transition query
 	// this will be removed once rule_instances is used consistently in the engine

@@ -16390,7 +16390,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\rListProviders\x12\x1f.minder.v1.ListProvidersRequest\x1a .minder.v1.ListProvidersResponse\"!\xaa\xf8\x18\x040\x038\x15\x82\xd3\xe4\x93\x02\x13\x12\x11/api/v1/providers\x12{\n" +
 	"\x0eCreateProvider\x12 .minder.v1.CreateProviderRequest\x1a!.minder.v1.CreateProviderResponse\"$\xaa\xf8\x18\x040\x038\x16\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/v1/providers\x12x\n" +
 	"\x0eDeleteProvider\x12 .minder.v1.DeleteProviderRequest\x1a!.minder.v1.DeleteProviderResponse\"!\xaa\xf8\x18\x040\x038\x18\x82\xd3\xe4\x93\x02\x13*\x11/api/v1/providers\x12\x89\x01\n" +
-	"\x12DeleteProviderByID\x12$.minder.v1.DeleteProviderByIDRequest\x1a%.minder.v1.DeleteProviderByIDResponse\"&\xaa\xf8\x18\x040\x038\f\x82\xd3\xe4\x93\x02\x18*\x16/api/v1/providers/{id}\x12\x8e\x01\n" +
+	"\x12DeleteProviderByID\x12$.minder.v1.DeleteProviderByIDRequest\x1a%.minder.v1.DeleteProviderByIDResponse\"&\xaa\xf8\x18\x040\x038\x18\x82\xd3\xe4\x93\x02\x18*\x16/api/v1/providers/{id}\x12\x8e\x01\n" +
 	"\x13ListProviderClasses\x12%.minder.v1.ListProviderClassesRequest\x1a&.minder.v1.ListProviderClassesResponse\"(\xaa\xf8\x18\x040\x038\x15\x82\xd3\xe4\x93\x02\x1a\x12\x18/api/v1/provider_classes\x12\xae\x01\n" +
 	"\x1bReconcileEntityRegistration\x12-.minder.v1.ReconcileEntityRegistrationRequest\x1a..minder.v1.ReconcileEntityRegistrationResponse\"0\xaa\xf8\x18\x040\x038$\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/api/v1/provider/register_all2\x92\x01\n" +
 	"\rInviteService\x12\x80\x01\n" +

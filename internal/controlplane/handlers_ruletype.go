@@ -35,13 +35,9 @@ const regoV0DeprecationWarning = "This rule type uses Rego V0 syntax. " +
 	"Please migrate to V1 using `opa fmt --v0-v1`. " +
 	"V0 support will be removed in a future release."
 
-var (
-	maxReadableStringSize = 3 * 1 << 10 // 3kB
-)
+const maxReadableStringSize = 3 * 1 << 10 // 3kB
 
-var (
-	errInvalidRuleType = errors.New("invalid rule type")
-)
+var errInvalidRuleType = errors.New("invalid rule type")
 
 // ListRuleTypes is a method to list all rule types for a given context
 func (s *Server) ListRuleTypes(
@@ -136,7 +132,10 @@ func (s *Server) GetRuleTypeById(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid rule type ID")
 	}
 
-	rtdb, err := s.store.GetRuleTypeByID(ctx, parsedRuleTypeID)
+	rtdb, err := s.store.GetRuleTypeByID(ctx, db.GetRuleTypeByIDParams{
+		Projects: []uuid.UUID{entityCtx.Project.ID},
+		ID:       parsedRuleTypeID,
+	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, util.UserVisibleError(codes.NotFound, "rule type %s not found", in.GetId())
 	} else if err != nil {
@@ -282,8 +281,10 @@ func (s *Server) DeleteRuleType(
 				return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
 			}
 		} else {
-			rtdb, err = qtx.GetRuleTypeByID(ctx, parsedRuleTypeID)
-
+			rtdb, err = qtx.GetRuleTypeByID(ctx, db.GetRuleTypeByIDParams{
+				Projects: []uuid.UUID{entityCtx.Project.ID},
+				ID:       parsedRuleTypeID,
+			})
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
 					return nil, util.UserVisibleError(codes.NotFound, "rule type %s not found", in.GetId())

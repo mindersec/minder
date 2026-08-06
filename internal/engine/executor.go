@@ -174,7 +174,7 @@ func (e *executor) evaluateRule(
 	}
 
 	// retrieve the rule type engine from the cache
-	ruleEngine, err := ruleEngineCache.GetRuleEngine(ctx, rule.RuleTypeID)
+	ruleEngine, err := ruleEngineCache.GetRuleEngine(ctx, inf.ProjectID, rule.RuleTypeID)
 	if err != nil {
 		return fmt.Errorf("error creating rule type engine: %w", err)
 	}

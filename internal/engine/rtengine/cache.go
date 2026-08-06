@@ -26,7 +26,7 @@ import (
 // Cache contains a set of RuleTypeEngine instances
 type Cache interface {
 	// GetRuleEngine retrieves the rule type engine instance for the specified rule type
-	GetRuleEngine(context.Context, uuid.UUID) (*rtengine2.RuleTypeEngine, error)
+	GetRuleEngine(ctx context.Context, projectID, ruleID uuid.UUID) (*rtengine2.RuleTypeEngine, error)
 }
 
 type cacheType = map[uuid.UUID]*rtengine2.RuleTypeEngine
@@ -93,7 +93,7 @@ func NewRuleEngineCache(
 	}, nil
 }
 
-func (r *ruleEngineCache) GetRuleEngine(ctx context.Context, ruleTypeID uuid.UUID) (*rtengine2.RuleTypeEngine, error) {
+func (r *ruleEngineCache) GetRuleEngine(ctx context.Context, projectID, ruleTypeID uuid.UUID) (*rtengine2.RuleTypeEngine, error) {
 	if ruleTypeEngine, ok := r.engines[ruleTypeID]; ok {
 		return ruleTypeEngine, nil
 	}
@@ -108,12 +108,15 @@ func (r *ruleEngineCache) GetRuleEngine(ctx context.Context, ruleTypeID uuid.UUI
 	// authorized for this project/user, since the rule type ID comes from
 	// the rule_instances table, and it is validated before it is inserted
 	// into that table.
-	ruleType, err := r.store.GetRuleTypeByID(ctx, ruleTypeID)
+	ruleType, err := r.store.GetRuleTypeByID(ctx, db.GetRuleTypeByIDParams{
+		Projects: []uuid.UUID{projectID},
+		ID:       ruleTypeID,
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("unknown rule type with ID: %s", ruleTypeID)
 		}
-		return nil, fmt.Errorf("error creating rule type engine: %s", ruleTypeID)
+		return nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}
 
 	// If we find the rule type, insert into the cache and return.
