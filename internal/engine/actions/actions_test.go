@@ -71,11 +71,11 @@ func TestShouldRemediate(t *testing.T) {
 			expected:   engif.ActionCmdOff,
 		},
 		{
-			name:       "eval failure, prev error -> do nothing",
+			name:       "eval failure, prev error -> on",
 			prevStatus: RemediationStatusError,
 			hasPrev:    true,
 			evalErr:    enginerr.NewErrEvaluationFailed("failed"),
-			expected:   engif.ActionCmdDoNothing,
+			expected:   engif.ActionCmdOn,
 		},
 		{
 			name:       "eval error, prev error -> off",
