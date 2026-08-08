@@ -171,11 +171,11 @@ func shouldRemediate(prevEval *previousEval, evalStatus EvalStatus) engif.Action
 		return engif.ActionCmdDoNothing
 	case EvalStatusFailure:
 		// Case 4 - Evaluation has changed from something else to FAILED -> Remediation should be ON
-		// We should remediate only if the previous remediation was skipped, so we don't risk endless remediation loops
-		if RemediationStatusSkipped == prevRemediation {
+		// Retry failed remediations so they can recover after their underlying error is fixed.
+		if RemediationStatusSkipped == prevRemediation || RemediationStatusError == prevRemediation {
 			return engif.ActionCmdOn
 		}
-		// Do nothing if the Remediation is something else other than skipped, i.e. pending, success, error, etc.
+		// Do nothing while remediation is pending or after it has completed.
 		return engif.ActionCmdDoNothing
 	case EvalStatusSkipped:
 	case EvalStatusPending:
