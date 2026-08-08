@@ -1,1 +1,0 @@
-"use strict";(globalThis.webpackChunkminder_docs=globalThis.webpackChunkminder_docs||[]).push([[3872],{43872(e,a,s){s.d(a,{createRadarServices:()=>c.f});var c=s(15160);s(46921)}}]);
