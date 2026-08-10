@@ -1586,18 +1586,18 @@ func (mr *MockStoreMockRecorder) GetRuleInstancesForProfile(ctx, profileID any) 
 }
 
 // GetRuleTypeByID mocks base method.
-func (m *MockStore) GetRuleTypeByID(ctx context.Context, id uuid.UUID) (db.RuleType, error) {
+func (m *MockStore) GetRuleTypeByID(ctx context.Context, arg db.GetRuleTypeByIDParams) (db.RuleType, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRuleTypeByID", ctx, id)
+	ret := m.ctrl.Call(m, "GetRuleTypeByID", ctx, arg)
 	ret0, _ := ret[0].(db.RuleType)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetRuleTypeByID indicates an expected call of GetRuleTypeByID.
-func (mr *MockStoreMockRecorder) GetRuleTypeByID(ctx, id any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetRuleTypeByID(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleTypeByID", reflect.TypeOf((*MockStore)(nil).GetRuleTypeByID), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleTypeByID", reflect.TypeOf((*MockStore)(nil).GetRuleTypeByID), ctx, arg)
 }
 
 // GetRuleTypeByName mocks base method.

@@ -153,7 +153,6 @@ func TestCreateRuleType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
@@ -281,7 +280,6 @@ func TestUpdateRuleType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
@@ -346,7 +344,10 @@ func TestDeleteRuleType(t *testing.T) {
 				df.WithTransaction(),
 				func(mockStore *mockdb.MockStore) {
 					mockStore.EXPECT().
-						GetRuleTypeByID(gomock.Any(), ruleTypeId).
+						GetRuleTypeByID(gomock.Any(), db.GetRuleTypeByIDParams{
+							ID:       ruleTypeId,
+							Projects: []uuid.UUID{projectID},
+						}).
 						Return(db.RuleType{ID: ruleTypeId, ProjectID: projectID}, nil)
 					mockStore.EXPECT().
 						ListProfilesInstantiatingRuleType(gomock.Any(), ruleTypeId).
@@ -390,7 +391,10 @@ func TestDeleteRuleType(t *testing.T) {
 				WithSuccessfulGetProjectByID(projectID),
 				df.WithRollbackTransaction(),
 				func(mockStore *mockdb.MockStore) {
-					mockStore.EXPECT().GetRuleTypeByID(gomock.Any(), ruleTypeId).
+					mockStore.EXPECT().GetRuleTypeByID(gomock.Any(), db.GetRuleTypeByIDParams{
+						ID:       ruleTypeId,
+						Projects: []uuid.UUID{projectID},
+					}).
 						Return(db.RuleType{
 							ID:             ruleTypeId,
 							SubscriptionID: uuid.NullUUID{Valid: true},
@@ -409,7 +413,10 @@ func TestDeleteRuleType(t *testing.T) {
 				WithSuccessfulGetProjectByID(projectID),
 				df.WithRollbackTransaction(),
 				func(mockStore *mockdb.MockStore) {
-					mockStore.EXPECT().GetRuleTypeByID(gomock.Any(), ruleTypeId).
+					mockStore.EXPECT().GetRuleTypeByID(gomock.Any(), db.GetRuleTypeByIDParams{
+						ID:       ruleTypeId,
+						Projects: []uuid.UUID{projectID},
+					}).
 						Return(db.RuleType{ID: ruleTypeId, ProjectID: projectID}, nil)
 					mockStore.EXPECT().ListProfilesInstantiatingRuleType(gomock.Any(), ruleTypeId).
 						Return([]string{uuid.NewString()}, nil)
@@ -423,7 +430,6 @@ func TestDeleteRuleType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
@@ -504,7 +510,6 @@ func TestListRuleTypes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)

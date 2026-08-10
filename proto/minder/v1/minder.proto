@@ -1057,7 +1057,7 @@ service ProvidersService {
 
         option (minder.v1.rpc_options) = {
             target_resource: TARGET_RESOURCE_PROJECT
-            relation: RELATION_REPO_DELETE
+            relation: RELATION_PROVIDER_DELETE
         };
     }
 

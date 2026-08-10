@@ -101,11 +101,16 @@ func (q *Queries) DeleteRuleType(ctx context.Context, id uuid.UUID) error {
 }
 
 const getRuleTypeByID = `-- name: GetRuleTypeByID :one
-SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name, release_phase, short_failure_message, rego_version FROM rule_type WHERE id = $1
+SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name, release_phase, short_failure_message, rego_version FROM rule_type WHERE project_id = ANY($1::uuid[]) AND id = $2::uuid
 `
 
-func (q *Queries) GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, error) {
-	row := q.db.QueryRowContext(ctx, getRuleTypeByID, id)
+type GetRuleTypeByIDParams struct {
+	Projects []uuid.UUID `json:"projects"`
+	ID       uuid.UUID   `json:"id"`
+}
+
+func (q *Queries) GetRuleTypeByID(ctx context.Context, arg GetRuleTypeByIDParams) (RuleType, error) {
+	row := q.db.QueryRowContext(ctx, getRuleTypeByID, pq.Array(arg.Projects), arg.ID)
 	var i RuleType
 	err := row.Scan(
 		&i.ID,
@@ -129,7 +134,7 @@ func (q *Queries) GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, 
 }
 
 const getRuleTypeByName = `-- name: GetRuleTypeByName :one
-SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name, release_phase, short_failure_message, rego_version FROM rule_type WHERE  project_id = ANY($1::uuid[]) AND lower(name) = lower($2)
+SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name, release_phase, short_failure_message, rego_version FROM rule_type WHERE project_id = ANY($1::uuid[]) AND lower(name) = lower($2)
 `
 
 type GetRuleTypeByNameParams struct {
