@@ -92,6 +92,9 @@ var nat64Prefix = net.IPNet{
 	Mask: net.CIDRMask(96, 128),
 }
 
+// NonPublicIP returns true if the IP is one of the assigned ranges for local /
+// non-internet communication.  This is somewhat heuristic, but protects calling
+// most services accessible to Minder but not to the public internet.
 func NonPublicIP(ip net.IP) bool {
 	return !ip.IsGlobalUnicast() || ip.IsLoopback() || ip.IsPrivate() || cgNatPrefix.Contains(ip) || nat64Prefix.Contains(ip)
 }
