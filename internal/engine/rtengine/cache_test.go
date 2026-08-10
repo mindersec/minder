@@ -195,6 +195,14 @@ func TestGetRuleEngine(t *testing.T) {
 			dsRegistryError: errTest,
 			ExpectedError:   errTest.Error(),
 		},
+		{
+			Name:  "Returns error when reading project hierarchy fails",
+			Cache: cacheType{},
+			DBSetup: dbf.NewDBMock(func(mock dbf.DBMock) {
+				mock.EXPECT().GetParentProjects(gomock.Any(), projectID).Return(nil, errTest)
+			}),
+			ExpectedError: errTest.Error(),
+		},
 	}
 
 	for _, scenario := range scenarios {
@@ -259,6 +267,7 @@ func withRuleTypeLookup(ruleType *db.RuleType, projectID uuid.UUID, err error) f
 		if ruleType != nil {
 			rt = *ruleType
 		}
+		mock.EXPECT().GetParentProjects(gomock.Any(), projectID).Return([]uuid.UUID{projectID}, nil)
 		mock.EXPECT().
 			GetRuleTypeByID(gomock.Any(), db.GetRuleTypeByIDParams{
 				ID:       ruleTypeID,

@@ -104,12 +104,13 @@ func (r *ruleEngineCache) GetRuleEngine(ctx context.Context, projectID, ruleType
 	// expected to happen often, so the code handles it by querying for that
 	// rule type, building the rule type engine, and caching it.
 
-	// In this part of the code, we can be sure that the rule type ID is
-	// authorized for this project/user, since the rule type ID comes from
-	// the rule_instances table, and it is validated before it is inserted
-	// into that table.
+	hierarchy, err := r.store.GetParentProjects(ctx, projectID)
+	if err != nil {
+		return nil, fmt.Errorf("error finding project hierarchy for %s: %w", projectID, err)
+	}
+
 	ruleType, err := r.store.GetRuleTypeByID(ctx, db.GetRuleTypeByIDParams{
-		Projects: []uuid.UUID{projectID},
+		Projects: hierarchy,
 		ID:       ruleTypeID,
 	})
 	if err != nil {
