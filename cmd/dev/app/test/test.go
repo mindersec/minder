@@ -8,6 +8,8 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -17,6 +19,7 @@ import (
 // CmdTest returns the test cobra command
 func CmdTest() *cobra.Command {
 	var outputFormat string
+	var junitFile string
 
 	cmd := &cobra.Command{
 		Use:   "test [paths...]",
@@ -46,18 +49,23 @@ func CmdTest() *cobra.Command {
 			case "text":
 				formatFailuresHuman(cmd, results)
 			case "junit":
-				suites := ruletest.AsJUnit(results)
-				_, err := fmt.Fprint(cmd.OutOrStdout(), xml.Header)
-				if err != nil {
-					return fmt.Errorf("failed to write XML header: %w", err)
-				}
-				encoder := xml.NewEncoder(cmd.OutOrStdout())
-				encoder.Indent("", "  ")
-				if err := encoder.Encode(suites); err != nil {
-					return fmt.Errorf("failed to encode JUnit XML: %w", err)
+				if err := writeJUnit(cmd.OutOrStdout(), results); err != nil {
+					return err
 				}
 			default:
 				return fmt.Errorf("unsupported output format %q: must be \"text\" or \"junit\"", outputFormat)
+			}
+
+			if junitFile != "" {
+				//nolint:gosec // path is provided by the user via a flag
+				f, err := os.Create(junitFile)
+				if err != nil {
+					return fmt.Errorf("failed to create junit file: %w", err)
+				}
+				defer f.Close()
+				if err := writeJUnit(f, results); err != nil {
+					return err
+				}
 			}
 
 			for _, res := range results {
@@ -71,6 +79,7 @@ func CmdTest() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&outputFormat, "output", "o", "text", "Output format (text, junit)")
+	cmd.Flags().StringVar(&junitFile, "junit-file", "", "File to write JUnit report to (in addition to standard output)")
 
 	return cmd
 }
@@ -89,4 +98,17 @@ func formatFailuresHuman(cmd *cobra.Command, results []ruletest.TestResult) {
 			cmd.Printf("PASS: %s/%s\n", res.Filename, res.Name)
 		}
 	}
+}
+
+func writeJUnit(w io.Writer, results []ruletest.TestResult) error {
+	suites := ruletest.AsJUnit(results)
+	if _, err := fmt.Fprint(w, xml.Header); err != nil {
+		return fmt.Errorf("failed to write XML header: %w", err)
+	}
+	encoder := xml.NewEncoder(w)
+	encoder.Indent("", "  ")
+	if err := encoder.Encode(suites); err != nil {
+		return fmt.Errorf("failed to encode JUnit XML: %w", err)
+	}
+	return nil
 }

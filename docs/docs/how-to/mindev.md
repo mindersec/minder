@@ -193,6 +193,73 @@ For more information on the rego print statement, the following blog post is a
 good resource:
 [Introducing the OPA print function](https://blog.openpolicyagent.org/introducing-the-opa-print-function-809da6a13aee)
 
+## Testing with Starlark
+
+In addition to evaluating rules against a single entity, `mindev test` allows you to run comprehensive Starlark-based tests against your rule types. This is the recommended way to verify rule behavior, as it lets you mock external systems like GitHub REST/GraphQL APIs and Git filesystems.
+
+You can run your Starlark tests using the following command:
+
+```bash
+mindev test /path/to/test.star
+```
+
+By default, `mindev test .` will recursively find and run all `*_test.star` files in the current directory and its subdirectories.
+
+### Writing Starlark Tests
+
+Test files use Starlark (a Python-like configuration language). A basic test file looks like this:
+
+```python
+# test_rule.star
+def test_valid_case():
+    # 1. Define the input entity
+    entity = {
+        "repo_name": "example",
+        "repo_owner": "org"
+    }
+
+    # 2. Mock external calls if your rule uses the `rest` or `git` ingest types
+    def mock_http(content):
+        return {
+            "/repos/org/example/branches/main/protection": {
+                "enforce_admins": {"enabled": True}
+            }
+        }
+
+    # 3. Call the `eval` builtin to run the rule
+    result = eval(
+        rule="rule-types/github/branch_protection.yaml",
+        entity=entity,
+        mock_http=mock_http
+    )
+
+    # 4. Assert the result
+    assert result["status"] == "success", "Expected rule to pass"
+
+def test_failure_case():
+    # ... mock the API to return invalid configuration ...
+    result = eval(...)
+    assert result["status"] == "error", "Expected rule to fail"
+```
+
+The `eval` builtin takes several optional arguments:
+- `rule`: The path to the rule type YAML file
+- `entity`: The entity object to evaluate (defaults to an empty entity if omitted)
+- `profile`: A profile dictionary or path to evaluate the rule in the context of a profile
+- `params`: Rule parameters dictionary (matches the `param_schema`)
+- `mock_http`: A function that receives the request content and returns a dictionary of URL paths to mocked JSON responses
+- `mock_fs`: A function or dictionary to mock filesystem contents for `git` ingest
+
+### JUnit Output
+
+If you want to use the test output in CI/CD pipelines, you can generate a JUnit XML report:
+
+```bash
+mindev test . --junit-file report.xml
+```
+
+This will write the standard text output to your terminal, and output a structured `report.xml` file containing the test results.
+
 ## Conclusion
 
 Mindev is a powerful tool that helps you develop and debug rule types for
