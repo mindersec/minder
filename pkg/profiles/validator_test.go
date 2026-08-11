@@ -32,11 +32,6 @@ func TestValidatorScenarios(t *testing.T) {
 	}
 	dbReturnsRuleType := dbMockWithRuleType(rawRuleDefinition)
 
-	rawRuleDefWithGithubTrait, err := loadRawRuleTypeDefWithProviderTrait(minderv1.ProviderType_PROVIDER_TYPE_GITHUB)
-	if err != nil {
-		t.Fatalf("Could not load test data: %s", err)
-	}
-
 	validatorTestScenarios := []struct {
 		Name           string
 		Profile        *minderv1.Profile
@@ -122,28 +117,6 @@ func TestValidatorScenarios(t *testing.T) {
 			Profile:       makeProfile(withBasicProfileData, withArtifactRules(makeRule(withRuleDefs, withRuleParams))),
 			DBSetup:       dbReturnsRuleType,
 			ExpectedError: "expects entity repository, but was given entity artifact",
-		},
-		{
-			Name:    "Validator accepts profile whose provider satisfies rule type's provider_trait",
-			Profile: makeProfile(withBasicProfileData, withRules(makeRule(withRuleDefs, withRuleParams))),
-			DBSetup: dbMockWithRuleTypeAndProviders(rawRuleDefWithGithubTrait, []db.Provider{
-				{Implements: []db.ProviderType{db.ProviderTypeGithub}},
-			}),
-			ExpectedResult: expectation(ruleName, ruleName),
-		},
-		{
-			Name:    "Validator rejects profile whose provider does not satisfy rule type's provider_trait",
-			Profile: makeProfile(withBasicProfileData, withRules(makeRule(withRuleDefs, withRuleParams))),
-			DBSetup: dbMockWithRuleTypeAndProviders(rawRuleDefWithGithubTrait, []db.Provider{
-				{Implements: []db.ProviderType{db.ProviderTypeGit}},
-			}),
-			ExpectedError: "requires provider trait",
-		},
-		{
-			Name:          "Validator rejects profile when project has no providers but rule type requires a provider_trait",
-			Profile:       makeProfile(withBasicProfileData, withRules(makeRule(withRuleDefs, withRuleParams))),
-			DBSetup:       dbMockWithRuleTypeAndProviders(rawRuleDefWithGithubTrait, []db.Provider{}),
-			ExpectedError: "requires provider trait",
 		},
 	}
 
@@ -280,10 +253,6 @@ func dbReturnsError(store *mockdb.MockStore) {
 		Return([]uuid.UUID{uuid.New()}, nil).
 		AnyTimes()
 	store.EXPECT().
-		ListProvidersByProjectID(gomock.Any(), gomock.Any()).
-		Return([]db.Provider{}, nil).
-		AnyTimes()
-	store.EXPECT().
 		GetRuleTypeByName(gomock.Any(), gomock.Any()).
 		Return(db.RuleType{}, sql.ErrNoRows).
 		AnyTimes()
@@ -301,37 +270,6 @@ func dbMockWithRuleType(rawRuleDefinition json.RawMessage) func(*mockdb.MockStor
 		store.EXPECT().
 			GetParentProjects(gomock.Any(), gomock.Any()).
 			Return([]uuid.UUID{uuid.New()}, nil).
-			AnyTimes()
-		store.EXPECT().
-			ListProvidersByProjectID(gomock.Any(), gomock.Any()).
-			Return([]db.Provider{}, nil).
-			AnyTimes()
-		store.EXPECT().
-			GetRuleTypeByName(gomock.Any(), gomock.Any()).
-			Return(ruleType, nil).
-			AnyTimes()
-	}
-}
-
-func dbMockWithRuleTypeAndProviders(
-	rawRuleDefinition json.RawMessage,
-	dbProviders []db.Provider,
-) func(*mockdb.MockStore) {
-	return func(store *mockdb.MockStore) {
-		ruleType := db.RuleType{
-			ID:          ruleUUID,
-			Name:        ruleTypeName,
-			DisplayName: ruleTypeDisplayName,
-			Definition:  rawRuleDefinition,
-		}
-
-		store.EXPECT().
-			GetParentProjects(gomock.Any(), gomock.Any()).
-			Return([]uuid.UUID{uuid.New()}, nil).
-			AnyTimes()
-		store.EXPECT().
-			ListProvidersByProjectID(gomock.Any(), gomock.Any()).
-			Return(dbProviders, nil).
 			AnyTimes()
 		store.EXPECT().
 			GetRuleTypeByName(gomock.Any(), gomock.Any()).
@@ -417,21 +355,6 @@ func loadRawRuleTypeDef() (json.RawMessage, error) {
 	if err := minderv1.ParseResource(f, ruleType); err != nil {
 		return nil, err
 	}
-
-	raw, err := util.GetBytesFromProto(ruleType.GetDef())
-	if err != nil {
-		return nil, err
-	}
-	return raw, nil
-}
-func loadRawRuleTypeDefWithProviderTrait(trait minderv1.ProviderType) (json.RawMessage, error) {
-	f := strings.NewReader(ruleTypeContent)
-
-	ruleType := &minderv1.RuleType{}
-	if err := minderv1.ParseResource(f, ruleType); err != nil {
-		return nil, err
-	}
-	ruleType.Def.ProviderTrait = trait
 
 	raw, err := util.GetBytesFromProto(ruleType.GetDef())
 	if err != nil {
