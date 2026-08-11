@@ -3,7 +3,10 @@
 
 package actions
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"time"
+)
 
 // RemediationStatus represents remediation state.
 type RemediationStatus string
@@ -44,8 +47,9 @@ const (
 
 // previousEval captures previous remediation and alert state.
 type previousEval struct {
-	RemediationStatus RemediationStatus
-	AlertStatus       AlertStatus
-	RemediationMeta   json.RawMessage
-	AlertMeta         json.RawMessage
+	RemediationStatus      RemediationStatus
+	RemediationLastUpdated time.Time
+	AlertStatus            AlertStatus
+	RemediationMeta        json.RawMessage
+	AlertMeta              json.RawMessage
 }
