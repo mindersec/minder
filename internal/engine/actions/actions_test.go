@@ -6,6 +6,7 @@ package actions
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -16,13 +17,16 @@ import (
 
 func TestShouldRemediate(t *testing.T) {
 	t.Parallel()
+	now := time.Date(2026, time.August, 11, 0, 0, 0, 0, time.UTC)
 
 	tests := []struct {
-		name       string
-		prevStatus RemediationStatus
-		hasPrev    bool
-		evalErr    error
-		expected   engif.ActionCmd
+		name            string
+		prevStatus      RemediationStatus
+		lastUpdated     time.Time
+		hasPrev         bool
+		evalErr         error
+		expected        engif.ActionCmd
+		expectedCooloff bool
 	}{
 		// Happy path: eval success
 		{
@@ -71,11 +75,21 @@ func TestShouldRemediate(t *testing.T) {
 			expected:   engif.ActionCmdOff,
 		},
 		{
-			name:       "eval failure, prev error -> on",
-			prevStatus: RemediationStatusError,
-			hasPrev:    true,
-			evalErr:    enginerr.NewErrEvaluationFailed("failed"),
-			expected:   engif.ActionCmdOn,
+			name:            "eval failure, recent prev error -> do nothing",
+			prevStatus:      RemediationStatusError,
+			lastUpdated:     now.Add(-remediationRetryCooloff + time.Second),
+			hasPrev:         true,
+			evalErr:         enginerr.NewErrEvaluationFailed("failed"),
+			expected:        engif.ActionCmdDoNothing,
+			expectedCooloff: true,
+		},
+		{
+			name:        "eval failure, prev error at cooloff boundary -> on",
+			prevStatus:  RemediationStatusError,
+			lastUpdated: now.Add(-remediationRetryCooloff),
+			hasPrev:     true,
+			evalErr:     enginerr.NewErrEvaluationFailed("failed"),
+			expected:    engif.ActionCmdOn,
 		},
 		{
 			name:       "eval error, prev error -> off",
@@ -118,11 +132,15 @@ func TestShouldRemediate(t *testing.T) {
 			t.Parallel()
 			var prev *previousEval
 			if tt.hasPrev {
-				prev = &previousEval{RemediationStatus: tt.prevStatus}
+				prev = &previousEval{
+					RemediationStatus:      tt.prevStatus,
+					RemediationLastUpdated: tt.lastUpdated,
+				}
 			}
 			status := mapEvalStatus(tt.evalErr)
-			got := shouldRemediate(prev, status)
+			got, cooloffHit := shouldRemediate(prev, status, now)
 			assert.Equal(t, tt.expected, got)
+			assert.Equal(t, tt.expectedCooloff, cooloffHit)
 		})
 	}
 }
