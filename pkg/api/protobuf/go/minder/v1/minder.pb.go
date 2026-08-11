@@ -13419,15 +13419,15 @@ type RuleType_Definition struct {
 	// in_entity is the entity in which the rule is evaluated.
 	// This can be repository, build_environment or artifact.
 	InEntity string `protobuf:"bytes,1,opt,name=in_entity,json=inEntity,proto3" json:"in_entity,omitempty"`
-	// provider_trait declares the provider trait this rule type
+	// provider_traits declares the provider trait(s) this rule type
 	// requires an implementation of (e.g. "github", "git", "oci").
-	// This is an API/interface requirement, not a pin to a specific
-	// named provider registration: any provider whose implementation
-	// satisfies this trait (see ProviderType / CanImplement) may
-	// evaluate this rule type. If PROVIDER_TYPE_UNSPECIFIED (the
-	// zero value / default), the rule type is not gated by
-	// provider trait.
-	ProviderTrait ProviderType `protobuf:"varint,8,opt,name=provider_trait,json=providerTrait,proto3,enum=minder.v1.ProviderType" json:"provider_trait,omitempty"`
+	// This is AND semantics: a rule type requires an implementation of
+	// every listed trait, not just one of them. For example, a rule
+	// type requiring ["git", "github"] needs a provider that
+	// implements both traits (e.g. to read repo contents via git and
+	// call a forge-specific API via github). If empty, the rule type
+	// is not gated by provider traits.
+	ProviderTraits []ProviderType `protobuf:"varint,8,rep,packed,name=provider_traits,json=providerTraits,proto3,enum=minder.v1.ProviderType" json:"provider_traits,omitempty"`
 	// rule_schema is the schema of the rule. This is expressed in JSON Schema.
 	RuleSchema *structpb.Struct `protobuf:"bytes,2,opt,name=rule_schema,json=ruleSchema,proto3" json:"rule_schema,omitempty"`
 	// param_schema is the schema of the parameters that are passed to the rule.
@@ -13478,11 +13478,11 @@ func (x *RuleType_Definition) GetInEntity() string {
 	return ""
 }
 
-func (x *RuleType_Definition) GetProviderTrait() ProviderType {
+func (x *RuleType_Definition) GetProviderTraits() []ProviderType {
 	if x != nil {
-		return x.ProviderTrait
+		return x.ProviderTraits
 	}
-	return ProviderType_PROVIDER_TYPE_UNSPECIFIED
+	return nil
 }
 
 func (x *RuleType_Definition) GetRuleSchema() *structpb.Struct {
@@ -15701,7 +15701,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\xea\xdc\x14\x06medium\x12\x18\n" +
 	"\n" +
 	"VALUE_HIGH\x10\x05\x1a\b\xea\xdc\x14\x04high\x12 \n" +
-	"\x0eVALUE_CRITICAL\x10\x06\x1a\f\xea\xdc\x14\bcritical\"\xa1(\n" +
+	"\x0eVALUE_CRITICAL\x10\x06\x1a\f\xea\xdc\x14\bcritical\"\xa3(\n" +
 	"\bRuleType\x12&\n" +
 	"\aversion\x18\v \x01(\tB\f\xbaH\tr\a2\x05^v\\d$R\aversion\x12$\n" +
 	"\x04type\x18\f \x01(\tB\x10\xbaH\rr\v2\trule-typeR\x04type\x12 \n" +
@@ -15715,11 +15715,11 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\vdescription\x18\x05 \x01(\tB\r\xe0A\x02\xbaH\ar\x05\x10\x01\x18\xdc\vR\vdescription\x12)\n" +
 	"\bguidance\x18\x06 \x01(\tB\r\xe0A\x02\xbaH\ar\x05\x10\x01\x18\xe8\aR\bguidance\x12/\n" +
 	"\bseverity\x18\a \x01(\v2\x13.minder.v1.SeverityR\bseverity\x12D\n" +
-	"\rrelease_phase\x18\t \x01(\x0e2\x1f.minder.v1.RuleTypeReleasePhaseR\freleasePhase\x1a\x9c#\n" +
+	"\rrelease_phase\x18\t \x01(\x0e2\x1f.minder.v1.RuleTypeReleasePhaseR\freleasePhase\x1a\x9e#\n" +
 	"\n" +
 	"Definition\x12;\n" +
-	"\tin_entity\x18\x01 \x01(\tB\x1e\xbaH\x1br\x19\x10\x01\x18\xc8\x012\x12^[a-z]+(_[a-z]+)*$R\binEntity\x12>\n" +
-	"\x0eprovider_trait\x18\b \x01(\x0e2\x17.minder.v1.ProviderTypeR\rproviderTrait\x128\n" +
+	"\tin_entity\x18\x01 \x01(\tB\x1e\xbaH\x1br\x19\x10\x01\x18\xc8\x012\x12^[a-z]+(_[a-z]+)*$R\binEntity\x12@\n" +
+	"\x0fprovider_traits\x18\b \x03(\x0e2\x17.minder.v1.ProviderTypeR\x0eproviderTraits\x128\n" +
 	"\vrule_schema\x18\x02 \x01(\v2\x17.google.protobuf.StructR\n" +
 	"ruleSchema\x12?\n" +
 	"\fparam_schema\x18\x03 \x01(\v2\x17.google.protobuf.StructH\x00R\vparamSchema\x88\x01\x01\x12B\n" +
@@ -16944,7 +16944,7 @@ var file_minder_v1_minder_proto_depIdxs = []int32{
 	98,  // 242: minder.v1.ListEvaluationResultsResponse.EntityProfileEvaluationResults.results:type_name -> minder.v1.RuleEvaluationStatus
 	99,  // 243: minder.v1.ListEvaluationResultsResponse.EntityEvaluationResults.entity:type_name -> minder.v1.EntityTypedId
 	220, // 244: minder.v1.ListEvaluationResultsResponse.EntityEvaluationResults.profiles:type_name -> minder.v1.ListEvaluationResultsResponse.EntityProfileEvaluationResults
-	5,   // 245: minder.v1.RuleType.Definition.provider_trait:type_name -> minder.v1.ProviderType
+	5,   // 245: minder.v1.RuleType.Definition.provider_traits:type_name -> minder.v1.ProviderType
 	255, // 246: minder.v1.RuleType.Definition.rule_schema:type_name -> google.protobuf.Struct
 	255, // 247: minder.v1.RuleType.Definition.param_schema:type_name -> google.protobuf.Struct
 	227, // 248: minder.v1.RuleType.Definition.ingest:type_name -> minder.v1.RuleType.Definition.Ingest
