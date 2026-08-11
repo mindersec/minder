@@ -19,6 +19,7 @@ import (
 	regoeval "github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/marketplaces/namespaces"
+	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/schemaupdate"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -112,6 +113,11 @@ func (s *ruleTypeService) CreateRuleType(
 	if err != nil {
 		return nil, errors.Join(ErrRuleTypeInvalid, err)
 	}
+
+	if err := validateProviderTraits(ruleType); err != nil {
+		return nil, errors.Join(ErrRuleTypeInvalid, err)
+	}
+
 	if uuidLike.MatchString(ruleType.Name) {
 		return nil, errors.Join(ErrRuleTypeInvalid, errors.New("rule type name must not be UUID-like"))
 	}
@@ -206,6 +212,10 @@ func (s *ruleTypeService) UpdateRuleType(
 
 	regoVersion, err := s.validateAndDetectRegoVersion(ctx, ruleType)
 	if err != nil {
+		return nil, errors.Join(ErrRuleTypeInvalid, err)
+	}
+
+	if err := validateProviderTraits(ruleType); err != nil {
 		return nil, errors.Join(ErrRuleTypeInvalid, err)
 	}
 
@@ -343,6 +353,20 @@ func (s *ruleTypeService) validateAndDetectRegoVersion(ctx context.Context, rule
 	default:
 		return "", fmt.Errorf("rego definition is invalid: %w", errV0)
 	}
+}
+
+// validateProviderTraits validates that a rule type's declared
+// provider_traits are known, valid ProviderType enum values. This checks
+// against the static set of provider types Minder defines, not against
+// providers currently registered in any project: gating on registration
+// would block loading rule types before providers exist, and would leave
+// rule types silently stale if a provider is later unregistered.
+func validateProviderTraits(ruleType *pb.RuleType) error {
+	if _, err := providers.PBProviderTypesToDB(ruleType.GetDef().GetProviderTraits()); err != nil {
+		return fmt.Errorf("invalid provider_traits: %w", err)
+	}
+
+	return nil
 }
 
 func getRuleTypeSeverity(severity *pb.Severity) (*db.Severity, error) {
