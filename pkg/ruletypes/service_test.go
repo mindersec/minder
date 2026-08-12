@@ -369,6 +369,30 @@ func TestRuleTypeService(t *testing.T) {
 			ExpectedError: "rego definition is invalid",
 			TestMethod:    update,
 		},
+		{
+			Name:       "CreateRuleType accepts valid provider_traits",
+			RuleType:   newRuleType(withBasicStructure, withProviderTraits(pb.ProviderType_PROVIDER_TYPE_GIT, pb.ProviderType_PROVIDER_TYPE_GITHUB)),
+			DBSetup:    dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreate, withSuccessfulDeleteRuleTypeDataSource),
+			TestMethod: create,
+		},
+		{
+			Name:          "CreateRuleType rejects invalid provider_traits",
+			RuleType:      newRuleType(withBasicStructure, withProviderTraits(pb.ProviderType_PROVIDER_TYPE_UNSPECIFIED)),
+			ExpectedError: ruletypes.ErrRuleTypeInvalid.Error(),
+			TestMethod:    create,
+		},
+		{
+			Name:       "UpdateRuleType accepts valid provider_traits",
+			RuleType:   newRuleType(withBasicStructure, withProviderTraits(pb.ProviderType_PROVIDER_TYPE_GIT, pb.ProviderType_PROVIDER_TYPE_GITHUB)),
+			DBSetup:    dbf.NewDBMock(withHierarchyGet, withSuccessfulGet, withSuccessfulUpdate, withSuccessfulDeleteRuleTypeDataSource),
+			TestMethod: update,
+		},
+		{
+			Name:          "UpdateRuleType rejects invalid provider_traits",
+			RuleType:      newRuleType(withBasicStructure, withProviderTraits(pb.ProviderType_PROVIDER_TYPE_UNSPECIFIED)),
+			ExpectedError: ruletypes.ErrRuleTypeInvalid.Error(),
+			TestMethod:    update,
+		},
 	}
 
 	for _, scenario := range scenarios {
@@ -514,6 +538,12 @@ func withEvaluationFailureMessage(message string) func(ruleType *pb.RuleType) {
 func withRuleName(name string) func(ruleType *pb.RuleType) {
 	return func(ruleType *pb.RuleType) {
 		ruleType.Name = name
+	}
+}
+
+func withProviderTraits(traits ...pb.ProviderType) func(ruleType *pb.RuleType) {
+	return func(ruleType *pb.RuleType) {
+		ruleType.Def.ProviderTraits = traits
 	}
 }
 
