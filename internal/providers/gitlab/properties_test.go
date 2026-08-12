@@ -143,7 +143,7 @@ func Test_gitlabClient_FetchAllProperties(t *testing.T) {
 				properties.RepoPropertyIsPrivate:  true,
 				properties.RepoPropertyIsArchived: false,
 				properties.RepoPropertyIsFork:     false,
-				RepoPropertyLicense:               "mit", // Uses the correct constant
+				RepoPropertyLicense:               "mit", 
 			}),
 			wantErr: false,
 			gitLabServerMockFunc: func(w http.ResponseWriter, r *http.Request) {
