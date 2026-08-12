@@ -51,7 +51,7 @@ func (c *gitlabClient) getGitLabProject(
 ) (*gitlab.Project, error) {
 	projectURLPath, err := url.JoinPath("projects", url.PathEscape(upstreamID))
 	if err != nil {
-    	return nil, fmt.Errorf("failed to join URL path for project using upstream ID: %w", err)
+		return nil, fmt.Errorf("failed to join URL path for project using upstream ID: %w", err)
 	}
 	projectURLPath = projectURLPath + "?license=true"
 

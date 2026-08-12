@@ -155,17 +155,17 @@ func Test_gitlabClient_FetchAllProperties(t *testing.T) {
 				}
 
 				resp := &gitlab.Project{
-					ID:                  1,
-					Name:                "project-1",
-					Description:         "project-1 description",
-					Visibility:          gitlab.PrivateVisibility,
-					Archived:            false,
-					ForkedFromProject:   nil,
+					ID:                1,
+					Name:              "project-1",
+					Description:       "project-1 description",
+					Visibility:        gitlab.PrivateVisibility,
+					Archived:          false,
+					ForkedFromProject: nil,
 					Namespace: &gitlab.ProjectNamespace{
 						Path: "group",
 					},
 					License: &gitlab.ProjectLicense{
-						Name: "mit", 
+						Name: "mit",
 					},
 				}
 
@@ -408,4 +408,3 @@ func newTestGitlabProvider(endpoint string) *gitlabClient {
 		cli: &http.Client{},
 	}
 }
-
