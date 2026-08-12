@@ -3704,6 +3704,19 @@ definitions:
         description: |-
           in_entity is the entity in which the rule is evaluated.
           This can be repository, build_environment or artifact.
+      providerTraits:
+        type: array
+        items:
+          $ref: '#/definitions/v1ProviderType'
+        description: |-
+          provider_traits declares the provider trait(s) this rule type
+          requires an implementation of (e.g. "github", "git", "oci").
+          This is AND semantics: a rule type requires an implementation of
+          every listed trait, not just one of them. For example, a rule
+          type requiring ["git", "github"] needs a provider that
+          implements both traits (e.g. to read repo contents via git and
+          call a forge-specific API via github). If empty, the rule type
+          is not gated by provider traits.
       ruleSchema:
         type: object
         description: >-
