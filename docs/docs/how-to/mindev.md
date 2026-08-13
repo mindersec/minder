@@ -195,7 +195,9 @@ good resource:
 
 ## Testing with Starlark
 
-In addition to evaluating rules against a single entity, `mindev test` allows you to run comprehensive Starlark-based tests against your rule types. This is the recommended way to verify rule behavior, as it lets you mock external systems like GitHub REST/GraphQL APIs and Git filesystems.
+In addition to evaluating rules against a single entity, `mindev test` is the supported mechanism for verifying rule behavior, and is designed for integration into CI/CD pipelines as well as standalone usage. It allows you to run comprehensive tests written in [Starlark](https://github.com/bazelbuild/starlark/blob/master/spec.md) (a Python-like configuration language) against your rule types, letting you mock external systems like GitHub REST/GraphQL APIs and Git filesystems.
+
+For a full guide on testing rules, including CI setup and runtime builtin references, see [Testing Rules](./testing-rules.md).
 
 You can run your Starlark tests using the following command:
 
@@ -207,48 +209,57 @@ By default, `mindev test .` will recursively find and run all `*_test.star` file
 
 ### Writing Starlark Tests
 
-Test files use Starlark (a Python-like configuration language). A basic test file looks like this:
+Test files use Starlark. A basic test file looks like this:
 
 ```python
 # test_rule.star
 def test_valid_case():
     # 1. Define the input entity
     entity = {
-        "repo_name": "example",
-        "repo_owner": "org"
+        "name": "minder",
+        "owner": "mindersec"
     }
 
-    # 2. Mock external calls if your rule uses the `rest` or `git` ingest types
-    def mock_http(content):
+    # 2. Mock external HTTP calls
+    def mock_http():
         return {
-            "/repos/org/example/branches/main/protection": {
+            "/repos/mindersec/minder/branches/main/protection": body({
                 "enforce_admins": {"enabled": True}
-            }
+            })
         }
 
     # 3. Call the `eval` builtin to run the rule
     result = eval(
-        rule="rule-types/github/branch_protection.yaml",
+        rule="branch_protection_enforce_admins",
         entity=entity,
-        mock_http=mock_http
+        mock_http=mock_http()
     )
 
     # 4. Assert the result
-    assert result["status"] == "success", "Expected rule to pass"
+    assert result["status"] == "pass", "Expected rule to pass"
 
 def test_failure_case():
-    # ... mock the API to return invalid configuration ...
     result = eval(...)
-    assert result["status"] == "error", "Expected rule to fail"
+    assert result["status"] == "fail", "Expected rule to fail"
 ```
 
-The `eval` builtin takes several optional arguments:
-- `rule`: The path to the rule type YAML file
-- `entity`: The entity object to evaluate (defaults to an empty entity if omitted)
-- `profile`: A profile dictionary or path to evaluate the rule in the context of a profile
+The `eval` builtin takes the following arguments:
+
+**Required:**
+- `rule`: The name or path of the rule type to evaluate (e.g. `"branch_protection_enforce_admins"`)
+
+**Optional:**
+- `entity`: The entity object dictionary to evaluate against
+- `profile`: Profile configuration dictionary to evaluate rule parameters
 - `params`: Rule parameters dictionary (matches the `param_schema`)
-- `mock_http`: A function that receives the request content and returns a dictionary of URL paths to mocked JSON responses
-- `mock_fs`: A function or dictionary to mock filesystem contents for `git` ingest
+- `mock_http`: A dictionary mapping endpoint paths to mock HTTP responses created via `body()` or `code()`
+- `mock_fs`: A dictionary mocking git filesystem contents for `git` ingest rules
+- `data_sources`: A list of datasource YAML paths required by the rule
+
+The return value of `eval` is a dictionary containing:
+- `status`: `"pass"`, `"fail"`, `"skip"`, or `"error"`
+- `message`: Detailed error or failure message (if any)
+- `output`: Evaluation output value (if any)
 
 ### JUnit Output
 
