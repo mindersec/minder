@@ -1,0 +1,10 @@
+Invite created successfully.
+ INVITEE                     │ ROLE       │ SPONSOR           │ EXPIRES AT                          
+─────────────────────────────┼────────────┼───────────────────┼─────────────────────────────────────
+ test@example.com            │ viewer     │ Admin User        │ 2026-05-01T12:00:00Z                
+
+The invitee can accept it by running: 
+
+minder auth invite accept MOCK-INVITE-CODE
+
+Or by visiting: https://minder.example.com/invite/MOCK-INVITE-CODE
