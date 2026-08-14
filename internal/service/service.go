@@ -53,6 +53,7 @@ import (
 	"github.com/mindersec/minder/internal/roles"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
 	"github.com/mindersec/minder/pkg/engine/selectors"
 	"github.com/mindersec/minder/pkg/eventer"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
@@ -101,7 +102,11 @@ func AllInOneServerService(
 	profileSvc := profiles.NewProfileService(evt, selChecker)
 	ruleSvc := ruletypes.NewRuleTypeService(featureFlagClient)
 	roleScv := roles.NewRoleService()
-	dataSourcesSvc := datasourcessvc.NewDataSourceService(store)
+	dataSourcesSvc := datasourcessvc.NewDataSourceService(
+		store,
+		v1datasources.WithRESTRequestTimeout(cfg.DataSources.REST.RequestTimeout),
+		v1datasources.WithRESTMaxResponseBytes(cfg.DataSources.REST.MaxResponseBytes),
+	)
 	marketplace, err := marketplaces.NewMarketplaceFromServiceConfig(cfg.Marketplace, profileSvc, ruleSvc, dataSourcesSvc)
 	if err != nil {
 		return fmt.Errorf("failed to create marketplace: %w", err)

@@ -35,6 +35,8 @@ import (
 )
 
 const (
+	// DefaultRequestTimeout is the default timeout for REST data source requests.
+	DefaultRequestTimeout = 5 * time.Second
 	// MaxBytesLimit is the maximum number of bytes to read from the response body
 	// We limit to 1MB to prevent abuse
 	MaxBytesLimit int64 = 1 << 20
@@ -54,10 +56,12 @@ type restHandler struct {
 	// used only to allow requests to localhost during tests
 	testOnlyTransport http.RoundTripper
 	// contains the request body or the key
-	body          string
-	bodyFromInput bool
-	headers       map[string]string
-	parse         string
+	body             string
+	bodyFromInput    bool
+	headers          map[string]string
+	parse            string
+	requestTimeout   time.Duration
+	maxResponseBytes int64
 	// TODO implement fallback
 	// TODO implement auth
 	provider interfaces.RESTProvider
@@ -82,6 +86,8 @@ func newHandlerFromDef(
 	def *minderv1.RestDataSource_Def,
 	provider provinfv1.Provider,
 	testOnlyTransport http.RoundTripper,
+	requestTimeout time.Duration,
+	maxResponseBytes int64,
 ) (*restHandler, error) {
 	if def == nil {
 		return nil, errors.New("rest data source handler definition is nil")
@@ -112,6 +118,8 @@ func newHandlerFromDef(
 		body:              body,
 		bodyFromInput:     bodyFromInput,
 		parse:             def.GetParse(),
+		requestTimeout:    requestTimeout,
+		maxResponseBytes:  maxResponseBytes,
 		provider:          restProvider,
 		testOnlyTransport: testOnlyTransport,
 	}, nil
@@ -162,8 +170,6 @@ func (h *restHandler) Call(ctx context.Context, _ *interfaces.Ingested, args any
 	}
 	// TODO: Add option to use custom client
 	cli := &http.Client{
-		// TODO: Make timeout configurable
-		Timeout: 5 * time.Second,
 		// Don't allow calling non-public addresses.
 		Transport: transport,
 	}
@@ -196,7 +202,9 @@ func (h *restHandler) Call(ctx context.Context, _ *interfaces.Ingested, args any
 		}
 		doer = cli.Do
 	}
-	req = req.WithContext(ctx)
+	requestCtx, cancel := context.WithTimeout(ctx, h.effectiveRequestTimeout())
+	defer cancel()
+	req = req.WithContext(requestCtx)
 
 	for k, v := range h.headers {
 		req.Header.Add(k, v)
@@ -280,7 +288,7 @@ func (h *restHandler) parseResponseBody(body io.Reader) (any, error) {
 		return nil, nil
 	}
 
-	lr := io.LimitReader(body, MaxBytesLimit)
+	lr := io.LimitReader(body, h.effectiveMaxResponseBytes())
 
 	if h.parse == "json" {
 		var jsonData any
@@ -300,6 +308,20 @@ func (h *restHandler) parseResponseBody(body io.Reader) (any, error) {
 	}
 
 	return data, nil
+}
+
+func (h *restHandler) effectiveRequestTimeout() time.Duration {
+	if h.requestTimeout > 0 {
+		return h.requestTimeout
+	}
+	return DefaultRequestTimeout
+}
+
+func (h *restHandler) effectiveMaxResponseBytes() int64 {
+	if h.maxResponseBytes > 0 {
+		return h.maxResponseBytes
+	}
+	return MaxBytesLimit
 }
 
 func parseRequestBodyConfig(def *minderv1.RestDataSource_Def) (bool, string, error) {

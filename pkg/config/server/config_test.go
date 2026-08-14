@@ -6,6 +6,7 @@ package server_test
 import (
 	"bytes"
 	"testing"
+	"time"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -28,6 +29,10 @@ grpc_server:
 metric_server:
   host:	"myhost"
   port:	8668
+data_sources:
+  rest:
+    request_timeout: 12s
+    max_response_bytes: 2097152
 `
 
 	cfgbuf := bytes.NewBufferString(cfgstr)
@@ -46,6 +51,8 @@ metric_server:
 	require.Equal(t, 8667, cfg.GRPCServer.Port)
 	require.Equal(t, "myhost", cfg.MetricServer.Host)
 	require.Equal(t, 8668, cfg.MetricServer.Port)
+	require.Equal(t, 12*time.Second, cfg.DataSources.REST.RequestTimeout)
+	require.Equal(t, int64(2<<20), cfg.DataSources.REST.MaxResponseBytes)
 }
 
 func TestReadConfigWithDefaults(t *testing.T) {
@@ -164,6 +171,8 @@ func TestReadDefaultConfig(t *testing.T) {
 	require.Equal(t, "debug", cfg.LoggingConfig.Level)
 	require.Equal(t, "minder", cfg.Database.Name)
 	require.Equal(t, "./.ssh/token_key_passphrase", cfg.Auth.TokenKey)
+	require.Equal(t, 5*time.Second, cfg.DataSources.REST.RequestTimeout)
+	require.Equal(t, int64(1<<20), cfg.DataSources.REST.MaxResponseBytes)
 }
 
 const (

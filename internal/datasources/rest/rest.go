@@ -55,7 +55,10 @@ func NewRestDataSource(
 		return nil, errors.New("rest data source definition is nil")
 	}
 
-	rOpts := &v1datasources.Options{}
+	rOpts := &v1datasources.Options{
+		RESTRequestTimeout:   DefaultRequestTimeout,
+		RESTMaxResponseBytes: MaxBytesLimit,
+	}
 	for _, opt := range opts {
 		opt(rOpts)
 	}
@@ -70,7 +73,13 @@ func NewRestDataSource(
 	}
 
 	for key, handlerCfg := range rest.GetDef() {
-		handler, err := newHandlerFromDef(handlerCfg, provider, rOpts.TestOnlyTransport)
+		handler, err := newHandlerFromDef(
+			handlerCfg,
+			provider,
+			rOpts.TestOnlyTransport,
+			rOpts.RESTRequestTimeout,
+			rOpts.RESTMaxResponseBytes,
+		)
 		if err != nil {
 			return nil, err
 		}
