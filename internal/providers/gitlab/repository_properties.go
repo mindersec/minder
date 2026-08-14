@@ -53,6 +53,7 @@ func (c *gitlabClient) getGitLabProject(
 	if err != nil {
 		return nil, fmt.Errorf("failed to join URL path for project using upstream ID: %w", err)
 	}
+	projectURLPath = projectURLPath + "?license=true"
 
 	// NOTE: We're not using github.com/xanzy/go-gitlab to do the actual
 	// request here because of the way they form authentication for requests.

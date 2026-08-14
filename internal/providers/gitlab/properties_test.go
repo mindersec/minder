@@ -143,9 +143,17 @@ func Test_gitlabClient_FetchAllProperties(t *testing.T) {
 				properties.RepoPropertyIsPrivate:  true,
 				properties.RepoPropertyIsArchived: false,
 				properties.RepoPropertyIsFork:     false,
+				properties.RepoPropertyLicense:    "mit",
 			}),
 			wantErr: false,
-			gitLabServerMockFunc: func(w http.ResponseWriter, _ *http.Request) {
+			gitLabServerMockFunc: func(w http.ResponseWriter, r *http.Request) {
+				// Verify the query parameter you added is being sent
+				if r.URL.Query().Get("license") != "true" {
+					t.Errorf("expected query param license=true, got %s", r.URL.RawQuery)
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				}
+
 				resp := &gitlab.Project{
 					ID:                1,
 					Name:              "project-1",
@@ -155,6 +163,9 @@ func Test_gitlabClient_FetchAllProperties(t *testing.T) {
 					ForkedFromProject: nil,
 					Namespace: &gitlab.ProjectNamespace{
 						Path: "group",
+					},
+					License: &gitlab.ProjectLicense{
+						Name: "mit",
 					},
 				}
 
