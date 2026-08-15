@@ -12,6 +12,8 @@ import (
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-billy/v5/osfs"
+
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // TestKit implements a set of interfaces for testing
@@ -23,6 +25,9 @@ type TestKit struct {
 
 	// HTTP
 	httpHandler http.Handler
+
+	// canImplement backs CanImplement. Defaults to always returning true.
+	canImplement func(trait minderv1.ProviderType) bool
 }
 
 // Option is a functional option type for TestKit
@@ -76,9 +81,19 @@ func WithHTTP(status int, body []byte, headers map[string]string) Option {
 	})
 }
 
+// WithCanImplement is a functional option to control the result of CanImplement.
+// If not set, CanImplement always returns true.
+func WithCanImplement(fn func(trait minderv1.ProviderType) bool) Option {
+	return func(tk *TestKit) {
+		tk.canImplement = fn
+	}
+}
+
 // NewTestKit creates a new TestKit
 func NewTestKit(opts ...Option) *TestKit {
-	pt := &TestKit{}
+	pt := &TestKit{
+		canImplement: func(minderv1.ProviderType) bool { return true },
+	}
 
 	for _, opt := range opts {
 		opt(pt)
