@@ -14,6 +14,14 @@ import (
 
 // Provider is a slice of the github.com/mindersec/minder/pkg/providers/v1.Provider
 // interface which contains only the methods needed for engine evaluation. (currently none)
+//
+// Note: this interface intentionally does not depend on
+// github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1 (minderv1). That
+// package transitively imports pkg/datasources/v1, which imports this
+// package for interfaces.Ingested — so importing minderv1 here would create
+// an import cycle. Callers that need a minderv1-typed method (e.g.
+// CanImplement) should type-assert against a package-local interface
+// instead, the way rtengine does.
 type Provider interface {
 }
 
