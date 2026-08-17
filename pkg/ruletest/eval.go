@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"slices"
 
 	"go.starlark.net/starlark"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -34,13 +35,20 @@ func (tr *testCaseRunner) builtinEval(
 	var mockHttpDict *starlark.Dict
 	var mockFSDict *starlark.Dict
 	var datasourcesList *starlark.List
+	var providerMissingTraitsList *starlark.List
 
 	err := starlark.UnpackArgs("eval", args, kwargs,
 		"rule", &ruleName, "entity?", &entityDict,
 		"profile?", &profileDict, "params?", &paramsDict, "mock_http?", &mockHttpDict,
-		"mock_fs?", &mockFSDict, "data_sources?", &datasourcesList)
+		"mock_fs?", &mockFSDict, "data_sources?", &datasourcesList,
+		"provider_missing_traits?", &providerMissingTraitsList)
 	if err != nil {
 		return nil, err
+	}
+
+	missingTraits, err := parseProviderTraitsList(providerMissingTraitsList)
+	if err != nil {
+		return nil, fmt.Errorf("invalid provider_missing_traits argument: %w", err)
 	}
 
 	mockFSMap, err := parseMockFSDict(mockFSDict)
@@ -86,6 +94,11 @@ func (tr *testCaseRunner) builtinEval(
 	tkOpts := []tkv1.Option{tkv1.WithHandlerFunc(mockHandler.ServeHTTP)}
 	if mockFSDict != nil {
 		tkOpts = append(tkOpts, tkv1.WithGitFiles(mockFSMap))
+	}
+	if len(missingTraits) > 0 {
+		tkOpts = append(tkOpts, tkv1.WithCanImplement(func(trait minderv1.ProviderType) bool {
+			return !slices.Contains(missingTraits, trait)
+		}))
 	}
 	tk := tkv1.NewTestKit(tkOpts...)
 
@@ -160,6 +173,29 @@ func parseMockFSDict(mockFSDict *starlark.Dict) (map[string]string, error) {
 		}
 	}
 	return mockFSMap, nil
+}
+
+// parseProviderTraitsList converts a Starlark list of provider trait names
+// (e.g. "PROVIDER_TYPE_GITHUB") into their protobuf enum values, for use
+// with tkv1.WithCanImplement. A nil list returns a nil slice.
+func parseProviderTraitsList(list *starlark.List) ([]minderv1.ProviderType, error) {
+	if list == nil {
+		return nil, nil
+	}
+
+	traits := make([]minderv1.ProviderType, 0, list.Len())
+	for val := range list.Elements() {
+		s, ok := val.(starlark.String)
+		if !ok {
+			return nil, fmt.Errorf("provider_missing_traits must be a list of strings")
+		}
+		trait, ok := minderv1.ProviderType_value[string(s)]
+		if !ok {
+			return nil, fmt.Errorf("unknown provider trait %q", string(s))
+		}
+		traits = append(traits, minderv1.ProviderType(trait))
+	}
+	return traits, nil
 }
 
 func buildDataSourceRegistry(

@@ -35,3 +35,14 @@ def test_eval_error_404():
     )
     assert.eq(res["status"], "fail")
     assert.true(res["message"] != "")
+
+# branch_protection_reviews declares provider_traits: [PROVIDER_TYPE_GITHUB].
+# When the test provider doesn't implement that trait, rule type engine
+# construction should fail (raising a Starlark error), not silently skip.
+def test_fail_eval_missing_provider_trait():
+    eval(
+        rule="branch_protection_reviews",
+        entity={"owner": "test", "name": "repo"},
+        profile={"required_reviews": 2},
+        provider_missing_traits=["PROVIDER_TYPE_GITHUB"],
+    )

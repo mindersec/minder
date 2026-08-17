@@ -16,6 +16,10 @@ guidance: |
   and set the 'Required approving reviews' count to 2 or higher.
 def:
   in_entity: repository
+  # RuleType uses plain encoding/json (not protojson) for these fields, so
+  # provider_traits must be the numeric enum value, not the string name:
+  # 1 = PROVIDER_TYPE_GITHUB.
+  provider_traits: [1]
   rule_schema:
     properties:
       required_reviews:
