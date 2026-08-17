@@ -77,6 +77,12 @@ func NewRuleEngineCache(
 		ruleEngine, err := cacheRuleEngine(
 			ctx, &ruleType, provider, featureFlags, ingestCache, engines, dssvc, opts...)
 		if err != nil {
+			if errors.Is(err, rtengine2.ErrProviderTraitNotSatisfied) {
+				// This rule type doesn't apply to this provider — exclude
+				// it from the cache rather than aborting construction for
+				// every other rule type.
+				continue
+			}
 			return nil, err
 		}
 		engines[ruleType.ID] = ruleEngine

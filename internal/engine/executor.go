@@ -5,6 +5,7 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -31,6 +32,7 @@ import (
 	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/engine/selectors"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	rtenginev1 "github.com/mindersec/minder/pkg/engine/v1/rtengine"
 	"github.com/mindersec/minder/pkg/flags"
 	"github.com/mindersec/minder/pkg/profiles"
 	"github.com/mindersec/minder/pkg/profiles/models"
@@ -176,6 +178,13 @@ func (e *executor) evaluateRule(
 	// retrieve the rule type engine from the cache
 	ruleEngine, err := ruleEngineCache.GetRuleEngine(ctx, inf.ProjectID, rule.RuleTypeID)
 	if err != nil {
+		if errors.Is(err, rtenginev1.ErrProviderTraitNotSatisfied) {
+			// This rule type doesn't apply to this entity's provider.
+			// Produce zero evaluation-status footprint: no error, no
+			// skip record, nothing — stricter than the SkipSilently
+			// path, which still logs at info level.
+			return nil
+		}
 		return fmt.Errorf("error creating rule type engine: %w", err)
 	}
 
