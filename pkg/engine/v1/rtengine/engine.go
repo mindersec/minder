@@ -6,6 +6,7 @@ package rtengine
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"runtime/debug"
 
@@ -21,6 +22,10 @@ import (
 	"github.com/mindersec/minder/pkg/profiles"
 )
 
+// ErrProviderTraitNotSatisfied indicates that the provider does not
+// implement a trait required by the rule type's provider_traits.
+var ErrProviderTraitNotSatisfied = errors.New("provider trait not satisfied")
+
 // RuleMeta is the metadata for a rule
 // TODO: We probably should care about a version
 type RuleMeta struct {
@@ -33,18 +38,6 @@ type RuleMeta struct {
 // String returns a string representation of the rule meta
 func (r *RuleMeta) String() string {
 	return fmt.Sprintf("group/%s/%s", r.Project, r.Name)
-}
-
-// traitProvider is a package-local interface for providers that can report
-// which minder provider traits they implement. It is declared here, rather
-// than added to interfaces.Provider, because pkg/engine/v1/interfaces cannot
-// import minderv1 without creating an import cycle (minderv1 transitively
-// imports pkg/datasources/v1, which imports pkg/engine/v1/interfaces).
-// Every concrete provider implementation already has this exact method, so
-// they satisfy this interface structurally without any changes.
-type traitProvider interface {
-	// CanImplement returns true if the provider implements the given trait.
-	CanImplement(trait minderv1.ProviderType) bool
 }
 
 // RuleTypeEngine is the engine for a rule type. It builds the multiple
@@ -77,18 +70,10 @@ func NewRuleTypeEngine(
 		return nil, fmt.Errorf("rule type context must have a project")
 	}
 
-	if traits := ruletype.GetDef().GetProviderTraits(); len(traits) > 0 {
-		tp, ok := provider.(traitProvider)
-		if !ok {
-			return nil, fmt.Errorf(
-				"provider does not support trait checks required by rule type %s", ruletype.Name)
-		}
-		for _, trait := range traits {
-			if !tp.CanImplement(trait) {
-				return nil, fmt.Errorf(
-					"provider does not implement required trait %s for rule type %s",
-					trait.String(), ruletype.Name)
-			}
+	for _, trait := range ruletype.GetDef().GetProviderTraits() {
+		if !provider.CanImplement(trait) {
+			return nil, fmt.Errorf("%w: rule type %s requires provider trait %s",
+				ErrProviderTraitNotSatisfied, ruletype.Name, trait.String())
 		}
 	}
 
