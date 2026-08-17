@@ -9,16 +9,24 @@ import (
 
 	"google.golang.org/protobuf/types/known/structpb"
 
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
 
 const (
-	// DataSourceDriverStruct is the driver type for the structured data source
-	DataSourceDriverStruct = "structured"
+	// DataSourceDriverStruct is the driver type for the structured data source.
+	//
+	// Deprecated: use minderv1.DataSourceDriverStruct. Kept here as an alias so
+	// existing callers of this package don't break; the canonical definition
+	// lives in minderv1 to avoid an import cycle (minderv1 -> this package ->
+	// pkg/engine/v1/interfaces).
+	DataSourceDriverStruct = minderv1.DataSourceDriverStruct
 	// DataSourceDriverRest is the driver type for a REST data source.
-	DataSourceDriverRest = "rest"
+	//
+	// Deprecated: use minderv1.DataSourceDriverRest. See DataSourceDriverStruct.
+	DataSourceDriverRest = minderv1.DataSourceDriverRest
 )
 
 // DataSourceFuncKey is the key that uniquely identifies a data source function.

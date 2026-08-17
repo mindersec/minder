@@ -3,7 +3,12 @@
 
 package v1
 
-import v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
+const (
+	// DataSourceDriverStruct is the driver type for the structured data source.
+	DataSourceDriverStruct = "structured"
+	// DataSourceDriverRest is the driver type for a REST data source.
+	DataSourceDriverRest = "rest"
+)
 
 // GetContext returns the v2 context from the CreateDataSourceRequest data source.
 func (r *CreateDataSourceRequest) GetContext() *ContextV2 {
@@ -24,9 +29,9 @@ func (ds *DataSource) GetDriverType() string {
 
 	switch ds.GetDriver().(type) {
 	case *DataSource_Rest:
-		return v1datasources.DataSourceDriverRest
+		return DataSourceDriverRest
 	case *DataSource_Structured:
-		return v1datasources.DataSourceDriverStruct
+		return DataSourceDriverStruct
 	default:
 		return "unknown"
 	}

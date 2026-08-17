@@ -536,7 +536,7 @@ func addDataSourceFunctions(
 				DataSourceID: dsID,
 				ProjectID:    projectID,
 				Name:         name,
-				Type:         v1datasources.DataSourceDriverStruct,
+				Type:         minderv1.DataSourceDriverStruct,
 				Definition:   defBytes,
 			}); err != nil {
 				return fmt.Errorf("failed to create data source function: %w", err)
@@ -553,7 +553,7 @@ func addDataSourceFunctions(
 				DataSourceID: dsID,
 				ProjectID:    projectID,
 				Name:         name,
-				Type:         v1datasources.DataSourceDriverRest,
+				Type:         minderv1.DataSourceDriverRest,
 				Definition:   defBytes,
 			}); err != nil {
 				return fmt.Errorf("failed to create data source function: %w", err)
