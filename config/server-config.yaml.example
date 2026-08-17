@@ -16,7 +16,7 @@ metric_server:
 data_sources:
   rest:
     request_timeout: 5s
-    max_response_bytes: 1048576
+    max_response_bytes: 1MiB
 
 logging:
   level: "debug"

@@ -102,10 +102,14 @@ func AllInOneServerService(
 	profileSvc := profiles.NewProfileService(evt, selChecker)
 	ruleSvc := ruletypes.NewRuleTypeService(featureFlagClient)
 	roleScv := roles.NewRoleService()
+	restMaxResponseBytes, err := cfg.DataSources.REST.GetMaxResponseBytes()
+	if err != nil {
+		return fmt.Errorf("invalid REST data source configuration: %w", err)
+	}
 	dataSourcesSvc := datasourcessvc.NewDataSourceService(
 		store,
 		v1datasources.WithRESTRequestTimeout(cfg.DataSources.REST.RequestTimeout),
-		v1datasources.WithRESTMaxResponseBytes(cfg.DataSources.REST.MaxResponseBytes),
+		v1datasources.WithRESTMaxResponseBytes(restMaxResponseBytes),
 	)
 	marketplace, err := marketplaces.NewMarketplaceFromServiceConfig(cfg.Marketplace, profileSvc, ruleSvc, dataSourcesSvc)
 	if err != nil {
