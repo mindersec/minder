@@ -257,6 +257,8 @@ func (g *GitHubAppDelegate) ListAllRepositories(ctx context.Context) ([]*minderv
 
 		repos, resp, err = g.client.Apps.ListRepos(ctx, listOpt)
 
+		github.ObserveResponseRate(ctx, resp)
+
 		if err != nil {
 			return ghcommon.ConvertRepositories(allRepos), fmt.Errorf("error listing repositories: %w", err)
 		}

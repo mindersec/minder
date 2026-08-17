@@ -428,6 +428,7 @@ func (c *GitHub) ListFiles(
 	}
 
 	resp, err := performWithRetry(ctx, op)
+	ObserveResponseRate(ctx, resp.resp)
 	return resp.files, resp.resp, err
 }
 
@@ -570,6 +571,8 @@ func (c *GitHub) Do(ctx context.Context, req *http.Request) (*http.Response, err
 	if err != nil && resp == nil {
 		return nil, err
 	}
+
+	ObserveResponseRate(ctx, resp)
 
 	if resp.Response != nil {
 		resp.Body = io.NopCloser(&buf)
