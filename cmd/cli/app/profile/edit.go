@@ -95,7 +95,7 @@ func editCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	updatedBytes, err := os.ReadFile(tmpFile.Name())
+	updatedBytes, err := os.ReadFile(tmpFile.Name()) //nolint:gosec  // Confused on path traversal
 	if err != nil {
 		return cli.MessageAndError("Error reading updated temporary file", err)
 	}

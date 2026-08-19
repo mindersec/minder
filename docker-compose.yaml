@@ -29,7 +29,12 @@ services:
       - "8090:8090"
       - "9090:9090"
     volumes:
-      - ./server-config.yaml:/app/server-config.yaml:z
+      - type: bind
+        source: ./server-config.yaml
+        target: /app/server-config.yaml
+        bind:
+          selinux: Z
+          create_host_path: false
       - ./flags-config.yaml:/app/flags-config.yaml:z
       # If you don't want to store your GitHub client ID and secret in the main
       # config file, point to them here:
@@ -90,7 +95,12 @@ services:
       "--config=/app/server-config.yaml",
       ]
     volumes:
-      - ./server-config.yaml:/app/server-config.yaml:z
+      - type: bind
+        source: ./server-config.yaml
+        target: /app/server-config.yaml
+        bind:
+          selinux: Z
+          create_host_path: false
       - ./database/migrations:/app/database/migrations:z
     environment:
       - KO_DATA_PATH=/app/

@@ -6,6 +6,7 @@ package server_test
 import (
 	"bytes"
 	"testing"
+	"time"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -28,6 +29,10 @@ grpc_server:
 metric_server:
   host:	"myhost"
   port:	8668
+data_sources:
+  rest:
+    request_timeout: 12s
+    max_response_bytes: 2MiB
 `
 
 	cfgbuf := bytes.NewBufferString(cfgstr)
@@ -46,6 +51,11 @@ metric_server:
 	require.Equal(t, 8667, cfg.GRPCServer.Port)
 	require.Equal(t, "myhost", cfg.MetricServer.Host)
 	require.Equal(t, 8668, cfg.MetricServer.Port)
+	require.Equal(t, 12*time.Second, cfg.DataSources.REST.RequestTimeout)
+	require.Equal(t, "2MiB", cfg.DataSources.REST.MaxResponseBytes)
+	maxResponseBytes, err := cfg.DataSources.REST.GetMaxResponseBytes()
+	require.NoError(t, err)
+	require.Equal(t, int64(2<<20), maxResponseBytes)
 }
 
 func TestReadConfigWithDefaults(t *testing.T) {
@@ -164,6 +174,43 @@ func TestReadDefaultConfig(t *testing.T) {
 	require.Equal(t, "debug", cfg.LoggingConfig.Level)
 	require.Equal(t, "minder", cfg.Database.Name)
 	require.Equal(t, "./.ssh/token_key_passphrase", cfg.Auth.TokenKey)
+	require.Zero(t, cfg.DataSources.REST.RequestTimeout)
+	require.Empty(t, cfg.DataSources.REST.MaxResponseBytes)
+	maxResponseBytes, err := cfg.DataSources.REST.GetMaxResponseBytes()
+	require.NoError(t, err)
+	require.Zero(t, maxResponseBytes)
+}
+
+func TestRESTDataSourceConfigGetMaxResponseBytes(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		value   string
+		want    int64
+		wantErr string
+	}{
+		{name: "empty uses code default"},
+		{name: "IEC size", value: "1.5MiB", want: 1572864},
+		{name: "SI size", value: "2MB", want: 2000000},
+		{name: "invalid", value: "lots", wantErr: "parse max_response_bytes"},
+		{name: "overflow", value: "9EiB", wantErr: "exceeds the supported limit"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := serverconfig.RESTDataSourceConfig{MaxResponseBytes: tt.value}
+			got, err := cfg.GetMaxResponseBytes()
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tt.want, got)
+		})
+	}
 }
 
 const (

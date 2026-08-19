@@ -16,8 +16,10 @@ import (
 	"go.opentelemetry.io/otel/metric"
 )
 
-var blockedRequests metric.Int64Counter
-var metricsInit sync.Once
+var (
+	blockedRequests metric.Int64Counter
+	metricsInit     sync.Once
+)
 
 type dialContextFunc = func(ctx context.Context, network, addr string) (net.Conn, error)
 
@@ -63,7 +65,7 @@ func publicOnlyDialer(baseDialer dialContextFunc) dialContextFunc {
 		if !ok {
 			return nil, fmt.Errorf("remote address is not a TCP address")
 		}
-		if !remote.IP.IsGlobalUnicast() || remote.IP.IsLoopback() || remote.IP.IsPrivate() {
+		if NonPublicIP(remote.IP) {
 			// We do not need to lock because blockedRequests is initialized in a sync.Once
 			// which is called before this method
 			if blockedRequests != nil {
@@ -74,4 +76,25 @@ func publicOnlyDialer(baseDialer dialContextFunc) dialContextFunc {
 		}
 		return conn, err
 	}
+}
+
+// Documented in RFC 6598
+// May be used by e.g. Tailscale or Alibaba Cloud as "private"
+var cgNatPrefix = net.IPNet{
+	IP:   net.IP([]byte{100, 64, 0, 0}),
+	Mask: net.CIDRMask(10, 32),
+}
+
+// Documented in RFC 6052
+// There are many other ways to NAT64, so this is not completely authoritative.
+var nat64Prefix = net.IPNet{
+	IP:   net.ParseIP("64:ff9b::"),
+	Mask: net.CIDRMask(96, 128),
+}
+
+// NonPublicIP returns true if the IP is one of the assigned ranges for local /
+// non-internet communication.  This is somewhat heuristic, but protects calling
+// most services accessible to Minder but not to the public internet.
+func NonPublicIP(ip net.IP) bool {
+	return !ip.IsGlobalUnicast() || ip.IsLoopback() || ip.IsPrivate() || cgNatPrefix.Contains(ip) || nat64Prefix.Contains(ip)
 }

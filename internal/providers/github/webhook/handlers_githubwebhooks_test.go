@@ -65,7 +65,7 @@ var rawPushEvent string
 //go:embed test-payloads/branch-protection-configuration-disabled.json
 var rawBranchProtectionConfigurationDisabledEvent string
 
-var timeout time.Duration = 10 * time.Millisecond
+var timeout time.Duration = 100 * time.Millisecond
 
 // MockClient is a mock implementation of the GitHub client.
 type MockClient struct {

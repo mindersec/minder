@@ -146,6 +146,8 @@ func TestNewRuleTypeEngineCacheConstructor(t *testing.T) {
 func TestGetRuleEngine(t *testing.T) {
 	t.Parallel()
 
+	projectID := uuid.New()
+
 	scenarios := []struct {
 		Name            string
 		Cache           cacheType
@@ -160,38 +162,46 @@ func TestGetRuleEngine(t *testing.T) {
 		{
 			Name:          "Returns error when rule type does not exist",
 			Cache:         cacheType{},
-			DBSetup:       dbf.NewDBMock(withRuleTypeLookup(nil, sql.ErrNoRows)),
+			DBSetup:       dbf.NewDBMock(withRuleTypeLookup(nil, projectID, sql.ErrNoRows)),
 			ExpectedError: "unknown rule type with ID",
 		},
 		{
 			Name:          "Returns error when rule type lookup fails",
 			Cache:         cacheType{},
-			DBSetup:       dbf.NewDBMock(withRuleTypeLookup(nil, errTest)),
+			DBSetup:       dbf.NewDBMock(withRuleTypeLookup(nil, projectID, errTest)),
 			ExpectedError: "error creating rule type engine",
 		},
 		{
 			Name:          "Returns error when rule type cannot be parsed",
 			Cache:         cacheType{},
-			DBSetup:       dbf.NewDBMock(withRuleTypeLookup(&db.RuleType{}, nil)),
+			DBSetup:       dbf.NewDBMock(withRuleTypeLookup(&db.RuleType{}, projectID, nil)),
 			ExpectedError: "error parsing rule type when parsing rule type",
 		},
 		{
 			Name:          "Returns error when rule type engine cannot be instantiated",
 			Cache:         cacheType{},
-			DBSetup:       dbf.NewDBMock(withRuleTypeLookup(&malformedRuleType, nil)),
+			DBSetup:       dbf.NewDBMock(withRuleTypeLookup(&malformedRuleType, projectID, nil)),
 			ExpectedError: "error creating rule type engine",
 		},
 		{
 			Name:    "Creates rule type engine for missing rule type and caches it",
 			Cache:   cacheType{},
-			DBSetup: dbf.NewDBMock(withRuleTypeLookup(&ruleType, nil)),
+			DBSetup: dbf.NewDBMock(withRuleTypeLookup(&ruleType, projectID, nil)),
 		},
 		{
 			Name:            "Returns error when building data source registry fails",
 			Cache:           cacheType{},
-			DBSetup:         dbf.NewDBMock(withRuleTypeLookup(&ruleType, nil)),
+			DBSetup:         dbf.NewDBMock(withRuleTypeLookup(&ruleType, projectID, nil)),
 			dsRegistryError: errTest,
 			ExpectedError:   errTest.Error(),
+		},
+		{
+			Name:  "Returns error when reading project hierarchy fails",
+			Cache: cacheType{},
+			DBSetup: dbf.NewDBMock(func(mock dbf.DBMock) {
+				mock.EXPECT().GetParentProjects(gomock.Any(), projectID).Return(nil, errTest)
+			}),
+			ExpectedError: errTest.Error(),
 		},
 	}
 
@@ -222,7 +232,7 @@ func TestGetRuleEngine(t *testing.T) {
 				dssvc:       dssvc,
 			}
 
-			result, err := cache.GetRuleEngine(ctx, ruleTypeID)
+			result, err := cache.GetRuleEngine(ctx, projectID, ruleTypeID)
 			if scenario.ExpectedError != "" {
 				require.ErrorContains(t, err, scenario.ExpectedError)
 				require.Nil(t, result)
@@ -251,14 +261,18 @@ var (
 	}
 )
 
-func withRuleTypeLookup(ruleType *db.RuleType, err error) func(dbf.DBMock) {
+func withRuleTypeLookup(ruleType *db.RuleType, projectID uuid.UUID, err error) func(dbf.DBMock) {
 	return func(mock dbf.DBMock) {
 		var rt db.RuleType
 		if ruleType != nil {
 			rt = *ruleType
 		}
+		mock.EXPECT().GetParentProjects(gomock.Any(), projectID).Return([]uuid.UUID{projectID}, nil)
 		mock.EXPECT().
-			GetRuleTypeByID(gomock.Any(), ruleTypeID).
+			GetRuleTypeByID(gomock.Any(), db.GetRuleTypeByIDParams{
+				ID:       ruleTypeID,
+				Projects: []uuid.UUID{projectID},
+			}).
 			Return(rt, err)
 	}
 }

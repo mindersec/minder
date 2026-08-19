@@ -8,9 +8,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lestrrat-go/jwx/v2/jwk"
-	"github.com/lestrrat-go/jwx/v2/jwt"
-	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"github.com/lestrrat-go/httprc/v3"
+	"github.com/lestrrat-go/jwx/v3/jwk"
+	"github.com/lestrrat-go/jwx/v3/jwt"
+	"github.com/lestrrat-go/jwx/v3/jwt/openid"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -41,7 +42,7 @@ type KeySetCache struct {
 
 // GetKeySet returns the caches JWK set
 func (k *KeySetCache) GetKeySet() (jwk.Set, error) {
-	return k.jwksCache.Get(k.ctx, k.jwksUrl)
+	return k.jwksCache.Lookup(k.ctx, k.jwksUrl)
 }
 
 // ParseAndValidate validates a token string and returns an openID token, or an error if the token is invalid
@@ -67,7 +68,7 @@ func (j *JwkSetJwtValidator) ParseAndValidate(tokenString string) (openid.Token,
 		return nil, fmt.Errorf("provided token was not an OpenID token")
 	}
 
-	if openIdToken.Subject() == "" {
+	if sub, ok := openIdToken.Subject(); !ok || sub == "" {
 		return nil, fmt.Errorf("provided token is missing required subject claim")
 	}
 
@@ -78,9 +79,11 @@ func (j *JwkSetJwtValidator) ParseAndValidate(tokenString string) (openid.Token,
 func NewJwtValidator(ctx context.Context, jwksUrl string, issUrl string, aud string) (Validator, error) {
 	// Cache the JWK set
 	// The cache will refresh every 15 minutes by default
-	jwks := jwk.NewCache(ctx)
-	err := jwks.Register(jwksUrl)
+	jwks, err := jwk.NewCache(ctx, httprc.NewClient(httprc.WithWhitelist(httprc.NewMapWhitelist().Add(jwksUrl))))
 	if err != nil {
+		return nil, err
+	}
+	if err := jwks.Register(ctx, jwksUrl); err != nil {
 		return nil, err
 	}
 
@@ -114,12 +117,10 @@ func GetUserClaimFromContext[T any](ctx context.Context, claim string) (T, bool)
 	if !ok {
 		return ret, false
 	}
-	data, ok := token.Get(claim)
-	if !ok {
+	if err := token.Get(claim, &ret); err != nil {
 		return ret, false
 	}
-	ret, ok = data.(T)
-	return ret, ok
+	return ret, true
 }
 
 // WithAuthTokenContext stores the specified user-identifying token in the context.
@@ -133,7 +134,9 @@ func GetUserEmailFromContext(ctx context.Context) (string, error) {
 	if !ok {
 		return "", fmt.Errorf("no user token in context")
 	}
-	return token.Email(), nil
+	// The default empty-string is fine, so we don't need to check if the field was present.
+	email, _ := token.Email()
+	return email, nil
 }
 
 // GetUserTokenFromContext returns the user token from the context

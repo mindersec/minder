@@ -8,8 +8,8 @@ import (
 	"crypto/rsa"
 	"testing"
 
-	"github.com/lestrrat-go/jwx/v2/jwa"
-	"github.com/lestrrat-go/jwx/v2/jwk"
+	"github.com/lestrrat-go/jwx/v3/jwa"
+	"github.com/lestrrat-go/jwx/v3/jwk"
 	"go.uber.org/mock/gomock"
 
 	mockjwt "github.com/mindersec/minder/internal/auth/jwt/mock"
@@ -31,14 +31,13 @@ func init() {
 
 func FuzzParseAndValidate(f *testing.F) {
 	f.Fuzz(func(t *testing.T, pubKeyId, privKeyId, token string) {
-
-		privateJwk, _ := jwk.FromRaw(privateKey)
+		privateJwk, _ := jwk.Import(privateKey)
 		err := privateJwk.Set(jwk.KeyIDKey, privKeyId)
 		if err != nil {
 			return
 		}
 
-		publicJwk, _ := jwk.FromRaw(publicKey)
+		publicJwk, _ := jwk.Import(publicKey)
 		err = publicJwk.Set(jwk.KeyIDKey, pubKeyId)
 		if err != nil {
 			return

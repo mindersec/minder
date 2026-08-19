@@ -1057,7 +1057,7 @@ service ProvidersService {
 
         option (minder.v1.rpc_options) = {
             target_resource: TARGET_RESOURCE_PROJECT
-            relation: RELATION_REPO_DELETE
+            relation: RELATION_PROVIDER_DELETE
         };
     }
 
@@ -2650,6 +2650,16 @@ message RuleType {
                 max_len: 200,
             }
         ];
+
+        // provider_traits declares the provider trait(s) this rule type
+        // requires an implementation of (e.g. "github", "git", "oci").
+        // This is AND semantics: a rule type requires an implementation of
+        // every listed trait, not just one of them. For example, a rule
+        // type requiring ["git", "github"] needs a provider that
+        // implements both traits (e.g. to read repo contents via git and
+        // call a forge-specific API via github). If empty, the rule type
+        // is not gated by provider traits.
+        repeated ProviderType provider_traits = 8;
 
         // rule_schema is the schema of the rule. This is expressed in JSON Schema.
         google.protobuf.Struct rule_schema = 2;

@@ -193,6 +193,84 @@ For more information on the rego print statement, the following blog post is a
 good resource:
 [Introducing the OPA print function](https://blog.openpolicyagent.org/introducing-the-opa-print-function-809da6a13aee)
 
+## Testing with Starlark
+
+In addition to evaluating rules against a single entity, `mindev test` is the supported mechanism for verifying rule behavior, and is designed for integration into CI/CD pipelines as well as standalone usage. It allows you to run comprehensive tests written in [Starlark](https://github.com/bazelbuild/starlark/blob/master/spec.md) (a Python-like configuration language) against your rule types, letting you mock external systems like GitHub REST/GraphQL APIs and Git filesystems.
+
+For a full guide on testing rules, including CI setup and runtime builtin references, see [Testing Rules](./testing-rules.md).
+
+You can run your Starlark tests using the following command:
+
+```bash
+mindev test /path/to/test.star
+```
+
+By default, `mindev test .` will recursively find and run all `*_test.star` files in the current directory and its subdirectories.
+
+### Writing Starlark Tests
+
+Test files use Starlark. A basic test file looks like this:
+
+```python
+# test_rule.star
+def test_valid_case():
+    # 1. Define the input entity
+    entity = {
+        "name": "minder",
+        "owner": "mindersec"
+    }
+
+    # 2. Mock external HTTP calls
+    def mock_http():
+        return {
+            "/repos/mindersec/minder/branches/main/protection": body({
+                "enforce_admins": {"enabled": True}
+            })
+        }
+
+    # 3. Call the `eval` builtin to run the rule
+    result = eval(
+        rule="branch_protection_enforce_admins",
+        entity=entity,
+        mock_http=mock_http()
+    )
+
+    # 4. Assert the result
+    assert result["status"] == "pass", "Expected rule to pass"
+
+def test_failure_case():
+    result = eval(...)
+    assert result["status"] == "fail", "Expected rule to fail"
+```
+
+The `eval` builtin takes the following arguments:
+
+**Required:**
+- `rule`: The name or path of the rule type to evaluate (e.g. `"branch_protection_enforce_admins"`)
+
+**Optional:**
+- `entity`: The entity object dictionary to evaluate against
+- `profile`: Profile configuration dictionary to evaluate rule parameters
+- `params`: Rule parameters dictionary (matches the `param_schema`)
+- `mock_http`: A dictionary mapping endpoint paths to mock HTTP responses created via `body()` or `code()`
+- `mock_fs`: A dictionary mocking git filesystem contents for `git` ingest rules
+- `data_sources`: A list of datasource YAML paths required by the rule
+
+The return value of `eval` is a dictionary containing:
+- `status`: `"pass"`, `"fail"`, `"skip"`, or `"error"`
+- `message`: Detailed error or failure message (if any)
+- `output`: Evaluation output value (if any)
+
+### JUnit Output
+
+If you want to use the test output in CI/CD pipelines, you can generate a JUnit XML report:
+
+```bash
+mindev test . --junit-file report.xml
+```
+
+This will write the standard text output to your terminal, and output a structured `report.xml` file containing the test results.
+
 ## Conclusion
 
 Mindev is a powerful tool that helps you develop and debug rule types for

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	"go.starlark.net/starlark"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -57,7 +58,7 @@ func (tr *testCaseRunner) builtinEval(
 		return nil, fmt.Errorf("invalid profile argument: %w", err)
 	}
 
-	var paramsMap map[string]any
+	paramsMap := make(map[string]any)
 	if paramsDict != nil {
 		paramsMap, err = dictToGoMap(paramsDict)
 		if err != nil {
@@ -88,7 +89,7 @@ func (tr *testCaseRunner) builtinEval(
 	}
 	tk := tkv1.NewTestKit(tkOpts...)
 
-	dsRegistry, err := buildDataSourceRegistry(datasourcesList, tk)
+	dsRegistry, err := buildDataSourceRegistry(datasourcesList, tk, tr.baseDir)
 	if err != nil {
 		return nil, fmt.Errorf("invalid data_sources argument: %w", err)
 	}
@@ -161,7 +162,9 @@ func parseMockFSDict(mockFSDict *starlark.Dict) (map[string]string, error) {
 	return mockFSMap, nil
 }
 
-func buildDataSourceRegistry(datasourcesList *starlark.List, tk *tkv1.TestKit) (*v1datasources.DataSourceRegistry, error) {
+func buildDataSourceRegistry(
+	datasourcesList *starlark.List, tk *tkv1.TestKit, baseDir string,
+) (*v1datasources.DataSourceRegistry, error) {
 	registry := v1datasources.NewDataSourceRegistry()
 	if datasourcesList == nil {
 		return registry, nil
@@ -174,6 +177,9 @@ func buildDataSourceRegistry(datasourcesList *starlark.List, tk *tkv1.TestKit) (
 		}
 
 		path := string(pathStr)
+		if !filepath.IsAbs(path) {
+			path = filepath.Join(baseDir, path)
+		}
 
 		ds, err := loadDataSource(path)
 		if err != nil {

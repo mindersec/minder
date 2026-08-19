@@ -37,6 +37,7 @@ type Config struct {
 	DefaultProfiles DefaultProfilesConfig `mapstructure:"default_profiles"`
 	Crypto          CryptoConfig          `mapstructure:"crypto"`
 	Email           EmailConfig           `mapstructure:"email"`
+	DataSources     DataSourceConfig      `mapstructure:"data_sources"`
 }
 
 // DefaultConfigForTest returns a configuration with all the struct defaults set,

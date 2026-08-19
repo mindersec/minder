@@ -4,7 +4,12 @@
 package rest
 
 import (
+	"context"
+	"io"
+	"net/http"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,6 +21,12 @@ import (
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 	mock_v1 "github.com/mindersec/minder/pkg/providers/v1/mock"
 )
+
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
 
 func TestNewRestDataSource(t *testing.T) {
 	t.Parallel()
@@ -203,4 +214,46 @@ func TestNewRestDataSource(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNewRestDataSourceAppliesServerLimits(t *testing.T) {
+	t.Parallel()
+
+	const (
+		responseLimit  = int64(4)
+		requestTimeout = 3 * time.Second
+	)
+
+	deadlineSeen := make(chan time.Duration, 1)
+	transport := roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		deadline, ok := req.Context().Deadline()
+		require.True(t, ok, "REST request is missing the configured timeout")
+		deadlineSeen <- time.Until(deadline)
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader("abcdefgh")),
+			Request:    req,
+		}, nil
+	})
+
+	ds, err := NewRestDataSource(
+		&minderv1.RestDataSource{Def: map[string]*minderv1.RestDataSource_Def{
+			"get_data": {Endpoint: "https://api.example.com/data"},
+		}},
+		nil,
+		v1datasources.WithTestOnlyTransport(transport),
+		v1datasources.WithRESTRequestTimeout(requestTimeout),
+		v1datasources.WithRESTMaxResponseBytes(responseLimit),
+	)
+	require.NoError(t, err)
+
+	handler := ds.GetFuncs()[v1datasources.DataSourceFuncKey("get_data")]
+	got, err := handler.Call(context.Background(), nil, map[string]any{})
+	require.NoError(t, err)
+	require.Equal(t, buildRestOutput(http.StatusOK, "abcd"), got)
+
+	remaining := <-deadlineSeen
+	require.Positive(t, remaining)
+	require.LessOrEqual(t, remaining, requestTimeout)
+	require.Greater(t, remaining, 2*time.Second)
 }

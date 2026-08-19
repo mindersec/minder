@@ -29,8 +29,8 @@ import (
 
 // TokenValidationInterceptor is a server interceptor that validates the bearer token
 func (s *Server) TokenValidationInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
-	handler grpc.UnaryHandler) (any, error) {
-
+	handler grpc.UnaryHandler,
+) (any, error) {
 	opts, err := optionsForMethod(info)
 	if err != nil {
 		// Fail closed safely, rather than log and proceed.
@@ -96,7 +96,8 @@ func (s *Server) TokenValidationInterceptor(ctx context.Context, req interface{}
 	ctx = jwt.WithAuthTokenContext(ctx, parsedToken)
 
 	// Attach the login sha for telemetry usage (hash of the user subject from the JWT)
-	loginSHA := sha256.Sum256([]byte(parsedToken.Subject()))
+	sub, _ := parsedToken.Subject()
+	loginSHA := sha256.Sum256([]byte(sub))
 	logger.BusinessRecord(ctx).LoginHash = hex.EncodeToString(loginSHA[:])
 
 	return handler(ctx, req)

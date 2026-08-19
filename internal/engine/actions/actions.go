@@ -11,8 +11,12 @@ import (
 	"errors"
 	"fmt"
 	"runtime/debug"
+	"sync"
+	"time"
 
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/metric"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/internal/engine/actions/alert"
@@ -24,6 +28,13 @@ import (
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/profiles/models"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
+)
+
+const remediationRetryCooloff = 5 * time.Minute
+
+var (
+	remediationCooloffHits metric.Int64Counter
+	actionMetricsInit      sync.Once
 )
 
 // RuleActionsEngine is the engine responsible for processing all actions i.e., remediation and alerts
@@ -38,6 +49,18 @@ func NewRuleActions(
 	provider provinfv1.Provider,
 	actionConfig *models.ActionConfiguration,
 ) (*RuleActionsEngine, error) {
+	actionMetricsInit.Do(func() {
+		var err error
+		remediationCooloffHits, err = otel.Meter("minder").Int64Counter(
+			"actions.remediation_cooloff_hits",
+			metric.WithDescription("Number of remediation retries skipped during the cooloff period"),
+			metric.WithUnit("count"),
+		)
+		if err != nil {
+			zerolog.Ctx(context.Background()).Warn().Err(err).Msg("Creating counter for remediation cooloff hits failed")
+		}
+	})
+
 	// Create the remediation engine
 	remEngine, err := remediate.NewRuleRemediator(ruletype, provider, actionConfig.Remediate)
 	if err != nil {
@@ -94,10 +117,11 @@ func (rae *RuleActionsEngine) DoActions(
 
 	if row := params.GetEvalStatusFromDb(); row != nil {
 		prev = &previousEval{
-			RemediationStatus: RemediationStatus(row.RemStatus),
-			AlertStatus:       AlertStatus(row.AlertStatus),
-			RemediationMeta:   row.RemMetadata,
-			AlertMeta:         row.AlertMetadata,
+			RemediationStatus:      RemediationStatus(row.RemStatus),
+			RemediationLastUpdated: row.RemLastUpdated,
+			AlertStatus:            AlertStatus(row.AlertStatus),
+			RemediationMeta:        row.RemMetadata,
+			AlertMeta:              row.AlertMetadata,
 		}
 	}
 	status := mapEvalStatus(params.GetEvalErr())
@@ -105,7 +129,10 @@ func (rae *RuleActionsEngine) DoActions(
 	// Try remediating
 	if !skipRemediate {
 		// Decide if we should remediate
-		cmd := shouldRemediate(prev, status)
+		cmd, cooloffHit := shouldRemediate(prev, status, time.Now())
+		if cooloffHit && remediationCooloffHits != nil {
+			remediationCooloffHits.Add(ctx, 1)
+		}
 		// Run remediation
 		result.RemediateMeta, result.RemediateErr = rae.processAction(ctx, remediate.ActionType, cmd, ent, params,
 			getRemediationMeta(prev))
@@ -147,7 +174,7 @@ func (rae *RuleActionsEngine) processAction(
 }
 
 // shouldRemediate returns the action command for remediation taking into account previous evaluations
-func shouldRemediate(prevEval *previousEval, evalStatus EvalStatus) engif.ActionCmd {
+func shouldRemediate(prevEval *previousEval, evalStatus EvalStatus, now time.Time) (engif.ActionCmd, bool) {
 	// Get previous Remediation status
 	prevRemediation := RemediationStatusSkipped
 	if prevEval != nil {
@@ -165,25 +192,31 @@ func shouldRemediate(prevEval *previousEval, evalStatus EvalStatus) engif.Action
 		// Case 3 - Evaluation changed from something else to PASSING -> Remediation should be OFF
 		// The Remediation should be OFF (if it wasn't already)
 		if RemediationStatusSkipped != prevRemediation {
-			return engif.ActionCmdOff
+			return engif.ActionCmdOff, false
 		}
 		// We should do nothing if remediation was already skipped
-		return engif.ActionCmdDoNothing
+		return engif.ActionCmdDoNothing, false
 	case EvalStatusFailure:
 		// Case 4 - Evaluation has changed from something else to FAILED -> Remediation should be ON
-		// We should remediate only if the previous remediation was skipped, so we don't risk endless remediation loops
 		if RemediationStatusSkipped == prevRemediation {
-			return engif.ActionCmdOn
+			return engif.ActionCmdOn, false
 		}
-		// Do nothing if the Remediation is something else other than skipped, i.e. pending, success, error, etc.
-		return engif.ActionCmdDoNothing
+		// Retry failed remediations after a cooloff so immediate re-evaluations cannot busy-loop.
+		if RemediationStatusError == prevRemediation {
+			if now.Before(prevEval.RemediationLastUpdated.Add(remediationRetryCooloff)) {
+				return engif.ActionCmdDoNothing, true
+			}
+			return engif.ActionCmdOn, false
+		}
+		// Do nothing while remediation is pending or after it has completed.
+		return engif.ActionCmdDoNothing, false
 	case EvalStatusSkipped:
 	case EvalStatusPending:
-		return engif.ActionCmdDoNothing
+		return engif.ActionCmdDoNothing, false
 	}
 
 	// Default to do nothing
-	return engif.ActionCmdDoNothing
+	return engif.ActionCmdDoNothing, false
 }
 
 // shouldAlert returns the action command for alerting taking into account previous evaluations

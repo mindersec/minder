@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 	"golang.org/x/oauth2/clientcredentials"
 
 	"github.com/mindersec/minder/internal/auth"
@@ -61,8 +61,10 @@ func NewKeyCloak(name string, cfg serverconfig.IdentityConfig) (*KeyCloak, error
 	}, nil
 }
 
-var _ auth.IdentityManager = (*KeyCloak)(nil)
-var _ auth.IdentityProvider = (*KeyCloak)(nil)
+var (
+	_ auth.IdentityManager  = (*KeyCloak)(nil)
+	_ auth.IdentityProvider = (*KeyCloak)(nil)
+)
 
 // String implements auth.IdentityProvider.
 func (k *KeyCloak) String() string {
@@ -124,17 +126,17 @@ func (k *KeyCloak) ResolveFederated(ctx context.Context, federatedIdP, id string
 func (k *KeyCloak) Validate(_ context.Context, token jwt.Token) (*auth.Identity, error) {
 	// TODO: implement validating the JWT against the jwks.
 	// Note: Currently, JWTs are validated before this method is called within internal/auth/jwt/validator.go.
-
-	humanName, ok := token.Get("preferred_username")
-	if !ok {
+	var humanStr string
+	err := token.Get("preferred_username", &humanStr)
+	if err != nil {
 		return nil, errors.New("preferred_username not found in token")
 	}
-	humanStr, ok := humanName.(string)
-	if !ok {
-		return nil, errors.New("preferred_username is not a string")
+	sub, ok := token.Subject()
+	if !ok || sub == "" {
+		return nil, errors.New("token has no subject")
 	}
 	return &auth.Identity{
-		UserID:    token.Subject(),
+		UserID:    sub,
 		HumanName: humanStr,
 		Provider:  k,
 	}, nil
