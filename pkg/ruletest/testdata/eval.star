@@ -36,13 +36,18 @@ def test_eval_error_404():
     assert.eq(res["status"], "fail")
     assert.true(res["message"] != "")
 
-# branch_protection_reviews declares provider_traits: [PROVIDER_TYPE_GITHUB].
-# When the test provider doesn't implement that trait, rule type engine
-# construction should fail (raising a Starlark error), not silently skip.
-def test_fail_eval_missing_provider_trait():
-    eval(
+# branch_protection_reviews declares provider_traits: [github]. When
+# provider_traits_present lists other traits but excludes it, the rule type
+# is not applicable to the test provider, and eval() reports a skip rather
+# than pass/fail/error. This also exercises parseProviderTraitsList against
+# real short trait names (the same spelling used in rule type YAML), not
+# just the trivial empty-list case.
+def test_skip_eval_missing_provider_trait():
+    res = eval(
         rule="branch_protection_reviews",
         entity={"owner": "test", "name": "repo"},
         profile={"required_reviews": 2},
-        provider_missing_traits=["PROVIDER_TYPE_GITHUB"],
+        provider_traits_present=["git", "rest"],
     )
+    assert.eq(res["status"], "skip")
+    assert.true(res["message"] != "")
