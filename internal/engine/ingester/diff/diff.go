@@ -25,7 +25,6 @@ import (
 	scalibr_fs "github.com/google/osv-scalibr/fs"
 	scalibr_plugin "github.com/google/osv-scalibr/plugin"
 	scalibr_config "github.com/google/osv-scalibr/plugin/config"
-
 	"github.com/google/osv-scalibr/plugin/list"
 	"github.com/google/osv-scalibr/purl"
 	"github.com/rs/zerolog"

@@ -89,8 +89,8 @@ func scanFilesystem(ctx context.Context, iofs fs.FS) (*sbom.NodeList, error) {
 		return slices.Contains(skipPlugins, p.Name())
 	})
 	// Ugly way to get statistics from each plugin, see https://github.com/google/osv-scalibr/issues/2316
-	stats := errorStats{}
-	patchExtractorStats(plugins, &stats)
+	errStats := errorStats{}
+	patchExtractorStats(plugins, &errStats)
 	scanConfig := scalibr.ScanConfig{
 		ScanRoots:    []*scalibr_fs.ScanRoot{&scalibrFs},
 		Plugins:      plugins,
@@ -124,7 +124,7 @@ func scanFilesystem(ctx context.Context, iofs fs.FS) (*sbom.NodeList, error) {
 		return nil, fmt.Errorf("error scanning files: %s", scanResults.Status)
 	}
 
-	for _, statErr := range stats.errs {
+	for _, statErr := range errStats.errs {
 		zerolog.Ctx(ctx).Info().
 			Str("plugin", statErr.plugin).Str("path", statErr.path).Str("res", string(statErr.result)).
 			Msg("Scalibr require warning on file")
@@ -167,7 +167,7 @@ func scanFilesystem(ctx context.Context, iofs fs.FS) (*sbom.NodeList, error) {
 // Monkey-patch the plugins with stats.Collector, as Scalibr does not provide a nice interface
 // for setting the collector which almost every plugin exposes.
 // See https://github.com/google/osv-scalibr/issues/2316
-func patchExtractorStats(plugins []scalibr_plugin.Plugin, stats stats.Collector) {
+func patchExtractorStats(plugins []scalibr_plugin.Plugin, collector stats.Collector) {
 	for _, p := range plugins {
 		v := reflect.ValueOf(p)
 		if v.Kind() != reflect.Ptr || v.IsNil() {
@@ -181,7 +181,7 @@ func patchExtractorStats(plugins []scalibr_plugin.Plugin, stats stats.Collector)
 		if !statsField.IsValid() || !statsField.CanSet() {
 			continue
 		}
-		collectorVal := reflect.ValueOf(stats)
+		collectorVal := reflect.ValueOf(collector)
 		if collectorVal.Type().AssignableTo(statsField.Type()) {
 			statsField.Set(collectorVal)
 			continue
@@ -206,10 +206,10 @@ type errorStats struct {
 }
 
 // AfterDetectorRun implements [stats.Collector].
-func (e *errorStats) AfterDetectorRun(name string, runtime time.Duration, err error) {}
+func (*errorStats) AfterDetectorRun(string, time.Duration, error) {}
 
 // AfterExtractorRun implements [stats.Collector].
-func (e *errorStats) AfterExtractorRun(pluginName string, extractorstats *stats.AfterExtractorStats) {
+func (*errorStats) AfterExtractorRun(string, *stats.AfterExtractorStats) {
 }
 
 // AfterFileExtracted implements [stats.Collector].
@@ -227,13 +227,13 @@ func (e *errorStats) AfterFileRequired(pluginName string, filestats *stats.FileR
 }
 
 // AfterInodeVisited implements [stats.Collector].
-func (e *errorStats) AfterInodeVisited(path string) {}
+func (*errorStats) AfterInodeVisited(string) {}
 
 // AfterResultsExported implements [stats.Collector].
-func (e *errorStats) AfterResultsExported(destination string, bytes int, err error) {}
+func (*errorStats) AfterResultsExported(string, int, error) {}
 
 // AfterScan implements [stats.Collector].
-func (e *errorStats) AfterScan(runtime time.Duration, status *scalibr_plugin.ScanStatus) {}
+func (*errorStats) AfterScan(time.Duration, *scalibr_plugin.ScanStatus) {}
 
 // MaxRSS implements [stats.Collector].
 func (e *errorStats) MaxRSS(maxRSS int64) {
@@ -247,12 +247,12 @@ var _ http.RoundTripper = (*DisabledClientFactory)(nil)
 var _ grpc.ClientConnInterface = (*DisabledClientFactory)(nil)
 
 // GRPCClientConn implements [config.ClientFactories].
-func (d *DisabledClientFactory) GRPCClientConn(url string, dialOpts ...grpc.DialOption) (grpc.ClientConnInterface, error) {
+func (d *DisabledClientFactory) GRPCClientConn(string, ...grpc.DialOption) (grpc.ClientConnInterface, error) {
 	return d, nil
 }
 
 // GoogleHTTPClient implements [config.ClientFactories].
-func (d *DisabledClientFactory) GoogleHTTPClient(ctx context.Context, scope ...string) (*http.Client, error) {
+func (*DisabledClientFactory) GoogleHTTPClient(context.Context, ...string) (*http.Client, error) {
 	return nil, errors.New("network access is prohibited")
 }
 
@@ -263,16 +263,16 @@ func (d *DisabledClientFactory) HTTPClient() *http.Client {
 }
 
 // RoundTrip implements [http.RoundTripper].
-func (d *DisabledClientFactory) RoundTrip(*http.Request) (*http.Response, error) {
+func (*DisabledClientFactory) RoundTrip(*http.Request) (*http.Response, error) {
 	return nil, errors.New("network access is prohibited")
 }
 
 // Invoke implements [grpc.ClientConnInterface].
-func (d *DisabledClientFactory) Invoke(ctx context.Context, method string, args any, reply any, opts ...grpc.CallOption) error {
+func (*DisabledClientFactory) Invoke(context.Context, string, any, any, ...grpc.CallOption) error {
 	return errors.New("network access is prohibited")
 }
 
 // NewStream implements [grpc.ClientConnInterface].
-func (d *DisabledClientFactory) NewStream(ctx context.Context, desc *grpc.StreamDesc, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+func (*DisabledClientFactory) NewStream(context.Context, *grpc.StreamDesc, string, ...grpc.CallOption) (grpc.ClientStream, error) {
 	return nil, errors.New("network access is prohibited")
 }
