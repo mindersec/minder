@@ -21,6 +21,7 @@ require (
 	github.com/cloudevents/sdk-go/observability/opentelemetry/v2 v2.16.2
 	github.com/cloudevents/sdk-go/protocol/nats_jetstream/v2 v2.16.2
 	github.com/cloudevents/sdk-go/v2 v2.16.2
+	github.com/dustin/go-humanize v1.0.1
 	github.com/erikgeiser/promptkit v0.12.0
 	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/fergusstrange/embedded-postgres v1.34.0
@@ -192,7 +193,6 @@ require (
 	github.com/docker/go-connections v0.7.0 // indirect
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/edsrzf/mmap-go v1.1.0 // indirect
 	github.com/elliotchance/orderedmap v1.8.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect

@@ -3,19 +3,38 @@
 
 package v1
 
-import "net/http"
+import (
+	"net/http"
+	"time"
+)
 
 // Option is a functional option for configuring a data source
 type Option func(*Options)
 
 // Options contains configuration for a data source
 type Options struct {
-	TestOnlyTransport http.RoundTripper
+	TestOnlyTransport    http.RoundTripper
+	RESTRequestTimeout   time.Duration
+	RESTMaxResponseBytes int64
 }
 
 // WithTestOnlyTransport sets a custom HTTP transport, primarily used for testing.
 func WithTestOnlyTransport(transport http.RoundTripper) Option {
 	return func(opts *Options) {
 		opts.TestOnlyTransport = transport
+	}
+}
+
+// WithRESTRequestTimeout sets the server-controlled timeout for REST data source requests.
+func WithRESTRequestTimeout(timeout time.Duration) Option {
+	return func(opts *Options) {
+		opts.RESTRequestTimeout = timeout
+	}
+}
+
+// WithRESTMaxResponseBytes sets the server-controlled response body limit for REST data sources.
+func WithRESTMaxResponseBytes(limit int64) Option {
+	return func(opts *Options) {
+		opts.RESTMaxResponseBytes = limit
 	}
 }
