@@ -6,7 +6,6 @@ package rtengine
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"runtime/debug"
 
@@ -21,10 +20,6 @@ import (
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/profiles"
 )
-
-// ErrProviderTraitNotSatisfied indicates that the provider does not
-// implement a trait required by the rule type's provider_traits.
-var ErrProviderTraitNotSatisfied = errors.New("provider trait not satisfied")
 
 // RuleMeta is the metadata for a rule
 // TODO: We probably should care about a version
@@ -57,6 +52,11 @@ type RuleTypeEngine struct {
 	ruletype *minderv1.RuleType
 
 	ingestCache ingestcache.Cache
+
+	// supportedByProvider records whether the provider this engine was
+	// built with implements every trait the rule type declares in
+	// provider_traits. Computed once at construction time.
+	supportedByProvider bool
 }
 
 // NewRuleTypeEngine creates a new rule type engine
@@ -70,10 +70,28 @@ func NewRuleTypeEngine(
 		return nil, fmt.Errorf("rule type context must have a project")
 	}
 
+	supportedByProvider := true
 	for _, trait := range ruletype.GetDef().GetProviderTraits() {
-		if !provider.CanImplement(trait) {
-			return nil, fmt.Errorf("%w: rule type %s requires provider trait %s",
-				ErrProviderTraitNotSatisfied, ruletype.Name, trait.String())
+		providerTrait, ok := minderv1.ProviderTypeFromString(trait)
+		if !ok {
+			// A trait name that doesn't map to any known ProviderType is
+			// almost certainly a typo. Rule type creation validates
+			// against this (see ruletypes.validateProviderTraits), but
+			// rule types already stored before that validation existed,
+			// or any path that bypasses it, would otherwise fail this
+			// exact same way with no signal anywhere that anything is
+			// wrong. Treat it as unsupported, same as a provider that
+			// doesn't implement the trait, but log it so it's visible.
+			zerolog.Ctx(ctx).Warn().
+				Str("rule_type", ruletype.GetName()).
+				Str("provider_trait", trait).
+				Msg("rule type declares an unknown provider trait; treating as unsupported")
+			supportedByProvider = false
+			break
+		}
+		if !provider.CanImplement(providerTrait) {
+			supportedByProvider = false
+			break
 		}
 	}
 
@@ -102,9 +120,17 @@ func NewRuleTypeEngine(
 		ruleEvaluator: evaluator,
 		ruletype:      ruletype,
 		ingestCache:   ingestcache.NewNoopCache(),
+
+		supportedByProvider: supportedByProvider,
 	}
 
 	return rte, nil
+}
+
+// SupportedByProvider reports whether the provider this engine was built
+// with implements every trait the rule type declares in provider_traits.
+func (r *RuleTypeEngine) SupportedByProvider() bool {
+	return r.supportedByProvider
 }
 
 // WithIngesterCache sets the ingester cache for the rule type engine

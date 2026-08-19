@@ -160,7 +160,7 @@ allow if {
 func TestNewRuleTypeEngineProviderTraits(t *testing.T) {
 	t.Parallel()
 
-	newRuleType := func(traits ...minderv1.ProviderType) *minderv1.RuleType {
+	newRuleType := func(traits ...string) *minderv1.RuleType {
 		return &minderv1.RuleType{
 			Name: "test-rule",
 			Context: &minderv1.Context{
@@ -190,10 +190,10 @@ default allow := false
 	}
 
 	tests := []struct {
-		name         string
-		ruleType     *minderv1.RuleType
-		canImplement func(trait minderv1.ProviderType) bool
-		wantErr      bool
+		name          string
+		ruleType      *minderv1.RuleType
+		canImplement  func(trait minderv1.ProviderType) bool
+		wantSupported bool
 	}{
 		{
 			name:     "no provider_traits is unaffected",
@@ -201,29 +201,38 @@ default allow := false
 			canImplement: func(minderv1.ProviderType) bool {
 				return false
 			},
-			wantErr: false,
+			wantSupported: true,
 		},
 		{
-			name: "provider satisfies all required traits",
-			ruleType: newRuleType(
-				minderv1.ProviderType_PROVIDER_TYPE_GIT,
-				minderv1.ProviderType_PROVIDER_TYPE_GITHUB,
-			),
+			name:     "provider satisfies all required traits",
+			ruleType: newRuleType("git", "github"),
 			canImplement: func(minderv1.ProviderType) bool {
 				return true
 			},
-			wantErr: false,
+			wantSupported: true,
 		},
 		{
-			name: "provider missing a required trait",
-			ruleType: newRuleType(
-				minderv1.ProviderType_PROVIDER_TYPE_GIT,
-				minderv1.ProviderType_PROVIDER_TYPE_GITHUB,
-			),
+			name:     "provider missing a required trait",
+			ruleType: newRuleType("git", "github"),
 			canImplement: func(trait minderv1.ProviderType) bool {
 				return trait != minderv1.ProviderType_PROVIDER_TYPE_GITHUB
 			},
-			wantErr: true,
+			wantSupported: false,
+		},
+		{
+			// Defensive path: rule type creation validates provider_traits
+			// (see ruletypes.validateProviderTraits), so this shouldn't
+			// happen for rule types created after that validation existed.
+			// It's a fallback for rule types stored before then, or any
+			// path that bypasses validation — not intended behaviour. The
+			// engine also logs a warning here, which this test doesn't
+			// assert on directly.
+			name:     "unknown trait name is a defensive fallback, treated as unsupported and warned about",
+			ruleType: newRuleType("not-a-real-trait"),
+			canImplement: func(minderv1.ProviderType) bool {
+				return true
+			},
+			wantSupported: false,
 		},
 	}
 
@@ -235,12 +244,9 @@ default allow := false
 			ctx := zerolog.New(tlw).With().Logger().WithContext(context.Background())
 
 			tk := tkv1.NewTestKit(tkv1.WithGitDir(t.TempDir()), tkv1.WithCanImplement(tt.canImplement))
-			_, err := NewRuleTypeEngine(ctx, tt.ruleType, tk)
-			if tt.wantErr {
-				assert.Error(t, err, "NewRuleTypeEngine() should have failed")
-			} else {
-				assert.NoError(t, err, "NewRuleTypeEngine() failed")
-			}
+			rte, err := NewRuleTypeEngine(ctx, tt.ruleType, tk)
+			require.NoError(t, err, "NewRuleTypeEngine() failed")
+			assert.Equal(t, tt.wantSupported, rte.SupportedByProvider())
 		})
 	}
 }
