@@ -10,20 +10,23 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"net/http"
 	"os"
 	"reflect"
 	"slices"
 	"time"
 
 	scalibr "github.com/google/osv-scalibr"
-	scalibr_cfg "github.com/google/osv-scalibr/binary/proto/config_go_proto"
+	scalibr_cpb "github.com/google/osv-scalibr/binary/proto/config_go_proto"
 	scalibr_fs "github.com/google/osv-scalibr/fs"
 	scalibr_plugin "github.com/google/osv-scalibr/plugin"
+	scalibr_config "github.com/google/osv-scalibr/plugin/config"
 	"github.com/google/osv-scalibr/plugin/list"
 	"github.com/google/osv-scalibr/stats"
 	"github.com/google/uuid"
 	"github.com/protobom/protobom/pkg/sbom"
 	"github.com/rs/zerolog"
+	"google.golang.org/grpc"
 )
 
 // Extractor is a dependency extractor based on osv-scalibr.
@@ -66,16 +69,19 @@ func scanFilesystem(ctx context.Context, iofs fs.FS) (*sbom.NodeList, error) {
 	defer func() {
 		_ = os.RemoveAll(tmpDir)
 	}()
-	cfg := scalibr_cfg.PluginConfig{
-		MaxFileSizeBytes:  1024 * 1024,
-		LocalRegistry:     tmpDir,
-		DisableGoogleAuth: true,
+	cfg := scalibr_config.PluginConfig{
+		ProtoConfig: &scalibr_cpb.PluginConfig{
+			MaxFileSizeBytes:  1024 * 1024,
+			LocalRegistry:     tmpDir,
+			DisableGoogleAuth: true,
+		},
+		ClientFactories: &DisabledClientFactory{},
 	}
 
 	scalibrFs := scalibr_fs.ScanRoot{FS: wrapped}
 	plugins, err := list.FromCapabilities(&desiredCaps, &cfg)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to assemble plugins list: %w", err)
 	}
 	// unknownbinariesextr uses file extension to determine "binary-ness", and triggers on e.g. .py files
 	skipPlugins := []string{"ffa/unknownbinariesextr"}
@@ -142,10 +148,17 @@ func scanFilesystem(ctx context.Context, iofs fs.FS) (*sbom.NodeList, error) {
 				// int32(sbom.SoftwareIdentifierType_CPE23):  inv.Extractor.ToCPEs(inv),
 			},
 		}
-		for _, l := range inv.Locations {
+		if inv.Location.Descriptor.PathOrEmpty() != "" {
 			node.Properties = append(node.Properties, &sbom.Property{
 				Name: "sourceFile",
-				Data: l,
+				Data: inv.Location.Descriptor.PathOrEmpty(),
+				// TODO: add Descriptor.File.LineNumber if available
+			})
+		}
+		for _, l := range inv.Location.Related {
+			node.Properties = append(node.Properties, &sbom.Property{
+				Name: "sourceFile",
+				Data: l.PathOrEmpty(),
 			})
 		}
 		res.AddNode(node)
@@ -228,4 +241,41 @@ func (e *errorStats) AfterScan(runtime time.Duration, status *scalibr_plugin.Sca
 // MaxRSS implements [stats.Collector].
 func (e *errorStats) MaxRSS(maxRSS int64) {
 	e.maxRSS = maxRSS
+}
+
+type DisabledClientFactory struct{}
+
+var _ scalibr_config.ClientFactories = (*DisabledClientFactory)(nil)
+var _ http.RoundTripper = (*DisabledClientFactory)(nil)
+var _ grpc.ClientConnInterface = (*DisabledClientFactory)(nil)
+
+// GRPCClientConn implements [config.ClientFactories].
+func (d *DisabledClientFactory) GRPCClientConn(url string, dialOpts ...grpc.DialOption) (grpc.ClientConnInterface, error) {
+	return d, nil
+}
+
+// GoogleHTTPClient implements [config.ClientFactories].
+func (d *DisabledClientFactory) GoogleHTTPClient(ctx context.Context, scope ...string) (*http.Client, error) {
+	return nil, errors.New("network access is prohibited")
+}
+
+// HTTPClient implements [config.ClientFactories].
+// This needs to return non-nil for
+func (d *DisabledClientFactory) HTTPClient() *http.Client {
+	return &http.Client{Transport: d}
+}
+
+// RoundTrip implements [http.RoundTripper].
+func (d *DisabledClientFactory) RoundTrip(*http.Request) (*http.Response, error) {
+	return nil, errors.New("network access is prohibited")
+}
+
+// Invoke implements [grpc.ClientConnInterface].
+func (d *DisabledClientFactory) Invoke(ctx context.Context, method string, args any, reply any, opts ...grpc.CallOption) error {
+	return errors.New("network access is prohibited")
+}
+
+// NewStream implements [grpc.ClientConnInterface].
+func (d *DisabledClientFactory) NewStream(ctx context.Context, desc *grpc.StreamDesc, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+	return nil, errors.New("network access is prohibited")
 }

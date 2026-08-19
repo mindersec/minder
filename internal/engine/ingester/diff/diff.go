@@ -24,11 +24,14 @@ import (
 	"github.com/google/osv-scalibr/extractor"
 	scalibr_fs "github.com/google/osv-scalibr/fs"
 	scalibr_plugin "github.com/google/osv-scalibr/plugin"
+	scalibr_config "github.com/google/osv-scalibr/plugin/config"
+
 	"github.com/google/osv-scalibr/plugin/list"
 	"github.com/google/osv-scalibr/purl"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	scalibr_adapt "github.com/mindersec/minder/internal/deps/scalibr"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
@@ -214,15 +217,25 @@ func (di *Diff) getScalibrTypeDiff(ctx context.Context, _ int, pr *pbinternal.Pu
 
 	deps.Deps = make([]*pbinternal.PrDependencies_ContextualDependency, 0, len(newDeps))
 	for _, inventory := range newDeps {
-		for _, filename := range inventory.Locations {
+		dep := &pbinternal.Dependency{
+			Ecosystem: inventoryToEcosystem(inventory),
+			Name:      inventory.Name,
+			Version:   inventory.Version,
+		}
+		if inventory.Location.PathOrEmpty() != "" {
 			deps.Deps = append(deps.Deps, &pbinternal.PrDependencies_ContextualDependency{
-				Dep: &pbinternal.Dependency{
-					Ecosystem: inventoryToEcosystem(inventory),
-					Name:      inventory.Name,
-					Version:   inventory.Version,
-				},
+				Dep: dep,
 				File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
-					Name:     filename,
+					Name:     inventory.Location.PathOrEmpty(),
+					PatchUrl: "", // TODO: do we need this?
+				},
+			})
+		}
+		for _, file := range inventory.Location.Related {
+			deps.Deps = append(deps.Deps, &pbinternal.PrDependencies_ContextualDependency{
+				Dep: dep,
+				File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
+					Name:     file.PathOrEmpty(),
 					PatchUrl: "", // TODO: do we need this?
 				},
 			})
@@ -234,14 +247,11 @@ func (di *Diff) getScalibrTypeDiff(ctx context.Context, _ int, pr *pbinternal.Pu
 
 func inventorySorter(a *extractor.Package, b *extractor.Package) int {
 	// If we compare by name and version first, we can avoid serializing Locations to strings
-	res := cmp.Or(cmp.Compare(a.Name, b.Name), cmp.Compare(a.Version, b.Version))
-	if res != 0 {
-		return res
-	}
-	// TODO: Locations should probably be sorted, but scalibr is going to export a compare function.
-	aLoc := fmt.Sprintf("%v", a.Locations)
-	bLoc := fmt.Sprintf("%v", b.Locations)
-	return cmp.Compare(aLoc, bLoc)
+	return cmp.Or(
+		cmp.Compare(a.Name, b.Name),
+		cmp.Compare(a.Version, b.Version),
+		cmp.Compare(a.Location.PathOrEmpty(), b.Location.PathOrEmpty()),
+	)
 }
 
 func (di *Diff) scalibrInventory(ctx context.Context, repoURL string, ref string) ([]*extractor.Package, error) {
@@ -280,10 +290,13 @@ func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([
 	defer func() {
 		_ = os.RemoveAll(tmpDir)
 	}()
-	cfg := scalibr_cfg.PluginConfig{
-		MaxFileSizeBytes:  1024 * 1024,
-		LocalRegistry:     tmpDir,
-		DisableGoogleAuth: true,
+	cfg := scalibr_config.PluginConfig{
+		ProtoConfig: &scalibr_cfg.PluginConfig{
+			MaxFileSizeBytes:  1024 * 1024,
+			LocalRegistry:     tmpDir,
+			DisableGoogleAuth: true,
+		},
+		ClientFactories: &scalibr_adapt.DisabledClientFactory{},
 	}
 
 	scalibrFs := scalibr_fs.ScanRoot{FS: wrapped}
