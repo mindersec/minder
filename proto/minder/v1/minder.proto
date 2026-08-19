@@ -2651,15 +2651,19 @@ message RuleType {
             }
         ];
 
+        reserved 8;
+
         // provider_traits declares the provider trait(s) this rule type
-        // requires an implementation of (e.g. "github", "git", "oci").
+        // requires an implementation of. Values are trait names as used in
+        // provider class definitions, e.g. "github", "rest", "git", "oci",
+        // "repo-lister", "image-lister".
         // This is AND semantics: a rule type requires an implementation of
         // every listed trait, not just one of them. For example, a rule
         // type requiring ["git", "github"] needs a provider that
         // implements both traits (e.g. to read repo contents via git and
         // call a forge-specific API via github). If empty, the rule type
         // is not gated by provider traits.
-        repeated ProviderType provider_traits = 8;
+        repeated string provider_traits = 9;
 
         // rule_schema is the schema of the rule. This is expressed in JSON Schema.
         google.protobuf.Struct rule_schema = 2;

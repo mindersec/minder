@@ -3953,9 +3953,9 @@
         "providerTraits": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/v1ProviderType"
+            "type": "string"
           },
-          "description": "provider_traits declares the provider trait(s) this rule type\nrequires an implementation of (e.g. \"github\", \"git\", \"oci\").\nThis is AND semantics: a rule type requires an implementation of\nevery listed trait, not just one of them. For example, a rule\ntype requiring [\"git\", \"github\"] needs a provider that\nimplements both traits (e.g. to read repo contents via git and\ncall a forge-specific API via github). If empty, the rule type\nis not gated by provider traits."
+          "description": "provider_traits declares the provider trait(s) this rule type\nrequires an implementation of. Values are trait names as used in\nprovider class definitions, e.g. \"github\", \"rest\", \"git\", \"oci\",\n\"repo-lister\", \"image-lister\".\nThis is AND semantics: a rule type requires an implementation of\nevery listed trait, not just one of them. For example, a rule\ntype requiring [\"git\", \"github\"] needs a provider that\nimplements both traits (e.g. to read repo contents via git and\ncall a forge-specific API via github). If empty, the rule type\nis not gated by provider traits."
         },
         "ruleSchema": {
           "type": "object",

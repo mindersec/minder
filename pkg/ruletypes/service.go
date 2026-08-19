@@ -11,6 +11,8 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"sort"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/open-policy-agent/opa/v1/ast"
@@ -19,7 +21,6 @@ import (
 	regoeval "github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/marketplaces/namespaces"
-	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/schemaupdate"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -355,15 +356,39 @@ func (s *ruleTypeService) validateAndDetectRegoVersion(ctx context.Context, rule
 	}
 }
 
+// validProviderTraitNames lists the trait names a rule type's
+// provider_traits may declare: the (name) option of every defined
+// ProviderType value.
+var validProviderTraitNames = func() []string {
+	names := make([]string, 0, len(pb.ProviderType_name))
+	for v := range pb.ProviderType_name {
+		t := pb.ProviderType(v)
+		if t == pb.ProviderType_PROVIDER_TYPE_UNSPECIFIED {
+			continue
+		}
+		names = append(names, t.ToString())
+	}
+	sort.Strings(names)
+	return names
+}()
+
 // validateProviderTraits validates that a rule type's declared
-// provider_traits are known, valid ProviderType enum values. This checks
-// against the static set of provider types Minder defines, not against
-// providers currently registered in any project: gating on registration
-// would block loading rule types before providers exist, and would leave
-// rule types silently stale if a provider is later unregistered.
+// provider_traits are known trait names. This checks against the static set
+// of provider types Minder defines, not against providers currently
+// registered in any project: gating on registration would block loading
+// rule types before providers exist, and would leave rule types silently
+// stale if a provider is later unregistered.
+//
+// This validation is the only safeguard against a typo in provider_traits:
+// an unrecognized string parses fine but matches no trait, silently making
+// the rule type never evaluate (see rtengine.RuleTypeEngine.SupportedByProvider),
+// with no error, skipped status, or eval status row to reveal the mistake.
 func validateProviderTraits(ruleType *pb.RuleType) error {
-	if _, err := providers.PBProviderTypesToDB(ruleType.GetDef().GetProviderTraits()); err != nil {
-		return fmt.Errorf("invalid provider_traits: %w", err)
+	for _, trait := range ruleType.GetDef().GetProviderTraits() {
+		if _, ok := pb.ProviderTypeFromString(trait); !ok {
+			return fmt.Errorf("invalid provider_traits: unknown trait %q, valid values are: %s",
+				trait, strings.Join(validProviderTraitNames, ", "))
+		}
 	}
 
 	return nil

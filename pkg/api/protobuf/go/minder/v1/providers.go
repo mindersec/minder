@@ -10,6 +10,18 @@ func (provt ProviderType) ToString() string {
 	return enumToStringViaDescriptor(provt.Descriptor(), provt.Number())
 }
 
+// ProviderTypeFromString returns the ProviderType whose (name) option
+// matches s (e.g. "github", "git"), and true if one was found. It is the
+// inverse of ProviderType.ToString.
+func ProviderTypeFromString(s string) (ProviderType, bool) {
+	n, ok := enumFromStringViaDescriptor(ProviderType(0).Descriptor(), s)
+	if !ok {
+		return ProviderType_PROVIDER_TYPE_UNSPECIFIED, false
+	}
+
+	return ProviderType(n), true
+}
+
 // ToString returns the string representation of the AuthorizationFlow
 func (a AuthorizationFlow) ToString() string {
 	return enumToStringViaDescriptor(a.Descriptor(), a.Number())

@@ -9,6 +9,17 @@ deps:
 breaking:
   use:
     - WIRE_JSON
+  # RuleType.Definition.provider_traits (field 8) was removed in favor of a
+  # new field 9 of the same name but a different type (repeated ProviderType
+  # -> repeated string). Field 8 is reserved so its number can never be
+  # reused, but WIRE_JSON also requires the *name* to be reserved on
+  # deletion, which would conflict with reusing "provider_traits" for field
+  # 9. This is a deliberate, sanctioned exception: provider_traits has never
+  # been documented or used, so no real caller depends on the old field 8
+  # wire/JSON shape.
+  ignore_only:
+    FIELD_NO_DELETE_UNLESS_NAME_RESERVED:
+      - minder/v1/minder.proto
 lint:
   use:
     - STANDARD
