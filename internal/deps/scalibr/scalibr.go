@@ -109,10 +109,7 @@ func scanFilesystem(ctx context.Context, iofs fs.FS) (*sbom.NodeList, error) {
 	case scalibr_plugin.ScanStatusPartiallySucceeded:
 		// Scalibr runs a lot of plugins and aggregates the result.  Some of these are picky, and
 		// fail for random reasons.  Accept partial success, but log the failing plugins.
-		known_bad := []string{
-			"endoflife/linuxdistro", // https://github.com/google/osv-scalibr/pull/2068
-			"rust/cargoauditable",   // https://github.com/go-git/go-billy/pull/208
-		}
+		known_bad := []string{}
 		for _, ps := range scanResults.PluginStatus {
 			if ps.Status.Status != scalibr_plugin.ScanStatusSucceeded {
 				if !slices.Contains(known_bad, ps.Name) {

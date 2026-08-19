@@ -133,6 +133,9 @@ func TestScanFilesystem(t *testing.T) {
 
 			assert.Contains(t, string(logOutput.String()), tc.expectedLog)
 			require.NoError(t, err)
+			if tc.expectedLog == "" {
+				assert.Equal(t, logOutput.String(), tc.expectedLog)
+			}
 			require.Len(t, nodelist.Nodes, tc.expectedLen)
 
 			// Compare the nodes, make sure they are equal
