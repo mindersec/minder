@@ -44,7 +44,7 @@ require (
 	github.com/hashicorp/go-version v1.9.0
 	github.com/itchyny/gojq v0.12.19
 	github.com/jedib0t/go-pretty/v6 v6.8.3
-	github.com/lestrrat-go/httprc/v3 v3.0.5
+	github.com/lestrrat-go/httprc/v3 v3.0.6
 	github.com/lestrrat-go/jwx/v3 v3.1.1
 	github.com/lib/pq v1.12.3
 	github.com/mhale/smtpd v0.8.3
