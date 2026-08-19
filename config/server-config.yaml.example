@@ -12,6 +12,12 @@ metric_server:
   host: "127.0.0.1"
   port: 9090
 
+# Server-controlled limits for outbound REST data source requests.
+data_sources:
+  rest:
+    request_timeout: 5s
+    max_response_bytes: 1MiB
+
 logging:
   level: "debug"
   format: "json"

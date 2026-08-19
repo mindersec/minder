@@ -18,10 +18,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lestrrat-go/jwx/v2/jwa"
-	"github.com/lestrrat-go/jwx/v2/jwk"
-	"github.com/lestrrat-go/jwx/v2/jwt"
-	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"github.com/lestrrat-go/jwx/v3/jwa"
+	"github.com/lestrrat-go/jwx/v3/jwk"
+	"github.com/lestrrat-go/jwx/v3/jwt"
+	"github.com/lestrrat-go/jwx/v3/jwt/openid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -31,10 +31,10 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 	keyGen := rand.New(rand.NewSource(12345))
 	key, err := rsa.GenerateKey(keyGen, 2048)
 	require.NoError(t, err)
-	jwkKey, err := jwk.FromRaw(key)
+	jwkKey, err := jwk.Import(key)
 	require.NoError(t, err)
 	require.NoError(t, jwkKey.Set(jwk.KeyIDKey, "test"))
-	require.NoError(t, jwkKey.Set(jwk.AlgorithmKey, jwa.RS256))
+	require.NoError(t, jwkKey.Set(jwk.AlgorithmKey, jwa.RS256().String()))
 	require.NoError(t, jwkKey.Set(jwk.KeyUsageKey, "sig"))
 	pubKey, err := jwkKey.PublicKey()
 	require.NoError(t, err)
@@ -99,7 +99,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 				IssuedAt(time.Now()).
 				Build()
 			require.NoError(t, err)
-			signed, err := jwt.Sign(token, jwt.WithKey(jwa.RS256, jwkKey))
+			signed, err := jwt.Sign(token, jwt.WithKey(jwa.RS256(), jwkKey))
 			require.NoError(t, err)
 			return string(signed), token
 		},
@@ -116,7 +116,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 				IssuedAt(time.Now()).
 				Build()
 			require.NoError(t, err)
-			signed, err := jwt.Sign(token, jwt.WithKey(jwa.RS256, jwkKey))
+			signed, err := jwt.Sign(token, jwt.WithKey(jwa.RS256(), jwkKey))
 			require.NoError(t, err)
 			return string(signed), token
 		},
@@ -127,7 +127,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 			t.Helper()
 			return "invalid", nil
 		},
-		wantErr: `failed to split compact JWT: invalid number of segments`,
+		wantErr: `failed to split compact JWT: jwsbb: invalid number of segments`,
 	}, {
 		name:    "expired jwt",
 		issuers: []string{server.URL},
@@ -141,11 +141,11 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 				IssuedAt(time.Now().Add(-2 * time.Minute)).
 				Build()
 			require.NoError(t, err)
-			signed, err := jwt.Sign(token, jwt.WithKey(jwa.RS256, jwkKey))
+			signed, err := jwt.Sign(token, jwt.WithKey(jwa.RS256(), jwkKey))
 			require.NoError(t, err)
 			return string(signed), token
 		},
-		wantErr: `failed to parse JWT payload: "exp" not satisfied`,
+		wantErr: `failed to parse JWT payload: jwt.Parse: failed to parse token: jwt.Validate: validation failed: "exp" not satisfied: token is expired`,
 	}, {
 		name:    "bad well-known URL",
 		issuers: []string{server.URL, server.URL + "/elsewhere"},
@@ -159,11 +159,11 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 				IssuedAt(time.Now()).
 				Build()
 			require.NoError(t, err)
-			signed, err := jwt.Sign(token, jwt.WithKey(jwa.RS256, jwkKey))
+			signed, err := jwt.Sign(token, jwt.WithKey(jwa.RS256(), jwkKey))
 			require.NoError(t, err)
 			return string(signed), token
 		},
-		wantErr: `non-200 response code "404 Not Found"`,
+		wantErr: `failed to get JWK set: failed to register JWKS URL`,
 	}, {
 		name:    "bad issuer",
 		issuers: []string{server.URL, server.URL + "/nothing"},
@@ -177,7 +177,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 				IssuedAt(time.Now()).
 				Build()
 			require.NoError(t, err)
-			signed, err := jwt.Sign(token, jwt.WithKey(jwa.RS256, jwkKey))
+			signed, err := jwt.Sign(token, jwt.WithKey(jwa.RS256(), jwkKey))
 			require.NoError(t, err)
 			return string(signed), token
 		},
@@ -195,7 +195,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 				IssuedAt(time.Now()).
 				Build()
 			require.NoError(t, err)
-			signed, err := jwt.Sign(token, jwt.WithKey(jwa.RS256, jwkKey))
+			signed, err := jwt.Sign(token, jwt.WithKey(jwa.RS256(), jwkKey))
 			require.NoError(t, err)
 			return string(signed), token
 		},
@@ -221,15 +221,19 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 			if got == nil {
 				t.Fatal("Validator.ParseAndValidate() unexpectedly nil")
 			}
-			if got.Subject() != want.Subject() {
-				t.Errorf("Validator.ParseAndValidate() = %s, want %s", got.Subject(), want.Subject())
+			if valueOnly(want.Subject()) != valueOnly(got.Subject()) {
+				t.Errorf("Validator.ParseAndValidate() = %s, want %s", valueOnly(got.Subject()), valueOnly(want.Subject()))
 			}
-			if got.Issuer() != want.Issuer() {
-				t.Errorf("Validator.ParseAndValidate() = %s, want %s", got.Issuer(), want.Issuer())
+			if valueOnly(got.Issuer()) != valueOnly(want.Issuer()) {
+				t.Errorf("Validator.ParseAndValidate() = %s, want %s", valueOnly(got.Issuer()), valueOnly(want.Issuer()))
 			}
-			if !slices.Equal(got.Audience(), want.Audience()) {
-				t.Errorf("Validator.ParseAndValidate() = %v, want %v", got.Audience(), want.Audience())
+			if !slices.Equal(valueOnly(got.Audience()), valueOnly(want.Audience())) {
+				t.Errorf("Validator.ParseAndValidate() = %v, want %v", valueOnly(got.Audience()), valueOnly(want.Audience()))
 			}
 		})
 	}
+}
+
+func valueOnly[T any](val T, _ bool) T {
+	return val
 }

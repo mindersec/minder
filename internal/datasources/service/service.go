@@ -72,7 +72,8 @@ type DataSourcesService interface {
 }
 
 type dataSourceService struct {
-	store db.Store
+	store             db.Store
+	dataSourceOptions []v1datasources.Option
 
 	// This is a function that will begin a transaction for the service.
 	// We make this a function so that we can mock it in tests.
@@ -80,10 +81,11 @@ type dataSourceService struct {
 }
 
 // NewDataSourceService creates a new data source service.
-func NewDataSourceService(store db.Store) *dataSourceService {
+func NewDataSourceService(store db.Store, options ...v1datasources.Option) *dataSourceService {
 	return &dataSourceService{
-		store:     store,
-		txBuilder: beginTx,
+		store:             store,
+		dataSourceOptions: append([]v1datasources.Option(nil), options...),
+		txBuilder:         beginTx,
 	}
 }
 
@@ -493,7 +495,7 @@ func (d *dataSourceService) BuildDataSourceRegistry(
 
 		// Get provider from options if available, needed for authenticated data sources
 		provider := opts.getProvider()
-		impl, err := datasources.BuildFromProtobuf(inst, provider)
+		impl, err := datasources.BuildFromProtobuf(inst, provider, d.dataSourceOptions...)
 		if err != nil {
 			return nil, fmt.Errorf("failed to build data source from protobuf: %w", err)
 		}

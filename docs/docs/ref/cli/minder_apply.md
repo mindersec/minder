@@ -16,8 +16,9 @@ minder apply [flags]
 ### Options
 
 ```
-  -f, --file strings   Input file or directory
-  -h, --help           help for apply
+  -f, --file strings     Input file or directory
+  -h, --help             help for apply
+  -j, --project string   ID of the project
 ```
 
 ### Options inherited from parent commands

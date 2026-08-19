@@ -21,6 +21,7 @@ import (
 	"go.starlark.net/syntax"
 
 	"github.com/mindersec/minder/internal/util"
+	"github.com/mindersec/minder/internal/util/ptr"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/fileconvert"
 )
@@ -30,17 +31,21 @@ import (
 type testCaseRunner struct {
 	thread      *starlark.Thread
 	fs          fs.FS
+	baseDir     string
 	predeclared starlark.StringDict
 	failures    []string
 	ruleTypes   map[string]*minderv1.RuleType
 }
 
-func (r *Runner) newTestCaseRunner(name string, fileSystem fs.FS, ruleTypes map[string]*minderv1.RuleType) *testCaseRunner {
+func (r *Runner) newTestCaseRunner(
+	name string, fileSystem fs.FS, baseDir string, ruleTypes map[string]*minderv1.RuleType,
+) *testCaseRunner {
 	if fileSystem == nil {
 		panic("fileSystem cannot be nil")
 	}
 	tr := &testCaseRunner{
 		fs:          fileSystem,
+		baseDir:     baseDir,
 		predeclared: starlark.StringDict{},
 		ruleTypes:   ruleTypes,
 	}
@@ -115,7 +120,7 @@ func (r *Runner) RunFile(filename string, src any, ruleTypes map[string]*minderv
 	fileSystem := os.DirFS(baseDir)
 
 	name := filepath.Base(filename)
-	tr := r.newTestCaseRunner(name, fileSystem, ruleTypes)
+	tr := r.newTestCaseRunner(name, fileSystem, baseDir, ruleTypes)
 
 	globals, err := tr.runFile(filename, src)
 	if err != nil {
@@ -143,7 +148,7 @@ func (r *Runner) RunFile(filename string, src any, ruleTypes map[string]*minderv
 	base := filepath.Base(filename)
 	var results []TestResult
 	for name, fn := range testFns {
-		result := r.runOneTest(name, fn, fileSystem, ruleTypes)
+		result := r.runOneTest(name, fn, fileSystem, baseDir, ruleTypes)
 		result.Filename = base
 		results = append(results, result)
 	}
@@ -155,9 +160,10 @@ func (r *Runner) runOneTest(
 	name string,
 	fn *starlark.Function,
 	fileSystem fs.FS,
+	baseDir string,
 	ruleTypes map[string]*minderv1.RuleType,
 ) TestResult {
-	tr := r.newTestCaseRunner(name, fileSystem, ruleTypes)
+	tr := r.newTestCaseRunner(name, fileSystem, baseDir, ruleTypes)
 	result := TestResult{Name: name}
 
 	_, err := starlark.Call(tr.thread, fn, nil, nil)
@@ -178,14 +184,23 @@ func (r *Runner) runOneTest(
 // into a map of RuleTypes keyed by rule name.
 func loadRulesFromDir(dir string) (map[string]*minderv1.RuleType, error) {
 	ruleTypes := make(map[string]*minderv1.RuleType)
-	yamlFiles, err := filepath.Glob(filepath.Join(dir, "*.yaml"))
+	ruleFiles, err := filepath.Glob(filepath.Join(dir, "*.yaml"))
 	if err != nil {
 		return nil, fmt.Errorf("globbing yaml files: %w", err)
 	}
-	for _, yf := range yamlFiles {
-		rt, err := loadSingleRule(yf)
+	regoFiles, err := filepath.Glob(filepath.Join(dir, "*.rego"))
+	if err != nil {
+		return nil, fmt.Errorf("globbing rego files: %w", err)
+	}
+	ruleFiles = append(ruleFiles, regoFiles...)
+	for _, path := range ruleFiles {
+		rt, err := loadSingleRule(path)
 		if err != nil {
-			continue // skip files that aren't valid rule types
+			// Rego files are highly likely to be intentional ruletypes, do not silently swallow errors.
+			if filepath.Ext(path) == ".rego" {
+				return nil, fmt.Errorf("error loading rego file %s: %w", path, err)
+			}
+			continue // skip YAML (and other) files that aren't valid rule types, as they might be other content.
 		}
 		if rt != nil && rt.Name != "" {
 			if _, exists := ruleTypes[rt.Name]; exists {
@@ -206,7 +221,22 @@ func loadSingleRule(path string) (*minderv1.RuleType, error) {
 	defer func(c io.Closer) {
 		_ = c.Close()
 	}(closer)
-	return fileconvert.ReadResourceTyped[*minderv1.RuleType](decoder)
+
+	rt, err := fileconvert.ReadResourceTyped[*minderv1.RuleType](decoder)
+	if err != nil {
+		return nil, err
+	}
+
+	// Ensure that ruletypes have a project context; the Minder CLI + API tooling
+	// will automatically apply the "current project" when creating a ruletype.
+	if rt.Context == nil {
+		rt.Context = &minderv1.Context{}
+	}
+	if rt.Context.GetProject() == "" {
+		rt.Context.Project = ptr.Ptr("00000000-0000-0000-0000-000000000000")
+	}
+
+	return rt, nil
 }
 
 // RunPaths takes a list of file or directory paths, discovering all *.star test

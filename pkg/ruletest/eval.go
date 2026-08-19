@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	"go.starlark.net/starlark"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -29,13 +30,14 @@ func (tr *testCaseRunner) builtinEval(
 	var ruleName string
 	var entityDict *starlark.Dict
 	var profileDict *starlark.Dict
+	var paramsDict *starlark.Dict
 	var mockHttpDict *starlark.Dict
 	var mockFSDict *starlark.Dict
 	var datasourcesList *starlark.List
 
 	err := starlark.UnpackArgs("eval", args, kwargs,
 		"rule", &ruleName, "entity?", &entityDict,
-		"profile?", &profileDict, "mock_http?", &mockHttpDict,
+		"profile?", &profileDict, "params?", &paramsDict, "mock_http?", &mockHttpDict,
 		"mock_fs?", &mockFSDict, "data_sources?", &datasourcesList)
 	if err != nil {
 		return nil, err
@@ -56,6 +58,14 @@ func (tr *testCaseRunner) builtinEval(
 		return nil, fmt.Errorf("invalid profile argument: %w", err)
 	}
 
+	paramsMap := make(map[string]any)
+	if paramsDict != nil {
+		paramsMap, err = dictToGoMap(paramsDict)
+		if err != nil {
+			return nil, fmt.Errorf("invalid params argument: %w", err)
+		}
+	}
+
 	entityMap, err := dictToGoMap(entityDict)
 	if err != nil {
 		return nil, fmt.Errorf("invalid entity argument: %w", err)
@@ -74,12 +84,12 @@ func (tr *testCaseRunner) builtinEval(
 	ctx := context.Background()
 
 	tkOpts := []tkv1.Option{tkv1.WithHandlerFunc(mockHandler.ServeHTTP)}
-	if len(mockFSMap) > 0 {
+	if mockFSDict != nil {
 		tkOpts = append(tkOpts, tkv1.WithGitFiles(mockFSMap))
 	}
 	tk := tkv1.NewTestKit(tkOpts...)
 
-	dsRegistry, err := buildDataSourceRegistry(datasourcesList, tk)
+	dsRegistry, err := buildDataSourceRegistry(datasourcesList, tk, tr.baseDir)
 	if err != nil {
 		return nil, fmt.Errorf("invalid data_sources argument: %w", err)
 	}
@@ -93,19 +103,16 @@ func (tr *testCaseRunner) builtinEval(
 		rte.WithCustomIngester(tk)
 	}
 
-	res, err := rte.Eval(ctx, entityProto, profileMap, nil, &stubResultSink{})
+	res, err := rte.Eval(ctx, entityProto, profileMap, paramsMap, &stubResultSink{})
 
-	// Because Eval returns the error, we pass that error to formatEvalResult
-	// We ignore res for now as we just want the error
-	_ = res
-	return formatEvalResult(err), nil
+	return formatEvalResult(res, err), nil
 }
 
 type stubResultSink struct{}
 
 func (*stubResultSink) SetIngestResult(*interfaces.Ingested) {}
 
-func formatEvalResult(evalErr error) *starlark.Dict {
+func formatEvalResult(res *interfaces.EvaluationResult, evalErr error) *starlark.Dict {
 	result := starlark.NewDict(2)
 	status, msg := "", ""
 
@@ -129,6 +136,13 @@ func formatEvalResult(evalErr error) *starlark.Dict {
 
 	_ = result.SetKey(starlark.String("status"), starlark.String(status))
 	_ = result.SetKey(starlark.String("message"), starlark.String(msg))
+
+	if res != nil && res.Output != nil {
+		if slVal, err := goToStarlarkValue(res.Output); err == nil {
+			_ = result.SetKey(starlark.String("output"), slVal)
+		}
+	}
+
 	return result
 }
 
@@ -148,7 +162,9 @@ func parseMockFSDict(mockFSDict *starlark.Dict) (map[string]string, error) {
 	return mockFSMap, nil
 }
 
-func buildDataSourceRegistry(datasourcesList *starlark.List, tk *tkv1.TestKit) (*v1datasources.DataSourceRegistry, error) {
+func buildDataSourceRegistry(
+	datasourcesList *starlark.List, tk *tkv1.TestKit, baseDir string,
+) (*v1datasources.DataSourceRegistry, error) {
 	registry := v1datasources.NewDataSourceRegistry()
 	if datasourcesList == nil {
 		return registry, nil
@@ -161,6 +177,9 @@ func buildDataSourceRegistry(datasourcesList *starlark.List, tk *tkv1.TestKit) (
 		}
 
 		path := string(pathStr)
+		if !filepath.IsAbs(path) {
+			path = filepath.Join(baseDir, path)
+		}
 
 		ds, err := loadDataSource(path)
 		if err != nil {

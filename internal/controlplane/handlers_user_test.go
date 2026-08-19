@@ -15,7 +15,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
-	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"github.com/lestrrat-go/jwx/v3/jwt/openid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -70,7 +70,8 @@ func TestCreateUser_gRPC(t *testing.T) {
 			name: "Success",
 			req:  &pb.CreateUserRequest{},
 			buildStubs: func(ctx context.Context, store *mockdb.MockStore, jwt *mockjwt.MockValidator,
-				_ *mockprov.MockGitHubProviderService) context.Context {
+				_ *mockprov.MockGitHubProviderService,
+			) context.Context {
 				tx := sql.Tx{}
 				store.EXPECT().BeginTransaction().Return(&tx, nil)
 				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
@@ -115,7 +116,8 @@ func TestCreateUser_gRPC(t *testing.T) {
 			name: "Success with pending App",
 			req:  &pb.CreateUserRequest{},
 			buildStubs: func(ctx context.Context, store *mockdb.MockStore, validator *mockjwt.MockValidator,
-				prov *mockprov.MockGitHubProviderService) context.Context {
+				prov *mockprov.MockGitHubProviderService,
+			) context.Context {
 				ctx = jwt.WithAuthTokenContext(ctx, keyCloakUserToken)
 
 				tx := sql.Tx{}
@@ -172,7 +174,8 @@ func TestCreateUser_gRPC(t *testing.T) {
 			name: "Success with two pending Apps",
 			req:  &pb.CreateUserRequest{},
 			buildStubs: func(ctx context.Context, store *mockdb.MockStore, validator *mockjwt.MockValidator,
-				prov *mockprov.MockGitHubProviderService) context.Context {
+				prov *mockprov.MockGitHubProviderService,
+			) context.Context {
 				ctx = jwt.WithAuthTokenContext(ctx, keyCloakUserToken)
 
 				tx := sql.Tx{}

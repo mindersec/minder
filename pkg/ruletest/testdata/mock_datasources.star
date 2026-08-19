@@ -1,9 +1,12 @@
+# Note: the datasource rule also tests loading ruletypes from Rego files
+# as well as YAML.  The corresponding ruletype is in mock_datasource_rule.rego.
+
 def test_mock_datasource_passing():
     res = eval(
         rule="mock_datasource_rule",
         entity={"type": "repository", "name": "test"},
         profile={"required_value": "hello"},
-        data_sources=["testdata/mock_datasource_def.yaml"],
+        data_sources=["mock_datasource_def.yaml"],
         mock_http={
             "https://api.github.com/mock_endpoint": body('"hello"')
         }
@@ -17,7 +20,7 @@ def test_mock_datasource_failing():
         rule="mock_datasource_rule",
         entity={"type": "repository", "name": "test"},
         profile={"required_value": "hello"},
-        data_sources=["testdata/mock_datasource_def.yaml"],
+        data_sources=["mock_datasource_def.yaml"],
         mock_http={
             "https://api.github.com/mock_endpoint": body('"wrong_value"')
         }

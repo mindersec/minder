@@ -29,10 +29,10 @@ INSERT INTO rule_type (
 SELECT * FROM rule_type WHERE project_id = $1;
 
 -- name: GetRuleTypeByID :one
-SELECT * FROM rule_type WHERE id = $1;
+SELECT * FROM rule_type WHERE project_id = ANY(sqlc.arg(projects)::uuid[]) AND id = sqlc.arg(id)::uuid;
 
 -- name: GetRuleTypeByName :one
-SELECT * FROM rule_type WHERE  project_id = ANY(sqlc.arg(projects)::uuid[]) AND lower(name) = lower(sqlc.arg(name));
+SELECT * FROM rule_type WHERE project_id = ANY(sqlc.arg(projects)::uuid[]) AND lower(name) = lower(sqlc.arg(name));
 
 -- name: DeleteRuleType :exec
 DELETE FROM rule_type WHERE id = $1;

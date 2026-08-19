@@ -3,25 +3,21 @@
 
 version: v1
 type: rule-type
-name: mock_datasource_rule
+name: check_required_setting
 context:
   project: 00000000-0000-0000-0000-000000000000
-description: 'Uses a data source to fetch some data and eval against it.'
-display_name: 'Mock Datasource Rule'
-release_phase: beta
-severity:
-  value: high
+description: Checks whether a required setting matches the expected value.
 def:
   in_entity: repository
   rule_schema:
     properties:
       required_value:
         type: string
-        default: "hello"
   ingest:
-    type: builtin
-    builtin:
-      method: Passthrough
+    type: rest
+    rest:
+      endpoint: '/repos/{{.Entity.Owner}}/{{.Entity.Name}}/settings'
+      parse: 'json'
   eval:
     type: rego
     rego:
@@ -34,6 +30,10 @@ def:
         default allow := false
 
         allow if {
-          data_val := minder.datasource.mock_ds.get_val({})
-          data_val.body == input.profile.required_value
+          input.ingested.value == input.profile.required_value
+        }
+
+        output := {
+          "actual": input.ingested.value,
+          "expected": input.profile.required_value,
         }

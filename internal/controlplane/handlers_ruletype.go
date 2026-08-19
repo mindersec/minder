@@ -28,7 +28,6 @@ import (
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	"github.com/mindersec/minder/pkg/flags"
 	"github.com/mindersec/minder/pkg/ruletypes"
 )
 
@@ -36,13 +35,9 @@ const regoV0DeprecationWarning = "This rule type uses Rego V0 syntax. " +
 	"Please migrate to V1 using `opa fmt --v0-v1`. " +
 	"V0 support will be removed in a future release."
 
-var (
-	maxReadableStringSize = 3 * 1 << 10 // 3kB
-)
+const maxReadableStringSize = 3 * 1 << 10 // 3kB
 
-var (
-	errInvalidRuleType = errors.New("invalid rule type")
-)
+var errInvalidRuleType = errors.New("invalid rule type")
 
 // ListRuleTypes is a method to list all rule types for a given context
 func (s *Server) ListRuleTypes(
@@ -137,7 +132,10 @@ func (s *Server) GetRuleTypeById(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid rule type ID")
 	}
 
-	rtdb, err := s.store.GetRuleTypeByID(ctx, parsedRuleTypeID)
+	rtdb, err := s.store.GetRuleTypeByID(ctx, db.GetRuleTypeByIDParams{
+		Projects: []uuid.UUID{entityCtx.Project.ID},
+		ID:       parsedRuleTypeID,
+	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, util.UserVisibleError(codes.NotFound, "rule type %s not found", in.GetId())
 	} else if err != nil {
@@ -197,7 +195,7 @@ func (s *Server) CreateRuleType(
 
 	return &minderv1.CreateRuleTypeResponse{
 		RuleType: newRuleType,
-		Warnings: s.regoVersionWarnings(ctx, crt.GetRuleType()),
+		Warnings: regoVersionWarnings(crt.GetRuleType()),
 	}, nil
 }
 
@@ -238,25 +236,17 @@ func (s *Server) UpdateRuleType(
 
 	return &minderv1.UpdateRuleTypeResponse{
 		RuleType: updatedRuleType,
-		Warnings: s.regoVersionWarnings(ctx, urt.GetRuleType()),
+		Warnings: regoVersionWarnings(urt.GetRuleType()),
 	}, nil
 }
 
-func (s *Server) regoVersionWarnings(ctx context.Context, ruleType *minderv1.RuleType) []string {
-	if !flags.Bool(ctx, s.featureFlags, flags.RegoV1WarnV0) {
-		return nil
-	}
-
+func regoVersionWarnings(ruleType *minderv1.RuleType) []string {
 	eval := ruleType.GetDef().GetEval()
 	if eval.GetType() != regoeval.RegoEvalType || eval.GetRego().GetDef() == "" {
 		return nil
 	}
 
-	version := ast.RegoV0
-	if flags.Bool(ctx, s.featureFlags, flags.RegoV1DualParse) {
-		version = regoeval.DetectRegoVersion(eval.GetRego().GetDef())
-	}
-	if version != ast.RegoV0 {
+	if regoeval.DetectRegoVersion(eval.GetRego().GetDef()) != ast.RegoV0 {
 		return nil
 	}
 
@@ -291,8 +281,10 @@ func (s *Server) DeleteRuleType(
 				return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
 			}
 		} else {
-			rtdb, err = qtx.GetRuleTypeByID(ctx, parsedRuleTypeID)
-
+			rtdb, err = qtx.GetRuleTypeByID(ctx, db.GetRuleTypeByIDParams{
+				Projects: []uuid.UUID{entityCtx.Project.ID},
+				ID:       parsedRuleTypeID,
+			})
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
 					return nil, util.UserVisibleError(codes.NotFound, "rule type %s not found", in.GetId())

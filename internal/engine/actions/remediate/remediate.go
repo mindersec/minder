@@ -25,6 +25,8 @@ import (
 const ActionType engif.ActionType = "remediate"
 
 // NewRuleRemediator creates a new rule remediator
+//
+//nolint:gocyclo // Just a big switch statment
 func NewRuleRemediator(
 	rt *pb.RuleType,
 	provider provinfv1.Provider,

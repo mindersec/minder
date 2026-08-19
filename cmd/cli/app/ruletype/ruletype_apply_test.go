@@ -20,11 +20,29 @@ import (
 //nolint:paralleltest // Cannot run in parallel because it swaps global Viper/Stdout state
 func TestApplyCommand(t *testing.T) {
 	applyFixture := filepath.Join("fixture", "rule_type_apply.yaml")
+	applyRegoFixture := filepath.Join("fixture", "applied_rule.rego")
+	emptyFixture := filepath.Join("fixture", "empty_file.yaml")
 
 	tests := []cli.CmdTestCase{
 		{
 			Name: "apply - create new rule type via flag",
 			Args: []string{"ruletype", "apply", "-f", applyFixture},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
+				t.Helper()
+				client := mockv1.NewMockRuleTypeServiceClient(ctrl)
+				mockResp := &minderv1.ListRuleTypesResponse{}
+				cli.LoadFixture(t, "mock_ruletypes_response.json", mockResp)
+
+				client.EXPECT().
+					CreateRuleType(gomock.Any(), gomock.Any()).
+					Return(&minderv1.CreateRuleTypeResponse{RuleType: mockResp.RuleTypes[0]}, nil)
+				return cli.WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), client)
+			},
+			GoldenFileName: "apply_create.table",
+		},
+		{
+			Name: "apply - create new rule type with rego input",
+			Args: []string{"ruletype", "apply", "-f", applyRegoFixture},
 			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
 				t.Helper()
 				client := mockv1.NewMockRuleTypeServiceClient(ctrl)
@@ -80,6 +98,18 @@ func TestApplyCommand(t *testing.T) {
 				return cli.WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), client)
 			},
 			GoldenFileName: "apply_warning.table",
+		},
+		{
+			Name: "apply with empty file fails",
+			Args: []string{"ruletype", "apply", "-f", emptyFixture},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
+				// Apply creates the client _before_ loading the file, so we need to mock out
+				// the client even though we don't call the service.
+				t.Helper()
+				client := mockv1.NewMockRuleTypeServiceClient(ctrl)
+				return cli.WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), client)
+			},
+			ExpectedError: "fixture/empty_file.yaml did not contain a ruletype",
 		},
 		{
 			Name:          "no files specified",

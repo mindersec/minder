@@ -19,7 +19,6 @@ import (
 	db "github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	"github.com/mindersec/minder/pkg/flags"
 	sf "github.com/mindersec/minder/pkg/ruletypes/mock/fixtures"
 )
 
@@ -42,7 +41,7 @@ const ruleDefJSON = `
 
 const (
 	regoV0Definition = "package minder\n\ndefault allow = false\n\nallow {\n\tinput.allowed\n}\n"
-	regoV1Definition = "package minder\n\ndefault allow := false\n\nallow if {\n\tinput.allowed\n}\n"
+	regoV1Definition = "package minder\n\nimport rego.v1\n\ndefault allow := false\n\nallow if {\n\tinput.allowed\n}\n"
 )
 
 func ruleTypeWithRego(def string) *minderv1.RuleType {
@@ -68,7 +67,6 @@ func TestCreateRuleType(t *testing.T) {
 		mockStoreFunc          df.MockStoreBuilder
 		ruleTypeServiceFunc    sf.RuleTypeSvcMockBuilder
 		dataSourcesServiceFunc dsf.DataSourcesSvcMockBuilder
-		features               map[string]any
 		request                *minderv1.CreateRuleTypeRequest
 		expectedWarnings       []string
 		error                  bool
@@ -95,27 +93,6 @@ func TestCreateRuleType(t *testing.T) {
 			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(
 				sf.WithSuccessfulCreateRuleType,
 			),
-			features: map[string]any{
-				string(flags.RegoV1DualParse): true,
-				string(flags.RegoV1WarnV0):    true,
-			},
-			request: &minderv1.CreateRuleTypeRequest{
-				RuleType: ruleTypeWithRego(regoV0Definition),
-			},
-			expectedWarnings: []string{regoV0DeprecationWarning},
-		},
-		{
-			name: "warns when creating a V0 rule type without dual-parse",
-			mockStoreFunc: df.NewMockStore(
-				df.WithTransaction(),
-				WithSuccessfulGetProjectByID(projectID),
-			),
-			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(
-				sf.WithSuccessfulCreateRuleType,
-			),
-			features: map[string]any{
-				string(flags.RegoV1WarnV0): true,
-			},
 			request: &minderv1.CreateRuleTypeRequest{
 				RuleType: ruleTypeWithRego(regoV0Definition),
 			},
@@ -130,10 +107,6 @@ func TestCreateRuleType(t *testing.T) {
 			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(
 				sf.WithSuccessfulCreateRuleType,
 			),
-			features: map[string]any{
-				string(flags.RegoV1DualParse): true,
-				string(flags.RegoV1WarnV0):    true,
-			},
 			request: &minderv1.CreateRuleTypeRequest{
 				RuleType: ruleTypeWithRego(regoV1Definition),
 			},
@@ -180,7 +153,6 @@ func TestCreateRuleType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
@@ -203,15 +175,9 @@ func TestCreateRuleType(t *testing.T) {
 				mockDsSvc = tt.dataSourcesServiceFunc(ctrl)
 			}
 
-			featureClient := &flags.FakeClient{}
-			if tt.features != nil {
-				featureClient.Data = tt.features
-			}
-
 			srv := newDefaultServer(t, mockStore, nil, nil, nil)
 			srv.ruleTypes = mockSvc
 			srv.dataSourcesService = mockDsSvc
-			srv.featureFlags = featureClient
 
 			ctx := context.Background()
 			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
@@ -241,7 +207,6 @@ func TestUpdateRuleType(t *testing.T) {
 		mockStoreFunc          df.MockStoreBuilder
 		ruleTypeServiceFunc    sf.RuleTypeSvcMockBuilder
 		dataSourcesServiceFunc dsf.DataSourcesSvcMockBuilder
-		features               map[string]any
 		request                *minderv1.UpdateRuleTypeRequest
 		expectedWarnings       []string
 		error                  bool
@@ -268,27 +233,6 @@ func TestUpdateRuleType(t *testing.T) {
 			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(
 				sf.WithSuccessfulUpdateRuleType,
 			),
-			features: map[string]any{
-				string(flags.RegoV1DualParse): true,
-				string(flags.RegoV1WarnV0):    true,
-			},
-			request: &minderv1.UpdateRuleTypeRequest{
-				RuleType: ruleTypeWithRego(regoV0Definition),
-			},
-			expectedWarnings: []string{regoV0DeprecationWarning},
-		},
-		{
-			name: "warns when updating a V0 rule type without dual-parse",
-			mockStoreFunc: df.NewMockStore(
-				df.WithTransaction(),
-				WithSuccessfulGetProjectByID(projectID),
-			),
-			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(
-				sf.WithSuccessfulUpdateRuleType,
-			),
-			features: map[string]any{
-				string(flags.RegoV1WarnV0): true,
-			},
 			request: &minderv1.UpdateRuleTypeRequest{
 				RuleType: ruleTypeWithRego(regoV0Definition),
 			},
@@ -336,7 +280,6 @@ func TestUpdateRuleType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
@@ -359,15 +302,9 @@ func TestUpdateRuleType(t *testing.T) {
 				mockDsSvc = tt.dataSourcesServiceFunc(ctrl)
 			}
 
-			featureClient := &flags.FakeClient{}
-			if tt.features != nil {
-				featureClient.Data = tt.features
-			}
-
 			srv := newDefaultServer(t, mockStore, nil, nil, nil)
 			srv.ruleTypes = mockSvc
 			srv.dataSourcesService = mockDsSvc
-			srv.featureFlags = featureClient
 
 			ctx := context.Background()
 			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
@@ -397,7 +334,6 @@ func TestDeleteRuleType(t *testing.T) {
 	tests := []struct {
 		name          string
 		mockStoreFunc df.MockStoreBuilder
-		features      map[string]any
 		request       *minderv1.DeleteRuleTypeRequest
 		error         bool
 	}{
@@ -408,7 +344,10 @@ func TestDeleteRuleType(t *testing.T) {
 				df.WithTransaction(),
 				func(mockStore *mockdb.MockStore) {
 					mockStore.EXPECT().
-						GetRuleTypeByID(gomock.Any(), ruleTypeId).
+						GetRuleTypeByID(gomock.Any(), db.GetRuleTypeByIDParams{
+							ID:       ruleTypeId,
+							Projects: []uuid.UUID{projectID},
+						}).
 						Return(db.RuleType{ID: ruleTypeId, ProjectID: projectID}, nil)
 					mockStore.EXPECT().
 						ListProfilesInstantiatingRuleType(gomock.Any(), ruleTypeId).
@@ -452,7 +391,10 @@ func TestDeleteRuleType(t *testing.T) {
 				WithSuccessfulGetProjectByID(projectID),
 				df.WithRollbackTransaction(),
 				func(mockStore *mockdb.MockStore) {
-					mockStore.EXPECT().GetRuleTypeByID(gomock.Any(), ruleTypeId).
+					mockStore.EXPECT().GetRuleTypeByID(gomock.Any(), db.GetRuleTypeByIDParams{
+						ID:       ruleTypeId,
+						Projects: []uuid.UUID{projectID},
+					}).
 						Return(db.RuleType{
 							ID:             ruleTypeId,
 							SubscriptionID: uuid.NullUUID{Valid: true},
@@ -471,7 +413,10 @@ func TestDeleteRuleType(t *testing.T) {
 				WithSuccessfulGetProjectByID(projectID),
 				df.WithRollbackTransaction(),
 				func(mockStore *mockdb.MockStore) {
-					mockStore.EXPECT().GetRuleTypeByID(gomock.Any(), ruleTypeId).
+					mockStore.EXPECT().GetRuleTypeByID(gomock.Any(), db.GetRuleTypeByIDParams{
+						ID:       ruleTypeId,
+						Projects: []uuid.UUID{projectID},
+					}).
 						Return(db.RuleType{ID: ruleTypeId, ProjectID: projectID}, nil)
 					mockStore.EXPECT().ListProfilesInstantiatingRuleType(gomock.Any(), ruleTypeId).
 						Return([]string{uuid.NewString()}, nil)
@@ -485,7 +430,6 @@ func TestDeleteRuleType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
@@ -498,13 +442,7 @@ func TestDeleteRuleType(t *testing.T) {
 				mockStore = mockdb.NewMockStore(ctrl)
 			}
 
-			featureClient := &flags.FakeClient{}
-			if tt.features != nil {
-				featureClient.Data = tt.features
-			}
-
 			srv := newDefaultServer(t, mockStore, nil, nil, nil)
-			srv.featureFlags = featureClient
 
 			ctx := context.Background()
 			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
@@ -572,7 +510,6 @@ func TestListRuleTypes(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)

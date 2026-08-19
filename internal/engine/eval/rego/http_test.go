@@ -39,6 +39,8 @@ func TestLimitedDialer(t *testing.T) {
 		message := resp.error.message
 		`
 
+	// NOTE: these addresses need to resolve, or the client will fail with
+	// a timeout resolving the address, rather than a blocked error.
 	tests := []struct {
 		name    string
 		url     string

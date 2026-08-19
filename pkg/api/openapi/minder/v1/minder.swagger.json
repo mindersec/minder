@@ -3950,6 +3950,13 @@
           "type": "string",
           "description": "in_entity is the entity in which the rule is evaluated.\nThis can be repository, build_environment or artifact."
         },
+        "providerTraits": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ProviderType"
+          },
+          "description": "provider_traits declares the provider trait(s) this rule type\nrequires an implementation of (e.g. \"github\", \"git\", \"oci\").\nThis is AND semantics: a rule type requires an implementation of\nevery listed trait, not just one of them. For example, a rule\ntype requiring [\"git\", \"github\"] needs a provider that\nimplements both traits (e.g. to read repo contents via git and\ncall a forge-specific API via github). If empty, the rule type\nis not gated by provider traits."
+        },
         "ruleSchema": {
           "type": "object",
           "description": "rule_schema is the schema of the rule. This is expressed in JSON Schema."
@@ -4607,6 +4614,10 @@
         "properties": {
           "type": "object",
           "description": "properties is a map of properties of the entity."
+        },
+        "originatingId": {
+          "type": "string",
+          "description": "originating_id is the id of the entity which originated this resource.\nIf the originating entity is cleaned up, this entity will also be removed."
         }
       },
       "title": "used for parsing resources in ruletypes"

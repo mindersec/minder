@@ -7,8 +7,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lestrrat-go/jwx/v2/jwt"
-	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"github.com/lestrrat-go/jwx/v3/jwt"
+	"github.com/lestrrat-go/jwx/v3/jwt/openid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -56,11 +56,14 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 
 	// Confirm user wants to delete their account
 	if !yesFlag {
+		givenName, _ := token.GivenName()
+		familyName, _ := token.FamilyName()
+		email, _ := token.Email()
 		yes := cli.PrintYesNoPrompt(cmd,
 			fmt.Sprintf(
 				"You are about to permanently delete your account. \n\nName: %s\nEmail: %s",
-				fmt.Sprintf("%s %s", token.GivenName(), token.FamilyName()),
-				token.Email(),
+				fmt.Sprintf("%s %s", givenName, familyName),
+				email,
 			),
 			"Are you sure?",
 			"Delete account operation cancelled.",

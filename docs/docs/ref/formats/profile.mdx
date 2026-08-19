@@ -1,0 +1,36 @@
+---
+title: Profile
+sidebar_position: 40
+---
+
+Profiles define policy sets which should be applied to all entities in a project.  [Profiles](../../understand/profiles.md) are covered in the conceptual background.  Profiles can optionally select which entities they are applied to, and can define parameters for the referenced rule types.
+
+## YAML Example
+
+```yaml
+---
+version: v1
+type: profile
+name: sample-profile
+display_name: Sample Profile
+alert: "off"
+remediate: "off"
+repository:
+  - type: github_branch_protection
+    def:
+      min_reviews: 1
+  - type: secret_scanning
+    def: {}
+  - type: secret_push_protection
+    def: {}
+```
+
+## Fields
+
+:::note
+Note that the Minder CLI uses `snake_case` for field names, but the OpenAPI spec (shown here) uses `camelCase` for names like `display_name`, `in_entity`, etc.
+:::
+
+import ApiSchema from '@theme/ApiSchema';
+
+<ApiSchema pointer="#/components/schemas/v1Profile" />;

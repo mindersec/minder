@@ -9,6 +9,39 @@ concise manner. Its declarative syntax makes it an excellent choice for defining
 policy logic. In the context of Minder, Rego plays a central role in crafting
 rule types, which are used to enforce security policies.
 
+## Migrating to Rego V1
+
+New Rego definitions should use Rego V1. Include `import rego.v1` and use V1
+syntax, including the `if` keyword for rule bodies and `contains` for partial
+set rules.
+
+Minder continues to evaluate existing Rego V0 rule types during the migration
+period and returns a warning when a V0 rule type is created or updated.
+Operators can enable `rego_v1_refuse_v0` after confirming that their rule types
+have been migrated. When enabled, Minder rejects V0-only definitions.
+
+To migrate a rule type that still contains Rego V0 syntax:
+
+1. Copy the contents of `def.eval.rego.def` into a temporary `.rego` file.
+2. Format the policy with OPA's V0-to-V1 migration mode:
+
+   ```bash
+   opa fmt --v0-v1 --write policy.rego
+   ```
+
+3. Replace the `def.eval.rego.def` block in the rule type YAML with the
+   formatted policy. The formatter adds the required V1 syntax and replaces
+   `future.keywords` imports where appropriate.
+4. Validate the updated rule type before publishing it:
+
+   ```bash
+   ./bin/mindev ruletype lint -r path/to/rule-type.yaml
+   ```
+
+Review the formatted policy before publishing it, especially rules that use
+partial sets or functions. For more detail, see OPA's
+[Rego V0 to V1 migration guide](https://www.openpolicyagent.org/docs/v0-upgrade/).
+
 ## Writing rule types in Minder
 
 {/* TODO: this is common between the rego and jq docs. Move somewhere common? */}

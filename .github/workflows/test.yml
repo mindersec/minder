@@ -16,10 +16,10 @@ jobs:
     steps:
       # Checkout your project with git
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # Install Go on the VM running the action.
       - name: Set up Go
-        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: 'go.mod'
       - name: Set up helm (test dependency)
@@ -65,7 +65,7 @@ jobs:
       - name: Convert go coverage to LCOV
         run: go run github.com/jandelgado/gcov2lcov@latest -infile=./coverage.out -outfile=./coverage.lcov
       - name: Coveralls GitHub Action
-        uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
+        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
       - name: Add top-level report from JUnit XML
         if: ${{ !cancelled() }}
         run: |
@@ -76,10 +76,10 @@ jobs:
     steps:
       # Checkout your project with git
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # Install Go on the VM running the action.
       - name: Set up Go
-        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: 'go.mod'
       - name: Run `make bootstrap`

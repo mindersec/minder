@@ -7,12 +7,14 @@ name: applied_rule
 context:
   project: 00000000-0000-0000-0000-000000000000
 description: 'A minimal test rule type.'
-displayName: 'Applied Rule'
-releasePhase: alpha
+display_name: 'Applied Rule'
+release_phase: alpha
 severity:
   value: low
 def:
-  inEntity: repository
+  in_entity: repository
+
+  rule_schema: {}
 
   # How to gather data (Minimal REST example)
   ingest:

@@ -1031,6 +1031,21 @@ func (mr *MockStoreMockRecorder) GetEntitiesByType(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntitiesByType", reflect.TypeOf((*MockStore)(nil).GetEntitiesByType), ctx, arg)
 }
 
+// GetEntitiesWithProps mocks base method.
+func (m *MockStore) GetEntitiesWithProps(ctx context.Context, arg db.GetEntitiesWithPropsParams) ([]db.GetEntitiesWithPropsRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEntitiesWithProps", ctx, arg)
+	ret0, _ := ret[0].([]db.GetEntitiesWithPropsRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEntitiesWithProps indicates an expected call of GetEntitiesWithProps.
+func (mr *MockStoreMockRecorder) GetEntitiesWithProps(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntitiesWithProps", reflect.TypeOf((*MockStore)(nil).GetEntitiesWithProps), ctx, arg)
+}
+
 // GetEntitlementFeaturesByProjectID mocks base method.
 func (m *MockStore) GetEntitlementFeaturesByProjectID(ctx context.Context, projectID uuid.UUID) ([]string, error) {
 	m.ctrl.T.Helper()
@@ -1571,18 +1586,18 @@ func (mr *MockStoreMockRecorder) GetRuleInstancesForProfile(ctx, profileID any) 
 }
 
 // GetRuleTypeByID mocks base method.
-func (m *MockStore) GetRuleTypeByID(ctx context.Context, id uuid.UUID) (db.RuleType, error) {
+func (m *MockStore) GetRuleTypeByID(ctx context.Context, arg db.GetRuleTypeByIDParams) (db.RuleType, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRuleTypeByID", ctx, id)
+	ret := m.ctrl.Call(m, "GetRuleTypeByID", ctx, arg)
 	ret0, _ := ret[0].(db.RuleType)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetRuleTypeByID indicates an expected call of GetRuleTypeByID.
-func (mr *MockStoreMockRecorder) GetRuleTypeByID(ctx, id any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetRuleTypeByID(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleTypeByID", reflect.TypeOf((*MockStore)(nil).GetRuleTypeByID), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleTypeByID", reflect.TypeOf((*MockStore)(nil).GetRuleTypeByID), ctx, arg)
 }
 
 // GetRuleTypeByName mocks base method.

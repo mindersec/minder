@@ -13,7 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
-	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"github.com/lestrrat-go/jwx/v3/jwt/openid"
 	"github.com/lib/pq"
 	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/assert"
@@ -295,7 +295,8 @@ func TestCreateProvider(t *testing.T) {
 					ProjectID:  projectID,
 					Class:      scenario.providerClass,
 					Definition: jsonConfig,
-				}}).
+				},
+			}).
 				Return(db.Provider{
 					Name: scenario.name,
 				}, nil)

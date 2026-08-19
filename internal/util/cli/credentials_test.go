@@ -22,8 +22,6 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -88,12 +86,11 @@ func TestGetGrpcConnection(t *testing.T) {
 		}
 	})
 
-	h2cServer := http2.Server{}
-	h2cHandler := h2c.NewHandler(requestHandler, &h2cServer)
-
-	authServer := httptest.NewUnstartedServer(h2cHandler)
+	authServer := httptest.NewUnstartedServer(requestHandler)
 	authServer.EnableHTTP2 = true
-	require.NoError(t, http2.ConfigureServer(authServer.Config, &h2cServer))
+	authServer.Config.Protocols = new(http.Protocols)
+	authServer.Config.Protocols.SetHTTP1(true)
+	authServer.Config.Protocols.SetUnencryptedHTTP2(true)
 	authServer.Start()
 	fakeSvc.authUrl = authServer.URL + "/custom"
 	t.Cleanup(authServer.Close)
@@ -238,7 +235,6 @@ func TestSaveCredentials(t *testing.T) {
 	if string(content) != string(credsJSON) {
 		t.Errorf("expected file content %v, got %v", string(credsJSON), string(content))
 	}
-
 }
 
 // TestRemoveCredentials tests the RemoveCredentials function
@@ -253,13 +249,12 @@ func TestRemoveCredentials(t *testing.T) {
 	filePath := filepath.Join(xdgConfigHome, "minder", "localhost_8081.json")
 
 	// Create a dummy credentials file
-	err := os.MkdirAll(filepath.Dir(filePath), 0750)
-
+	err := os.MkdirAll(filepath.Dir(filePath), 0o750)
 	if err != nil {
 		t.Fatalf("error creating directory: %v", err)
 	}
 
-	err = os.WriteFile(filePath, []byte(`{"access_token":"test_access_token","refresh_token":"test_refresh_token","access_token_expires_at":1234567890}`), 0600)
+	err = os.WriteFile(filePath, []byte(`{"access_token":"test_access_token","refresh_token":"test_refresh_token","access_token_expires_at":1234567890}`), 0o600)
 	if err != nil {
 		t.Fatalf("error writing credentials to file: %v", err)
 	}
@@ -395,13 +390,12 @@ func TestLoadCredentials(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 			testDir := t.TempDir()
 			setEnvVar(t, XdgConfigHomeEnvVar, testDir)
 			// Create the minder directory inside the temp directory
 			minderDir := filepath.Join(testDir, "minder")
-			err := os.MkdirAll(minderDir, 0750)
+			err := os.MkdirAll(minderDir, 0o750)
 			if err != nil {
 				t.Fatalf("failed to create minder directory: %v", err)
 			}
@@ -413,7 +407,7 @@ func TestLoadCredentials(t *testing.T) {
 
 			if tt.fileContent != "" {
 				// Create a temporary file with the specified content
-				require.NoError(t, os.WriteFile(filePath, []byte(tt.fileContent), 0600))
+				require.NoError(t, os.WriteFile(filePath, []byte(tt.fileContent), 0o600))
 				// Print the file path and content for debugging
 				t.Logf("Test %s: written file path %s with content: %s", tt.name, filePath, tt.fileContent)
 			} else {
@@ -434,9 +428,7 @@ func TestLoadCredentials(t *testing.T) {
 					t.Errorf("expected result %v, got %v", tt.expectedResult, result)
 				}
 			}
-
 		})
-
 	}
 }
 
@@ -488,7 +480,6 @@ func TestRevokeToken(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			var server *httptest.Server

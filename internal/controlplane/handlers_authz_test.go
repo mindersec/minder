@@ -15,8 +15,8 @@ import (
 
 	gojwt "github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
-	"github.com/lestrrat-go/jwx/v2/jwt"
-	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"github.com/lestrrat-go/jwx/v3/jwt"
+	"github.com/lestrrat-go/jwx/v3/jwt/openid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -111,7 +111,8 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 			},
 			buildStubs: func(t *testing.T, store *mockdb.MockStore) {
 				t.Helper()
-				store.EXPECT().GetUserBySubject(gomock.Any(), userJWT.Subject()).
+				sub, _ := userJWT.Subject()
+				store.EXPECT().GetUserBySubject(gomock.Any(), sub).
 					Return(db.User{}, nil)
 			},
 			rpcErr: util.UserVisibleError(codes.InvalidArgument, "Multiple projects found, cannot determine default project."+
@@ -142,8 +143,9 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 			defaultProject: true,
 			buildStubs: func(t *testing.T, store *mockdb.MockStore) {
 				t.Helper()
+				sub, _ := userJWT.Subject()
 				store.EXPECT().
-					GetUserBySubject(gomock.Any(), userJWT.Subject()).
+					GetUserBySubject(gomock.Any(), sub).
 					Return(db.User{
 						ID: 1,
 					}, nil)
@@ -152,7 +154,8 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 				// Uses the default project id
 				Project: engcontext.Project{ID: defaultProjectID},
 			},
-		}, {
+		},
+		{
 			name: "no provider",
 			req: &minder.CreateProviderRequest{
 				Context: &minder.Context{
@@ -163,7 +166,8 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 			expectedContext: engcontext.EntityContext{
 				Project: engcontext.Project{ID: projectID},
 			},
-		}, {
+		},
+		{
 			name: "sets entity context",
 			req: &minder.RegisterRepositoryRequest{
 				Context: &minder.Context{
@@ -176,7 +180,8 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 				Project:  engcontext.Project{ID: projectID},
 				Provider: engcontext.Provider{Name: provider},
 			},
-		}, {
+		},
+		{
 			name: "lookup by name",
 			req: &minder.AssignRoleRequest{
 				Context: &minder.Context{
@@ -196,7 +201,8 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 			expectedContext: engcontext.EntityContext{
 				Project: engcontext.Project{ID: projectID},
 			},
-		}, {
+		},
+		{
 			name: "with ContextV2",
 			req: &minder.GetDataSourceByNameRequest{
 				Context: &minder.ContextV2{
@@ -232,8 +238,9 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 				tc.buildStubs(t, mockStore)
 			}
 			ctx := authjwt.WithAuthTokenContext(withRpcOptions(context.Background(), rpcOptions), userJWT)
+			sub, _ := userJWT.Subject()
 			ctx = auth.WithIdentityContext(ctx, &auth.Identity{
-				UserID: userJWT.Subject(),
+				UserID: sub,
 			})
 
 			authzClient := &mock.SimpleClient{}
@@ -372,9 +379,10 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 			ctx := withRpcOptions(context.Background(), rpcOptions)
 			ctx = engcontext.WithEntityContext(ctx, tc.entityCtx)
 			ctx = authjwt.WithAuthTokenContext(ctx, jwt)
+			sub, _ := jwt.Subject()
 			ctx = auth.WithIdentityContext(ctx, &auth.Identity{
-				UserID:    jwt.Subject(),
-				HumanName: jwt.Subject(),
+				UserID:    sub,
+				HumanName: sub,
 			})
 			_, err := ProjectAuthorizationInterceptor(ctx, request{}, &grpc.UnaryServerInfo{
 				Server: &server,
@@ -755,6 +763,7 @@ func TestUpdateRole(t *testing.T) {
 		})
 	}
 }
+
 func TestAssignRole(t *testing.T) {
 	t.Parallel()
 
@@ -799,7 +808,8 @@ func TestAssignRole(t *testing.T) {
 				Provider: &keycloak.KeyCloak{},
 			},
 			expectedError: "human users may only be added by invitation",
-		}, {
+		},
+		{
 			name:    "grant permission to GitHub Action",
 			subject: "githubactions/repo:mindersec/community:ref:refs/heads/main",
 			userIdentity: &auth.Identity{

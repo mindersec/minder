@@ -4,12 +4,11 @@
 package app
 
 import (
-	"context"
+	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/pkg/api"
@@ -21,20 +20,38 @@ var applyCmd = &cobra.Command{
 	Use:   "apply",
 	Short: "Apply multiple minder resources",
 	Long:  `The apply subcommand lets you apply multiple Minder resources at once.`,
-	RunE:  cli.GRPCClientWrapRunE(applyCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %s", err)
+		}
+
+		return nil
+
+	},
+	RunE: applyCommand,
 }
 
 // applyCommand is the general-purpose "apply" subcommand
-func applyCommand(ctx context.Context, cmd *cobra.Command, args []string, conn *grpc.ClientConn) error {
+//
+//nolint:gocyclo
+func applyCommand(cmd *cobra.Command, args []string) error {
 	// Step 1: Collect inputs, by reading files or directories.  Use the "-f" flag if set, positional arguments otherwise.
 	fileNames := args
-	if len(viper.GetStringSlice("file")) > 0 {
-		fileNames = viper.GetStringSlice("file")
+	argFiles, _ := cmd.Flags().GetStringSlice("file")
+	if len(argFiles) > 0 {
+		fileNames = argFiles
 	}
 	objects, err := fileconvert.ResourcesFromPaths(cmd.Printf, fileNames...)
 	if err != nil {
 		return cli.MessageAndError("Error reading resources", err)
 	}
+
+	if len(objects) == 0 {
+		return errors.New("no resources found")
+	}
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
 
 	// Step 2: sort objects by type
 	var profiles []*minderv1.Profile
@@ -67,23 +84,35 @@ func applyCommand(ctx context.Context, cmd *cobra.Command, args []string, conn *
 	}
 
 	// Step 3: apply objects, starting with DataSources
-	dataSourceClient := minderv1.NewDataSourceServiceClient(conn)
+	dataSourceClient, dsClose, err := cli.GetCLIClient(cmd, minderv1.NewDataSourceServiceClient)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer dsClose()
 	for _, dataSource := range dataSources {
-		if err := api.UpsertDataSource(ctx, dataSourceClient, dataSource); err != nil {
+		if err := api.UpsertDataSource(cmd.Context(), dataSourceClient, dataSource); err != nil {
 			return cli.MessageAndError(fmt.Sprintf("Unable to create datasource %s", dataSource.Name), err)
 		}
 	}
 
-	ruleTypeClient := minderv1.NewRuleTypeServiceClient(conn)
+	ruleTypeClient, rtClose, err := cli.GetCLIClient(cmd, minderv1.NewRuleTypeServiceClient)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer rtClose()
 	for _, ruleType := range ruleTypes {
-		if err := api.UpsertRuleType(ctx, ruleTypeClient, ruleType); err != nil {
+		if err := api.UpsertRuleType(cmd.Context(), ruleTypeClient, ruleType); err != nil {
 			return cli.MessageAndError(fmt.Sprintf("Unable to create ruletype %s", ruleType.Name), err)
 		}
 	}
 
-	profileClient := minderv1.NewProfileServiceClient(conn)
+	profileClient, pClose, err := cli.GetCLIClient(cmd, minderv1.NewProfileServiceClient)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer pClose()
 	for _, profile := range profiles {
-		if err := api.UpsertProfile(ctx, profileClient, profile); err != nil {
+		if err := api.UpsertProfile(cmd.Context(), profileClient, profile); err != nil {
 			return cli.MessageAndError(fmt.Sprintf("Unable to create profile %s", profile.Name), err)
 		}
 	}
@@ -94,5 +123,6 @@ func applyCommand(ctx context.Context, cmd *cobra.Command, args []string, conn *
 func init() {
 	RootCmd.AddCommand(applyCmd)
 	// Flags
+	applyCmd.Flags().StringP("project", "j", "", "ID of the project")
 	applyCmd.Flags().StringSliceP("file", "f", []string{}, "Input file or directory")
 }

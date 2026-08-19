@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 	"github.com/puzpuzpuz/xsync/v3"
 	"github.com/rs/zerolog"
 )
@@ -78,7 +78,6 @@ func (i *Identity) Human() string {
 // Resolver is an interface for resolving human-readable or stable identifiers
 // from either JWTs or stored strings
 type Resolver interface {
-
 	// Validate validates a token and returns an underlying identity representation
 	// suitable for use in authz calls.  This _probably_ reads data from the token,
 	// but could fetch from an external provider.
@@ -292,8 +291,8 @@ func (c *IdentityClient) ResolveFederated(ctx context.Context, federatedIdP, id 
 
 // Validate implements Resolver.
 func (c *IdentityClient) Validate(ctx context.Context, token jwt.Token) (*Identity, error) {
-	iss := token.Issuer()
-	if iss == "" {
+	iss, ok := token.Issuer()
+	if !ok || iss == "" {
 		return nil, errors.New("token has no issuer")
 	}
 	provider, ok := c.providers.Load(iss)

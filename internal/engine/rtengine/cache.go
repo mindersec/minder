@@ -26,7 +26,7 @@ import (
 // Cache contains a set of RuleTypeEngine instances
 type Cache interface {
 	// GetRuleEngine retrieves the rule type engine instance for the specified rule type
-	GetRuleEngine(context.Context, uuid.UUID) (*rtengine2.RuleTypeEngine, error)
+	GetRuleEngine(ctx context.Context, projectID, ruleID uuid.UUID) (*rtengine2.RuleTypeEngine, error)
 }
 
 type cacheType = map[uuid.UUID]*rtengine2.RuleTypeEngine
@@ -93,7 +93,7 @@ func NewRuleEngineCache(
 	}, nil
 }
 
-func (r *ruleEngineCache) GetRuleEngine(ctx context.Context, ruleTypeID uuid.UUID) (*rtengine2.RuleTypeEngine, error) {
+func (r *ruleEngineCache) GetRuleEngine(ctx context.Context, projectID, ruleTypeID uuid.UUID) (*rtengine2.RuleTypeEngine, error) {
 	if ruleTypeEngine, ok := r.engines[ruleTypeID]; ok {
 		return ruleTypeEngine, nil
 	}
@@ -104,16 +104,20 @@ func (r *ruleEngineCache) GetRuleEngine(ctx context.Context, ruleTypeID uuid.UUI
 	// expected to happen often, so the code handles it by querying for that
 	// rule type, building the rule type engine, and caching it.
 
-	// In this part of the code, we can be sure that the rule type ID is
-	// authorized for this project/user, since the rule type ID comes from
-	// the rule_instances table, and it is validated before it is inserted
-	// into that table.
-	ruleType, err := r.store.GetRuleTypeByID(ctx, ruleTypeID)
+	hierarchy, err := r.store.GetParentProjects(ctx, projectID)
+	if err != nil {
+		return nil, fmt.Errorf("error finding project hierarchy for %s: %w", projectID, err)
+	}
+
+	ruleType, err := r.store.GetRuleTypeByID(ctx, db.GetRuleTypeByIDParams{
+		Projects: hierarchy,
+		ID:       ruleTypeID,
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("unknown rule type with ID: %s", ruleTypeID)
 		}
-		return nil, fmt.Errorf("error creating rule type engine: %s", ruleTypeID)
+		return nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}
 
 	// If we find the rule type, insert into the cache and return.
@@ -164,14 +168,8 @@ func cacheRuleEngine(
 	}
 
 	opts = append(opts, eoptions.WithDataSources(dsreg), eoptions.WithFlagsClient(featureFlags))
-
-	// Pass the stored Rego version to the evaluator when the dual-parse
-	// feature flag is enabled. When the flag is off, the evaluator defaults
-	// to Rego V0 (the zero value of ast.RegoVersion).
-	if flags.Bool(ctx, featureFlags, flags.RegoV1DualParse) {
-		opts = append(opts, regoeval.WithRegoVersion(
-			regoeval.VersionFromString(ruleType.RegoVersion)))
-	}
+	opts = append(opts, regoeval.WithRegoVersion(
+		regoeval.VersionFromString(ruleType.RegoVersion)))
 
 	// Create the rule type engine
 	ruleEngine, err := rtengine2.NewRuleTypeEngine(ctx, pbRuleType, provider, opts...)

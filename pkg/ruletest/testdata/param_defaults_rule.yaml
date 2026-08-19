@@ -1,0 +1,36 @@
+# SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
+version: v1
+type: rule-type
+name: param_defaults_rule
+context:
+  project: 00000000-0000-0000-0000-000000000000
+description: 'Test rule that uses param_schema with defaults in endpoint template.'
+display_name: 'Param Defaults Test Rule'
+release_phase: alpha
+severity:
+  value: low
+guidance: 'Test rule for verifying param defaults are applied.'
+def:
+  in_entity: repository
+  param_schema:
+    properties:
+      branch:
+        type: string
+        description: "Branch name to check."
+        default: ""
+  rule_schema:
+    type: object
+    properties: {}
+  ingest:
+    type: rest
+    rest:
+      endpoint: '{{ $branch := index .Params "branch" }}/repos/{{.Entity.Owner}}/{{.Entity.Name}}/branches/{{if ne $branch "" }}{{ $branch }}{{ else }}{{ .Entity.DefaultBranch }}{{ end }}/protection'
+      parse: 'json'
+  eval:
+    type: jq
+    jq:
+      - ingested:
+          def: ".allow_deletions.enabled"
+        constant: false
