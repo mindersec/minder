@@ -250,6 +250,7 @@ func inventorySorter(a *extractor.Package, b *extractor.Package) int {
 		cmp.Compare(a.Name, b.Name),
 		cmp.Compare(a.Version, b.Version),
 		cmp.Compare(a.Location.PathOrEmpty(), b.Location.PathOrEmpty()),
+		cmp.Compare(a.ID, b.ID),
 	)
 }
 
@@ -298,7 +299,6 @@ func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([
 		ClientFactories: &scalibr_adapt.DisabledClientFactory{},
 	}
 
-	scalibrFs := scalibr_fs.ScanRoot{FS: wrapped}
 	plugins, err := list.FromCapabilities(&desiredCaps, &cfg)
 	if err != nil {
 		return nil, err
@@ -308,6 +308,9 @@ func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([
 	plugins = slices.DeleteFunc(plugins, func(p scalibr_plugin.Plugin) bool {
 		return slices.Contains(skipPlugins, p.Name())
 	})
+	errStats := scalibr_adapt.ErrorStats{}
+	scalibr_adapt.PatchExtractorStats(plugins, &errStats)
+	scalibrFs := scalibr_fs.ScanRoot{FS: wrapped}
 	scanConfig := scalibr.ScanConfig{
 		ScanRoots:    []*scalibr_fs.ScanRoot{&scalibrFs},
 		Plugins:      plugins,
@@ -322,14 +325,11 @@ func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([
 	}
 	switch scanResults.Status.Status {
 	case scalibr_plugin.ScanStatusSucceeded:
-		return scanResults.Inventory.Packages, nil
+		// success, continue
+	case scalibr_plugin.ScanStatusPartiallySucceeded:
 		// Scalibr runs a lot of plugins and aggregates the result.  Some of these are picky, and
 		// fail for random reasons.  Accept partial success, but log the failing plugins.
-	case scalibr_plugin.ScanStatusPartiallySucceeded:
-		known_bad := []string{
-			"endoflife/linuxdistro", // https://github.com/google/osv-scalibr/pull/2068
-			"rust/cargoauditable",   // https://github.com/go-git/go-billy/pull/208
-		}
+		known_bad := []string{}
 		for _, ps := range scanResults.PluginStatus {
 			if ps.Status.Status != scalibr_plugin.ScanStatusSucceeded {
 				if !slices.Contains(known_bad, ps.Name) {
@@ -338,12 +338,22 @@ func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([
 				}
 			}
 		}
-		return scanResults.Inventory.Packages, nil
+		// continue
 	case scalibr_plugin.ScanStatusUnspecified, scalibr_plugin.ScanStatusFailed:
 		fallthrough
 	default:
 		return nil, fmt.Errorf("error scanning files: %s", scanResults.Status)
 	}
+
+	// Log skipped files for server-side telemetry to adjust the 1MB limit.
+	// We don't return anything to clients, sorry!
+	for _, statErr := range errStats.Errs {
+		zerolog.Ctx(ctx).Info().
+			Str("plugin", statErr.Plugin).Str("path", statErr.Path).Str("res", string(statErr.Result)).
+			Msg("Scalibr require warning on file")
+	}
+
+	return scanResults.Inventory.Packages, nil
 }
 
 func inventoryToEcosystem(inventory *extractor.Package) pbinternal.DepEcosystem {
