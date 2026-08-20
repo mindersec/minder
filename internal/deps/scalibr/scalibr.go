@@ -18,6 +18,7 @@ import (
 
 	scalibr "github.com/google/osv-scalibr"
 	scalibr_cpb "github.com/google/osv-scalibr/binary/proto/config_go_proto"
+	"github.com/google/osv-scalibr/extractor"
 	scalibr_fs "github.com/google/osv-scalibr/fs"
 	scalibr_plugin "github.com/google/osv-scalibr/plugin"
 	scalibr_config "github.com/google/osv-scalibr/plugin/config"
@@ -89,8 +90,8 @@ func scanFilesystem(ctx context.Context, iofs fs.FS) (*sbom.NodeList, error) {
 		return slices.Contains(skipPlugins, p.Name())
 	})
 	// Ugly way to get statistics from each plugin, see https://github.com/google/osv-scalibr/issues/2316
-	errStats := errorStats{}
-	patchExtractorStats(plugins, &errStats)
+	errStats := ErrorStats{}
+	PatchExtractorStats(plugins, &errStats)
 	scanConfig := scalibr.ScanConfig{
 		ScanRoots:    []*scalibr_fs.ScanRoot{&scalibrFs},
 		Plugins:      plugins,
@@ -124,50 +125,58 @@ func scanFilesystem(ctx context.Context, iofs fs.FS) (*sbom.NodeList, error) {
 		return nil, fmt.Errorf("error scanning files: %s", scanResults.Status)
 	}
 
-	for _, statErr := range errStats.errs {
+	// Log skipped files for server-side telemetry to adjust the 1MB limit.
+	// We don't return anything to clients, sorry!
+	for _, statErr := range errStats.Errs {
 		zerolog.Ctx(ctx).Info().
-			Str("plugin", statErr.plugin).Str("path", statErr.path).Str("res", string(statErr.result)).
+			Str("plugin", statErr.Plugin).Str("path", statErr.Path).Str("res", string(statErr.Result)).
 			Msg("Scalibr require warning on file")
 	}
 
 	res := sbom.NewNodeList()
 	for _, inv := range scanResults.Inventory.Packages {
-		// TODO: use repo and commit from inv.SourceCode
-		node := &sbom.Node{
-			Type:    sbom.Node_PACKAGE,
-			Id:      uuid.New().String(),
-			Name:    inv.Name,
-			Version: inv.Version,
-			Identifiers: map[int32]string{
-				int32(sbom.SoftwareIdentifierType_PURL): inv.PURL().String(),
-				// TODO: scalibr returns a _list_ of CPEs, but protobom will store one.
-				// use the first?
-				// int32(sbom.SoftwareIdentifierType_CPE23):  inv.Extractor.ToCPEs(inv),
-			},
-		}
-		if inv.Location.Descriptor.PathOrEmpty() != "" {
-			node.Properties = append(node.Properties, &sbom.Property{
-				Name: "sourceFile",
-				Data: inv.Location.Descriptor.PathOrEmpty(),
-				// TODO: add Descriptor.File.LineNumber if available
-			})
-		}
-		for _, l := range inv.Location.Related {
-			node.Properties = append(node.Properties, &sbom.Property{
-				Name: "sourceFile",
-				Data: l.PathOrEmpty(),
-			})
-		}
-		res.AddNode(node)
+		res.AddNode(nodeFromPackage(inv))
 	}
 
 	return res, nil
 }
 
-// Monkey-patch the plugins with stats.Collector, as Scalibr does not provide a nice interface
-// for setting the collector which almost every plugin exposes.
-// See https://github.com/google/osv-scalibr/issues/2316
-func patchExtractorStats(plugins []scalibr_plugin.Plugin, collector stats.Collector) {
+func nodeFromPackage(inv *extractor.Package) *sbom.Node {
+	// TODO: use repo and commit from inv.SourceCode
+	node := &sbom.Node{
+		Type:        sbom.Node_PACKAGE,
+		Id:          uuid.New().String(),
+		Name:        inv.Name,
+		Version:     inv.Version,
+		Identifiers: map[int32]string{
+			// TODO: scalibr returns a _list_ of CPEs, but protobom will store one.
+			// use the first?
+			// int32(sbom.SoftwareIdentifierType_CPE23):  inv.Extractor.ToCPEs(inv),
+		},
+	}
+	if inv.PURL() != nil {
+		node.Identifiers[int32(sbom.SoftwareIdentifierType_PURL)] = inv.PURL().String()
+	}
+	if inv.Location.Descriptor.PathOrEmpty() != "" {
+		node.Properties = append(node.Properties, &sbom.Property{
+			Name: "sourceFile",
+			Data: inv.Location.Descriptor.PathOrEmpty(),
+			// TODO: add Descriptor.File.LineNumber if available
+		})
+	}
+	for _, l := range inv.Location.Related {
+		node.Properties = append(node.Properties, &sbom.Property{
+			Name: "sourceFile",
+			Data: l.PathOrEmpty(),
+		})
+	}
+	return node
+}
+
+// PatchExtractorStats monkey-patches each plugin with stats.Collector,
+// as Scalibr does not provide a nice interface for setting the collector
+// which almost every plugin exposes. See https://github.com/google/osv-scalibr/issues/2316
+func PatchExtractorStats(plugins []scalibr_plugin.Plugin, collector stats.Collector) {
 	for _, p := range plugins {
 		v := reflect.ValueOf(p)
 		if v.Kind() != reflect.Ptr || v.IsNil() {
@@ -192,54 +201,61 @@ func patchExtractorStats(plugins []scalibr_plugin.Plugin, collector stats.Collec
 	}
 }
 
-var _ stats.Collector = (*errorStats)(nil)
+var _ stats.Collector = (*ErrorStats)(nil)
 
-type statErr struct {
-	plugin string
-	path   string
-	result string
+// StatErr contains plugin error reports (via the stats module) for specific paths
+// which were unable to be processed.
+type StatErr struct {
+	Plugin string
+	Path   string
+	Result string
 }
 
-type errorStats struct {
-	errs   []statErr
+// ErrorStats is a scalibr stat collector for monitoring cases where
+// (for example) files are too large to be scanned.
+type ErrorStats struct {
+	Errs   []StatErr
 	maxRSS int64
 }
 
 // AfterDetectorRun implements [stats.Collector].
-func (*errorStats) AfterDetectorRun(string, time.Duration, error) {}
+func (*ErrorStats) AfterDetectorRun(string, time.Duration, error) {}
 
 // AfterExtractorRun implements [stats.Collector].
-func (*errorStats) AfterExtractorRun(string, *stats.AfterExtractorStats) {
+func (*ErrorStats) AfterExtractorRun(string, *stats.AfterExtractorStats) {
 }
 
 // AfterFileExtracted implements [stats.Collector].
-func (e *errorStats) AfterFileExtracted(pluginName string, filestats *stats.FileExtractedStats) {
+func (e *ErrorStats) AfterFileExtracted(pluginName string, filestats *stats.FileExtractedStats) {
 	if filestats.Result != stats.FileExtractedResultSuccess {
-		e.errs = append(e.errs, statErr{pluginName, filestats.Path, string(filestats.Result)})
+		e.Errs = append(e.Errs, StatErr{pluginName, filestats.Path, string(filestats.Result)})
 	}
 }
 
 // AfterFileRequired implements [stats.Collector].
-func (e *errorStats) AfterFileRequired(pluginName string, filestats *stats.FileRequiredStats) {
+func (e *ErrorStats) AfterFileRequired(pluginName string, filestats *stats.FileRequiredStats) {
 	if filestats.Result != stats.FileRequiredResultOK {
-		e.errs = append(e.errs, statErr{pluginName, filestats.Path, string(filestats.Result)})
+		e.Errs = append(e.Errs, StatErr{pluginName, filestats.Path, string(filestats.Result)})
 	}
 }
 
 // AfterInodeVisited implements [stats.Collector].
-func (*errorStats) AfterInodeVisited(string) {}
+func (*ErrorStats) AfterInodeVisited(string) {}
 
 // AfterResultsExported implements [stats.Collector].
-func (*errorStats) AfterResultsExported(string, int, error) {}
+func (*ErrorStats) AfterResultsExported(string, int, error) {}
 
 // AfterScan implements [stats.Collector].
-func (*errorStats) AfterScan(time.Duration, *scalibr_plugin.ScanStatus) {}
+func (*ErrorStats) AfterScan(time.Duration, *scalibr_plugin.ScanStatus) {}
 
 // MaxRSS implements [stats.Collector].
-func (e *errorStats) MaxRSS(maxRSS int64) {
+func (e *ErrorStats) MaxRSS(maxRSS int64) {
 	e.maxRSS = maxRSS
 }
 
+// DisabledClientFactory is a scalibr ClientFactory that produces network clients
+// which exist but always throw errors when used.  (Non-existent clients cause
+// plugin initialization to fail: https://github.com/google/osv-scalibr/issues/2377)
 type DisabledClientFactory struct{}
 
 var _ scalibr_config.ClientFactories = (*DisabledClientFactory)(nil)
@@ -273,6 +289,7 @@ func (*DisabledClientFactory) Invoke(context.Context, string, any, any, ...grpc.
 }
 
 // NewStream implements [grpc.ClientConnInterface].
-func (*DisabledClientFactory) NewStream(context.Context, *grpc.StreamDesc, string, ...grpc.CallOption) (grpc.ClientStream, error) {
+func (*DisabledClientFactory) NewStream(
+	context.Context, *grpc.StreamDesc, string, ...grpc.CallOption) (grpc.ClientStream, error) {
 	return nil, errors.New("network access is prohibited")
 }

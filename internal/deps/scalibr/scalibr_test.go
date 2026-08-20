@@ -8,11 +8,16 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/go-git/go-billy/v5/helper/iofs"
 	"github.com/go-git/go-billy/v5/memfs"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/osv-scalibr/extractor"
+	py_requirements "github.com/google/osv-scalibr/extractor/filesystem/language/python/requirements"
+	"github.com/google/osv-scalibr/inventory/location"
 	"github.com/protobom/protobom/pkg/sbom"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
@@ -133,7 +138,9 @@ func TestScanFilesystem(t *testing.T) {
 
 			assert.Contains(t, string(logOutput.String()), tc.expectedLog)
 			require.NoError(t, err)
-			if tc.expectedLog == "" {
+			// We want to flag _Linux_ plugins where partial-success happens "normally"
+			// to prevent log spam.
+			if runtime.GOOS == "linux" && tc.expectedLog == "" {
 				assert.Equal(t, logOutput.String(), tc.expectedLog)
 			}
 			require.Len(t, nodelist.Nodes, tc.expectedLen)
@@ -142,6 +149,63 @@ func TestScanFilesystem(t *testing.T) {
 			for i := range nodelist.Nodes {
 				nodelist.Nodes[i].Id = strings.Repeat(fmt.Sprintf("%d", i), 10)
 				require.Equal(t, tc.expect.Nodes[i].Checksum(), nodelist.Nodes[i].Checksum())
+			}
+		})
+	}
+}
+
+func Test_nodeFromPackage(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string // description of this test case
+		// Named input parameters for target function.
+		inv  *extractor.Package
+		want *sbom.Node
+	}{{
+		name: "standard case",
+		inv: &extractor.Package{
+			Name:    "Flask",
+			ID:      "123",
+			Version: "1",
+			Location: extractor.PackageLocation{
+				Descriptor: &location.Location{
+					File: &location.File{
+						Path:       "requirements.txt",
+						LineNumber: 1,
+					},
+				},
+			},
+			PURLType: "pypi",
+			Plugins:  []string{"python/requirements"},
+			Metadata: &py_requirements.Metadata{
+				Requirement: ">=1",
+			},
+		},
+		want: &sbom.Node{
+			Type:    sbom.Node_PACKAGE,
+			Name:    "Flask",
+			Version: "1",
+			Identifiers: map[int32]string{
+				1: "pkg:pypi/flask@1",
+			},
+			Properties: []*sbom.Property{{
+				Name: "sourceFile",
+				Data: "requirements.txt",
+			}},
+		},
+	}, {
+		name: "empty package",
+		inv:  &extractor.Package{},
+		want: &sbom.Node{},
+	}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got := nodeFromPackage(tt.inv)
+			// TODO: update the condition below to compare got with tt.want.
+			tt.want.Id = got.Id
+			if diff := cmp.Diff(tt.want, got); diff != "" {
+				t.Errorf("nodeFromPackage() diff:\n%s", diff)
 			}
 		})
 	}
