@@ -16,7 +16,7 @@ func TestValidateProviderTraits(t *testing.T) {
 
 	scenarios := []struct {
 		Name          string
-		Traits        []pb.ProviderType
+		Traits        []string
 		ExpectedError string
 	}{
 		{
@@ -25,29 +25,26 @@ func TestValidateProviderTraits(t *testing.T) {
 		},
 		{
 			Name:   "single valid trait passes",
-			Traits: []pb.ProviderType{pb.ProviderType_PROVIDER_TYPE_GITHUB},
+			Traits: []string{"github"},
 		},
 		{
-			Name: "multiple valid traits pass",
-			Traits: []pb.ProviderType{
-				pb.ProviderType_PROVIDER_TYPE_GIT,
-				pb.ProviderType_PROVIDER_TYPE_GITHUB,
-			},
+			Name:   "multiple valid traits pass",
+			Traits: []string{"git", "github"},
 		},
 		{
-			Name:          "unspecified trait fails",
-			Traits:        []pb.ProviderType{pb.ProviderType_PROVIDER_TYPE_UNSPECIFIED},
-			ExpectedError: "invalid provider_traits",
+			Name:          "unknown trait fails",
+			Traits:        []string{"gihtub"},
+			ExpectedError: `unknown trait "gihtub"`,
 		},
 		{
-			Name:          "unspecified trait among valid ones fails",
-			Traits:        []pb.ProviderType{pb.ProviderType_PROVIDER_TYPE_GITHUB, pb.ProviderType_PROVIDER_TYPE_UNSPECIFIED},
-			ExpectedError: "invalid provider_traits",
+			Name:          "unknown trait among valid ones fails",
+			Traits:        []string{"github", "gitlab"},
+			ExpectedError: `unknown trait "gitlab"`,
 		},
 		{
-			Name:          "unknown trait value fails",
-			Traits:        []pb.ProviderType{pb.ProviderType(9999)},
-			ExpectedError: "invalid provider_traits",
+			Name:          "numeric enum value is no longer accepted",
+			Traits:        []string{"1"},
+			ExpectedError: `unknown trait "1"`,
 		},
 	}
 

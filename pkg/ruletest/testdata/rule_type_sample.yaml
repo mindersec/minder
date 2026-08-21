@@ -16,6 +16,7 @@ guidance: |
   and set the 'Required approving reviews' count to 2 or higher.
 def:
   in_entity: repository
+  provider_traits: [github]
   rule_schema:
     properties:
       required_reviews:

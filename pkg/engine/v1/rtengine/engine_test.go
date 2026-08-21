@@ -156,3 +156,109 @@ allow if {
 		})
 	}
 }
+
+func TestNewRuleTypeEngineProviderTraits(t *testing.T) {
+	t.Parallel()
+
+	newRuleType := func(traits ...string) *minderv1.RuleType {
+		return &minderv1.RuleType{
+			Name: "test-rule",
+			Context: &minderv1.Context{
+				Project: ptr.Ptr("test"),
+			},
+			Def: &minderv1.RuleType_Definition{
+				InEntity:       minderv1.RepositoryEntity.String(),
+				RuleSchema:     &structpb.Struct{},
+				ProviderTraits: traits,
+				Ingest: &minderv1.RuleType_Definition_Ingest{
+					Type: "git",
+				},
+				Eval: &minderv1.RuleType_Definition_Eval{
+					Type: "rego",
+					Rego: &minderv1.RuleType_Definition_Eval_Rego{
+						Type: "deny-by-default",
+						Def: `package minder
+
+import rego.v1
+
+default allow := false
+`,
+					},
+				},
+			},
+		}
+	}
+
+	tests := []struct {
+		name          string
+		ruleType      *minderv1.RuleType
+		canImplement  func(trait minderv1.ProviderType) bool
+		wantSupported bool
+		wantUnknown   []string
+	}{
+		{
+			name:     "no provider_traits is unaffected",
+			ruleType: newRuleType(),
+			canImplement: func(minderv1.ProviderType) bool {
+				return false
+			},
+			wantSupported: true,
+		},
+		{
+			name:     "provider satisfies all required traits",
+			ruleType: newRuleType("git", "github"),
+			canImplement: func(minderv1.ProviderType) bool {
+				return true
+			},
+			wantSupported: true,
+		},
+		{
+			name:     "provider missing a required trait",
+			ruleType: newRuleType("git", "github"),
+			canImplement: func(trait minderv1.ProviderType) bool {
+				return trait != minderv1.ProviderType_PROVIDER_TYPE_GITHUB
+			},
+			wantSupported: false,
+		},
+		{
+			// Defensive path: rule type creation validates provider_traits
+			// (see ruletypes.validateProviderTraits), so this shouldn't
+			// happen for rule types created after that validation existed.
+			// It's a fallback for rule types stored before then, or any
+			// path that bypasses validation — not intended behaviour.
+			name:     "unknown trait name is a defensive fallback, treated as unsupported and reported",
+			ruleType: newRuleType("not-a-real-trait"),
+			canImplement: func(minderv1.ProviderType) bool {
+				return true
+			},
+			wantSupported: false,
+			wantUnknown:   []string{"not-a-real-trait"},
+		},
+		{
+			// Every unknown trait name must be collected, not just the
+			// first, so the user sees every typo at once.
+			name:     "multiple unknown trait names are all collected",
+			ruleType: newRuleType("not-a-real-trait", "git", "also-not-real"),
+			canImplement: func(minderv1.ProviderType) bool {
+				return true
+			},
+			wantSupported: false,
+			wantUnknown:   []string{"not-a-real-trait", "also-not-real"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			tlw := zerolog.NewTestWriter(t)
+			ctx := zerolog.New(tlw).With().Logger().WithContext(context.Background())
+
+			tk := tkv1.NewTestKit(tkv1.WithGitDir(t.TempDir()), tkv1.WithCanImplement(tt.canImplement))
+			rte, err := NewRuleTypeEngine(ctx, tt.ruleType, tk)
+			require.NoError(t, err, "NewRuleTypeEngine() failed")
+			assert.Equal(t, tt.wantSupported, rte.SupportedByProvider())
+			assert.Equal(t, tt.wantUnknown, rte.UnknownProviderTraits())
+		})
+	}
+}

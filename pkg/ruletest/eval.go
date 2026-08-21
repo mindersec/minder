@@ -9,6 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"slices"
+	"strings"
 
 	"go.starlark.net/starlark"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -34,13 +36,23 @@ func (tr *testCaseRunner) builtinEval(
 	var mockHttpDict *starlark.Dict
 	var mockFSDict *starlark.Dict
 	var datasourcesList *starlark.List
+	var providerTraitsPresentList *starlark.List
 
 	err := starlark.UnpackArgs("eval", args, kwargs,
 		"rule", &ruleName, "entity?", &entityDict,
 		"profile?", &profileDict, "params?", &paramsDict, "mock_http?", &mockHttpDict,
-		"mock_fs?", &mockFSDict, "data_sources?", &datasourcesList)
+		"mock_fs?", &mockFSDict, "data_sources?", &datasourcesList,
+		"provider_traits_present?", &providerTraitsPresentList)
 	if err != nil {
 		return nil, err
+	}
+
+	// A nil list (the argument was not passed) means the default: every
+	// trait is present. An explicit (possibly empty) list means only the
+	// listed traits are present.
+	presentTraits, err := parseProviderTraitsList(providerTraitsPresentList)
+	if err != nil {
+		return nil, fmt.Errorf("invalid provider_traits_present argument: %w", err)
 	}
 
 	mockFSMap, err := parseMockFSDict(mockFSDict)
@@ -87,6 +99,11 @@ func (tr *testCaseRunner) builtinEval(
 	if mockFSDict != nil {
 		tkOpts = append(tkOpts, tkv1.WithGitFiles(mockFSMap))
 	}
+	if providerTraitsPresentList != nil {
+		tkOpts = append(tkOpts, tkv1.WithCanImplement(func(trait minderv1.ProviderType) bool {
+			return slices.Contains(presentTraits, trait)
+		}))
+	}
 	tk := tkv1.NewTestKit(tkOpts...)
 
 	dsRegistry, err := buildDataSourceRegistry(datasourcesList, tk, tr.baseDir)
@@ -99,6 +116,21 @@ func (tr *testCaseRunner) builtinEval(
 		return nil, fmt.Errorf("failed to initialize rule type engine: %w", err)
 	}
 
+	// An unknown provider_traits entry is a bug in the rule type under
+	// test (a typo, or a trait renamed since the rule type was written),
+	// not something a test author can work around with
+	// provider_traits_present. Fail the eval() call outright instead of
+	// reporting a "skip" result, so it can't be mistaken for the rule
+	// type simply not applying to this test's provider traits.
+	if unknown := rte.UnknownProviderTraits(); len(unknown) > 0 {
+		return nil, fmt.Errorf("rule %q declares unknown provider trait(s) %s, valid values are: %s",
+			ruleName, strings.Join(unknown, ", "), strings.Join(minderv1.ValidProviderTraitNames(), ", "))
+	}
+
+	if !rte.SupportedByProvider() {
+		return skippedResult("rule type requires a provider trait not present in this test"), nil
+	}
+
 	if tk.ShouldOverrideIngest() {
 		rte.WithCustomIngester(tk)
 	}
@@ -106,6 +138,23 @@ func (tr *testCaseRunner) builtinEval(
 	res, err := rte.Eval(ctx, entityProto, profileMap, paramsMap, &stubResultSink{})
 
 	return formatEvalResult(res, err), nil
+}
+
+// skippedResult builds an eval() result for a rule type that was not
+// evaluated because the test provider does not implement one of its
+// required provider_traits.
+//
+// This intentionally diverges from the production executor, which produces
+// no eval status row at all for this case (see executor.evaluateRule) —
+// zero footprint, not even a skip. A Starlark test still needs eval() to
+// return *something* observable so a test author can assert on it, so the
+// harness reports it as a "skip" result rather than reproducing the
+// executor's silent no-op.
+func skippedResult(msg string) *starlark.Dict {
+	result := starlark.NewDict(2)
+	_ = result.SetKey(starlark.String("status"), starlark.String("skip"))
+	_ = result.SetKey(starlark.String("message"), starlark.String(msg))
+	return result
 }
 
 type stubResultSink struct{}
@@ -160,6 +209,31 @@ func parseMockFSDict(mockFSDict *starlark.Dict) (map[string]string, error) {
 		}
 	}
 	return mockFSMap, nil
+}
+
+// parseProviderTraitsList converts a Starlark list of provider trait names
+// (e.g. "github"), using the same short trait names as a rule type's
+// provider_traits field, into their protobuf enum values, for use with
+// tkv1.WithCanImplement. A nil list returns a nil slice.
+func parseProviderTraitsList(list *starlark.List) ([]minderv1.ProviderType, error) {
+	if list == nil {
+		return nil, nil
+	}
+
+	traits := make([]minderv1.ProviderType, 0, list.Len())
+	for val := range list.Elements() {
+		s, ok := val.(starlark.String)
+		if !ok {
+			return nil, fmt.Errorf("provider_traits_present must be a list of strings")
+		}
+		trait, ok := minderv1.ProviderTypeFromString(string(s))
+		if !ok {
+			return nil, fmt.Errorf("unknown provider trait %q, valid values are: %s",
+				string(s), strings.Join(minderv1.ValidProviderTraitNames(), ", "))
+		}
+		traits = append(traits, trait)
+	}
+	return traits, nil
 }
 
 func buildDataSourceRegistry(

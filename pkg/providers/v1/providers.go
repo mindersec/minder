@@ -106,6 +106,9 @@ type Provider interface {
 	// and the engine, but for now, each provider may have a custom mapping here for each
 	// supported message type.
 	PropertiesToProtoMessage(entType minderv1.Entity, props *properties.Properties) (protoreflect.ProtoMessage, error)
+
+	// CanImplement returns true if the provider implements the given trait.
+	CanImplement(trait minderv1.ProviderType) bool
 }
 
 // Git is the interface for git providers

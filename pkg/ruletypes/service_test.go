@@ -371,25 +371,25 @@ func TestRuleTypeService(t *testing.T) {
 		},
 		{
 			Name:       "CreateRuleType accepts valid provider_traits",
-			RuleType:   newRuleType(withBasicStructure, withProviderTraits(pb.ProviderType_PROVIDER_TYPE_GIT, pb.ProviderType_PROVIDER_TYPE_GITHUB)),
+			RuleType:   newRuleType(withBasicStructure, withProviderTraits("git", "github")),
 			DBSetup:    dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreate, withSuccessfulDeleteRuleTypeDataSource),
 			TestMethod: create,
 		},
 		{
 			Name:          "CreateRuleType rejects invalid provider_traits",
-			RuleType:      newRuleType(withBasicStructure, withProviderTraits(pb.ProviderType_PROVIDER_TYPE_UNSPECIFIED)),
+			RuleType:      newRuleType(withBasicStructure, withProviderTraits("gihtub")),
 			ExpectedError: ruletypes.ErrRuleTypeInvalid.Error(),
 			TestMethod:    create,
 		},
 		{
 			Name:       "UpdateRuleType accepts valid provider_traits",
-			RuleType:   newRuleType(withBasicStructure, withProviderTraits(pb.ProviderType_PROVIDER_TYPE_GIT, pb.ProviderType_PROVIDER_TYPE_GITHUB)),
+			RuleType:   newRuleType(withBasicStructure, withProviderTraits("git", "github")),
 			DBSetup:    dbf.NewDBMock(withHierarchyGet, withSuccessfulGet, withSuccessfulUpdate, withSuccessfulDeleteRuleTypeDataSource),
 			TestMethod: update,
 		},
 		{
 			Name:          "UpdateRuleType rejects invalid provider_traits",
-			RuleType:      newRuleType(withBasicStructure, withProviderTraits(pb.ProviderType_PROVIDER_TYPE_UNSPECIFIED)),
+			RuleType:      newRuleType(withBasicStructure, withProviderTraits("gihtub")),
 			ExpectedError: ruletypes.ErrRuleTypeInvalid.Error(),
 			TestMethod:    update,
 		},
@@ -541,7 +541,7 @@ func withRuleName(name string) func(ruleType *pb.RuleType) {
 	}
 }
 
-func withProviderTraits(traits ...pb.ProviderType) func(ruleType *pb.RuleType) {
+func withProviderTraits(traits ...string) func(ruleType *pb.RuleType) {
 	return func(ruleType *pb.RuleType) {
 		ruleType.Def.ProviderTraits = traits
 	}

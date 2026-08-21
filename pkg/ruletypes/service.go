@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/open-policy-agent/opa/v1/ast"
@@ -19,7 +20,6 @@ import (
 	regoeval "github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/marketplaces/namespaces"
-	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/schemaupdate"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -356,14 +356,25 @@ func (s *ruleTypeService) validateAndDetectRegoVersion(ctx context.Context, rule
 }
 
 // validateProviderTraits validates that a rule type's declared
-// provider_traits are known, valid ProviderType enum values. This checks
-// against the static set of provider types Minder defines, not against
-// providers currently registered in any project: gating on registration
-// would block loading rule types before providers exist, and would leave
-// rule types silently stale if a provider is later unregistered.
+// provider_traits are known trait names. This checks against the static set
+// of provider types Minder defines, not against providers currently
+// registered in any project: gating on registration would block loading
+// rule types before providers exist, and would leave rule types silently
+// stale if a provider is later unregistered.
+//
+// This validation catches a typo in provider_traits at rule type creation
+// or update time, before it's ever stored. Rule types stored before this
+// validation existed, or created through a path that bypasses it, can
+// still end up with an unrecognized trait name; that case is caught at
+// evaluation time instead (see rtengine.RuleTypeEngine.UnknownProviderTraits
+// and executor.evaluateRule), which surfaces it as an eval status error
+// rather than letting the rule type silently never evaluate.
 func validateProviderTraits(ruleType *pb.RuleType) error {
-	if _, err := providers.PBProviderTypesToDB(ruleType.GetDef().GetProviderTraits()); err != nil {
-		return fmt.Errorf("invalid provider_traits: %w", err)
+	for _, trait := range ruleType.GetDef().GetProviderTraits() {
+		if _, ok := pb.ProviderTypeFromString(trait); !ok {
+			return fmt.Errorf("invalid provider_traits: unknown trait %q, valid values are: %s",
+				trait, strings.Join(pb.ValidProviderTraitNames(), ", "))
+		}
 	}
 
 	return nil
