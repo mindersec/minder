@@ -176,6 +176,8 @@ func (o *GitHubOAuthDelegate) ListAllRepositories(ctx context.Context) ([]*minde
 			repos, resp, err = o.client.Repositories.ListByAuthenticatedUser(ctx, opt)
 		}
 
+		github.ObserveResponseRate(ctx, resp)
+
 		if err != nil {
 			return ghcommon.ConvertRepositories(allRepos), fmt.Errorf("error listing repositories: %w", err)
 		}
