@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"os"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -19,14 +20,17 @@ import (
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/helper/iofs"
 	scalibr "github.com/google/osv-scalibr"
+	scalibr_cfg "github.com/google/osv-scalibr/binary/proto/config_go_proto"
 	"github.com/google/osv-scalibr/extractor"
 	scalibr_fs "github.com/google/osv-scalibr/fs"
 	scalibr_plugin "github.com/google/osv-scalibr/plugin"
+	scalibr_config "github.com/google/osv-scalibr/plugin/config"
 	"github.com/google/osv-scalibr/plugin/list"
 	"github.com/google/osv-scalibr/purl"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	scalibr_adapt "github.com/mindersec/minder/internal/deps/scalibr"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
@@ -212,15 +216,25 @@ func (di *Diff) getScalibrTypeDiff(ctx context.Context, _ int, pr *pbinternal.Pu
 
 	deps.Deps = make([]*pbinternal.PrDependencies_ContextualDependency, 0, len(newDeps))
 	for _, inventory := range newDeps {
-		for _, filename := range inventory.Locations {
+		dep := &pbinternal.Dependency{
+			Ecosystem: inventoryToEcosystem(inventory),
+			Name:      inventory.Name,
+			Version:   inventory.Version,
+		}
+		if inventory.Location.PathOrEmpty() != "" {
 			deps.Deps = append(deps.Deps, &pbinternal.PrDependencies_ContextualDependency{
-				Dep: &pbinternal.Dependency{
-					Ecosystem: inventoryToEcosystem(inventory),
-					Name:      inventory.Name,
-					Version:   inventory.Version,
-				},
+				Dep: dep,
 				File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
-					Name:     filename,
+					Name:     inventory.Location.PathOrEmpty(),
+					PatchUrl: "", // TODO: do we need this?
+				},
+			})
+		}
+		for _, file := range inventory.Location.Related {
+			deps.Deps = append(deps.Deps, &pbinternal.PrDependencies_ContextualDependency{
+				Dep: dep,
+				File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
+					Name:     file.PathOrEmpty(),
 					PatchUrl: "", // TODO: do we need this?
 				},
 			})
@@ -232,14 +246,12 @@ func (di *Diff) getScalibrTypeDiff(ctx context.Context, _ int, pr *pbinternal.Pu
 
 func inventorySorter(a *extractor.Package, b *extractor.Package) int {
 	// If we compare by name and version first, we can avoid serializing Locations to strings
-	res := cmp.Or(cmp.Compare(a.Name, b.Name), cmp.Compare(a.Version, b.Version))
-	if res != 0 {
-		return res
-	}
-	// TODO: Locations should probably be sorted, but scalibr is going to export a compare function.
-	aLoc := fmt.Sprintf("%v", a.Locations)
-	bLoc := fmt.Sprintf("%v", b.Locations)
-	return cmp.Compare(aLoc, bLoc)
+	return cmp.Or(
+		cmp.Compare(a.Name, b.Name),
+		cmp.Compare(a.Version, b.Version),
+		cmp.Compare(a.Location.PathOrEmpty(), b.Location.PathOrEmpty()),
+		cmp.Compare(a.ID, b.ID),
+	)
 }
 
 func (di *Diff) scalibrInventory(ctx context.Context, repoURL string, ref string) ([]*extractor.Package, error) {
@@ -269,11 +281,39 @@ func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([
 		RunningSystem: false,
 	}
 
+	// TODO: it's unfortunate that scalibr spills files to disk.  File an upstream bug?
+	// NOTE: since we require NetworkOffline, we may not actually download anything...
+	tmpDir, err := os.MkdirTemp("", "minder-scalibr-*")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temporary scalibr directory: %w", err)
+	}
+	defer func() {
+		_ = os.RemoveAll(tmpDir)
+	}()
+	cfg := scalibr_config.PluginConfig{
+		ProtoConfig: &scalibr_cfg.PluginConfig{
+			MaxFileSizeBytes:  1024 * 1024,
+			LocalRegistry:     tmpDir,
+			DisableGoogleAuth: true,
+		},
+		ClientFactories: &scalibr_adapt.DisabledClientFactory{},
+	}
+
+	plugins, err := list.FromCapabilities(&desiredCaps, &cfg)
+	if err != nil {
+		return nil, err
+	}
+	// unknownbinariesextr uses file extension to determine "binary-ness", and triggers on e.g. .py files
+	skipPlugins := []string{"ffa/unknownbinariesextr"}
+	plugins = slices.DeleteFunc(plugins, func(p scalibr_plugin.Plugin) bool {
+		return slices.Contains(skipPlugins, p.Name())
+	})
+	errStats := scalibr_adapt.ErrorStats{}
+	scalibr_adapt.PatchExtractorStats(plugins, &errStats)
 	scalibrFs := scalibr_fs.ScanRoot{FS: wrapped}
 	scanConfig := scalibr.ScanConfig{
-		ScanRoots: []*scalibr_fs.ScanRoot{&scalibrFs},
-		// All includes Ruby, Dotnet which we're not ready to test yet, so use the more limited Default set.
-		Plugins:      list.FromCapabilities(&desiredCaps),
+		ScanRoots:    []*scalibr_fs.ScanRoot{&scalibrFs},
+		Plugins:      plugins,
 		Capabilities: &desiredCaps,
 	}
 
@@ -283,8 +323,34 @@ func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([
 	if scanResults == nil || scanResults.Status == nil {
 		return nil, fmt.Errorf("error scanning files: no results")
 	}
-	if scanResults.Status.Status != scalibr_plugin.ScanStatusSucceeded {
+	switch scanResults.Status.Status {
+	case scalibr_plugin.ScanStatusSucceeded:
+		// success, continue
+	case scalibr_plugin.ScanStatusPartiallySucceeded:
+		// Scalibr runs a lot of plugins and aggregates the result.  Some of these are picky, and
+		// fail for random reasons.  Accept partial success, but log the failing plugins.
+		known_bad := []string{}
+		for _, ps := range scanResults.PluginStatus {
+			if ps.Status.Status != scalibr_plugin.ScanStatusSucceeded {
+				if !slices.Contains(known_bad, ps.Name) {
+					zerolog.Ctx(ctx).Warn().Str("plugin", ps.Name).Str("status", ps.Status.FailureReason).
+						Msg("Scalibr plugin failed")
+				}
+			}
+		}
+		// continue
+	case scalibr_plugin.ScanStatusUnspecified, scalibr_plugin.ScanStatusFailed:
+		fallthrough
+	default:
 		return nil, fmt.Errorf("error scanning files: %s", scanResults.Status)
+	}
+
+	// Log skipped files for server-side telemetry to adjust the 1MB limit.
+	// We don't return anything to clients, sorry!
+	for _, statErr := range errStats.Errs {
+		zerolog.Ctx(ctx).Info().
+			Str("plugin", statErr.Plugin).Str("path", statErr.Path).Str("res", string(statErr.Result)).
+			Msg("Scalibr require warning on file")
 	}
 
 	return scanResults.Inventory.Packages, nil
@@ -297,6 +363,9 @@ func inventoryToEcosystem(inventory *extractor.Package) pbinternal.DepEcosystem 
 	}
 
 	package_url := inventory.PURL()
+	if package_url == nil {
+		package_url = &purl.PackageURL{}
+	}
 
 	// Sometimes Scalibr uses the string "PyPI" instead of "pypi" when reporting the ecosystem.
 	switch package_url.Type {

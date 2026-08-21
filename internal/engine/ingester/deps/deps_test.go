@@ -221,7 +221,7 @@ func TestIngestRepo(t *testing.T) {
 				Name:    "vtop",
 				Version: "0.6.1",
 				Identifiers: map[int32]string{
-					int32(sbom.SoftwareIdentifierType_PURL): "pkg:npm/vtop@0.6.1",
+					int32(sbom.SoftwareIdentifierType_PURL): "pkg:npm/vtop@0.6.1?source=UNKNOWN",
 				},
 				Properties: []*sbom.Property{{
 					Name: "sourceFile",
