@@ -8,8 +8,10 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -122,13 +124,54 @@ func checkGoldenFile(t *testing.T, filename string, actual string) {
 	expected, err := os.ReadFile(goldenPath)
 	require.NoError(t, err, "could not read golden file. Run 'go test ./... -update' to generate it")
 
+	// Try standard JSON comparison first
 	if json.Valid(expected) && json.Valid([]byte(actual)) {
-		// if it's valid json compare the objects (ignores spaces/newlines)
 		require.JSONEq(t, string(expected), actual, "JSON Output does not match golden file")
-	} else {
-		// if it's a table, txt, or yaml fallback to exact string matching
-		require.Equal(t, string(expected), actual, "Output does not match golden file")
+		return
 	}
+
+	// Try to handle JSON streams (newline-delimited JSON)
+	// Attempt to decode newline-delimited JSON (JSON stream).
+	// If decoding fails, input is treated as non-JSON output.
+	expectedParsed, expectedErr := tryParseJSONStream(string(expected))
+	actualParsed, actualErr := tryParseJSONStream(actual)
+
+	// If both successfully parsed as JSON streams, compare them.
+	// This includes edge cases like empty arrays [] which are valid JSON.
+	if expectedErr == nil && actualErr == nil {
+		require.Equal(t, expectedParsed, actualParsed, "JSON stream output does not match golden file")
+		return
+	}
+
+	// Otherwise do exact string matching (for tables, txt, yaml, etc.)
+	require.Equal(t, string(expected), actual, "Output does not match golden file")
+}
+
+// tryParseJSONStream attempts to parse newline-delimited JSON (JSON stream output from CLI).
+// Returns empty slice and an error if input is not a JSON stream (e.g., YAML, table, etc).
+func tryParseJSONStream(input string) ([]interface{}, error) {
+	// Try to decode as JSON stream directly without heuristics.
+	// If the input is not JSON, the decoder will fail on the first non-JSON line.
+	dec := json.NewDecoder(strings.NewReader(input))
+
+	var result []interface{}
+
+	for {
+		var obj interface{}
+		err := dec.Decode(&obj)
+
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			// Not a JSON stream (could be YAML, table, plain text, etc.)
+			return nil, err
+		}
+
+		result = append(result, obj)
+	}
+
+	return result, nil
 }
 
 // LoadFixture reads a JSON file from the "fixture" directory and unmarshals
