@@ -6,6 +6,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -178,7 +179,15 @@ func (e *executor) evaluateRule(
 	if err != nil {
 		return fmt.Errorf("error creating rule type engine: %w", err)
 	}
-	if !ruleEngine.SupportedByProvider() {
+
+	// An unknown provider_traits entry (typo, or a trait renamed since the
+	// rule type was stored) is a rule type authoring problem the user can
+	// fix, so it must surface as a loud evaluation error rather than the
+	// silent skip below. Only when every declared trait name is known, but
+	// the provider doesn't implement one of them, do we take the silent
+	// path: that's expected and not something the user can act on.
+	unknownTraits := ruleEngine.UnknownProviderTraits()
+	if len(unknownTraits) == 0 && !ruleEngine.SupportedByProvider() {
 		// This rule type doesn't apply to this entity's provider.
 		// Produce zero evaluation-status footprint: no error, no
 		// skip record, nothing — stricter than the SkipSilently
@@ -199,9 +208,14 @@ func (e *executor) evaluateRule(
 	// Evaluate the rule
 	var evalErr error
 	var result *interfaces.EvaluationResult
-	if profileEvalStatus != nil {
+	switch {
+	case len(unknownTraits) > 0:
+		evalErr = fmt.Errorf("rule type %q declares unknown provider trait(s) %s; "+
+			"check provider_traits for a typo or a trait renamed since this rule type was stored",
+			ruleEngine.GetRuleType().Name, strings.Join(unknownTraits, ", "))
+	case profileEvalStatus != nil:
 		evalErr = profileEvalStatus
-	} else {
+	default:
 		// enrich the logger with the entity type and execution ID
 		ctx := zerolog.Ctx(ctx).With().
 			Str("entity_type", inf.Type.ToString()).

@@ -194,6 +194,7 @@ default allow := false
 		ruleType      *minderv1.RuleType
 		canImplement  func(trait minderv1.ProviderType) bool
 		wantSupported bool
+		wantUnknown   []string
 	}{
 		{
 			name:     "no provider_traits is unaffected",
@@ -224,15 +225,25 @@ default allow := false
 			// (see ruletypes.validateProviderTraits), so this shouldn't
 			// happen for rule types created after that validation existed.
 			// It's a fallback for rule types stored before then, or any
-			// path that bypasses validation — not intended behaviour. The
-			// engine also logs a warning here, which this test doesn't
-			// assert on directly.
-			name:     "unknown trait name is a defensive fallback, treated as unsupported and warned about",
+			// path that bypasses validation — not intended behaviour.
+			name:     "unknown trait name is a defensive fallback, treated as unsupported and reported",
 			ruleType: newRuleType("not-a-real-trait"),
 			canImplement: func(minderv1.ProviderType) bool {
 				return true
 			},
 			wantSupported: false,
+			wantUnknown:   []string{"not-a-real-trait"},
+		},
+		{
+			// Every unknown trait name must be collected, not just the
+			// first, so the user sees every typo at once.
+			name:     "multiple unknown trait names are all collected",
+			ruleType: newRuleType("not-a-real-trait", "git", "also-not-real"),
+			canImplement: func(minderv1.ProviderType) bool {
+				return true
+			},
+			wantSupported: false,
+			wantUnknown:   []string{"not-a-real-trait", "also-not-real"},
 		},
 	}
 
@@ -247,6 +258,7 @@ default allow := false
 			rte, err := NewRuleTypeEngine(ctx, tt.ruleType, tk)
 			require.NoError(t, err, "NewRuleTypeEngine() failed")
 			assert.Equal(t, tt.wantSupported, rte.SupportedByProvider())
+			assert.Equal(t, tt.wantUnknown, rte.UnknownProviderTraits())
 		})
 	}
 }

@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"slices"
-	"sort"
 	"strings"
 
 	"go.starlark.net/starlark"
@@ -117,6 +116,17 @@ func (tr *testCaseRunner) builtinEval(
 		return nil, fmt.Errorf("failed to initialize rule type engine: %w", err)
 	}
 
+	// An unknown provider_traits entry is a bug in the rule type under
+	// test (a typo, or a trait renamed since the rule type was written),
+	// not something a test author can work around with
+	// provider_traits_present. Fail the eval() call outright instead of
+	// reporting a "skip" result, so it can't be mistaken for the rule
+	// type simply not applying to this test's provider traits.
+	if unknown := rte.UnknownProviderTraits(); len(unknown) > 0 {
+		return nil, fmt.Errorf("rule %q declares unknown provider trait(s) %s, valid values are: %s",
+			ruleName, strings.Join(unknown, ", "), strings.Join(minderv1.ValidProviderTraitNames(), ", "))
+	}
+
 	if !rte.SupportedByProvider() {
 		return skippedResult("rule type requires a provider trait not present in this test"), nil
 	}
@@ -219,27 +229,11 @@ func parseProviderTraitsList(list *starlark.List) ([]minderv1.ProviderType, erro
 		trait, ok := minderv1.ProviderTypeFromString(string(s))
 		if !ok {
 			return nil, fmt.Errorf("unknown provider trait %q, valid values are: %s",
-				string(s), strings.Join(validProviderTraitNames(), ", "))
+				string(s), strings.Join(minderv1.ValidProviderTraitNames(), ", "))
 		}
 		traits = append(traits, trait)
 	}
 	return traits, nil
-}
-
-// validProviderTraitNames lists the trait names accepted by
-// provider_traits_present: the (name) option of every defined ProviderType
-// value.
-func validProviderTraitNames() []string {
-	names := make([]string, 0, len(minderv1.ProviderType_name))
-	for v := range minderv1.ProviderType_name {
-		t := minderv1.ProviderType(v)
-		if t == minderv1.ProviderType_PROVIDER_TYPE_UNSPECIFIED {
-			continue
-		}
-		names = append(names, t.ToString())
-	}
-	sort.Strings(names)
-	return names
 }
 
 func buildDataSourceRegistry(
