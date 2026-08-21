@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/google/uuid"
@@ -356,22 +355,6 @@ func (s *ruleTypeService) validateAndDetectRegoVersion(ctx context.Context, rule
 	}
 }
 
-// validProviderTraitNames lists the trait names a rule type's
-// provider_traits may declare: the (name) option of every defined
-// ProviderType value.
-var validProviderTraitNames = func() []string {
-	names := make([]string, 0, len(pb.ProviderType_name))
-	for v := range pb.ProviderType_name {
-		t := pb.ProviderType(v)
-		if t == pb.ProviderType_PROVIDER_TYPE_UNSPECIFIED {
-			continue
-		}
-		names = append(names, t.ToString())
-	}
-	sort.Strings(names)
-	return names
-}()
-
 // validateProviderTraits validates that a rule type's declared
 // provider_traits are known trait names. This checks against the static set
 // of provider types Minder defines, not against providers currently
@@ -379,15 +362,18 @@ var validProviderTraitNames = func() []string {
 // rule types before providers exist, and would leave rule types silently
 // stale if a provider is later unregistered.
 //
-// This validation is the only safeguard against a typo in provider_traits:
-// an unrecognized string parses fine but matches no trait, silently making
-// the rule type never evaluate (see rtengine.RuleTypeEngine.SupportedByProvider),
-// with no error, skipped status, or eval status row to reveal the mistake.
+// This validation catches a typo in provider_traits at rule type creation
+// or update time, before it's ever stored. Rule types stored before this
+// validation existed, or created through a path that bypasses it, can
+// still end up with an unrecognized trait name; that case is caught at
+// evaluation time instead (see rtengine.RuleTypeEngine.UnknownProviderTraits
+// and executor.evaluateRule), which surfaces it as an eval status error
+// rather than letting the rule type silently never evaluate.
 func validateProviderTraits(ruleType *pb.RuleType) error {
 	for _, trait := range ruleType.GetDef().GetProviderTraits() {
 		if _, ok := pb.ProviderTypeFromString(trait); !ok {
 			return fmt.Errorf("invalid provider_traits: unknown trait %q, valid values are: %s",
-				trait, strings.Join(validProviderTraitNames, ", "))
+				trait, strings.Join(pb.ValidProviderTraitNames(), ", "))
 		}
 	}
 
