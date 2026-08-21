@@ -434,6 +434,15 @@ func (RuleTypeReleasePhase) EnumDescriptor() ([]byte, []int) {
 }
 
 // ProviderTrait is the type of the provider.
+// The (name) option on each value below is a stable public interface, not
+// an internal label: rule types declare required provider traits by these
+// names in provider_traits (see RuleType.Definition.provider_traits), and
+// that field is stored as serialized proto in the database. Renaming a
+// (name) value would silently stop it matching any already-stored rule
+// type's provider_traits entries -- no error, just the rule type never
+// evaluating again -- as well as breaking any client that parses or
+// constructs these names directly. Add new values instead of renaming
+// existing ones.
 type ProviderType int32
 
 const (

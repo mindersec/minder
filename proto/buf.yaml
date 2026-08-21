@@ -17,6 +17,11 @@ breaking:
   # 9. This is a deliberate, sanctioned exception: provider_traits has never
   # been documented or used, so no real caller depends on the old field 8
   # wire/JSON shape.
+  #
+  # TEMPORARY: the buf incompatibility check only compares between a PR's
+  # base and current commit, so this exception is only needed for the PR
+  # that makes the field 8 -> field 9 change. Safe to delete this
+  # ignore_only entry (and this comment) once that PR is merged.
   ignore_only:
     FIELD_NO_DELETE_UNLESS_NAME_RESERVED:
       - minder/v1/minder.proto
