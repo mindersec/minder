@@ -58,7 +58,8 @@ func (c *gitlabClient) getGitLabProject(
 	// request here because of the way they form authentication for requests.
 	// It would be ideal to use it, so we should consider contributing and making
 	// that part more pluggable.
-	req, err := c.NewRequest("GET", projectURLPath, nil)
+	// GitLab omits license unless license=true is requested.
+	req, err := c.NewRequest("GET", projectURLPath+"?license=true", nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
