@@ -26,6 +26,7 @@ import (
 	tkv1 "github.com/mindersec/minder/pkg/testkit/v1"
 )
 
+//nolint:gocyclo // Mostly one error check per decoded Starlark argument.
 func (tr *testCaseRunner) builtinEval(
 	_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple,
 ) (starlark.Value, error) {
@@ -128,7 +129,7 @@ func (tr *testCaseRunner) builtinEval(
 	}
 
 	if !rte.SupportedByProvider() {
-		return skippedResult("rule type requires a provider trait not present in this test"), nil
+		return unsupportedTraitResult(), nil
 	}
 
 	if tk.ShouldOverrideIngest() {
@@ -140,8 +141,8 @@ func (tr *testCaseRunner) builtinEval(
 	return formatEvalResult(res, err), nil
 }
 
-// skippedResult builds an eval() result for a rule type that was not
-// evaluated because the test provider does not implement one of its
+// unsupportedTraitResult builds the eval() result for a rule type that was
+// not evaluated because the test provider does not implement one of its
 // required provider_traits.
 //
 // This intentionally diverges from the production executor, which produces
@@ -150,10 +151,11 @@ func (tr *testCaseRunner) builtinEval(
 // return *something* observable so a test author can assert on it, so the
 // harness reports it as a "skip" result rather than reproducing the
 // executor's silent no-op.
-func skippedResult(msg string) *starlark.Dict {
+func unsupportedTraitResult() *starlark.Dict {
 	result := starlark.NewDict(2)
 	_ = result.SetKey(starlark.String("status"), starlark.String("skip"))
-	_ = result.SetKey(starlark.String("message"), starlark.String(msg))
+	_ = result.SetKey(starlark.String("message"),
+		starlark.String("rule type requires a provider trait not present in this test"))
 	return result
 }
 
@@ -226,8 +228,8 @@ func parseProviderTraitsList(list *starlark.List) ([]minderv1.ProviderType, erro
 		if !ok {
 			return nil, fmt.Errorf("provider_traits_present must be a list of strings")
 		}
-		trait, ok := minderv1.ProviderTypeFromString(string(s))
-		if !ok {
+		trait := minderv1.ProviderTypeFromString(string(s))
+		if trait == minderv1.ProviderType_PROVIDER_TYPE_UNSPECIFIED {
 			return nil, fmt.Errorf("unknown provider trait %q, valid values are: %s",
 				string(s), strings.Join(minderv1.ValidProviderTraitNames(), ", "))
 		}

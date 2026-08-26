@@ -4,8 +4,8 @@
 package v1
 
 import (
+	"maps"
 	"slices"
-	"sort"
 )
 
 // providerTypeByName maps the (name) option of every defined ProviderType
@@ -31,11 +31,7 @@ func init() {
 		providerTypeByName[t.ToString()] = t
 	}
 
-	validProviderTraitNames = make([]string, 0, len(providerTypeByName))
-	for name := range providerTypeByName {
-		validProviderTraitNames = append(validProviderTraitNames, name)
-	}
-	sort.Strings(validProviderTraitNames)
+	validProviderTraitNames = slices.Sorted(maps.Keys(providerTypeByName))
 }
 
 // ToString returns the string representation of the ProviderType
@@ -44,15 +40,16 @@ func (provt ProviderType) ToString() string {
 }
 
 // ProviderTypeFromString returns the ProviderType whose (name) option
-// matches s (e.g. "github", "git"), and true if one was found. It is the
-// inverse of ProviderType.ToString.
-func ProviderTypeFromString(s string) (ProviderType, bool) {
-	t, ok := providerTypeByName[s]
-	if !ok {
-		return ProviderType_PROVIDER_TYPE_UNSPECIFIED, false
-	}
-
-	return t, true
+// matches s (e.g. "github", "git"), or ProviderType_PROVIDER_TYPE_UNSPECIFIED
+// if no ProviderType has that name. It is the inverse of
+// ProviderType.ToString.
+//
+// PROVIDER_TYPE_UNSPECIFIED has no (name) option and is deliberately left
+// out of the lookup table, so it is never a valid result and the zero value
+// doubles as the "no such trait" signal. Callers that need to distinguish
+// the two compare the result against PROVIDER_TYPE_UNSPECIFIED.
+func ProviderTypeFromString(s string) ProviderType {
+	return providerTypeByName[s]
 }
 
 // ValidProviderTraitNames returns the sorted list of valid provider trait

@@ -85,8 +85,8 @@ func NewRuleTypeEngine(
 	supportedByProvider := true
 	var unknownProviderTraits []string
 	for _, trait := range ruletype.GetDef().GetProviderTraits() {
-		providerTrait, ok := minderv1.ProviderTypeFromString(trait)
-		if !ok {
+		providerTrait := minderv1.ProviderTypeFromString(trait)
+		if providerTrait == minderv1.ProviderType_PROVIDER_TYPE_UNSPECIFIED {
 			// A trait name that doesn't map to any known ProviderType is
 			// almost certainly a typo, or a trait renamed since the rule
 			// type was stored. Rule type creation validates against this

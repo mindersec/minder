@@ -371,7 +371,7 @@ func (s *ruleTypeService) validateAndDetectRegoVersion(ctx context.Context, rule
 // rather than letting the rule type silently never evaluate.
 func validateProviderTraits(ruleType *pb.RuleType) error {
 	for _, trait := range ruleType.GetDef().GetProviderTraits() {
-		if _, ok := pb.ProviderTypeFromString(trait); !ok {
+		if pb.ProviderTypeFromString(trait) == pb.ProviderType_PROVIDER_TYPE_UNSPECIFIED {
 			return fmt.Errorf("invalid provider_traits: unknown trait %q, valid values are: %s",
 				trait, strings.Join(pb.ValidProviderTraitNames(), ", "))
 		}
