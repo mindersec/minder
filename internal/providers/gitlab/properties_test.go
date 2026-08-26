@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -386,6 +387,45 @@ func TestPropertiesToProtoMessage(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+func Test_gitlabClient_getGitLabProject_requestsLicense(t *testing.T) {
+	t.Parallel()
+
+	var gotQuery url.Values
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotQuery = r.URL.Query()
+
+		resp := &gitlab.Project{
+			ID:   1,
+			Name: "project-1",
+			Namespace: &gitlab.ProjectNamespace{
+				Path: "group",
+			},
+			License: &gitlab.ProjectLicense{
+				Key:  "mit",
+				Name: "MIT License",
+			},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		//nolint:gosec // This is a test
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer ts.Close()
+
+	got, err := newTestGitlabProvider(ts.URL).getPropertiesForRepo(
+		context.Background(),
+		properties.NewProperties(map[string]any{
+			properties.PropertyUpstreamID: "1",
+		}),
+	)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "true", gotQuery.Get("license"),
+		"GitLab omits license information unless license=true is requested")
+	assert.Equal(t, "MIT License", got.GetProperty(RepoPropertyLicense).GetString())
 }
 
 func newTestGitlabProvider(endpoint string) *gitlabClient {
