@@ -453,6 +453,7 @@ const (
 	ProviderType_PROVIDER_TYPE_OCI          ProviderType = 4
 	ProviderType_PROVIDER_TYPE_REPO_LISTER  ProviderType = 5
 	ProviderType_PROVIDER_TYPE_IMAGE_LISTER ProviderType = 6
+	ProviderType_PROVIDER_TYPE_GITLAB       ProviderType = 7
 )
 
 // Enum value maps for ProviderType.
@@ -465,6 +466,7 @@ var (
 		4: "PROVIDER_TYPE_OCI",
 		5: "PROVIDER_TYPE_REPO_LISTER",
 		6: "PROVIDER_TYPE_IMAGE_LISTER",
+		7: "PROVIDER_TYPE_GITLAB",
 	}
 	ProviderType_value = map[string]int32{
 		"PROVIDER_TYPE_UNSPECIFIED":  0,
@@ -474,6 +476,7 @@ var (
 		"PROVIDER_TYPE_OCI":          4,
 		"PROVIDER_TYPE_REPO_LISTER":  5,
 		"PROVIDER_TYPE_IMAGE_LISTER": 6,
+		"PROVIDER_TYPE_GITLAB":       7,
 	}
 )
 
@@ -13430,14 +13433,16 @@ type RuleType_Definition struct {
 	InEntity string `protobuf:"bytes,1,opt,name=in_entity,json=inEntity,proto3" json:"in_entity,omitempty"`
 	// provider_traits declares the provider trait(s) this rule type
 	// requires an implementation of. Values are trait names as used in
-	// provider class definitions, e.g. "github", "rest", "git", "oci",
-	// "repo-lister", "image-lister".
+	// provider class definitions, e.g. "github", "gitlab", "rest",
+	// "git", "oci", "repo-lister", "image-lister".
 	// This is AND semantics: a rule type requires an implementation of
 	// every listed trait, not just one of them. For example, a rule
 	// type requiring ["git", "github"] needs a provider that
 	// implements both traits (e.g. to read repo contents via git and
-	// call a forge-specific API via github). If empty, the rule type
-	// is not gated by provider traits.
+	// call a forge-specific API via github). Use ["rest", "github"] for
+	// a rule that calls the GitHub API and ["rest", "gitlab"] for one
+	// that calls the GitLab API. If empty, the rule type is not gated
+	// by provider traits.
 	ProviderTraits []string `protobuf:"bytes,9,rep,name=provider_traits,json=providerTraits,proto3" json:"provider_traits,omitempty"`
 	// rule_schema is the schema of the rule. This is expressed in JSON Schema.
 	RuleSchema *structpb.Struct `protobuf:"bytes,2,opt,name=rule_schema,json=ruleSchema,proto3" json:"rule_schema,omitempty"`
@@ -16303,7 +16308,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x1cRULE_TYPE_RELEASE_PHASE_BETA\x10\x02\x1a\b\xea\xdc\x14\x04beta\x12&\n" +
 	"\x1aRULE_TYPE_RELEASE_PHASE_GA\x10\x03\x1a\x06\xea\xdc\x14\x02ga\x126\n" +
 	"\"RULE_TYPE_RELEASE_PHASE_DEPRECATED\x10\x04\x1a\x0e\xea\xdc\x14\n" +
-	"deprecated*\x97\x02\n" +
+	"deprecated*\xbd\x02\n" +
 	"\fProviderType\x12\x1d\n" +
 	"\x19PROVIDER_TYPE_UNSPECIFIED\x10\x00\x12$\n" +
 	"\x14PROVIDER_TYPE_GITHUB\x10\x01\x1a\n" +
@@ -16312,7 +16317,9 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x11PROVIDER_TYPE_GIT\x10\x03\x1a\a\xea\xdc\x14\x03git\x12\x1e\n" +
 	"\x11PROVIDER_TYPE_OCI\x10\x04\x1a\a\xea\xdc\x14\x03oci\x12.\n" +
 	"\x19PROVIDER_TYPE_REPO_LISTER\x10\x05\x1a\x0f\xea\xdc\x14\vrepo-lister\x120\n" +
-	"\x1aPROVIDER_TYPE_IMAGE_LISTER\x10\x06\x1a\x10\xea\xdc\x14\fimage-lister*\xd5\x01\n" +
+	"\x1aPROVIDER_TYPE_IMAGE_LISTER\x10\x06\x1a\x10\xea\xdc\x14\fimage-lister\x12$\n" +
+	"\x14PROVIDER_TYPE_GITLAB\x10\a\x1a\n" +
+	"\xea\xdc\x14\x06gitlab*\xd5\x01\n" +
 	"\rProviderClass\x12\x1e\n" +
 	"\x1aPROVIDER_CLASS_UNSPECIFIED\x10\x00\x12%\n" +
 	"\x15PROVIDER_CLASS_GITHUB\x10\x01\x1a\n" +

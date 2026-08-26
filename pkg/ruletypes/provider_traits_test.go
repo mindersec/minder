@@ -38,13 +38,17 @@ func TestValidateProviderTraits(t *testing.T) {
 		},
 		{
 			Name:          "unknown trait among valid ones fails",
-			Traits:        []string{"github", "gitlab"},
-			ExpectedError: `unknown trait "gitlab"`,
+			Traits:        []string{"github", "gitbub"},
+			ExpectedError: `unknown trait "gitbub"`,
 		},
 		{
 			Name:          "numeric enum value is no longer accepted",
 			Traits:        []string{"1"},
 			ExpectedError: `unknown trait "1"`,
+		},
+		{
+			Name:   "gitlab is a valid trait",
+			Traits: []string{"rest", "gitlab"},
 		},
 	}
 

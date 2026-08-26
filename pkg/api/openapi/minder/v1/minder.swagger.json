@@ -3955,7 +3955,7 @@
           "items": {
             "type": "string"
           },
-          "description": "provider_traits declares the provider trait(s) this rule type\nrequires an implementation of. Values are trait names as used in\nprovider class definitions, e.g. \"github\", \"rest\", \"git\", \"oci\",\n\"repo-lister\", \"image-lister\".\nThis is AND semantics: a rule type requires an implementation of\nevery listed trait, not just one of them. For example, a rule\ntype requiring [\"git\", \"github\"] needs a provider that\nimplements both traits (e.g. to read repo contents via git and\ncall a forge-specific API via github). If empty, the rule type\nis not gated by provider traits."
+          "description": "provider_traits declares the provider trait(s) this rule type\nrequires an implementation of. Values are trait names as used in\nprovider class definitions, e.g. \"github\", \"gitlab\", \"rest\",\n\"git\", \"oci\", \"repo-lister\", \"image-lister\".\nThis is AND semantics: a rule type requires an implementation of\nevery listed trait, not just one of them. For example, a rule\ntype requiring [\"git\", \"github\"] needs a provider that\nimplements both traits (e.g. to read repo contents via git and\ncall a forge-specific API via github). Use [\"rest\", \"github\"] for\na rule that calls the GitHub API and [\"rest\", \"gitlab\"] for one\nthat calls the GitLab API. If empty, the rule type is not gated\nby provider traits."
         },
         "ruleSchema": {
           "type": "object",
@@ -5863,7 +5863,8 @@
         "PROVIDER_TYPE_GIT",
         "PROVIDER_TYPE_OCI",
         "PROVIDER_TYPE_REPO_LISTER",
-        "PROVIDER_TYPE_IMAGE_LISTER"
+        "PROVIDER_TYPE_IMAGE_LISTER",
+        "PROVIDER_TYPE_GITLAB"
       ],
       "default": "PROVIDER_TYPE_UNSPECIFIED",
       "description": "ProviderTrait is the type of the provider.\nThe (name) option on each value below is a stable public interface, not\nan internal label: rule types declare required provider traits by these\nnames in provider_traits (see RuleType.Definition.provider_traits), and\nthat field is stored as serialized proto in the database. Renaming a\n(name) value would silently stop it matching any already-stored rule\ntype's provider_traits entries -- no error, just the rule type never\nevaluating again -- as well as breaking any client that parses or\nconstructs these names directly. Add new values instead of renaming\nexisting ones."

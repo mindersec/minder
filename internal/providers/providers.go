@@ -75,6 +75,13 @@ func PBToDBType(t minderv1.ProviderType) (db.ProviderType, bool) {
 		return db.ProviderTypeOci, true
 	case minderv1.ProviderType_PROVIDER_TYPE_IMAGE_LISTER:
 		return db.ProviderTypeImageLister, true
+	case minderv1.ProviderType_PROVIDER_TYPE_GITLAB:
+		// PROVIDER_TYPE_GITLAB exists as a rule type provider_traits value
+		// only; it is gated at evaluation time through
+		// provifv1.Provider.CanImplement, not through the providers table.
+		// There is deliberately no 'gitlab' value in the provider_type
+		// database enum, so it has no db.ProviderType to map to.
+		return db.ProviderType(""), false
 	case minderv1.ProviderType_PROVIDER_TYPE_UNSPECIFIED:
 		return db.ProviderType(""), false
 	default:
