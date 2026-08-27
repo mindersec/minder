@@ -54,6 +54,9 @@ func (c *gitlabClient) getGitLabProject(
 		return nil, fmt.Errorf("failed to join URL path for project using upstream ID: %w", err)
 	}
 
+	// GitLab only includes the project's license in the response when explicitly asked for it
+	projectURLPath += "?" + url.Values{"license": []string{"true"}}.Encode()
+
 	// NOTE: We're not using github.com/xanzy/go-gitlab to do the actual
 	// request here because of the way they form authentication for requests.
 	// It would be ideal to use it, so we should consider contributing and making
