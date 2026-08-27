@@ -21,7 +21,6 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/util/ptr"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	v1 "github.com/mindersec/minder/pkg/datasources/v1"
 )
 
 var (
@@ -93,7 +92,7 @@ func TestGetByName(t *testing.T) {
 							ID:           uuid.New(),
 							DataSourceID: dsID,
 							Name:         "test_function",
-							Type:         string(v1.DataSourceDriverRest),
+							Type:         string(minderv1.DataSourceDriverRest),
 							Definition: restDriverToJson(t, &minderv1.RestDataSource_Def{
 								Endpoint:    "http://example.com",
 								InputSchema: is,
@@ -230,7 +229,7 @@ func TestGetByID(t *testing.T) {
 							ID:           uuid.New(),
 							DataSourceID: id,
 							Name:         "test_function",
-							Type:         string(v1.DataSourceDriverRest),
+							Type:         string(minderv1.DataSourceDriverRest),
 							Definition: restDriverToJson(t, &minderv1.RestDataSource_Def{
 								Endpoint:    "http://example.com",
 								InputSchema: is,
@@ -348,7 +347,7 @@ func TestList(t *testing.T) {
 							ID:           uuid.New(),
 							DataSourceID: dsID,
 							Name:         "test_function",
-							Type:         string(v1.DataSourceDriverRest),
+							Type:         string(minderv1.DataSourceDriverRest),
 							Definition: restDriverToJson(t, &minderv1.RestDataSource_Def{
 								Endpoint:    "http://example.com",
 								InputSchema: is,
@@ -628,7 +627,7 @@ func TestBuildDataSourceRegistry(t *testing.T) {
 							DataSourceID: dsID,
 							ProjectID:    projectID,
 							Name:         "test_function",
-							Type:         string(v1.DataSourceDriverRest),
+							Type:         string(minderv1.DataSourceDriverRest),
 							Definition: restDriverToJson(t, &minderv1.RestDataSource_Def{
 								Endpoint:    "http://example.com",
 								InputSchema: is,
@@ -1147,7 +1146,7 @@ func TestUpdate(t *testing.T) {
 							ID:           uuid.New(),
 							DataSourceID: uuid.New(),
 							Name:         "test_function",
-							Type:         string(v1.DataSourceDriverRest),
+							Type:         string(minderv1.DataSourceDriverRest),
 							Definition: restDriverToJson(t, &minderv1.RestDataSource_Def{
 								Endpoint: "http://example.com",
 								InputSchema: func() *structpb.Struct {
@@ -1221,7 +1220,7 @@ func TestUpdate(t *testing.T) {
 							ID:           uuid.New(),
 							DataSourceID: uuid.New(),
 							Name:         "test_function",
-							Type:         v1.DataSourceDriverRest,
+							Type:         minderv1.DataSourceDriverRest,
 							Definition:   restDriverToJson(t, &minderv1.RestDataSource_Def{}),
 						},
 					}, nil)
@@ -1357,7 +1356,7 @@ func TestUpdate(t *testing.T) {
 							ID:           uuid.New(),
 							DataSourceID: uuid.New(),
 							Name:         "test_function",
-							Type:         string(v1.DataSourceDriverRest),
+							Type:         string(minderv1.DataSourceDriverRest),
 							Definition: restDriverToJson(t, &minderv1.RestDataSource_Def{
 								Endpoint: "http://example.com",
 								InputSchema: func() *structpb.Struct {
@@ -1402,7 +1401,7 @@ func TestUpdate(t *testing.T) {
 							ID:           uuid.New(),
 							DataSourceID: uuid.New(),
 							Name:         "test_function",
-							Type:         string(v1.DataSourceDriverRest),
+							Type:         string(minderv1.DataSourceDriverRest),
 							Definition: restDriverToJson(t, &minderv1.RestDataSource_Def{
 								Endpoint: "http://example.com",
 								InputSchema: func() *structpb.Struct {
@@ -1496,7 +1495,7 @@ func TestUpdate(t *testing.T) {
 							ID:           uuid.New(),
 							DataSourceID: uuid.New(),
 							Name:         "test_function",
-							Type:         string(v1.DataSourceDriverRest),
+							Type:         string(minderv1.DataSourceDriverRest),
 							Definition: restDriverToJson(t, &minderv1.RestDataSource_Def{
 								Endpoint: "http://example.com",
 								InputSchema: func() *structpb.Struct {
@@ -1624,7 +1623,7 @@ func TestUpsert(t *testing.T) {
 							ID:           uuid.New(),
 							DataSourceID: dsID,
 							Name:         "test_function",
-							Type:         v1.DataSourceDriverRest,
+							Type:         minderv1.DataSourceDriverRest,
 							Definition: restDriverToJson(t, &minderv1.RestDataSource_Def{
 								Endpoint: "http://example.com/updated",
 								InputSchema: func() *structpb.Struct {

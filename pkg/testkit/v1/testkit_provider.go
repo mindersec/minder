@@ -24,9 +24,9 @@ var (
 var _ provv1.Provider = &TestKit{}
 
 // CanImplement implements the Provider interface.
-// It returns true since we don't have any restrictions on the provider.
-func (*TestKit) CanImplement(_ minderv1.ProviderType) bool {
-	return true
+// By default, it returns true; use WithCanImplement to override for a specific test.
+func (tk *TestKit) CanImplement(trait minderv1.ProviderType) bool {
+	return tk.canImplement(trait)
 }
 
 // FetchAllProperties implements the Provider interface.

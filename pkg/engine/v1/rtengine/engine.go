@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"runtime/debug"
+	"slices"
 
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -52,6 +53,22 @@ type RuleTypeEngine struct {
 	ruletype *minderv1.RuleType
 
 	ingestCache ingestcache.Cache
+
+	// supportedByProvider records whether the provider this engine was
+	// built with implements every trait the rule type declares in
+	// provider_traits. Computed once at construction time. This is false
+	// both when a declared trait name is unknown (see
+	// unknownProviderTraits) and when every trait name is known but the
+	// provider doesn't implement one of them.
+	supportedByProvider bool
+
+	// unknownProviderTraits lists every entry in provider_traits that
+	// doesn't match a known ProviderType name, e.g. a typo or a trait
+	// renamed since the rule type was stored. Distinct from a known trait
+	// the provider simply doesn't implement: unlike that case, this is a
+	// rule type authoring problem the user can fix, so callers surface it
+	// as an evaluation error rather than silently skipping the rule.
+	unknownProviderTraits []string
 }
 
 // NewRuleTypeEngine creates a new rule type engine
@@ -63,6 +80,31 @@ func NewRuleTypeEngine(
 ) (*RuleTypeEngine, error) {
 	if ruletype.Context.GetProject() == "" {
 		return nil, fmt.Errorf("rule type context must have a project")
+	}
+
+	supportedByProvider := true
+	var unknownProviderTraits []string
+	for _, trait := range ruletype.GetDef().GetProviderTraits() {
+		providerTrait := minderv1.ProviderTypeFromString(trait)
+		if providerTrait == minderv1.ProviderType_PROVIDER_TYPE_UNSPECIFIED {
+			// A trait name that doesn't map to any known ProviderType is
+			// almost certainly a typo, or a trait renamed since the rule
+			// type was stored. Rule type creation validates against this
+			// (see ruletypes.validateProviderTraits), but rule types
+			// already stored before that validation existed, or any path
+			// that bypasses it, would otherwise fail this exact same way
+			// with no signal anywhere that anything is wrong. Collect
+			// every unknown name rather than stopping at the first, so
+			// the caller can report them all at once: unlike a known
+			// trait the provider doesn't implement, this is a rule type
+			// authoring problem the user can fix.
+			unknownProviderTraits = append(unknownProviderTraits, trait)
+			supportedByProvider = false
+			continue
+		}
+		if !provider.CanImplement(providerTrait) {
+			supportedByProvider = false
+		}
 	}
 
 	rval, err := profiles.NewRuleValidator(ruletype)
@@ -90,9 +132,27 @@ func NewRuleTypeEngine(
 		ruleEvaluator: evaluator,
 		ruletype:      ruletype,
 		ingestCache:   ingestcache.NewNoopCache(),
+
+		supportedByProvider:   supportedByProvider,
+		unknownProviderTraits: unknownProviderTraits,
 	}
 
 	return rte, nil
+}
+
+// SupportedByProvider reports whether the provider this engine was built
+// with implements every trait the rule type declares in provider_traits.
+func (r *RuleTypeEngine) SupportedByProvider() bool {
+	return r.supportedByProvider
+}
+
+// UnknownProviderTraits returns the entries in provider_traits that don't
+// match any known ProviderType name, e.g. a typo or a trait renamed since
+// the rule type was stored. Empty if every declared trait name is known,
+// regardless of whether the provider implements it — see
+// SupportedByProvider for that.
+func (r *RuleTypeEngine) UnknownProviderTraits() []string {
+	return slices.Clone(r.unknownProviderTraits)
 }
 
 // WithIngesterCache sets the ingester cache for the rule type engine

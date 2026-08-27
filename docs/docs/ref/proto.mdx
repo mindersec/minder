@@ -2775,7 +2775,7 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | in_entity | <TypeLink type="string">string</TypeLink> |  | in_entity is the entity in which the rule is evaluated. This can be repository, build_environment or artifact. |
-| provider_traits | <TypeLink type="minder-v1-ProviderType">ProviderType</TypeLink> | repeated | provider_traits declares the provider trait(s) this rule type requires an implementation of (e.g. "github", "git", "oci"). This is AND semantics: a rule type requires an implementation of every listed trait, not just one of them. For example, a rule type requiring ["git", "github"] needs a provider that implements both traits (e.g. to read repo contents via git and call a forge-specific API via github). If empty, the rule type is not gated by provider traits. |
+| provider_traits | <TypeLink type="string">string</TypeLink> | repeated | provider_traits declares the provider trait(s) this rule type requires an implementation of. Values are trait names as used in provider class definitions, e.g. "github", "gitlab", "rest", "git", "oci", "repo-lister", "image-lister". This is AND semantics: a rule type requires an implementation of every listed trait, not just one of them. For example, a rule type requiring ["git", "github"] needs a provider that implements both traits (e.g. to read repo contents via git and call a forge-specific API via github). Use ["rest", "github"] for a rule that calls the GitHub API and ["rest", "gitlab"] for one that calls the GitLab API. If empty, the rule type is not gated by provider traits. |
 | rule_schema | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | rule_schema is the schema of the rule. This is expressed in JSON Schema. |
 | param_schema | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> | optional | param_schema is the schema of the parameters that are passed to the rule. This is expressed in JSON Schema. |
 | ingest | <TypeLink type="minder-v1-RuleType-Definition-Ingest">RuleType.Definition.Ingest</TypeLink> |  |  |
@@ -3381,6 +3381,15 @@ Entity defines the entity that is supported by the provider.
 <Enum id="minder-v1-ProviderType">ProviderType</Enum>
 
 ProviderTrait is the type of the provider.
+The (name) option on each value below is a stable public interface, not
+an internal label: rule types declare required provider traits by these
+names in provider_traits (see RuleType.Definition.provider_traits), and
+that field is stored as serialized proto in the database. Renaming a
+(name) value would silently stop it matching any already-stored rule
+type's provider_traits entries -- no error, just the rule type never
+evaluating again -- as well as breaking any client that parses or
+constructs these names directly. Add new values instead of renaming
+existing ones.
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -3391,6 +3400,7 @@ ProviderTrait is the type of the provider.
 | PROVIDER_TYPE_OCI | 4 |  |
 | PROVIDER_TYPE_REPO_LISTER | 5 |  |
 | PROVIDER_TYPE_IMAGE_LISTER | 6 |  |
+| PROVIDER_TYPE_GITLAB | 7 |  |
 
 
 

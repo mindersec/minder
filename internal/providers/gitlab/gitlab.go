@@ -120,7 +120,8 @@ func MarshalV1Config(rawCfg json.RawMessage) (json.RawMessage, error) {
 
 // CanImplement returns true if the provider can implement the given trait
 func (*gitlabClient) CanImplement(trait minderv1.ProviderType) bool {
-	return trait == minderv1.ProviderType_PROVIDER_TYPE_GIT ||
+	return trait == minderv1.ProviderType_PROVIDER_TYPE_GITLAB ||
+		trait == minderv1.ProviderType_PROVIDER_TYPE_GIT ||
 		trait == minderv1.ProviderType_PROVIDER_TYPE_REST
 }
 

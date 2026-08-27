@@ -13,7 +13,6 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
 )
 
 // DataSourceMetadata is used to serialize additional datasource-level fields
@@ -47,12 +46,12 @@ func dataSourceDBToProtobuf(ds db.DataSource, dsfuncs []db.DataSourcesFunction) 
 	// If we didn't record the type in metadata, use the first function to guess.
 	dsfType := cmp.Or(metadata.Type, dsfuncs[0].Type)
 	switch dsfType {
-	case v1datasources.DataSourceDriverStruct:
+	case minderv1.DataSourceDriverStruct:
 		outds.Driver = &minderv1.DataSource_Structured{
 			Structured: &minderv1.StructDataSource{},
 		}
 		return dataSourceStructDBToProtobuf(outds, dsfuncs)
-	case v1datasources.DataSourceDriverRest:
+	case minderv1.DataSourceDriverRest:
 		outds.Driver = &minderv1.DataSource_Rest{
 			Rest: &minderv1.RestDataSource{},
 		}
@@ -100,14 +99,14 @@ func dataSourceStructDBToProtobuf(ds *minderv1.DataSource, dsfuncs []db.DataSour
 
 func metadataForDataSource(ds *minderv1.DataSource) (json.RawMessage, error) {
 	metadata := DataSourceMetadata{
-		Type: v1datasources.DataSourceDriverStruct,
+		Type: minderv1.DataSourceDriverStruct,
 	}
 	switch ds.Driver.(type) {
 	case *minderv1.DataSource_Rest:
-		metadata.Type = v1datasources.DataSourceDriverRest
+		metadata.Type = minderv1.DataSourceDriverRest
 		metadata.ProviderAuth = ds.GetRest().GetProviderAuth()
 	case *minderv1.DataSource_Structured:
-		metadata.Type = v1datasources.DataSourceDriverStruct
+		metadata.Type = minderv1.DataSourceDriverStruct
 	default:
 		return nil, fmt.Errorf("unknown datasource driver %T", ds.Driver)
 	}
