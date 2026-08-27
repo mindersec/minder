@@ -3707,16 +3707,20 @@ definitions:
       providerTraits:
         type: array
         items:
-          $ref: '#/definitions/v1ProviderType'
+          type: string
         description: |-
           provider_traits declares the provider trait(s) this rule type
-          requires an implementation of (e.g. "github", "git", "oci").
+          requires an implementation of. Values are trait names as used in
+          provider class definitions, e.g. "github", "gitlab", "rest",
+          "git", "oci", "repo-lister", "image-lister".
           This is AND semantics: a rule type requires an implementation of
           every listed trait, not just one of them. For example, a rule
           type requiring ["git", "github"] needs a provider that
           implements both traits (e.g. to read repo contents via git and
-          call a forge-specific API via github). If empty, the rule type
-          is not gated by provider traits.
+          call a forge-specific API via github). Use ["rest", "github"] for
+          a rule that calls the GitHub API and ["rest", "gitlab"] for one
+          that calls the GitLab API. If empty, the rule type is not gated
+          by provider traits.
       ruleSchema:
         type: object
         description: >-
@@ -5339,8 +5343,19 @@ definitions:
       - PROVIDER_TYPE_OCI
       - PROVIDER_TYPE_REPO_LISTER
       - PROVIDER_TYPE_IMAGE_LISTER
+      - PROVIDER_TYPE_GITLAB
     default: PROVIDER_TYPE_UNSPECIFIED
-    description: ProviderTrait is the type of the provider.
+    description: |-
+      ProviderTrait is the type of the provider.
+      The (name) option on each value below is a stable public interface, not
+      an internal label: rule types declare required provider traits by these
+      names in provider_traits (see RuleType.Definition.provider_traits), and
+      that field is stored as serialized proto in the database. Renaming a
+      (name) value would silently stop it matching any already-stored rule
+      type's provider_traits entries -- no error, just the rule type never
+      evaluating again -- as well as breaking any client that parses or
+      constructs these names directly. Add new values instead of renaming
+      existing ones.
   v1ReconcileEntityRegistrationRequest:
     type: object
     properties:
