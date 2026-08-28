@@ -18,6 +18,7 @@ import (
 )
 
 func TestCreate(t *testing.T) {
+	t.Parallel()
 	ctrl := gomock.NewController(t)
 	store := mockdb.NewMockStore(ctrl)
 	svc := NewService(store)
@@ -61,6 +62,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestCreateError(t *testing.T) {
+	t.Parallel()
 	ctrl := gomock.NewController(t)
 	store := mockdb.NewMockStore(ctrl)
 	svc := NewService(store)
@@ -86,6 +88,7 @@ func TestCreateError(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
+	t.Parallel()
 	ctrl := gomock.NewController(t)
 	store := mockdb.NewMockStore(ctrl)
 	svc := NewService(store)
@@ -113,6 +116,7 @@ func TestList(t *testing.T) {
 }
 
 func TestListError(t *testing.T) {
+	t.Parallel()
 	ctrl := gomock.NewController(t)
 	store := mockdb.NewMockStore(ctrl)
 	svc := NewService(store)
@@ -131,6 +135,7 @@ func TestListError(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
+	t.Parallel()
 	ctrl := gomock.NewController(t)
 	store := mockdb.NewMockStore(ctrl)
 	svc := NewService(store)
@@ -151,6 +156,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestDeleteError(t *testing.T) {
+	t.Parallel()
 	ctrl := gomock.NewController(t)
 	store := mockdb.NewMockStore(ctrl)
 	svc := NewService(store)
