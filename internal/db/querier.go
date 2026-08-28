@@ -28,6 +28,8 @@ type Querier interface {
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
 	CountProfilesByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
+	// CreateAcceptedRisk adds an accepted risk for a project
+	CreateAcceptedRisk(ctx context.Context, arg CreateAcceptedRiskParams) (AcceptedRisk, error)
 	// CreateDataSource creates a new datasource in a given project.
 	CreateDataSource(ctx context.Context, arg CreateDataSourceParams) (DataSource, error)
 	CreateEntitlements(ctx context.Context, arg CreateEntitlementsParams) error
@@ -54,6 +56,8 @@ type Querier interface {
 	// Subscriptions --
 	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error)
 	CreateUser(ctx context.Context, identitySubject string) (User, error)
+	// DeleteAcceptedRisk removes an accepted risk from a project
+	DeleteAcceptedRisk(ctx context.Context, arg DeleteAcceptedRiskParams) error
 	DeleteAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) error
 	DeleteDataSource(ctx context.Context, arg DeleteDataSourceParams) (DataSource, error)
 	DeleteDataSourceFunction(ctx context.Context, arg DeleteDataSourceFunctionParams) (DataSourcesFunction, error)
@@ -198,6 +202,8 @@ type Querier interface {
 	InsertEvaluationRuleEntity(ctx context.Context, arg InsertEvaluationRuleEntityParams) (uuid.UUID, error)
 	InsertEvaluationStatus(ctx context.Context, arg InsertEvaluationStatusParams) (uuid.UUID, error)
 	InsertRemediationEvent(ctx context.Context, arg InsertRemediationEventParams) error
+	// ListAcceptedRisks lists active accepted risks for a project
+	ListAcceptedRisks(ctx context.Context, projectID uuid.UUID) ([]AcceptedRisk, error)
 	ListAllRootProjects(ctx context.Context) ([]Project, error)
 	// ListDataSourceFunctions retrieves all functions for a datasource.
 	ListDataSourceFunctions(ctx context.Context, arg ListDataSourceFunctionsParams) ([]DataSourcesFunction, error)
