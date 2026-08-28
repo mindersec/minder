@@ -1,0 +1,2 @@
+{"artifactPk":"1","name":"artifact-1","type":"image","owner":"owner-1","repository":"org/repo","visibility":"public","createdAt":"2024-01-02T15:04:05Z"}
+{"artifactPk":"2","name":"artifact-2","type":"image","owner":"owner-2","repository":"org/repo2","visibility":"private","createdAt":"2024-02-02T15:04:05Z"}
