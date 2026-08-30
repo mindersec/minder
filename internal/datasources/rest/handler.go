@@ -62,7 +62,13 @@ type restHandler struct {
 	parse            string
 	requestTimeout   time.Duration
 	maxResponseBytes int64
-	// TODO implement fallback
+	// fallback holds the per-status-code fallback responses configured on
+	// this data source definition. It is consulted in doRequest whenever the
+	// upstream response status is not in expectedStatus.
+	fallback []*minderv1.RestDataSource_Def_Fallback
+	// expectedStatus is the set of status codes treated as a normal
+	// response. If empty, only http.StatusOK is treated as expected.
+	expectedStatus []int32
 	// TODO implement auth
 	provider interfaces.RESTProvider
 }
@@ -120,6 +126,8 @@ func newHandlerFromDef(
 		parse:             def.GetParse(),
 		requestTimeout:    requestTimeout,
 		maxResponseBytes:  maxResponseBytes,
+		fallback:          def.GetFallback(),
+		expectedStatus:    def.GetExpectedStatus(),
 		provider:          restProvider,
 		testOnlyTransport: testOnlyTransport,
 	}, nil
@@ -233,14 +241,51 @@ func (h *restHandler) doRequest(dofunc func(*http.Request) (*http.Response, erro
 
 	recordMetrics(req.Context(), resp, start)
 
+	if !h.isExpectedStatus(resp.StatusCode) {
+		if fb, ok := h.matchFallback(resp.StatusCode); ok {
+			zerolog.Ctx(req.Context()).Debug().
+				Int("status_code", resp.StatusCode).
+				Int32("fallback_status_code", fb.GetHttpStatus()).
+				Msg("unexpected status code from datasource, using configured fallback")
+			return buildRestOutput(int(fb.GetHttpStatus()), fb.GetBody()), nil
+		}
+	}
+
 	bout, err := h.parseResponseBody(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: Handle fallback here.
-
 	return buildRestOutput(resp.StatusCode, bout), nil
+}
+
+// isExpectedStatus reports whether statusCode is one of the codes the
+// caller configured as a normal response via expected_status. When
+// expected_status is unset, only http.StatusOK is treated as expected,
+// matching the documented proto default.
+func (h *restHandler) isExpectedStatus(statusCode int) bool {
+	if len(h.expectedStatus) == 0 {
+		return statusCode == http.StatusOK
+	}
+
+	for _, s := range h.expectedStatus {
+		if int(s) == statusCode {
+			return true
+		}
+	}
+
+	return false
+}
+
+// matchFallback returns the configured fallback for statusCode, if any.
+func (h *restHandler) matchFallback(statusCode int) (*minderv1.RestDataSource_Def_Fallback, bool) {
+	for _, fb := range h.fallback {
+		if int(fb.GetHttpStatus()) == statusCode {
+			return fb, true
+		}
+	}
+
+	return nil, false
 }
 
 func (h *restHandler) getBody(args map[string]any) (io.Reader, int, error) {
