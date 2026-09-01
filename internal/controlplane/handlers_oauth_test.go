@@ -22,6 +22,8 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v3/jwt/openid"
+	"github.com/lib/pq"
+	"github.com/lib/pq/pqerror"
 	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -514,6 +516,26 @@ func TestProviderCallback(t *testing.T) {
 			Return([]db.Provider{}, nil)
 	}
 
+	withProviderCreateRace := func(store *mockdb.MockStore) {
+		// First attempt: no provider found, then creation loses the race
+		// against a concurrent callback.
+		store.EXPECT().GetParentProjects(gomock.Any(), projectID).Return([]uuid.UUID{projectID}, nil)
+		store.EXPECT().FindProviders(gomock.Any(), gomock.Any()).
+			Return([]db.Provider{}, nil)
+		store.EXPECT().CreateProvider(gomock.Any(), gomock.Any()).
+			Return(db.Provider{}, &pq.Error{Code: pqerror.UniqueViolation})
+		// Retry: the concurrently-created provider is now visible.
+		store.EXPECT().GetParentProjects(gomock.Any(), projectID).Return([]uuid.UUID{projectID}, nil)
+		store.EXPECT().FindProviders(gomock.Any(), gomock.Any()).
+			Return([]db.Provider{
+				{
+					Name:       "github",
+					Implements: []db.ProviderType{db.ProviderTypeGithub},
+					Version:    provinfv1.V1,
+				},
+			}, nil)
+	}
+
 	withValidOrgMemberships := func(service *mockprovsvc.MockGitHubProviderService) {
 		service.EXPECT().ValidateOrgMembershipForToken(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
 	}
@@ -577,6 +599,18 @@ func TestProviderCallback(t *testing.T) {
 		projectIDBySessionNumCalls: 2,
 		storeMockSetup: func(store *mockdb.MockStore) {
 			withProviderCreate(store)
+		},
+		buildStubs: withValidOrgMemberships,
+	}, {
+		name:        "Provider creation race retries and succeeds",
+		redirectUrl: "http://localhost:8080",
+		// such fallback config is stored when generating the authorization URL, but here we mock
+		// the state response, so let's provide the fallback ourselves.
+		config:                     []byte(`{}`),
+		code:                       307,
+		projectIDBySessionNumCalls: 3,
+		storeMockSetup: func(store *mockdb.MockStore) {
+			withProviderCreateRace(store)
 		},
 		buildStubs: withValidOrgMemberships,
 	}, {
