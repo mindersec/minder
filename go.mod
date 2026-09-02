@@ -103,7 +103,7 @@ require (
 	golang.org/x/term v0.45.0
 	golang.org/x/tools v0.49.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20260615183401-62b3387ff324
-	google.golang.org/grpc v1.83.0
+	google.golang.org/grpc v1.83.1
 	google.golang.org/protobuf v1.36.12
 	gopkg.in/op/go-logging.v1 v1.0.0-20160211212156-b2cb9fa56473
 	gopkg.in/yaml.v3 v3.0.1
