@@ -13,6 +13,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -67,8 +68,9 @@ type restHandler struct {
 	// upstream response status is not in expectedStatus.
 	fallback []*minderv1.RestDataSource_Def_Fallback
 	// expectedStatus is the set of status codes treated as a normal
-	// response. If empty, only http.StatusOK is treated as expected.
-	expectedStatus []int32
+	// response. It is always non-empty after construction, defaulting to
+	// []int{http.StatusOK} when expected_status is unset.
+	expectedStatus []int
 	// TODO implement auth
 	provider interfaces.RESTProvider
 }
@@ -115,6 +117,14 @@ func newHandlerFromDef(
 	// If this is not a RESTProvider, restProvider will be nil, which we already need to handle.
 	restProvider, _ := interfaces.As[interfaces.RESTProvider](provider)
 
+	expectedStatus := make([]int, 0, len(def.GetExpectedStatus()))
+	for _, s := range def.GetExpectedStatus() {
+		expectedStatus = append(expectedStatus, int(s))
+	}
+	if len(expectedStatus) == 0 {
+		expectedStatus = []int{http.StatusOK}
+	}
+
 	return &restHandler{
 		rawInputSchema:    def.GetInputSchema(),
 		inputSchema:       schema,
@@ -127,7 +137,7 @@ func newHandlerFromDef(
 		requestTimeout:    requestTimeout,
 		maxResponseBytes:  maxResponseBytes,
 		fallback:          def.GetFallback(),
-		expectedStatus:    def.GetExpectedStatus(),
+		expectedStatus:    expectedStatus,
 		provider:          restProvider,
 		testOnlyTransport: testOnlyTransport,
 	}, nil
@@ -241,7 +251,7 @@ func (h *restHandler) doRequest(dofunc func(*http.Request) (*http.Response, erro
 
 	recordMetrics(req.Context(), resp, start)
 
-	if !h.isExpectedStatus(resp.StatusCode) {
+	if !slices.Contains(h.expectedStatus, resp.StatusCode) {
 		if fb, ok := h.matchFallback(resp.StatusCode); ok {
 			zerolog.Ctx(req.Context()).Debug().
 				Int("status_code", resp.StatusCode).
@@ -259,33 +269,15 @@ func (h *restHandler) doRequest(dofunc func(*http.Request) (*http.Response, erro
 	return buildRestOutput(resp.StatusCode, bout), nil
 }
 
-// isExpectedStatus reports whether statusCode is one of the codes the
-// caller configured as a normal response via expected_status. When
-// expected_status is unset, only http.StatusOK is treated as expected,
-// matching the documented proto default.
-func (h *restHandler) isExpectedStatus(statusCode int) bool {
-	if len(h.expectedStatus) == 0 {
-		return statusCode == http.StatusOK
-	}
-
-	for _, s := range h.expectedStatus {
-		if int(s) == statusCode {
-			return true
-		}
-	}
-
-	return false
-}
-
 // matchFallback returns the configured fallback for statusCode, if any.
 func (h *restHandler) matchFallback(statusCode int) (*minderv1.RestDataSource_Def_Fallback, bool) {
-	for _, fb := range h.fallback {
-		if int(fb.GetHttpStatus()) == statusCode {
-			return fb, true
-		}
+	i := slices.IndexFunc(h.fallback, func(fb *minderv1.RestDataSource_Def_Fallback) bool {
+		return int(fb.GetHttpStatus()) == statusCode
+	})
+	if i < 0 {
+		return nil, false
 	}
-
-	return nil, false
+	return h.fallback[i], true
 }
 
 func (h *restHandler) getBody(args map[string]any) (io.Reader, int, error) {
