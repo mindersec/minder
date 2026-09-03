@@ -13,6 +13,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -62,7 +63,14 @@ type restHandler struct {
 	parse            string
 	requestTimeout   time.Duration
 	maxResponseBytes int64
-	// TODO implement fallback
+	// fallback holds the per-status-code fallback responses configured on
+	// this data source definition. It is consulted in doRequest whenever the
+	// upstream response status is not in expectedStatus.
+	fallback []*minderv1.RestDataSource_Def_Fallback
+	// expectedStatus is the set of status codes treated as a normal
+	// response. It is always non-empty after construction, defaulting to
+	// []int{http.StatusOK} when expected_status is unset.
+	expectedStatus []int
 	// TODO implement auth
 	provider interfaces.RESTProvider
 }
@@ -109,6 +117,14 @@ func newHandlerFromDef(
 	// If this is not a RESTProvider, restProvider will be nil, which we already need to handle.
 	restProvider, _ := interfaces.As[interfaces.RESTProvider](provider)
 
+	expectedStatus := make([]int, 0, len(def.GetExpectedStatus()))
+	for _, s := range def.GetExpectedStatus() {
+		expectedStatus = append(expectedStatus, int(s))
+	}
+	if len(expectedStatus) == 0 {
+		expectedStatus = []int{http.StatusOK}
+	}
+
 	return &restHandler{
 		rawInputSchema:    def.GetInputSchema(),
 		inputSchema:       schema,
@@ -120,6 +136,8 @@ func newHandlerFromDef(
 		parse:             def.GetParse(),
 		requestTimeout:    requestTimeout,
 		maxResponseBytes:  maxResponseBytes,
+		fallback:          def.GetFallback(),
+		expectedStatus:    expectedStatus,
 		provider:          restProvider,
 		testOnlyTransport: testOnlyTransport,
 	}, nil
@@ -233,14 +251,33 @@ func (h *restHandler) doRequest(dofunc func(*http.Request) (*http.Response, erro
 
 	recordMetrics(req.Context(), resp, start)
 
+	if !slices.Contains(h.expectedStatus, resp.StatusCode) {
+		if fb, ok := h.matchFallback(resp.StatusCode); ok {
+			zerolog.Ctx(req.Context()).Debug().
+				Int("status_code", resp.StatusCode).
+				Int32("fallback_status_code", fb.GetHttpStatus()).
+				Msg("unexpected status code from datasource, using configured fallback")
+			return buildRestOutput(int(fb.GetHttpStatus()), fb.GetBody()), nil
+		}
+	}
+
 	bout, err := h.parseResponseBody(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: Handle fallback here.
-
 	return buildRestOutput(resp.StatusCode, bout), nil
+}
+
+// matchFallback returns the configured fallback for statusCode, if any.
+func (h *restHandler) matchFallback(statusCode int) (*minderv1.RestDataSource_Def_Fallback, bool) {
+	i := slices.IndexFunc(h.fallback, func(fb *minderv1.RestDataSource_Def_Fallback) bool {
+		return int(fb.GetHttpStatus()) == statusCode
+	})
+	if i < 0 {
+		return nil, false
+	}
+	return h.fallback[i], true
 }
 
 func (h *restHandler) getBody(args map[string]any) (io.Reader, int, error) {

@@ -26,6 +26,7 @@ severity:
   value: high
 def:
   in_entity: repository
+  provider_traits: ["rest", "github"]
   rule_schema: {}
   ingest:
     type: rest
@@ -53,7 +54,7 @@ The Minder CLI will parse rego files and extract RuleType metadata from them.  I
 | --- | --- |
 | `name` | populate from filename if not present |
 | `display_name` | populate from `title` if not present |
-| `def.rule_schemad` | defaults to empty-object |
+| `def.rule_schema` | defaults to empty-object |
 
 ```rego
 # METADATA
@@ -84,6 +85,23 @@ input.ingested.enforce_admins.enabled == true
 input.ingested.allow_force_pushes == false
 input.ingested.allow_deletions == false
 ```
+
+## Provider traits
+
+`provider_traits` is an optional list on `def` that declares which provider capabilities a rule type depends on. Minder only evaluates the rule against providers that implement every listed trait:
+
+```yaml
+def:
+  provider_traits: ["rest", "github"]
+```
+
+The valid trait names are `git`, `github`, `gitlab`, `image-lister`, `oci`, `repo-lister`, and `rest`. Traits are ANDed together: a rule type requiring `["git", "github"]` needs a provider that implements both, not just one. The canonical idiom is `["rest", "github"]` for a rule that calls the GitHub API, and `["rest", "gitlab"]` for the GitLab equivalent. Omitting the field, or leaving it empty, means the rule type is not gated and evaluates against any provider.
+
+:::note
+If a provider doesn't implement a rule type's declared traits, the rule produces no evaluation result for that provider at all — it isn't listed, skipped, or errored, it simply doesn't appear in `minder profile status list`. A rule that can't apply to a provider isn't a finding.
+
+An unrecognized trait name is different: it's rejected at `ruletype create` with the valid values listed in the error message, and if one is already stored, evaluation records an error status naming the offending trait.
+:::
 
 ## Fields
 
