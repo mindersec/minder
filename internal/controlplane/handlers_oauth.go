@@ -349,11 +349,12 @@ func (s *Server) processOAuthCallback(
 
 	p, err := s.sessionService.CreateProviderFromSessionState(ctx, db.ProviderClass(provider), &encryptedToken, state)
 	if db.ErrIsUniqueViolation(err) {
-		// We lost the creation race against a concurrent callback for the
-		// same provider. The provider exists now, so a retry takes the
-		// fetch path and still stores this flow's access token.
-		zerolog.Ctx(ctx).Info().Str("provider", provider).Msg("Provider already exists, fetching it")
-		p, err = s.sessionService.CreateProviderFromSessionState(ctx, db.ProviderClass(provider), &encryptedToken, state)
+		// We lost the creation race against a concurrent enrollment of the
+		// same provider. The service returns the existing provider alongside
+		// the uniqueness error, and the winning flow stored its own access
+		// token, so just continue with the existing provider.
+		zerolog.Ctx(ctx).Info().Str("provider", provider).Msg("Provider already exists")
+		err = nil
 	}
 	if errors.As(err, &errConfig) {
 		return newHttpError(http.StatusBadRequest, "Invalid provider config").SetContents(

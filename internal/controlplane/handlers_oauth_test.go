@@ -558,6 +558,7 @@ func TestProviderCallback(t *testing.T) {
 		err                        string
 		config                     []byte
 		buildStubs                 func(service *mockprovsvc.MockGitHubProviderService)
+		noTokenWrite               bool
 	}{{
 		name:                       "Success",
 		redirectUrl:                "http://localhost:8080",
@@ -602,17 +603,19 @@ func TestProviderCallback(t *testing.T) {
 		},
 		buildStubs: withValidOrgMemberships,
 	}, {
-		name:        "Provider creation race retries and succeeds",
+		name:        "Provider creation race falls through to existing provider",
 		redirectUrl: "http://localhost:8080",
 		// such fallback config is stored when generating the authorization URL, but here we mock
 		// the state response, so let's provide the fallback ourselves.
 		config:                     []byte(`{}`),
 		code:                       307,
-		projectIDBySessionNumCalls: 3,
+		projectIDBySessionNumCalls: 2,
 		storeMockSetup: func(store *mockdb.MockStore) {
 			withProviderCreateRace(store)
 		},
 		buildStubs: withValidOrgMemberships,
+		// the winning flow stores the token; the loser must not write a second one
+		noTokenWrite: true,
 	}, {
 		name:                       "Config does not validate",
 		redirectUrl:                "http://localhost:8080",
@@ -797,7 +800,7 @@ func TestProviderCallback(t *testing.T) {
 					OwnerFilter:    sql.NullString{String: "TestOwner", Valid: true},
 				}, nil).Times(tc.projectIDBySessionNumCalls)
 
-			if tc.code < http.StatusBadRequest {
+			if tc.code < http.StatusBadRequest && !tc.noTokenWrite {
 				store.EXPECT().UpsertAccessToken(gomock.Any(), gomock.Any()).Return(
 					db.ProviderAccessToken{}, nil)
 			}
