@@ -206,8 +206,8 @@ func (r *Remediator) run(ctx context.Context, method string, endpoint string, bo
 		}
 	}()
 	// Translate the http status code response to an error
-	if engerrors.HTTPErrorCodeToErr(resp.StatusCode) != nil {
-		return engerrors.NewErrActionFailed("remediation failed: %s", err)
+	if httpErr := engerrors.HTTPErrorCodeToErr(resp.StatusCode); httpErr != nil {
+		return engerrors.NewErrActionFailed("remediation failed: HTTP status %d: %s", resp.StatusCode, httpErr)
 	}
 	return nil
 }
