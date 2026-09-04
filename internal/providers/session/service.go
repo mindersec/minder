@@ -25,6 +25,13 @@ import (
 
 // ProviderSessionService is the interface for creating providers from session state
 type ProviderSessionService interface {
+	// CreateProviderFromSessionState creates a provider from the session
+	// state, storing the encrypted credentials as its access token. If the
+	// provider already exists, it is returned and the token is refreshed.
+	// If creation loses a race against a concurrent enrollment, the existing
+	// provider is returned together with the unique-violation error and no
+	// access token is stored; callers can detect that case with
+	// db.ErrIsUniqueViolation and continue with the returned provider.
 	CreateProviderFromSessionState(
 		ctx context.Context, providerClass db.ProviderClass,
 		encryptedCreds *crypto.EncryptedData, state string,
@@ -85,13 +92,24 @@ func (pss *providerSessionService) CreateProviderFromSessionState(
 	}
 
 	// Check if the provider exists
-	pErr := providers.ErrProviderNotFoundBy{}
 	provider, err := pss.provGetter.GetByName(ctx, stateData.ProjectID, stateData.Provider)
-	if errors.As(err, &pErr) {
-		createdProvider, err := pss.providerManager.CreateFromConfig(
+	if _, notFound := errors.AsType[providers.ErrProviderNotFoundBy](err); notFound {
+		createdProvider, createErr := pss.providerManager.CreateFromConfig(
 			ctx, providerClass, stateData.ProjectID, stateData.Provider, stateData.ProviderConfig)
-		if err != nil {
-			return nil, fmt.Errorf("error creating provider: %w", err)
+		if db.ErrIsUniqueViolation(createErr) {
+			// We lost the creation race against a concurrent enrollment of
+			// the same provider. Return the winner's provider together with
+			// the uniqueness error so callers can detect the race; the
+			// winning flow stores its own access token, so we do not store
+			// a second one here.
+			existing, getErr := pss.provGetter.GetByName(ctx, stateData.ProjectID, stateData.Provider)
+			if getErr != nil {
+				return nil, fmt.Errorf("error getting provider from DB after losing creation race: %w", getErr)
+			}
+			return existing, createErr
+		}
+		if createErr != nil {
+			return nil, fmt.Errorf("error creating provider: %w", createErr)
 		}
 		provider = createdProvider
 	} else if err != nil {
