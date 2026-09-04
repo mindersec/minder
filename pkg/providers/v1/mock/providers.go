@@ -2241,6 +2241,248 @@ func (mr *MockGitHubMockRecorder) UpdateReview(arg0, arg1, arg2, arg3, arg4, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateReview", reflect.TypeOf((*MockGitHub)(nil).UpdateReview), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
+// MockGitLab is a mock of GitLab interface.
+type MockGitLab struct {
+	ctrl     *gomock.Controller
+	recorder *MockGitLabMockRecorder
+	isgomock struct{}
+}
+
+// MockGitLabMockRecorder is the mock recorder for MockGitLab.
+type MockGitLabMockRecorder struct {
+	mock *MockGitLab
+}
+
+// NewMockGitLab creates a new mock instance.
+func NewMockGitLab(ctrl *gomock.Controller) *MockGitLab {
+	mock := &MockGitLab{ctrl: ctrl}
+	mock.recorder = &MockGitLabMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockGitLab) EXPECT() *MockGitLabMockRecorder {
+	return m.recorder
+}
+
+// CanImplement mocks base method.
+func (m *MockGitLab) CanImplement(trait v10.ProviderType) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanImplement", trait)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanImplement indicates an expected call of CanImplement.
+func (mr *MockGitLabMockRecorder) CanImplement(trait any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockGitLab)(nil).CanImplement), trait)
+}
+
+// Clone mocks base method.
+func (m *MockGitLab) Clone(ctx context.Context, url, branch string) (*git.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Clone", ctx, url, branch)
+	ret0, _ := ret[0].(*git.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Clone indicates an expected call of Clone.
+func (mr *MockGitLabMockRecorder) Clone(ctx, url, branch any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Clone", reflect.TypeOf((*MockGitLab)(nil).Clone), ctx, url, branch)
+}
+
+// CreationOptions mocks base method.
+func (m *MockGitLab) CreationOptions(entType v10.Entity) *v11.EntityCreationOptions {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreationOptions", entType)
+	ret0, _ := ret[0].(*v11.EntityCreationOptions)
+	return ret0
+}
+
+// CreationOptions indicates an expected call of CreationOptions.
+func (mr *MockGitLabMockRecorder) CreationOptions(entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreationOptions", reflect.TypeOf((*MockGitLab)(nil).CreationOptions), entType)
+}
+
+// DeregisterEntity mocks base method.
+func (m *MockGitLab) DeregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeregisterEntity indicates an expected call of DeregisterEntity.
+func (mr *MockGitLabMockRecorder) DeregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeregisterEntity", reflect.TypeOf((*MockGitLab)(nil).DeregisterEntity), ctx, entType, props)
+}
+
+// Do mocks base method.
+func (m *MockGitLab) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Do", ctx, req)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Do indicates an expected call of Do.
+func (mr *MockGitLabMockRecorder) Do(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Do", reflect.TypeOf((*MockGitLab)(nil).Do), ctx, req)
+}
+
+// FetchAllProperties mocks base method.
+func (m *MockGitLab) FetchAllProperties(ctx context.Context, getByProps *properties.Properties, entType v10.Entity, cachedProps *properties.Properties) (*properties.Properties, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchAllProperties", ctx, getByProps, entType, cachedProps)
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchAllProperties indicates an expected call of FetchAllProperties.
+func (mr *MockGitLabMockRecorder) FetchAllProperties(ctx, getByProps, entType, cachedProps any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockGitLab)(nil).FetchAllProperties), ctx, getByProps, entType, cachedProps)
+}
+
+// GetBaseURL mocks base method.
+func (m *MockGitLab) GetBaseURL() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBaseURL")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetBaseURL indicates an expected call of GetBaseURL.
+func (mr *MockGitLabMockRecorder) GetBaseURL() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBaseURL", reflect.TypeOf((*MockGitLab)(nil).GetBaseURL))
+}
+
+// GetCredential mocks base method.
+func (m *MockGitLab) GetCredential() v11.GitLabCredential {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCredential")
+	ret0, _ := ret[0].(v11.GitLabCredential)
+	return ret0
+}
+
+// GetCredential indicates an expected call of GetCredential.
+func (mr *MockGitLabMockRecorder) GetCredential() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCredential", reflect.TypeOf((*MockGitLab)(nil).GetCredential))
+}
+
+// GetEntityName mocks base method.
+func (m *MockGitLab) GetEntityName(entType v10.Entity, props *properties.Properties) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEntityName", entType, props)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEntityName indicates an expected call of GetEntityName.
+func (mr *MockGitLabMockRecorder) GetEntityName(entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityName", reflect.TypeOf((*MockGitLab)(nil).GetEntityName), entType, props)
+}
+
+// ListAllRepositories mocks base method.
+func (m *MockGitLab) ListAllRepositories(arg0 context.Context) ([]*v10.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAllRepositories", arg0)
+	ret0, _ := ret[0].([]*v10.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAllRepositories indicates an expected call of ListAllRepositories.
+func (mr *MockGitLabMockRecorder) ListAllRepositories(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllRepositories", reflect.TypeOf((*MockGitLab)(nil).ListAllRepositories), arg0)
+}
+
+// NewRequest mocks base method.
+func (m *MockGitLab) NewRequest(method, url string, body any) (*http.Request, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NewRequest", method, url, body)
+	ret0, _ := ret[0].(*http.Request)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// NewRequest indicates an expected call of NewRequest.
+func (mr *MockGitLabMockRecorder) NewRequest(method, url, body any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewRequest", reflect.TypeOf((*MockGitLab)(nil).NewRequest), method, url, body)
+}
+
+// PropertiesToProtoMessage mocks base method.
+func (m *MockGitLab) PropertiesToProtoMessage(entType v10.Entity, props *properties.Properties) (protoreflect.ProtoMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PropertiesToProtoMessage", entType, props)
+	ret0, _ := ret[0].(protoreflect.ProtoMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PropertiesToProtoMessage indicates an expected call of PropertiesToProtoMessage.
+func (mr *MockGitLabMockRecorder) PropertiesToProtoMessage(entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropertiesToProtoMessage", reflect.TypeOf((*MockGitLab)(nil).PropertiesToProtoMessage), entType, props)
+}
+
+// ProviderClassInfo mocks base method.
+func (m *MockGitLab) ProviderClassInfo() *v10.ProviderClassInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProviderClassInfo")
+	ret0, _ := ret[0].(*v10.ProviderClassInfo)
+	return ret0
+}
+
+// ProviderClassInfo indicates an expected call of ProviderClassInfo.
+func (mr *MockGitLabMockRecorder) ProviderClassInfo() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProviderClassInfo", reflect.TypeOf((*MockGitLab)(nil).ProviderClassInfo))
+}
+
+// RegisterEntity mocks base method.
+func (m *MockGitLab) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) (*properties.Properties, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RegisterEntity indicates an expected call of RegisterEntity.
+func (mr *MockGitLabMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockGitLab)(nil).RegisterEntity), ctx, entType, props)
+}
+
+// SupportsEntity mocks base method.
+func (m *MockGitLab) SupportsEntity(entType v10.Entity) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SupportsEntity", entType)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// SupportsEntity indicates an expected call of SupportsEntity.
+func (mr *MockGitLabMockRecorder) SupportsEntity(entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SupportsEntity", reflect.TypeOf((*MockGitLab)(nil).SupportsEntity), entType)
+}
+
 // MockImageLister is a mock of ImageLister interface.
 type MockImageLister struct {
 	ctrl     *gomock.Controller

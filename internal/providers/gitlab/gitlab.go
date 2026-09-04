@@ -38,6 +38,7 @@ var AuthorizationFlows = []db.AuthorizationFlow{
 var _ provifv1.Git = (*gitlabClient)(nil)
 var _ provifv1.REST = (*gitlabClient)(nil)
 var _ provifv1.RepoLister = (*gitlabClient)(nil)
+var _ provifv1.GitLab = (*gitlabClient)(nil)
 
 type gitlabClient struct {
 	cred       provifv1.GitLabCredential
