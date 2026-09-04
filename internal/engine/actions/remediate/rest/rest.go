@@ -189,6 +189,13 @@ func (r *Remediator) run(ctx context.Context, method string, endpoint string, bo
 	}
 
 	resp, err := r.cli.Do(ctx, req)
+	if resp != nil {
+		defer func() {
+			if closeErr := resp.Body.Close(); closeErr != nil {
+				log.Printf("cannot close response body: %v", closeErr)
+			}
+		}()
+	}
 	if err != nil {
 		var respErr *github.ErrorResponse
 		if errors.As(err, &respErr) {
@@ -199,13 +206,9 @@ func (r *Remediator) run(ctx context.Context, method string, endpoint string, bo
 		}
 		return fmt.Errorf("cannot make request: %w", err)
 	}
-
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			log.Printf("cannot close response body: %v", err)
-		}
-	}()
-	// Translate the http status code response to an error
+	// Some providers (the generic REST and GitLab clients) pass non-2xx
+	// responses through without an error - translate the status into a
+	// failure here.
 	if httpErr := engerrors.HTTPErrorCodeToErr(resp.StatusCode); httpErr != nil {
 		return engerrors.NewErrActionFailed("remediation failed: HTTP status %d: %s", resp.StatusCode, httpErr)
 	}
