@@ -38,5 +38,6 @@ func TestClassInfo(t *testing.T) {
 		minderv1.ProviderType_PROVIDER_TYPE_GIT,
 		minderv1.ProviderType_PROVIDER_TYPE_REST,
 		minderv1.ProviderType_PROVIDER_TYPE_REPO_LISTER,
+		minderv1.ProviderType_PROVIDER_TYPE_GITLAB,
 	}, info.SupportedProviderTypes)
 }
