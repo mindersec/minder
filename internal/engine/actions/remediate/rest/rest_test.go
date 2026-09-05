@@ -39,6 +39,22 @@ var (
 	TestActionTypeValid  interfaces.ActionType = "remediate-test"
 )
 
+// jsonBodyRESTProvider wraps the test REST provider so the map body
+// produced by run() is accepted as JSON. Its Do still returns non-2xx
+// responses without an error, mirroring providers such as GitLab, so
+// tests can exercise the status-code translation in run().
+type jsonBodyRESTProvider struct {
+	*testproviders.RESTProvider
+}
+
+func (p jsonBodyRESTProvider) NewRequest(method, endpoint string, body any) (*http.Request, error) {
+	buf := new(bytes.Buffer)
+	if err := json.NewEncoder(buf).Encode(body); err != nil {
+		return nil, err
+	}
+	return p.RESTProvider.NewRequest(method, endpoint, buf)
+}
+
 func testGithubProvider(baseURL string) (provifv1.REST, error) {
 	if !strings.HasSuffix(baseURL, "/") {
 		baseURL = baseURL + "/"
@@ -189,11 +205,13 @@ func TestRestRemediate(t *testing.T) {
 	}
 
 	tests := []struct {
-		name        string
-		newRemArgs  newRestRemediateArgs
-		remArgs     remediateArgs
-		testHandler http.HandlerFunc
-		wantErr     bool
+		name            string
+		newRemArgs      newRestRemediateArgs
+		remArgs         remediateArgs
+		testHandler     http.HandlerFunc
+		useRESTProvider bool
+		wantErr         bool
+		wantErrContains string
 	}{
 		{
 			name: "valid remediate",
@@ -421,6 +439,35 @@ func TestRestRemediate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			// The generic REST provider returns the response as-is for
+			// non-2xx statuses, so the status-code translation in run()
+			// is what has to surface the failure reason.
+			name: "non-2xx response surfaces the HTTP status",
+			newRemArgs: newRestRemediateArgs{
+				restCfg: &pb.RestType{
+					Endpoint: "/repos/Foo/Bar",
+					Body:     &simpleBodyTemplate,
+				},
+			},
+			remArgs: remediateArgs{
+				remAction: models.ActionOptOn,
+				ent: &pb.Repository{
+					Owner:  "Foo",
+					Name:   "Bar",
+					RepoId: 123,
+				},
+				pol: map[string]any{
+					"enabled": true,
+				},
+			},
+			testHandler: func(writer http.ResponseWriter, _ *http.Request) {
+				writer.WriteHeader(http.StatusForbidden)
+			},
+			useRESTProvider: true,
+			wantErr:         true,
+			wantErrContains: "HTTP status 403: forbidden",
+		},
 	}
 	for _, tt := range tests {
 
@@ -429,7 +476,21 @@ func TestRestRemediate(t *testing.T) {
 
 			testServer := httptest.NewServer(tt.testHandler)
 			defer testServer.Close()
-			provider, err := testGithubProvider(testServer.URL)
+			var provider provifv1.REST
+			var err error
+			if tt.useRESTProvider {
+				var restProvider *testproviders.RESTProvider
+				restProvider, err = testproviders.NewRESTProvider(
+					&pb.RESTProviderConfig{
+						BaseUrl: proto.String(testServer.URL + "/"),
+					},
+					telemetry.NewNoopMetrics(),
+					credentials.NewGitHubTokenCredential("token"),
+				)
+				provider = jsonBodyRESTProvider{restProvider}
+			} else {
+				provider, err = testGithubProvider(testServer.URL)
+			}
 			require.NoError(t, err)
 			engine, err := NewRestRemediate(
 				TestActionTypeValid, tt.newRemArgs.restCfg, provider, tt.remArgs.remAction)
@@ -455,6 +516,9 @@ func TestRestRemediate(t *testing.T) {
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				require.Nil(t, retMeta, "expected nil metadata")
+				if tt.wantErrContains != "" {
+					require.ErrorContains(t, err, tt.wantErrContains)
+				}
 				return
 			}
 
