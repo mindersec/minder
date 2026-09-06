@@ -108,6 +108,7 @@ func (tr *TestResult) Output() string {
 	return tr.printOutput.String()
 }
 
+// TestRun represents a run of all the tests in a given directory.
 type TestRun struct {
 	// BaseDir is the directory from which the test run was initiated.
 	BaseDir string
