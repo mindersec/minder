@@ -43,6 +43,9 @@ func testDir(t *testing.T, r *Runner, dir string) {
 				for _, msg := range result.Failures {
 					t.Error(msg)
 				}
+				for _, msg := range result.Errors {
+					t.Error(msg)
+				}
 			})
 		}
 	}
