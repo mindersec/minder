@@ -68,10 +68,12 @@ func CmdTest() *cobra.Command {
 				}
 			}
 
-			for _, res := range results {
-				if len(res.Failures) > 0 {
-					finalErr = errors.New("one or more tests failed")
-					break
+			for _, run := range results {
+				for _, res := range run.Results {
+					if len(res.Failures)+len(res.Errors) > 0 {
+						finalErr = errors.New("one or more tests failed")
+						break
+					}
 				}
 			}
 			return finalErr
@@ -80,27 +82,44 @@ func CmdTest() *cobra.Command {
 
 	cmd.Flags().StringVarP(&outputFormat, "output", "o", "text", "Output format (text, junit)")
 	cmd.Flags().StringVar(&junitFile, "junit-file", "", "File to write JUnit report to (in addition to standard output)")
+	cmd.Flags().Bool("coverage", false, "Show uncovered rules in the output")
 
 	return cmd
 }
 
-func formatFailuresHuman(cmd *cobra.Command, results []ruletest.TestResult) {
+func formatFailuresHuman(cmd *cobra.Command, results []ruletest.TestRun) {
 	if len(results) == 0 {
 		cmd.Printf("No tests found\n")
 	}
-	for _, res := range results {
-		if len(res.Failures) > 0 {
-			cmd.Printf("FAIL: %s/%s\n", res.Filename, res.Name)
-			for _, f := range res.Failures {
-				cmd.Printf("  - %s\n", f)
+	coverage, _ := cmd.Flags().GetBool("coverage")
+	for _, run := range results {
+		cmd.Printf("Test run in %s:\n", run.BaseDir)
+		for _, res := range run.Results {
+			if len(res.Failures) > 0 {
+				cmd.Printf("FAIL: %s/%s\n", res.Filename, res.Name)
+				for _, f := range res.Failures {
+					cmd.Printf("  - %s\n", f)
+				}
+			} else if len(res.Errors) > 0 {
+				cmd.Printf("ERROR: %s/%s\n", res.Filename, res.Name)
+				for _, e := range res.Errors {
+					cmd.Printf("  - %s\n", e)
+				}
+			} else {
+				cmd.Printf("PASS: %s/%s\n", res.Filename, res.Name)
 			}
-		} else {
-			cmd.Printf("PASS: %s/%s\n", res.Filename, res.Name)
+		}
+		// TODO: hide this behind a flag
+		if uncovered := run.UncoveredRules(); coverage && len(uncovered) > 0 {
+			cmd.Printf("UNCOVERED RULES:\n")
+			for _, rule := range uncovered {
+				cmd.Printf("  - %s\n", rule)
+			}
 		}
 	}
 }
 
-func writeJUnit(w io.Writer, results []ruletest.TestResult) error {
+func writeJUnit(w io.Writer, results []ruletest.TestRun) error {
 	suites := ruletest.AsJUnit(results)
 	if _, err := fmt.Fprint(w, xml.Header); err != nil {
 		return fmt.Errorf("failed to write XML header: %w", err)

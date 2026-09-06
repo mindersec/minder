@@ -29,20 +29,21 @@ func testDir(t *testing.T, r *Runner, dir string) {
 		return
 	}
 
-	for _, result := range results {
-		result := result
-		name := result.Filename + "/" + result.Name
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-			if strings.HasPrefix(result.Name, "test_fail_") {
-				if result.Passed() {
-					t.Errorf("expected test %s to fail, but it passed", result.Name)
+	for _, run := range results {
+		for _, result := range run.Results {
+			name := result.Filename + "/" + result.Name
+			t.Run(name, func(t *testing.T) {
+				t.Parallel()
+				if strings.HasPrefix(result.Name, "test_fail_") {
+					if result.Passed() {
+						t.Errorf("expected test %s to fail, but it passed", result.Name)
+					}
+					return
 				}
-				return
-			}
-			for _, msg := range result.Failures {
-				t.Error(msg)
-			}
-		})
+				for _, msg := range result.Failures {
+					t.Error(msg)
+				}
+			})
+		}
 	}
 }
