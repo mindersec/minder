@@ -6,6 +6,7 @@ package gitlab
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -18,6 +19,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/util/ptr"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 type mockGitlabClient struct {
@@ -354,4 +356,123 @@ func Test_getParsedURL(t *testing.T) {
 			assert.Equal(t, tt.want.Fragment, got.Fragment, "Expected fragment to be equal")
 		})
 	}
+}
+
+func Test_glRESTGetPaginated(t *testing.T) {
+	t.Parallel()
+
+	newPagingClient := func(ts *httptest.Server) *mockGitlabClient {
+		return &mockGitlabClient{
+			doFunc: func(_ context.Context, req *http.Request) (*http.Response, error) {
+				return ts.Client().Do(req)
+			},
+			newRequestFunc: func(method, requestUrl string, _ any) (*http.Request, error) {
+				return http.NewRequest(method, ts.URL+"/"+requestUrl, nil)
+			},
+		}
+	}
+
+	t.Run("follows X-Next-Page across pages", func(t *testing.T) {
+		t.Parallel()
+
+		var pages []string
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			q := r.URL.Query()
+			assert.Equal(t, "keep", q.Get("existing"), "existing query params must be preserved")
+			assert.Equal(t, "100", q.Get("per_page"))
+
+			page := q.Get("page")
+			pages = append(pages, page)
+			if page == "1" {
+				w.Header().Set("X-Next-Page", "2")
+				fmt.Fprint(w, `["a", "b"]`)
+				return
+			}
+			fmt.Fprint(w, `["c"]`)
+		}))
+		defer ts.Close()
+
+		var out []string
+		err := glRESTGetPaginated(context.Background(), newPagingClient(ts), "test?existing=keep", &out)
+		require.NoError(t, err)
+		assert.Equal(t, []string{"a", "b", "c"}, out)
+		assert.Equal(t, []string{"1", "2"}, pages)
+	})
+
+	t.Run("single page without header", func(t *testing.T) {
+		t.Parallel()
+
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			fmt.Fprint(w, `["only"]`)
+		}))
+		defer ts.Close()
+
+		var out []string
+		err := glRESTGetPaginated(context.Background(), newPagingClient(ts), "test", &out)
+		require.NoError(t, err)
+		assert.Equal(t, []string{"only"}, out)
+	})
+
+	t.Run("empty collection", func(t *testing.T) {
+		t.Parallel()
+
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			fmt.Fprint(w, `[]`)
+		}))
+		defer ts.Close()
+
+		var out []string
+		err := glRESTGetPaginated(context.Background(), newPagingClient(ts), "test", &out)
+		require.NoError(t, err)
+		assert.Empty(t, out)
+	})
+
+	t.Run("stops when the server keeps reporting a next page with no items", func(t *testing.T) {
+		t.Parallel()
+
+		var requests int
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			requests++
+			w.Header().Set("X-Next-Page", "2")
+			fmt.Fprint(w, `[]`)
+		}))
+		defer ts.Close()
+
+		var out []string
+		err := glRESTGetPaginated(context.Background(), newPagingClient(ts), "test", &out)
+		require.NoError(t, err)
+		assert.Empty(t, out)
+		assert.Equal(t, 1, requests)
+	})
+
+	t.Run("404 maps to ErrEntityNotFound", func(t *testing.T) {
+		t.Parallel()
+
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+		}))
+		defer ts.Close()
+
+		var out []string
+		err := glRESTGetPaginated(context.Background(), newPagingClient(ts), "test", &out)
+		require.ErrorIs(t, err, provifv1.ErrEntityNotFound)
+	})
+
+	t.Run("error on a later page fails the whole listing", func(t *testing.T) {
+		t.Parallel()
+
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Query().Get("page") == "1" {
+				w.Header().Set("X-Next-Page", "2")
+				fmt.Fprint(w, `["a"]`)
+				return
+			}
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer ts.Close()
+
+		var out []string
+		err := glRESTGetPaginated(context.Background(), newPagingClient(ts), "test", &out)
+		require.Error(t, err)
+	})
 }

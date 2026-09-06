@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
@@ -103,6 +104,91 @@ func glRESTGet[T any](ctx context.Context, cli genericRESTClient, path string, o
 	}
 
 	return nil
+}
+
+const (
+	// glPerPage is the page size requested from collection endpoints.
+	// 100 is the maximum GitLab allows.
+	glPerPage = 100
+
+	// glNextPageHeader is the response header GitLab uses to point at the
+	// next page of an offset-paginated collection. It is empty on the
+	// last page.
+	glNextPageHeader = "X-Next-Page"
+)
+
+// glRESTGetPaginated retrieves every page of a GitLab collection endpoint
+// and appends the items to out. GitLab caps responses at per_page items
+// (20 by default), so collection endpoints have to follow the X-Next-Page
+// response header to retrieve the full result set.
+func glRESTGetPaginated[T any](ctx context.Context, cli genericRESTClient, path string, out *[]T) error {
+	for page := "1"; page != ""; {
+		items, nextPage, err := glRESTGetPage[T](ctx, cli, path, page)
+		if err != nil {
+			return err
+		}
+		*out = append(*out, items...)
+
+		// An empty page means there is nothing left to fetch regardless
+		// of what the header says, which also guards against a server
+		// that keeps reporting a next page.
+		if len(items) == 0 {
+			break
+		}
+		page = nextPage
+	}
+
+	return nil
+}
+
+// glRESTGetPage retrieves a single page of a GitLab collection endpoint and
+// returns the items along with the next page reported by the server.
+func glRESTGetPage[T any](ctx context.Context, cli genericRESTClient, path, page string) ([]T, string, error) {
+	pagedPath, err := pathWithPagination(path, page)
+	if err != nil {
+		return nil, "", err
+	}
+
+	req, err := cli.NewRequest(http.MethodGet, pagedPath, nil)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := cli.Do(ctx, req)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to get resource '%s': %w", pagedPath, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == http.StatusNotFound {
+			return nil, "", provifv1.ErrEntityNotFound
+		}
+		return nil, "", fmt.Errorf("failed to get resource '%s': %s", pagedPath, resp.Status)
+	}
+
+	var items []T
+	if err := json.NewDecoder(resp.Body).Decode(&items); err != nil {
+		return nil, "", fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return items, resp.Header.Get(glNextPageHeader), nil
+}
+
+// pathWithPagination sets the page and per_page query parameters on path,
+// preserving any query parameters it already carries.
+func pathWithPagination(path, page string) (string, error) {
+	u, err := url.Parse(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse path '%s': %w", path, err)
+	}
+
+	q := u.Query()
+	q.Set("page", page)
+	q.Set("per_page", strconv.Itoa(glPerPage))
+	u.RawQuery = q.Encode()
+
+	return u.String(), nil
 }
 
 func getParsedURL(endpoint, path string) (*url.URL, error) {
