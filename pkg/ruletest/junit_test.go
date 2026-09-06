@@ -45,6 +45,26 @@ func TestAsJUnit_PassingResultsMultipleSuites(t *testing.T) {
 			Tests: 4,
 			TestSuites: []JUnitTestSuite{
 				{
+					File: "bar",
+					Name: "bar",
+					Properties: &[]Property{{
+						Name:  "coverage.statements.pct",
+						Value: "0",
+					}},
+					TestCases: []JUnitTestCase{
+						{
+							Name: "rule_d",
+						},
+					},
+				},
+				{
+					File:       "bar/file_b.star",
+					Name:       "file_b.star",
+					Tests:      1,
+					Properties: &coverage100,
+					TestCases:  []JUnitTestCase{{Name: "test_one", ClassName: "file_b.star"}},
+				},
+				{
 					File:       "foo/file_a.star",
 					Name:       "file_a.star",
 					Tests:      2,
@@ -60,26 +80,6 @@ func TestAsJUnit_PassingResultsMultipleSuites(t *testing.T) {
 					Tests:      1,
 					Properties: &coverage100,
 					TestCases:  []JUnitTestCase{{Name: "test_three", ClassName: "file_b.star"}},
-				},
-				{
-					File:       "bar/file_b.star",
-					Name:       "file_b.star",
-					Tests:      1,
-					Properties: &coverage100,
-					TestCases:  []JUnitTestCase{{Name: "test_one", ClassName: "file_b.star"}},
-				},
-				{
-					File: "bar",
-					Name: "bar",
-					Properties: &[]Property{{
-						Name:  "coverage.statements.pct",
-						Value: "0",
-					}},
-					TestCases: []JUnitTestCase{
-						{
-							Name: "rule_d",
-						},
-					},
 				},
 			},
 		},
@@ -103,6 +103,19 @@ func TestAsJUnit_PassingResultsMultipleSuites(t *testing.T) {
 			Errors:   1,
 			TestSuites: []JUnitTestSuite{
 				{
+					File:       "suite/other.star",
+					Name:       "other.star",
+					Tests:      1,
+					Errors:     1,
+					Properties: &coverage100,
+					TestCases: []JUnitTestCase{
+						{
+							Name: "test_other", ClassName: "other.star",
+							Error: &JUnitFailure{Message: "Test error", Body: "err4"},
+						},
+					},
+				},
+				{
 					File:       "suite/suite.star",
 					Name:       "suite.star",
 					Tests:      3,
@@ -118,19 +131,6 @@ func TestAsJUnit_PassingResultsMultipleSuites(t *testing.T) {
 							Failure: &JUnitFailure{Message: "Test failed", Body: "err3"},
 						},
 						{Name: "test_pass", ClassName: "suite.star"},
-					},
-				},
-				{
-					File:       "suite/other.star",
-					Name:       "other.star",
-					Tests:      1,
-					Errors:     1,
-					Properties: &coverage100,
-					TestCases: []JUnitTestCase{
-						{
-							Name: "test_other", ClassName: "other.star",
-							Error: &JUnitFailure{Message: "Test error", Body: "err4"},
-						},
 					},
 				},
 			},

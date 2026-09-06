@@ -4,6 +4,7 @@
 package ruletest
 
 import (
+	"cmp"
 	"encoding/xml"
 	"maps"
 	"path/filepath"
@@ -138,7 +139,12 @@ func AsJUnit(results []TestRun) JUnitTestSuites {
 
 	res := JUnitTestSuites{}
 
-	for _, suite := range slices.Collect(maps.Values(suitesMap)) {
+	for _, suite := range slices.SortedFunc(
+		maps.Values(suitesMap),
+		func(a, b *JUnitTestSuite) int {
+			return cmp.Compare(a.File, b.File)
+		},
+	) {
 		res.TestSuites = append(res.TestSuites, *suite)
 		res.Tests += suite.Tests
 		res.Failures += suite.Failures
