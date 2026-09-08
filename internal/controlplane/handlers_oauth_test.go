@@ -122,10 +122,10 @@ func Test_NewOAuthConfig(t *testing.T) {
 			},
 		},
 		{
-			name:          "dockerhub fails as expected",
+			name:          "dockerhub does not support the oauth2 code flow",
 			providerClass: db.ProviderClassDockerhub,
 			cli:           true,
-			err:           "class manager does not implement OAuthManager",
+			err:           "dockerhub provider does not support the OAuth2 authorization code flow",
 		},
 	}
 
