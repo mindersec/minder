@@ -91,8 +91,7 @@ type TestResult struct {
 	Failures []string
 	Errors   []string
 
-	// printOutput contains the output of any `print` statements executed during the test.
-	printOutput strings.Builder
+	// TODO: collect print output from Rego print() and Starlark (print?)
 
 	// EvaluatedRules is a set of rule names that were evaluated during the test.
 	EvaluatedRules map[string]struct{}
@@ -101,11 +100,6 @@ type TestResult struct {
 // Passed returns true if the test had no failures.
 func (tr *TestResult) Passed() bool {
 	return len(tr.Failures) == 0 && len(tr.Errors) == 0
-}
-
-// Output returns the captured output of any `print` statements executed during the test.
-func (tr *TestResult) Output() string {
-	return tr.printOutput.String()
 }
 
 // TestRun represents a run of all the tests in a given directory.

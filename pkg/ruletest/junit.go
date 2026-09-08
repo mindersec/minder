@@ -6,6 +6,7 @@ package ruletest
 import (
 	"cmp"
 	"encoding/xml"
+	"fmt"
 	"maps"
 	"path/filepath"
 	"slices"
@@ -116,10 +117,16 @@ func AsJUnit(results []TestRun) JUnitTestSuites {
 
 			suite.TestCases = append(suite.TestCases, tc)
 		}
-		if len(run.UncoveredRules()) > 0 {
-			suitesMap[run.BaseDir] = &JUnitTestSuite{
-				Name: run.BaseDir,
-				File: run.BaseDir,
+		// See discussion in #6749: we want to record _something_ for ruletypes that don't
+		// have a corresponding test, but Tests > 0 is misleading.  The two options are:
+		// 1. Make up a suite and put each ruletype in as a testcase
+		// 2. Put each ruletype in its own suite
+		// We have chosen (2), as it makes it easier to understand the summary statistics like Test:0
+		for _, rule := range run.UncoveredRules() {
+			suite := &JUnitTestSuite{
+				// We use a different format from test suites to indicate ruletypes that don't have any tests.
+				Name: fmt.Sprintf("no-tests:%s", rule),
+				File: run.BaseDir + string(filepath.Separator), // TODO: do we want to keep and pass along a ruletype -> file map?
 				Properties: &[]Property{
 					{
 						Name:  "coverage.statements.pct",
@@ -127,13 +134,7 @@ func AsJUnit(results []TestRun) JUnitTestSuites {
 					},
 				},
 			}
-			suite := suitesMap[run.BaseDir]
-			for _, rule := range run.UncoveredRules() {
-				// Represent each uncovered rule as a test case with a failure
-				suite.TestCases = append(suite.TestCases, JUnitTestCase{
-					Name: rule,
-				})
-			}
+			suitesMap[suite.Name] = suite
 		}
 	}
 
@@ -142,7 +143,7 @@ func AsJUnit(results []TestRun) JUnitTestSuites {
 	for _, suite := range slices.SortedFunc(
 		maps.Values(suitesMap),
 		func(a, b *JUnitTestSuite) int {
-			return cmp.Compare(a.File, b.File)
+			return cmp.Or(cmp.Compare(a.File, b.File), cmp.Compare(a.Name, b.Name))
 		},
 	) {
 		res.TestSuites = append(res.TestSuites, *suite)

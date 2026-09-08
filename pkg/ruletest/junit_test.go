@@ -45,17 +45,12 @@ func TestAsJUnit_PassingResultsMultipleSuites(t *testing.T) {
 			Tests: 4,
 			TestSuites: []JUnitTestSuite{
 				{
-					File: "bar",
-					Name: "bar",
+					File: "bar/",
+					Name: "no-tests:rule_d",
 					Properties: &[]Property{{
 						Name:  "coverage.statements.pct",
 						Value: "0",
 					}},
-					TestCases: []JUnitTestCase{
-						{
-							Name: "rule_d",
-						},
-					},
 				},
 				{
 					File:       "bar/file_b.star",
