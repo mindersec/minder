@@ -522,9 +522,9 @@ func (s *Server) startMetricServer(ctx context.Context) error {
 
 func recoveryHandler(ctx context.Context, p any) error {
 	log.Ctx(ctx).Error().
-		Str("msg", "recovered from panic").
 		Any("panic", p).
-		Bytes("stack", debug.Stack())
+		Bytes("stack", debug.Stack()).
+		Msg("recovered from panic")
 	return status.Errorf(codes.Internal, "%s", p)
 }
 
