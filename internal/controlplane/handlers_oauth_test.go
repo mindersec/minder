@@ -122,10 +122,10 @@ func Test_NewOAuthConfig(t *testing.T) {
 			},
 		},
 		{
-			name:          "dockerhub does not support the oauth2 code flow",
+			name:          "dockerhub fails as expected",
 			providerClass: db.ProviderClassDockerhub,
 			cli:           true,
-			err:           "dockerhub provider does not support the OAuth2 authorization code flow",
+			err:           "class manager does not implement OAuthManager",
 		},
 	}
 
@@ -470,6 +470,8 @@ func testProviderClassInfo(class db.ProviderClass) *pb.ProviderClassInfo {
 	case db.ProviderClassGhcr:
 		fallthrough
 	case db.ProviderClassDockerhub:
+		fallthrough
+	case db.ProviderClassQuay:
 		fallthrough
 	case db.ProviderClassGitlab:
 		fallthrough

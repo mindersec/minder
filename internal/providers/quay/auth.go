@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package dockerhub
+package quay
 
 import (
 	"context"
@@ -15,16 +15,16 @@ import (
 )
 
 // NewOAuthConfig implements the providerClassOAuthManager interface.
-// DockerHub only supports the user-input (token) authorization flow, so
-// there is no OAuth2 authorization code flow to configure.
+// Quay only supports the user-input (token) authorization flow, so there
+// is no OAuth2 authorization code flow to configure.
 func (*providerClassManager) NewOAuthConfig(_ db.ProviderClass, _ bool) (*oauth2.Config, error) {
-	return nil, fmt.Errorf("dockerhub provider does not support the OAuth2 authorization code flow")
+	return nil, fmt.Errorf("quay provider does not support the OAuth2 authorization code flow")
 }
 
 // ValidateCredentials implements the providerClassOAuthManager interface.
-// DockerHub credentials are supplied directly by the user (a Docker Hub
-// Personal Access Token or account password) rather than obtained via an
-// OAuth2 exchange, so validation is limited to a basic sanity check.
+// Quay credentials are supplied directly by the user (a Quay.io Robot
+// account token) rather than obtained via an OAuth2 exchange, so
+// validation is limited to a basic sanity check.
 func (*providerClassManager) ValidateCredentials(
 	_ context.Context, cred provv1.Credential, _ *manager.CredentialVerifyParams,
 ) error {

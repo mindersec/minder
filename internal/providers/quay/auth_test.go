@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package dockerhub
+package quay
 
 import (
 	"context"
@@ -19,9 +19,9 @@ func TestNewOAuthConfig(t *testing.T) {
 
 	pcm := &providerClassManager{}
 
-	// DockerHub only supports the user-input (token) flow, so the OAuth2
+	// Quay only supports the user-input (token) flow, so the OAuth2
 	// authorization code flow is unsupported, not silently misconfigured.
-	cfg, err := pcm.NewOAuthConfig(DockerHub, true)
+	cfg, err := pcm.NewOAuthConfig(Quay, true)
 	require.Error(t, err)
 	assert.Nil(t, cfg)
 }

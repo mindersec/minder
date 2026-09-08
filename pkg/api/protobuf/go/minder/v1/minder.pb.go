@@ -740,7 +740,7 @@ func (x Severity_Value) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Severity_Value.Descriptor instead.
 func (Severity_Value) EnumDescriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{127, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128, 0}
 }
 
 type RpcOptions struct {
@@ -6707,6 +6707,54 @@ func (x *GHCRProviderConfig) GetNamespace() string {
 	return ""
 }
 
+// QuayProviderConfig contains the configuration for the Quay.io provider.
+//
+// Namespace: is the namespace for the Quay.io provider.
+type QuayProviderConfig struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// namespace is the namespace for the Quay.io provider.
+	Namespace     *string `protobuf:"bytes,1,opt,name=namespace,proto3,oneof" json:"namespace,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QuayProviderConfig) Reset() {
+	*x = QuayProviderConfig{}
+	mi := &file_minder_v1_minder_proto_msgTypes[105]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QuayProviderConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuayProviderConfig) ProtoMessage() {}
+
+func (x *QuayProviderConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_minder_v1_minder_proto_msgTypes[105]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QuayProviderConfig.ProtoReflect.Descriptor instead.
+func (*QuayProviderConfig) Descriptor() ([]byte, []int) {
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{105}
+}
+
+func (x *QuayProviderConfig) GetNamespace() string {
+	if x != nil && x.Namespace != nil {
+		return *x.Namespace
+	}
+	return ""
+}
+
 // Context defines the context in which a rule is evaluated.
 // this normally refers to a combination of the provider, organization and project.
 type Context struct {
@@ -6727,7 +6775,7 @@ type Context struct {
 
 func (x *Context) Reset() {
 	*x = Context{}
-	mi := &file_minder_v1_minder_proto_msgTypes[105]
+	mi := &file_minder_v1_minder_proto_msgTypes[106]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6739,7 +6787,7 @@ func (x *Context) String() string {
 func (*Context) ProtoMessage() {}
 
 func (x *Context) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[105]
+	mi := &file_minder_v1_minder_proto_msgTypes[106]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6752,7 +6800,7 @@ func (x *Context) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Context.ProtoReflect.Descriptor instead.
 func (*Context) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{105}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{106}
 }
 
 func (x *Context) GetProvider() string {
@@ -6790,7 +6838,7 @@ type ContextV2 struct {
 
 func (x *ContextV2) Reset() {
 	*x = ContextV2{}
-	mi := &file_minder_v1_minder_proto_msgTypes[106]
+	mi := &file_minder_v1_minder_proto_msgTypes[107]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6802,7 +6850,7 @@ func (x *ContextV2) String() string {
 func (*ContextV2) ProtoMessage() {}
 
 func (x *ContextV2) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[106]
+	mi := &file_minder_v1_minder_proto_msgTypes[107]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6815,7 +6863,7 @@ func (x *ContextV2) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContextV2.ProtoReflect.Descriptor instead.
 func (*ContextV2) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{106}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{107}
 }
 
 func (x *ContextV2) GetProjectId() string {
@@ -6843,7 +6891,7 @@ type ListRuleTypesRequest struct {
 
 func (x *ListRuleTypesRequest) Reset() {
 	*x = ListRuleTypesRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[107]
+	mi := &file_minder_v1_minder_proto_msgTypes[108]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6855,7 +6903,7 @@ func (x *ListRuleTypesRequest) String() string {
 func (*ListRuleTypesRequest) ProtoMessage() {}
 
 func (x *ListRuleTypesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[107]
+	mi := &file_minder_v1_minder_proto_msgTypes[108]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6868,7 +6916,7 @@ func (x *ListRuleTypesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRuleTypesRequest.ProtoReflect.Descriptor instead.
 func (*ListRuleTypesRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{107}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{108}
 }
 
 func (x *ListRuleTypesRequest) GetContext() *Context {
@@ -6889,7 +6937,7 @@ type ListRuleTypesResponse struct {
 
 func (x *ListRuleTypesResponse) Reset() {
 	*x = ListRuleTypesResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[108]
+	mi := &file_minder_v1_minder_proto_msgTypes[109]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6901,7 +6949,7 @@ func (x *ListRuleTypesResponse) String() string {
 func (*ListRuleTypesResponse) ProtoMessage() {}
 
 func (x *ListRuleTypesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[108]
+	mi := &file_minder_v1_minder_proto_msgTypes[109]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6914,7 +6962,7 @@ func (x *ListRuleTypesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRuleTypesResponse.ProtoReflect.Descriptor instead.
 func (*ListRuleTypesResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{108}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{109}
 }
 
 func (x *ListRuleTypesResponse) GetRuleTypes() []*RuleType {
@@ -6937,7 +6985,7 @@ type GetRuleTypeByNameRequest struct {
 
 func (x *GetRuleTypeByNameRequest) Reset() {
 	*x = GetRuleTypeByNameRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[109]
+	mi := &file_minder_v1_minder_proto_msgTypes[110]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6949,7 +6997,7 @@ func (x *GetRuleTypeByNameRequest) String() string {
 func (*GetRuleTypeByNameRequest) ProtoMessage() {}
 
 func (x *GetRuleTypeByNameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[109]
+	mi := &file_minder_v1_minder_proto_msgTypes[110]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6962,7 +7010,7 @@ func (x *GetRuleTypeByNameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRuleTypeByNameRequest.ProtoReflect.Descriptor instead.
 func (*GetRuleTypeByNameRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{109}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{110}
 }
 
 func (x *GetRuleTypeByNameRequest) GetContext() *Context {
@@ -6990,7 +7038,7 @@ type GetRuleTypeByNameResponse struct {
 
 func (x *GetRuleTypeByNameResponse) Reset() {
 	*x = GetRuleTypeByNameResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[110]
+	mi := &file_minder_v1_minder_proto_msgTypes[111]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7002,7 +7050,7 @@ func (x *GetRuleTypeByNameResponse) String() string {
 func (*GetRuleTypeByNameResponse) ProtoMessage() {}
 
 func (x *GetRuleTypeByNameResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[110]
+	mi := &file_minder_v1_minder_proto_msgTypes[111]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7015,7 +7063,7 @@ func (x *GetRuleTypeByNameResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRuleTypeByNameResponse.ProtoReflect.Descriptor instead.
 func (*GetRuleTypeByNameResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{110}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{111}
 }
 
 func (x *GetRuleTypeByNameResponse) GetRuleType() *RuleType {
@@ -7038,7 +7086,7 @@ type GetRuleTypeByIdRequest struct {
 
 func (x *GetRuleTypeByIdRequest) Reset() {
 	*x = GetRuleTypeByIdRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[111]
+	mi := &file_minder_v1_minder_proto_msgTypes[112]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7050,7 +7098,7 @@ func (x *GetRuleTypeByIdRequest) String() string {
 func (*GetRuleTypeByIdRequest) ProtoMessage() {}
 
 func (x *GetRuleTypeByIdRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[111]
+	mi := &file_minder_v1_minder_proto_msgTypes[112]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7063,7 +7111,7 @@ func (x *GetRuleTypeByIdRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRuleTypeByIdRequest.ProtoReflect.Descriptor instead.
 func (*GetRuleTypeByIdRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{111}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{112}
 }
 
 func (x *GetRuleTypeByIdRequest) GetContext() *Context {
@@ -7091,7 +7139,7 @@ type GetRuleTypeByIdResponse struct {
 
 func (x *GetRuleTypeByIdResponse) Reset() {
 	*x = GetRuleTypeByIdResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[112]
+	mi := &file_minder_v1_minder_proto_msgTypes[113]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7103,7 +7151,7 @@ func (x *GetRuleTypeByIdResponse) String() string {
 func (*GetRuleTypeByIdResponse) ProtoMessage() {}
 
 func (x *GetRuleTypeByIdResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[112]
+	mi := &file_minder_v1_minder_proto_msgTypes[113]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7116,7 +7164,7 @@ func (x *GetRuleTypeByIdResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRuleTypeByIdResponse.ProtoReflect.Descriptor instead.
 func (*GetRuleTypeByIdResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{112}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{113}
 }
 
 func (x *GetRuleTypeByIdResponse) GetRuleType() *RuleType {
@@ -7137,7 +7185,7 @@ type CreateRuleTypeRequest struct {
 
 func (x *CreateRuleTypeRequest) Reset() {
 	*x = CreateRuleTypeRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[113]
+	mi := &file_minder_v1_minder_proto_msgTypes[114]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7149,7 +7197,7 @@ func (x *CreateRuleTypeRequest) String() string {
 func (*CreateRuleTypeRequest) ProtoMessage() {}
 
 func (x *CreateRuleTypeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[113]
+	mi := &file_minder_v1_minder_proto_msgTypes[114]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7162,7 +7210,7 @@ func (x *CreateRuleTypeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRuleTypeRequest.ProtoReflect.Descriptor instead.
 func (*CreateRuleTypeRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{113}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{114}
 }
 
 func (x *CreateRuleTypeRequest) GetRuleType() *RuleType {
@@ -7185,7 +7233,7 @@ type CreateRuleTypeResponse struct {
 
 func (x *CreateRuleTypeResponse) Reset() {
 	*x = CreateRuleTypeResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[114]
+	mi := &file_minder_v1_minder_proto_msgTypes[115]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7197,7 +7245,7 @@ func (x *CreateRuleTypeResponse) String() string {
 func (*CreateRuleTypeResponse) ProtoMessage() {}
 
 func (x *CreateRuleTypeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[114]
+	mi := &file_minder_v1_minder_proto_msgTypes[115]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7210,7 +7258,7 @@ func (x *CreateRuleTypeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRuleTypeResponse.ProtoReflect.Descriptor instead.
 func (*CreateRuleTypeResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{114}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{115}
 }
 
 func (x *CreateRuleTypeResponse) GetRuleType() *RuleType {
@@ -7238,7 +7286,7 @@ type UpdateRuleTypeRequest struct {
 
 func (x *UpdateRuleTypeRequest) Reset() {
 	*x = UpdateRuleTypeRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[115]
+	mi := &file_minder_v1_minder_proto_msgTypes[116]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7250,7 +7298,7 @@ func (x *UpdateRuleTypeRequest) String() string {
 func (*UpdateRuleTypeRequest) ProtoMessage() {}
 
 func (x *UpdateRuleTypeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[115]
+	mi := &file_minder_v1_minder_proto_msgTypes[116]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7263,7 +7311,7 @@ func (x *UpdateRuleTypeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRuleTypeRequest.ProtoReflect.Descriptor instead.
 func (*UpdateRuleTypeRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{115}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{116}
 }
 
 func (x *UpdateRuleTypeRequest) GetRuleType() *RuleType {
@@ -7286,7 +7334,7 @@ type UpdateRuleTypeResponse struct {
 
 func (x *UpdateRuleTypeResponse) Reset() {
 	*x = UpdateRuleTypeResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[116]
+	mi := &file_minder_v1_minder_proto_msgTypes[117]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7298,7 +7346,7 @@ func (x *UpdateRuleTypeResponse) String() string {
 func (*UpdateRuleTypeResponse) ProtoMessage() {}
 
 func (x *UpdateRuleTypeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[116]
+	mi := &file_minder_v1_minder_proto_msgTypes[117]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7311,7 +7359,7 @@ func (x *UpdateRuleTypeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRuleTypeResponse.ProtoReflect.Descriptor instead.
 func (*UpdateRuleTypeResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{116}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{117}
 }
 
 func (x *UpdateRuleTypeResponse) GetRuleType() *RuleType {
@@ -7341,7 +7389,7 @@ type DeleteRuleTypeRequest struct {
 
 func (x *DeleteRuleTypeRequest) Reset() {
 	*x = DeleteRuleTypeRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[117]
+	mi := &file_minder_v1_minder_proto_msgTypes[118]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7353,7 +7401,7 @@ func (x *DeleteRuleTypeRequest) String() string {
 func (*DeleteRuleTypeRequest) ProtoMessage() {}
 
 func (x *DeleteRuleTypeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[117]
+	mi := &file_minder_v1_minder_proto_msgTypes[118]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7366,7 +7414,7 @@ func (x *DeleteRuleTypeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRuleTypeRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRuleTypeRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{117}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{118}
 }
 
 func (x *DeleteRuleTypeRequest) GetContext() *Context {
@@ -7392,7 +7440,7 @@ type DeleteRuleTypeResponse struct {
 
 func (x *DeleteRuleTypeResponse) Reset() {
 	*x = DeleteRuleTypeResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[118]
+	mi := &file_minder_v1_minder_proto_msgTypes[119]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7404,7 +7452,7 @@ func (x *DeleteRuleTypeResponse) String() string {
 func (*DeleteRuleTypeResponse) ProtoMessage() {}
 
 func (x *DeleteRuleTypeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[118]
+	mi := &file_minder_v1_minder_proto_msgTypes[119]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7417,7 +7465,7 @@ func (x *DeleteRuleTypeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRuleTypeResponse.ProtoReflect.Descriptor instead.
 func (*DeleteRuleTypeResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{118}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{119}
 }
 
 type ListEvaluationResultsRequest struct {
@@ -7450,7 +7498,7 @@ type ListEvaluationResultsRequest struct {
 
 func (x *ListEvaluationResultsRequest) Reset() {
 	*x = ListEvaluationResultsRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[119]
+	mi := &file_minder_v1_minder_proto_msgTypes[120]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7462,7 +7510,7 @@ func (x *ListEvaluationResultsRequest) String() string {
 func (*ListEvaluationResultsRequest) ProtoMessage() {}
 
 func (x *ListEvaluationResultsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[119]
+	mi := &file_minder_v1_minder_proto_msgTypes[120]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7475,7 +7523,7 @@ func (x *ListEvaluationResultsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListEvaluationResultsRequest.ProtoReflect.Descriptor instead.
 func (*ListEvaluationResultsRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{119}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{120}
 }
 
 func (x *ListEvaluationResultsRequest) GetContext() *Context {
@@ -7563,7 +7611,7 @@ type ListEvaluationResultsResponse struct {
 
 func (x *ListEvaluationResultsResponse) Reset() {
 	*x = ListEvaluationResultsResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[120]
+	mi := &file_minder_v1_minder_proto_msgTypes[121]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7575,7 +7623,7 @@ func (x *ListEvaluationResultsResponse) String() string {
 func (*ListEvaluationResultsResponse) ProtoMessage() {}
 
 func (x *ListEvaluationResultsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[120]
+	mi := &file_minder_v1_minder_proto_msgTypes[121]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7588,7 +7636,7 @@ func (x *ListEvaluationResultsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListEvaluationResultsResponse.ProtoReflect.Descriptor instead.
 func (*ListEvaluationResultsResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{120}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{121}
 }
 
 func (x *ListEvaluationResultsResponse) GetEntities() []*ListEvaluationResultsResponse_EntityEvaluationResults {
@@ -7629,7 +7677,7 @@ type RestType struct {
 
 func (x *RestType) Reset() {
 	*x = RestType{}
-	mi := &file_minder_v1_minder_proto_msgTypes[121]
+	mi := &file_minder_v1_minder_proto_msgTypes[122]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7641,7 +7689,7 @@ func (x *RestType) String() string {
 func (*RestType) ProtoMessage() {}
 
 func (x *RestType) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[121]
+	mi := &file_minder_v1_minder_proto_msgTypes[122]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7654,7 +7702,7 @@ func (x *RestType) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestType.ProtoReflect.Descriptor instead.
 func (*RestType) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{121}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{122}
 }
 
 func (x *RestType) GetEndpoint() string {
@@ -7709,7 +7757,7 @@ type BuiltinType struct {
 
 func (x *BuiltinType) Reset() {
 	*x = BuiltinType{}
-	mi := &file_minder_v1_minder_proto_msgTypes[122]
+	mi := &file_minder_v1_minder_proto_msgTypes[123]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7721,7 +7769,7 @@ func (x *BuiltinType) String() string {
 func (*BuiltinType) ProtoMessage() {}
 
 func (x *BuiltinType) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[122]
+	mi := &file_minder_v1_minder_proto_msgTypes[123]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7734,7 +7782,7 @@ func (x *BuiltinType) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BuiltinType.ProtoReflect.Descriptor instead.
 func (*BuiltinType) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{122}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{123}
 }
 
 func (x *BuiltinType) GetMethod() string {
@@ -7753,7 +7801,7 @@ type ArtifactType struct {
 
 func (x *ArtifactType) Reset() {
 	*x = ArtifactType{}
-	mi := &file_minder_v1_minder_proto_msgTypes[123]
+	mi := &file_minder_v1_minder_proto_msgTypes[124]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7765,7 +7813,7 @@ func (x *ArtifactType) String() string {
 func (*ArtifactType) ProtoMessage() {}
 
 func (x *ArtifactType) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[123]
+	mi := &file_minder_v1_minder_proto_msgTypes[124]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7778,7 +7826,7 @@ func (x *ArtifactType) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArtifactType.ProtoReflect.Descriptor instead.
 func (*ArtifactType) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{123}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{124}
 }
 
 // GitType defines the git data ingester.
@@ -7794,7 +7842,7 @@ type GitType struct {
 
 func (x *GitType) Reset() {
 	*x = GitType{}
-	mi := &file_minder_v1_minder_proto_msgTypes[124]
+	mi := &file_minder_v1_minder_proto_msgTypes[125]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7806,7 +7854,7 @@ func (x *GitType) String() string {
 func (*GitType) ProtoMessage() {}
 
 func (x *GitType) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[124]
+	mi := &file_minder_v1_minder_proto_msgTypes[125]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7819,7 +7867,7 @@ func (x *GitType) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitType.ProtoReflect.Descriptor instead.
 func (*GitType) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{124}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{125}
 }
 
 func (x *GitType) GetCloneUrl() string {
@@ -7852,7 +7900,7 @@ type DiffType struct {
 
 func (x *DiffType) Reset() {
 	*x = DiffType{}
-	mi := &file_minder_v1_minder_proto_msgTypes[125]
+	mi := &file_minder_v1_minder_proto_msgTypes[126]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7864,7 +7912,7 @@ func (x *DiffType) String() string {
 func (*DiffType) ProtoMessage() {}
 
 func (x *DiffType) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[125]
+	mi := &file_minder_v1_minder_proto_msgTypes[126]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7877,7 +7925,7 @@ func (x *DiffType) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiffType.ProtoReflect.Descriptor instead.
 func (*DiffType) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{125}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{126}
 }
 
 func (x *DiffType) GetEcosystems() []*DiffType_Ecosystem {
@@ -7909,7 +7957,7 @@ type DepsType struct {
 
 func (x *DepsType) Reset() {
 	*x = DepsType{}
-	mi := &file_minder_v1_minder_proto_msgTypes[126]
+	mi := &file_minder_v1_minder_proto_msgTypes[127]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7921,7 +7969,7 @@ func (x *DepsType) String() string {
 func (*DepsType) ProtoMessage() {}
 
 func (x *DepsType) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[126]
+	mi := &file_minder_v1_minder_proto_msgTypes[127]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7934,7 +7982,7 @@ func (x *DepsType) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DepsType.ProtoReflect.Descriptor instead.
 func (*DepsType) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{126}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{127}
 }
 
 func (x *DepsType) GetEntityType() isDepsType_EntityType {
@@ -7989,7 +8037,7 @@ type Severity struct {
 
 func (x *Severity) Reset() {
 	*x = Severity{}
-	mi := &file_minder_v1_minder_proto_msgTypes[127]
+	mi := &file_minder_v1_minder_proto_msgTypes[128]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8001,7 +8049,7 @@ func (x *Severity) String() string {
 func (*Severity) ProtoMessage() {}
 
 func (x *Severity) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[127]
+	mi := &file_minder_v1_minder_proto_msgTypes[128]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8014,7 +8062,7 @@ func (x *Severity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Severity.ProtoReflect.Descriptor instead.
 func (*Severity) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{127}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128}
 }
 
 func (x *Severity) GetValue() Severity_Value {
@@ -8061,7 +8109,7 @@ type RuleType struct {
 
 func (x *RuleType) Reset() {
 	*x = RuleType{}
-	mi := &file_minder_v1_minder_proto_msgTypes[128]
+	mi := &file_minder_v1_minder_proto_msgTypes[129]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8073,7 +8121,7 @@ func (x *RuleType) String() string {
 func (*RuleType) ProtoMessage() {}
 
 func (x *RuleType) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[128]
+	mi := &file_minder_v1_minder_proto_msgTypes[129]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8086,7 +8134,7 @@ func (x *RuleType) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RuleType.ProtoReflect.Descriptor instead.
 func (*RuleType) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129}
 }
 
 func (x *RuleType) GetVersion() string {
@@ -8225,7 +8273,7 @@ type Profile struct {
 
 func (x *Profile) Reset() {
 	*x = Profile{}
-	mi := &file_minder_v1_minder_proto_msgTypes[129]
+	mi := &file_minder_v1_minder_proto_msgTypes[130]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8237,7 +8285,7 @@ func (x *Profile) String() string {
 func (*Profile) ProtoMessage() {}
 
 func (x *Profile) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[129]
+	mi := &file_minder_v1_minder_proto_msgTypes[130]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8250,7 +8298,7 @@ func (x *Profile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Profile.ProtoReflect.Descriptor instead.
 func (*Profile) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{130}
 }
 
 func (x *Profile) GetContext() *Context {
@@ -8387,7 +8435,7 @@ type ListProjectsRequest struct {
 
 func (x *ListProjectsRequest) Reset() {
 	*x = ListProjectsRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[130]
+	mi := &file_minder_v1_minder_proto_msgTypes[131]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8399,7 +8447,7 @@ func (x *ListProjectsRequest) String() string {
 func (*ListProjectsRequest) ProtoMessage() {}
 
 func (x *ListProjectsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[130]
+	mi := &file_minder_v1_minder_proto_msgTypes[131]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8412,7 +8460,7 @@ func (x *ListProjectsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListProjectsRequest.ProtoReflect.Descriptor instead.
 func (*ListProjectsRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{130}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{131}
 }
 
 type ListProjectsResponse struct {
@@ -8424,7 +8472,7 @@ type ListProjectsResponse struct {
 
 func (x *ListProjectsResponse) Reset() {
 	*x = ListProjectsResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[131]
+	mi := &file_minder_v1_minder_proto_msgTypes[132]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8436,7 +8484,7 @@ func (x *ListProjectsResponse) String() string {
 func (*ListProjectsResponse) ProtoMessage() {}
 
 func (x *ListProjectsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[131]
+	mi := &file_minder_v1_minder_proto_msgTypes[132]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8449,7 +8497,7 @@ func (x *ListProjectsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListProjectsResponse.ProtoReflect.Descriptor instead.
 func (*ListProjectsResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{131}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{132}
 }
 
 func (x *ListProjectsResponse) GetProjects() []*Project {
@@ -8471,7 +8519,7 @@ type CreateProjectRequest struct {
 
 func (x *CreateProjectRequest) Reset() {
 	*x = CreateProjectRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[132]
+	mi := &file_minder_v1_minder_proto_msgTypes[133]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8483,7 +8531,7 @@ func (x *CreateProjectRequest) String() string {
 func (*CreateProjectRequest) ProtoMessage() {}
 
 func (x *CreateProjectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[132]
+	mi := &file_minder_v1_minder_proto_msgTypes[133]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8496,7 +8544,7 @@ func (x *CreateProjectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateProjectRequest.ProtoReflect.Descriptor instead.
 func (*CreateProjectRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{132}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{133}
 }
 
 func (x *CreateProjectRequest) GetContext() *Context {
@@ -8523,7 +8571,7 @@ type CreateProjectResponse struct {
 
 func (x *CreateProjectResponse) Reset() {
 	*x = CreateProjectResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[133]
+	mi := &file_minder_v1_minder_proto_msgTypes[134]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8535,7 +8583,7 @@ func (x *CreateProjectResponse) String() string {
 func (*CreateProjectResponse) ProtoMessage() {}
 
 func (x *CreateProjectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[133]
+	mi := &file_minder_v1_minder_proto_msgTypes[134]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8548,7 +8596,7 @@ func (x *CreateProjectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateProjectResponse.ProtoReflect.Descriptor instead.
 func (*CreateProjectResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{133}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{134}
 }
 
 func (x *CreateProjectResponse) GetProject() *Project {
@@ -8568,7 +8616,7 @@ type DeleteProjectRequest struct {
 
 func (x *DeleteProjectRequest) Reset() {
 	*x = DeleteProjectRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[134]
+	mi := &file_minder_v1_minder_proto_msgTypes[135]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8580,7 +8628,7 @@ func (x *DeleteProjectRequest) String() string {
 func (*DeleteProjectRequest) ProtoMessage() {}
 
 func (x *DeleteProjectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[134]
+	mi := &file_minder_v1_minder_proto_msgTypes[135]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8593,7 +8641,7 @@ func (x *DeleteProjectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteProjectRequest.ProtoReflect.Descriptor instead.
 func (*DeleteProjectRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{134}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{135}
 }
 
 func (x *DeleteProjectRequest) GetContext() *Context {
@@ -8613,7 +8661,7 @@ type DeleteProjectResponse struct {
 
 func (x *DeleteProjectResponse) Reset() {
 	*x = DeleteProjectResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[135]
+	mi := &file_minder_v1_minder_proto_msgTypes[136]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8625,7 +8673,7 @@ func (x *DeleteProjectResponse) String() string {
 func (*DeleteProjectResponse) ProtoMessage() {}
 
 func (x *DeleteProjectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[135]
+	mi := &file_minder_v1_minder_proto_msgTypes[136]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8638,7 +8686,7 @@ func (x *DeleteProjectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteProjectResponse.ProtoReflect.Descriptor instead.
 func (*DeleteProjectResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{135}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{136}
 }
 
 func (x *DeleteProjectResponse) GetProjectId() string {
@@ -8664,7 +8712,7 @@ type UpdateProjectRequest struct {
 
 func (x *UpdateProjectRequest) Reset() {
 	*x = UpdateProjectRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[136]
+	mi := &file_minder_v1_minder_proto_msgTypes[137]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8676,7 +8724,7 @@ func (x *UpdateProjectRequest) String() string {
 func (*UpdateProjectRequest) ProtoMessage() {}
 
 func (x *UpdateProjectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[136]
+	mi := &file_minder_v1_minder_proto_msgTypes[137]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8689,7 +8737,7 @@ func (x *UpdateProjectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateProjectRequest.ProtoReflect.Descriptor instead.
 func (*UpdateProjectRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{136}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{137}
 }
 
 func (x *UpdateProjectRequest) GetContext() *Context {
@@ -8723,7 +8771,7 @@ type UpdateProjectResponse struct {
 
 func (x *UpdateProjectResponse) Reset() {
 	*x = UpdateProjectResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[137]
+	mi := &file_minder_v1_minder_proto_msgTypes[138]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8735,7 +8783,7 @@ func (x *UpdateProjectResponse) String() string {
 func (*UpdateProjectResponse) ProtoMessage() {}
 
 func (x *UpdateProjectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[137]
+	mi := &file_minder_v1_minder_proto_msgTypes[138]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8748,7 +8796,7 @@ func (x *UpdateProjectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateProjectResponse.ProtoReflect.Descriptor instead.
 func (*UpdateProjectResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{137}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{138}
 }
 
 func (x *UpdateProjectResponse) GetProject() *Project {
@@ -8770,7 +8818,7 @@ type ProjectPatch struct {
 
 func (x *ProjectPatch) Reset() {
 	*x = ProjectPatch{}
-	mi := &file_minder_v1_minder_proto_msgTypes[138]
+	mi := &file_minder_v1_minder_proto_msgTypes[139]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8782,7 +8830,7 @@ func (x *ProjectPatch) String() string {
 func (*ProjectPatch) ProtoMessage() {}
 
 func (x *ProjectPatch) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[138]
+	mi := &file_minder_v1_minder_proto_msgTypes[139]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8795,7 +8843,7 @@ func (x *ProjectPatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProjectPatch.ProtoReflect.Descriptor instead.
 func (*ProjectPatch) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{138}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{139}
 }
 
 func (x *ProjectPatch) GetDisplayName() string {
@@ -8827,7 +8875,7 @@ type PatchProjectRequest struct {
 
 func (x *PatchProjectRequest) Reset() {
 	*x = PatchProjectRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[139]
+	mi := &file_minder_v1_minder_proto_msgTypes[140]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8839,7 +8887,7 @@ func (x *PatchProjectRequest) String() string {
 func (*PatchProjectRequest) ProtoMessage() {}
 
 func (x *PatchProjectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[139]
+	mi := &file_minder_v1_minder_proto_msgTypes[140]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8852,7 +8900,7 @@ func (x *PatchProjectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PatchProjectRequest.ProtoReflect.Descriptor instead.
 func (*PatchProjectRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{139}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{140}
 }
 
 func (x *PatchProjectRequest) GetContext() *Context {
@@ -8886,7 +8934,7 @@ type PatchProjectResponse struct {
 
 func (x *PatchProjectResponse) Reset() {
 	*x = PatchProjectResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[140]
+	mi := &file_minder_v1_minder_proto_msgTypes[141]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8898,7 +8946,7 @@ func (x *PatchProjectResponse) String() string {
 func (*PatchProjectResponse) ProtoMessage() {}
 
 func (x *PatchProjectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[140]
+	mi := &file_minder_v1_minder_proto_msgTypes[141]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8911,7 +8959,7 @@ func (x *PatchProjectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PatchProjectResponse.ProtoReflect.Descriptor instead.
 func (*PatchProjectResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{140}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{141}
 }
 
 func (x *PatchProjectResponse) GetProject() *Project {
@@ -8933,7 +8981,7 @@ type ListChildProjectsRequest struct {
 
 func (x *ListChildProjectsRequest) Reset() {
 	*x = ListChildProjectsRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[141]
+	mi := &file_minder_v1_minder_proto_msgTypes[142]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8945,7 +8993,7 @@ func (x *ListChildProjectsRequest) String() string {
 func (*ListChildProjectsRequest) ProtoMessage() {}
 
 func (x *ListChildProjectsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[141]
+	mi := &file_minder_v1_minder_proto_msgTypes[142]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8958,7 +9006,7 @@ func (x *ListChildProjectsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListChildProjectsRequest.ProtoReflect.Descriptor instead.
 func (*ListChildProjectsRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{141}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{142}
 }
 
 func (x *ListChildProjectsRequest) GetContext() *ContextV2 {
@@ -8984,7 +9032,7 @@ type ListChildProjectsResponse struct {
 
 func (x *ListChildProjectsResponse) Reset() {
 	*x = ListChildProjectsResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[142]
+	mi := &file_minder_v1_minder_proto_msgTypes[143]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8996,7 +9044,7 @@ func (x *ListChildProjectsResponse) String() string {
 func (*ListChildProjectsResponse) ProtoMessage() {}
 
 func (x *ListChildProjectsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[142]
+	mi := &file_minder_v1_minder_proto_msgTypes[143]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9009,7 +9057,7 @@ func (x *ListChildProjectsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListChildProjectsResponse.ProtoReflect.Descriptor instead.
 func (*ListChildProjectsResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{142}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{143}
 }
 
 func (x *ListChildProjectsResponse) GetProjects() []*Project {
@@ -9031,7 +9079,7 @@ type CreateEntityReconciliationTaskRequest struct {
 
 func (x *CreateEntityReconciliationTaskRequest) Reset() {
 	*x = CreateEntityReconciliationTaskRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[143]
+	mi := &file_minder_v1_minder_proto_msgTypes[144]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9043,7 +9091,7 @@ func (x *CreateEntityReconciliationTaskRequest) String() string {
 func (*CreateEntityReconciliationTaskRequest) ProtoMessage() {}
 
 func (x *CreateEntityReconciliationTaskRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[143]
+	mi := &file_minder_v1_minder_proto_msgTypes[144]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9056,7 +9104,7 @@ func (x *CreateEntityReconciliationTaskRequest) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use CreateEntityReconciliationTaskRequest.ProtoReflect.Descriptor instead.
 func (*CreateEntityReconciliationTaskRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{143}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{144}
 }
 
 func (x *CreateEntityReconciliationTaskRequest) GetEntity() *EntityTypedId {
@@ -9081,7 +9129,7 @@ type CreateEntityReconciliationTaskResponse struct {
 
 func (x *CreateEntityReconciliationTaskResponse) Reset() {
 	*x = CreateEntityReconciliationTaskResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[144]
+	mi := &file_minder_v1_minder_proto_msgTypes[145]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9093,7 +9141,7 @@ func (x *CreateEntityReconciliationTaskResponse) String() string {
 func (*CreateEntityReconciliationTaskResponse) ProtoMessage() {}
 
 func (x *CreateEntityReconciliationTaskResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[144]
+	mi := &file_minder_v1_minder_proto_msgTypes[145]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9106,7 +9154,7 @@ func (x *CreateEntityReconciliationTaskResponse) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use CreateEntityReconciliationTaskResponse.ProtoReflect.Descriptor instead.
 func (*CreateEntityReconciliationTaskResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{144}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{145}
 }
 
 type ListRolesRequest struct {
@@ -9119,7 +9167,7 @@ type ListRolesRequest struct {
 
 func (x *ListRolesRequest) Reset() {
 	*x = ListRolesRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[145]
+	mi := &file_minder_v1_minder_proto_msgTypes[146]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9131,7 +9179,7 @@ func (x *ListRolesRequest) String() string {
 func (*ListRolesRequest) ProtoMessage() {}
 
 func (x *ListRolesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[145]
+	mi := &file_minder_v1_minder_proto_msgTypes[146]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9144,7 +9192,7 @@ func (x *ListRolesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRolesRequest.ProtoReflect.Descriptor instead.
 func (*ListRolesRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{145}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{146}
 }
 
 func (x *ListRolesRequest) GetContext() *Context {
@@ -9163,7 +9211,7 @@ type ListRolesResponse struct {
 
 func (x *ListRolesResponse) Reset() {
 	*x = ListRolesResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[146]
+	mi := &file_minder_v1_minder_proto_msgTypes[147]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9175,7 +9223,7 @@ func (x *ListRolesResponse) String() string {
 func (*ListRolesResponse) ProtoMessage() {}
 
 func (x *ListRolesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[146]
+	mi := &file_minder_v1_minder_proto_msgTypes[147]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9188,7 +9236,7 @@ func (x *ListRolesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRolesResponse.ProtoReflect.Descriptor instead.
 func (*ListRolesResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{146}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{147}
 }
 
 func (x *ListRolesResponse) GetRoles() []*Role {
@@ -9208,7 +9256,7 @@ type ListRoleAssignmentsRequest struct {
 
 func (x *ListRoleAssignmentsRequest) Reset() {
 	*x = ListRoleAssignmentsRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[147]
+	mi := &file_minder_v1_minder_proto_msgTypes[148]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9220,7 +9268,7 @@ func (x *ListRoleAssignmentsRequest) String() string {
 func (*ListRoleAssignmentsRequest) ProtoMessage() {}
 
 func (x *ListRoleAssignmentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[147]
+	mi := &file_minder_v1_minder_proto_msgTypes[148]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9233,7 +9281,7 @@ func (x *ListRoleAssignmentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRoleAssignmentsRequest.ProtoReflect.Descriptor instead.
 func (*ListRoleAssignmentsRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{147}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{148}
 }
 
 func (x *ListRoleAssignmentsRequest) GetContext() *Context {
@@ -9257,7 +9305,7 @@ type ListRoleAssignmentsResponse struct {
 
 func (x *ListRoleAssignmentsResponse) Reset() {
 	*x = ListRoleAssignmentsResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[148]
+	mi := &file_minder_v1_minder_proto_msgTypes[149]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9269,7 +9317,7 @@ func (x *ListRoleAssignmentsResponse) String() string {
 func (*ListRoleAssignmentsResponse) ProtoMessage() {}
 
 func (x *ListRoleAssignmentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[148]
+	mi := &file_minder_v1_minder_proto_msgTypes[149]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9282,7 +9330,7 @@ func (x *ListRoleAssignmentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRoleAssignmentsResponse.ProtoReflect.Descriptor instead.
 func (*ListRoleAssignmentsResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{148}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{149}
 }
 
 func (x *ListRoleAssignmentsResponse) GetRoleAssignments() []*RoleAssignment {
@@ -9311,7 +9359,7 @@ type AssignRoleRequest struct {
 
 func (x *AssignRoleRequest) Reset() {
 	*x = AssignRoleRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[149]
+	mi := &file_minder_v1_minder_proto_msgTypes[150]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9323,7 +9371,7 @@ func (x *AssignRoleRequest) String() string {
 func (*AssignRoleRequest) ProtoMessage() {}
 
 func (x *AssignRoleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[149]
+	mi := &file_minder_v1_minder_proto_msgTypes[150]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9336,7 +9384,7 @@ func (x *AssignRoleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssignRoleRequest.ProtoReflect.Descriptor instead.
 func (*AssignRoleRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{149}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{150}
 }
 
 func (x *AssignRoleRequest) GetContext() *Context {
@@ -9368,7 +9416,7 @@ type AssignRoleResponse struct {
 
 func (x *AssignRoleResponse) Reset() {
 	*x = AssignRoleResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[150]
+	mi := &file_minder_v1_minder_proto_msgTypes[151]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9380,7 +9428,7 @@ func (x *AssignRoleResponse) String() string {
 func (*AssignRoleResponse) ProtoMessage() {}
 
 func (x *AssignRoleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[150]
+	mi := &file_minder_v1_minder_proto_msgTypes[151]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9393,7 +9441,7 @@ func (x *AssignRoleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssignRoleResponse.ProtoReflect.Descriptor instead.
 func (*AssignRoleResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{150}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{151}
 }
 
 func (x *AssignRoleResponse) GetRoleAssignment() *RoleAssignment {
@@ -9428,7 +9476,7 @@ type UpdateRoleRequest struct {
 
 func (x *UpdateRoleRequest) Reset() {
 	*x = UpdateRoleRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[151]
+	mi := &file_minder_v1_minder_proto_msgTypes[152]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9440,7 +9488,7 @@ func (x *UpdateRoleRequest) String() string {
 func (*UpdateRoleRequest) ProtoMessage() {}
 
 func (x *UpdateRoleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[151]
+	mi := &file_minder_v1_minder_proto_msgTypes[152]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9453,7 +9501,7 @@ func (x *UpdateRoleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRoleRequest.ProtoReflect.Descriptor instead.
 func (*UpdateRoleRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{151}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{152}
 }
 
 func (x *UpdateRoleRequest) GetContext() *Context {
@@ -9496,7 +9544,7 @@ type UpdateRoleResponse struct {
 
 func (x *UpdateRoleResponse) Reset() {
 	*x = UpdateRoleResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[152]
+	mi := &file_minder_v1_minder_proto_msgTypes[153]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9508,7 +9556,7 @@ func (x *UpdateRoleResponse) String() string {
 func (*UpdateRoleResponse) ProtoMessage() {}
 
 func (x *UpdateRoleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[152]
+	mi := &file_minder_v1_minder_proto_msgTypes[153]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9521,7 +9569,7 @@ func (x *UpdateRoleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRoleResponse.ProtoReflect.Descriptor instead.
 func (*UpdateRoleResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{152}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{153}
 }
 
 func (x *UpdateRoleResponse) GetRoleAssignments() []*RoleAssignment {
@@ -9550,7 +9598,7 @@ type RemoveRoleRequest struct {
 
 func (x *RemoveRoleRequest) Reset() {
 	*x = RemoveRoleRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[153]
+	mi := &file_minder_v1_minder_proto_msgTypes[154]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9562,7 +9610,7 @@ func (x *RemoveRoleRequest) String() string {
 func (*RemoveRoleRequest) ProtoMessage() {}
 
 func (x *RemoveRoleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[153]
+	mi := &file_minder_v1_minder_proto_msgTypes[154]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9575,7 +9623,7 @@ func (x *RemoveRoleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveRoleRequest.ProtoReflect.Descriptor instead.
 func (*RemoveRoleRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{153}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{154}
 }
 
 func (x *RemoveRoleRequest) GetContext() *Context {
@@ -9604,7 +9652,7 @@ type RemoveRoleResponse struct {
 
 func (x *RemoveRoleResponse) Reset() {
 	*x = RemoveRoleResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[154]
+	mi := &file_minder_v1_minder_proto_msgTypes[155]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9616,7 +9664,7 @@ func (x *RemoveRoleResponse) String() string {
 func (*RemoveRoleResponse) ProtoMessage() {}
 
 func (x *RemoveRoleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[154]
+	mi := &file_minder_v1_minder_proto_msgTypes[155]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9629,7 +9677,7 @@ func (x *RemoveRoleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveRoleResponse.ProtoReflect.Descriptor instead.
 func (*RemoveRoleResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{154}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{155}
 }
 
 func (x *RemoveRoleResponse) GetRoleAssignment() *RoleAssignment {
@@ -9660,7 +9708,7 @@ type Role struct {
 
 func (x *Role) Reset() {
 	*x = Role{}
-	mi := &file_minder_v1_minder_proto_msgTypes[155]
+	mi := &file_minder_v1_minder_proto_msgTypes[156]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9672,7 +9720,7 @@ func (x *Role) String() string {
 func (*Role) ProtoMessage() {}
 
 func (x *Role) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[155]
+	mi := &file_minder_v1_minder_proto_msgTypes[156]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9685,7 +9733,7 @@ func (x *Role) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Role.ProtoReflect.Descriptor instead.
 func (*Role) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{155}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{156}
 }
 
 func (x *Role) GetName() string {
@@ -9732,7 +9780,7 @@ type RoleAssignment struct {
 
 func (x *RoleAssignment) Reset() {
 	*x = RoleAssignment{}
-	mi := &file_minder_v1_minder_proto_msgTypes[156]
+	mi := &file_minder_v1_minder_proto_msgTypes[157]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9744,7 +9792,7 @@ func (x *RoleAssignment) String() string {
 func (*RoleAssignment) ProtoMessage() {}
 
 func (x *RoleAssignment) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[156]
+	mi := &file_minder_v1_minder_proto_msgTypes[157]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9757,7 +9805,7 @@ func (x *RoleAssignment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoleAssignment.ProtoReflect.Descriptor instead.
 func (*RoleAssignment) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{156}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{157}
 }
 
 func (x *RoleAssignment) GetRole() string {
@@ -9817,7 +9865,7 @@ type ListInvitationsRequest struct {
 
 func (x *ListInvitationsRequest) Reset() {
 	*x = ListInvitationsRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[157]
+	mi := &file_minder_v1_minder_proto_msgTypes[158]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9829,7 +9877,7 @@ func (x *ListInvitationsRequest) String() string {
 func (*ListInvitationsRequest) ProtoMessage() {}
 
 func (x *ListInvitationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[157]
+	mi := &file_minder_v1_minder_proto_msgTypes[158]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9842,7 +9890,7 @@ func (x *ListInvitationsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListInvitationsRequest.ProtoReflect.Descriptor instead.
 func (*ListInvitationsRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{157}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{158}
 }
 
 type ListInvitationsResponse struct {
@@ -9854,7 +9902,7 @@ type ListInvitationsResponse struct {
 
 func (x *ListInvitationsResponse) Reset() {
 	*x = ListInvitationsResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[158]
+	mi := &file_minder_v1_minder_proto_msgTypes[159]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9866,7 +9914,7 @@ func (x *ListInvitationsResponse) String() string {
 func (*ListInvitationsResponse) ProtoMessage() {}
 
 func (x *ListInvitationsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[158]
+	mi := &file_minder_v1_minder_proto_msgTypes[159]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9879,7 +9927,7 @@ func (x *ListInvitationsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListInvitationsResponse.ProtoReflect.Descriptor instead.
 func (*ListInvitationsResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{158}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{159}
 }
 
 func (x *ListInvitationsResponse) GetInvitations() []*Invitation {
@@ -9901,7 +9949,7 @@ type ResolveInvitationRequest struct {
 
 func (x *ResolveInvitationRequest) Reset() {
 	*x = ResolveInvitationRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[159]
+	mi := &file_minder_v1_minder_proto_msgTypes[160]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9913,7 +9961,7 @@ func (x *ResolveInvitationRequest) String() string {
 func (*ResolveInvitationRequest) ProtoMessage() {}
 
 func (x *ResolveInvitationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[159]
+	mi := &file_minder_v1_minder_proto_msgTypes[160]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9926,7 +9974,7 @@ func (x *ResolveInvitationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveInvitationRequest.ProtoReflect.Descriptor instead.
 func (*ResolveInvitationRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{159}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{160}
 }
 
 func (x *ResolveInvitationRequest) GetCode() string {
@@ -9963,7 +10011,7 @@ type ResolveInvitationResponse struct {
 
 func (x *ResolveInvitationResponse) Reset() {
 	*x = ResolveInvitationResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[160]
+	mi := &file_minder_v1_minder_proto_msgTypes[161]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -9975,7 +10023,7 @@ func (x *ResolveInvitationResponse) String() string {
 func (*ResolveInvitationResponse) ProtoMessage() {}
 
 func (x *ResolveInvitationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[160]
+	mi := &file_minder_v1_minder_proto_msgTypes[161]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -9988,7 +10036,7 @@ func (x *ResolveInvitationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveInvitationResponse.ProtoReflect.Descriptor instead.
 func (*ResolveInvitationResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{160}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{161}
 }
 
 func (x *ResolveInvitationResponse) GetRole() string {
@@ -10068,7 +10116,7 @@ type Invitation struct {
 
 func (x *Invitation) Reset() {
 	*x = Invitation{}
-	mi := &file_minder_v1_minder_proto_msgTypes[161]
+	mi := &file_minder_v1_minder_proto_msgTypes[162]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10080,7 +10128,7 @@ func (x *Invitation) String() string {
 func (*Invitation) ProtoMessage() {}
 
 func (x *Invitation) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[161]
+	mi := &file_minder_v1_minder_proto_msgTypes[162]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10093,7 +10141,7 @@ func (x *Invitation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Invitation.ProtoReflect.Descriptor instead.
 func (*Invitation) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{161}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{162}
 }
 
 func (x *Invitation) GetRole() string {
@@ -10192,7 +10240,7 @@ type GetProviderRequest struct {
 
 func (x *GetProviderRequest) Reset() {
 	*x = GetProviderRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[162]
+	mi := &file_minder_v1_minder_proto_msgTypes[163]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10204,7 +10252,7 @@ func (x *GetProviderRequest) String() string {
 func (*GetProviderRequest) ProtoMessage() {}
 
 func (x *GetProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[162]
+	mi := &file_minder_v1_minder_proto_msgTypes[163]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10217,7 +10265,7 @@ func (x *GetProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProviderRequest.ProtoReflect.Descriptor instead.
 func (*GetProviderRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{162}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{163}
 }
 
 func (x *GetProviderRequest) GetContext() *Context {
@@ -10244,7 +10292,7 @@ type GetProviderResponse struct {
 
 func (x *GetProviderResponse) Reset() {
 	*x = GetProviderResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[163]
+	mi := &file_minder_v1_minder_proto_msgTypes[164]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10256,7 +10304,7 @@ func (x *GetProviderResponse) String() string {
 func (*GetProviderResponse) ProtoMessage() {}
 
 func (x *GetProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[163]
+	mi := &file_minder_v1_minder_proto_msgTypes[164]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10269,7 +10317,7 @@ func (x *GetProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProviderResponse.ProtoReflect.Descriptor instead.
 func (*GetProviderResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{163}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{164}
 }
 
 func (x *GetProviderResponse) GetProvider() *Provider {
@@ -10294,7 +10342,7 @@ type ListProvidersRequest struct {
 
 func (x *ListProvidersRequest) Reset() {
 	*x = ListProvidersRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[164]
+	mi := &file_minder_v1_minder_proto_msgTypes[165]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10306,7 +10354,7 @@ func (x *ListProvidersRequest) String() string {
 func (*ListProvidersRequest) ProtoMessage() {}
 
 func (x *ListProvidersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[164]
+	mi := &file_minder_v1_minder_proto_msgTypes[165]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10319,7 +10367,7 @@ func (x *ListProvidersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListProvidersRequest.ProtoReflect.Descriptor instead.
 func (*ListProvidersRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{164}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{165}
 }
 
 func (x *ListProvidersRequest) GetContext() *Context {
@@ -10354,7 +10402,7 @@ type ListProvidersResponse struct {
 
 func (x *ListProvidersResponse) Reset() {
 	*x = ListProvidersResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[165]
+	mi := &file_minder_v1_minder_proto_msgTypes[166]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10366,7 +10414,7 @@ func (x *ListProvidersResponse) String() string {
 func (*ListProvidersResponse) ProtoMessage() {}
 
 func (x *ListProvidersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[165]
+	mi := &file_minder_v1_minder_proto_msgTypes[166]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10379,7 +10427,7 @@ func (x *ListProvidersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListProvidersResponse.ProtoReflect.Descriptor instead.
 func (*ListProvidersResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{165}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{166}
 }
 
 func (x *ListProvidersResponse) GetProviders() []*Provider {
@@ -10408,7 +10456,7 @@ type CreateProviderRequest struct {
 
 func (x *CreateProviderRequest) Reset() {
 	*x = CreateProviderRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[166]
+	mi := &file_minder_v1_minder_proto_msgTypes[167]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10420,7 +10468,7 @@ func (x *CreateProviderRequest) String() string {
 func (*CreateProviderRequest) ProtoMessage() {}
 
 func (x *CreateProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[166]
+	mi := &file_minder_v1_minder_proto_msgTypes[167]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10433,7 +10481,7 @@ func (x *CreateProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateProviderRequest.ProtoReflect.Descriptor instead.
 func (*CreateProviderRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{166}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{167}
 }
 
 func (x *CreateProviderRequest) GetContext() *Context {
@@ -10463,7 +10511,7 @@ type CreateProviderResponse struct {
 
 func (x *CreateProviderResponse) Reset() {
 	*x = CreateProviderResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[167]
+	mi := &file_minder_v1_minder_proto_msgTypes[168]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10475,7 +10523,7 @@ func (x *CreateProviderResponse) String() string {
 func (*CreateProviderResponse) ProtoMessage() {}
 
 func (x *CreateProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[167]
+	mi := &file_minder_v1_minder_proto_msgTypes[168]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10488,7 +10536,7 @@ func (x *CreateProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateProviderResponse.ProtoReflect.Descriptor instead.
 func (*CreateProviderResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{167}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{168}
 }
 
 func (x *CreateProviderResponse) GetProvider() *Provider {
@@ -10516,7 +10564,7 @@ type DeleteProviderRequest struct {
 
 func (x *DeleteProviderRequest) Reset() {
 	*x = DeleteProviderRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[168]
+	mi := &file_minder_v1_minder_proto_msgTypes[169]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10528,7 +10576,7 @@ func (x *DeleteProviderRequest) String() string {
 func (*DeleteProviderRequest) ProtoMessage() {}
 
 func (x *DeleteProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[168]
+	mi := &file_minder_v1_minder_proto_msgTypes[169]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10541,7 +10589,7 @@ func (x *DeleteProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteProviderRequest.ProtoReflect.Descriptor instead.
 func (*DeleteProviderRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{168}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{169}
 }
 
 func (x *DeleteProviderRequest) GetContext() *Context {
@@ -10561,7 +10609,7 @@ type DeleteProviderResponse struct {
 
 func (x *DeleteProviderResponse) Reset() {
 	*x = DeleteProviderResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[169]
+	mi := &file_minder_v1_minder_proto_msgTypes[170]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10573,7 +10621,7 @@ func (x *DeleteProviderResponse) String() string {
 func (*DeleteProviderResponse) ProtoMessage() {}
 
 func (x *DeleteProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[169]
+	mi := &file_minder_v1_minder_proto_msgTypes[170]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10586,7 +10634,7 @@ func (x *DeleteProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteProviderResponse.ProtoReflect.Descriptor instead.
 func (*DeleteProviderResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{169}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{170}
 }
 
 func (x *DeleteProviderResponse) GetName() string {
@@ -10608,7 +10656,7 @@ type DeleteProviderByIDRequest struct {
 
 func (x *DeleteProviderByIDRequest) Reset() {
 	*x = DeleteProviderByIDRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[170]
+	mi := &file_minder_v1_minder_proto_msgTypes[171]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10620,7 +10668,7 @@ func (x *DeleteProviderByIDRequest) String() string {
 func (*DeleteProviderByIDRequest) ProtoMessage() {}
 
 func (x *DeleteProviderByIDRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[170]
+	mi := &file_minder_v1_minder_proto_msgTypes[171]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10633,7 +10681,7 @@ func (x *DeleteProviderByIDRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteProviderByIDRequest.ProtoReflect.Descriptor instead.
 func (*DeleteProviderByIDRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{170}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{171}
 }
 
 func (x *DeleteProviderByIDRequest) GetContext() *Context {
@@ -10660,7 +10708,7 @@ type DeleteProviderByIDResponse struct {
 
 func (x *DeleteProviderByIDResponse) Reset() {
 	*x = DeleteProviderByIDResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[171]
+	mi := &file_minder_v1_minder_proto_msgTypes[172]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10672,7 +10720,7 @@ func (x *DeleteProviderByIDResponse) String() string {
 func (*DeleteProviderByIDResponse) ProtoMessage() {}
 
 func (x *DeleteProviderByIDResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[171]
+	mi := &file_minder_v1_minder_proto_msgTypes[172]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10685,7 +10733,7 @@ func (x *DeleteProviderByIDResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteProviderByIDResponse.ProtoReflect.Descriptor instead.
 func (*DeleteProviderByIDResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{171}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{172}
 }
 
 func (x *DeleteProviderByIDResponse) GetId() string {
@@ -10705,7 +10753,7 @@ type ListProviderClassesRequest struct {
 
 func (x *ListProviderClassesRequest) Reset() {
 	*x = ListProviderClassesRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[172]
+	mi := &file_minder_v1_minder_proto_msgTypes[173]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10717,7 +10765,7 @@ func (x *ListProviderClassesRequest) String() string {
 func (*ListProviderClassesRequest) ProtoMessage() {}
 
 func (x *ListProviderClassesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[172]
+	mi := &file_minder_v1_minder_proto_msgTypes[173]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10730,7 +10778,7 @@ func (x *ListProviderClassesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListProviderClassesRequest.ProtoReflect.Descriptor instead.
 func (*ListProviderClassesRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{172}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{173}
 }
 
 func (x *ListProviderClassesRequest) GetContext() *Context {
@@ -10762,7 +10810,7 @@ type ProviderClassInfo struct {
 
 func (x *ProviderClassInfo) Reset() {
 	*x = ProviderClassInfo{}
-	mi := &file_minder_v1_minder_proto_msgTypes[173]
+	mi := &file_minder_v1_minder_proto_msgTypes[174]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10774,7 +10822,7 @@ func (x *ProviderClassInfo) String() string {
 func (*ProviderClassInfo) ProtoMessage() {}
 
 func (x *ProviderClassInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[173]
+	mi := &file_minder_v1_minder_proto_msgTypes[174]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10787,7 +10835,7 @@ func (x *ProviderClassInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProviderClassInfo.ProtoReflect.Descriptor instead.
 func (*ProviderClassInfo) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{173}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{174}
 }
 
 func (x *ProviderClassInfo) GetClass() string {
@@ -10854,7 +10902,7 @@ type ListProviderClassesResponse struct {
 
 func (x *ListProviderClassesResponse) Reset() {
 	*x = ListProviderClassesResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[174]
+	mi := &file_minder_v1_minder_proto_msgTypes[175]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10866,7 +10914,7 @@ func (x *ListProviderClassesResponse) String() string {
 func (*ListProviderClassesResponse) ProtoMessage() {}
 
 func (x *ListProviderClassesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[174]
+	mi := &file_minder_v1_minder_proto_msgTypes[175]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10879,7 +10927,7 @@ func (x *ListProviderClassesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListProviderClassesResponse.ProtoReflect.Descriptor instead.
 func (*ListProviderClassesResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{174}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{175}
 }
 
 // Deprecated: Marked as deprecated in minder/v1/minder.proto.
@@ -10910,7 +10958,7 @@ type PatchProviderRequest struct {
 
 func (x *PatchProviderRequest) Reset() {
 	*x = PatchProviderRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[175]
+	mi := &file_minder_v1_minder_proto_msgTypes[176]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10922,7 +10970,7 @@ func (x *PatchProviderRequest) String() string {
 func (*PatchProviderRequest) ProtoMessage() {}
 
 func (x *PatchProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[175]
+	mi := &file_minder_v1_minder_proto_msgTypes[176]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10935,7 +10983,7 @@ func (x *PatchProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PatchProviderRequest.ProtoReflect.Descriptor instead.
 func (*PatchProviderRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{175}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{176}
 }
 
 func (x *PatchProviderRequest) GetContext() *Context {
@@ -10968,7 +11016,7 @@ type PatchProviderResponse struct {
 
 func (x *PatchProviderResponse) Reset() {
 	*x = PatchProviderResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[176]
+	mi := &file_minder_v1_minder_proto_msgTypes[177]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10980,7 +11028,7 @@ func (x *PatchProviderResponse) String() string {
 func (*PatchProviderResponse) ProtoMessage() {}
 
 func (x *PatchProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[176]
+	mi := &file_minder_v1_minder_proto_msgTypes[177]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10993,7 +11041,7 @@ func (x *PatchProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PatchProviderResponse.ProtoReflect.Descriptor instead.
 func (*PatchProviderResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{176}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{177}
 }
 
 func (x *PatchProviderResponse) GetProvider() *Provider {
@@ -11013,7 +11061,7 @@ type AuthorizationParams struct {
 
 func (x *AuthorizationParams) Reset() {
 	*x = AuthorizationParams{}
-	mi := &file_minder_v1_minder_proto_msgTypes[177]
+	mi := &file_minder_v1_minder_proto_msgTypes[178]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11025,7 +11073,7 @@ func (x *AuthorizationParams) String() string {
 func (*AuthorizationParams) ProtoMessage() {}
 
 func (x *AuthorizationParams) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[177]
+	mi := &file_minder_v1_minder_proto_msgTypes[178]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11038,7 +11086,7 @@ func (x *AuthorizationParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuthorizationParams.ProtoReflect.Descriptor instead.
 func (*AuthorizationParams) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{177}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{178}
 }
 
 func (x *AuthorizationParams) GetAuthorizationUrl() string {
@@ -11060,7 +11108,7 @@ type ProviderParameter struct {
 
 func (x *ProviderParameter) Reset() {
 	*x = ProviderParameter{}
-	mi := &file_minder_v1_minder_proto_msgTypes[178]
+	mi := &file_minder_v1_minder_proto_msgTypes[179]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11072,7 +11120,7 @@ func (x *ProviderParameter) String() string {
 func (*ProviderParameter) ProtoMessage() {}
 
 func (x *ProviderParameter) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[178]
+	mi := &file_minder_v1_minder_proto_msgTypes[179]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11085,7 +11133,7 @@ func (x *ProviderParameter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProviderParameter.ProtoReflect.Descriptor instead.
 func (*ProviderParameter) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{178}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{179}
 }
 
 func (x *ProviderParameter) GetParameters() isProviderParameter_Parameters {
@@ -11134,7 +11182,7 @@ type GitHubAppParams struct {
 
 func (x *GitHubAppParams) Reset() {
 	*x = GitHubAppParams{}
-	mi := &file_minder_v1_minder_proto_msgTypes[179]
+	mi := &file_minder_v1_minder_proto_msgTypes[180]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11146,7 +11194,7 @@ func (x *GitHubAppParams) String() string {
 func (*GitHubAppParams) ProtoMessage() {}
 
 func (x *GitHubAppParams) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[179]
+	mi := &file_minder_v1_minder_proto_msgTypes[180]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11159,7 +11207,7 @@ func (x *GitHubAppParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitHubAppParams.ProtoReflect.Descriptor instead.
 func (*GitHubAppParams) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{179}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{180}
 }
 
 func (x *GitHubAppParams) GetInstallationId() int64 {
@@ -11216,7 +11264,7 @@ type Provider struct {
 
 func (x *Provider) Reset() {
 	*x = Provider{}
-	mi := &file_minder_v1_minder_proto_msgTypes[180]
+	mi := &file_minder_v1_minder_proto_msgTypes[181]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11228,7 +11276,7 @@ func (x *Provider) String() string {
 func (*Provider) ProtoMessage() {}
 
 func (x *Provider) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[180]
+	mi := &file_minder_v1_minder_proto_msgTypes[181]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11241,7 +11289,7 @@ func (x *Provider) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Provider.ProtoReflect.Descriptor instead.
 func (*Provider) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{180}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{181}
 }
 
 func (x *Provider) GetName() string {
@@ -11330,7 +11378,7 @@ type GetEvaluationHistoryRequest struct {
 
 func (x *GetEvaluationHistoryRequest) Reset() {
 	*x = GetEvaluationHistoryRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[181]
+	mi := &file_minder_v1_minder_proto_msgTypes[182]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11342,7 +11390,7 @@ func (x *GetEvaluationHistoryRequest) String() string {
 func (*GetEvaluationHistoryRequest) ProtoMessage() {}
 
 func (x *GetEvaluationHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[181]
+	mi := &file_minder_v1_minder_proto_msgTypes[182]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11355,7 +11403,7 @@ func (x *GetEvaluationHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEvaluationHistoryRequest.ProtoReflect.Descriptor instead.
 func (*GetEvaluationHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{181}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{182}
 }
 
 func (x *GetEvaluationHistoryRequest) GetId() string {
@@ -11422,7 +11470,7 @@ type ListEvaluationHistoryRequest struct {
 
 func (x *ListEvaluationHistoryRequest) Reset() {
 	*x = ListEvaluationHistoryRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[182]
+	mi := &file_minder_v1_minder_proto_msgTypes[183]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11434,7 +11482,7 @@ func (x *ListEvaluationHistoryRequest) String() string {
 func (*ListEvaluationHistoryRequest) ProtoMessage() {}
 
 func (x *ListEvaluationHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[182]
+	mi := &file_minder_v1_minder_proto_msgTypes[183]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11447,7 +11495,7 @@ func (x *ListEvaluationHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListEvaluationHistoryRequest.ProtoReflect.Descriptor instead.
 func (*ListEvaluationHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{182}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{183}
 }
 
 func (x *ListEvaluationHistoryRequest) GetContext() *Context {
@@ -11546,7 +11594,7 @@ type GetEvaluationHistoryResponse struct {
 
 func (x *GetEvaluationHistoryResponse) Reset() {
 	*x = GetEvaluationHistoryResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[183]
+	mi := &file_minder_v1_minder_proto_msgTypes[184]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11558,7 +11606,7 @@ func (x *GetEvaluationHistoryResponse) String() string {
 func (*GetEvaluationHistoryResponse) ProtoMessage() {}
 
 func (x *GetEvaluationHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[183]
+	mi := &file_minder_v1_minder_proto_msgTypes[184]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11571,7 +11619,7 @@ func (x *GetEvaluationHistoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEvaluationHistoryResponse.ProtoReflect.Descriptor instead.
 func (*GetEvaluationHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{183}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{184}
 }
 
 func (x *GetEvaluationHistoryResponse) GetEvaluation() *EvaluationHistory {
@@ -11599,7 +11647,7 @@ type ListEvaluationHistoryResponse struct {
 
 func (x *ListEvaluationHistoryResponse) Reset() {
 	*x = ListEvaluationHistoryResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[184]
+	mi := &file_minder_v1_minder_proto_msgTypes[185]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11611,7 +11659,7 @@ func (x *ListEvaluationHistoryResponse) String() string {
 func (*ListEvaluationHistoryResponse) ProtoMessage() {}
 
 func (x *ListEvaluationHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[184]
+	mi := &file_minder_v1_minder_proto_msgTypes[185]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11624,7 +11672,7 @@ func (x *ListEvaluationHistoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListEvaluationHistoryResponse.ProtoReflect.Descriptor instead.
 func (*ListEvaluationHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{184}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{185}
 }
 
 func (x *ListEvaluationHistoryResponse) GetData() []*EvaluationHistory {
@@ -11667,7 +11715,7 @@ type EvaluationHistory struct {
 
 func (x *EvaluationHistory) Reset() {
 	*x = EvaluationHistory{}
-	mi := &file_minder_v1_minder_proto_msgTypes[185]
+	mi := &file_minder_v1_minder_proto_msgTypes[186]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11679,7 +11727,7 @@ func (x *EvaluationHistory) String() string {
 func (*EvaluationHistory) ProtoMessage() {}
 
 func (x *EvaluationHistory) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[185]
+	mi := &file_minder_v1_minder_proto_msgTypes[186]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11692,7 +11740,7 @@ func (x *EvaluationHistory) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EvaluationHistory.ProtoReflect.Descriptor instead.
 func (*EvaluationHistory) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{185}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{186}
 }
 
 func (x *EvaluationHistory) GetEntity() *EvaluationHistoryEntity {
@@ -11758,7 +11806,7 @@ type EvaluationHistoryEntity struct {
 
 func (x *EvaluationHistoryEntity) Reset() {
 	*x = EvaluationHistoryEntity{}
-	mi := &file_minder_v1_minder_proto_msgTypes[186]
+	mi := &file_minder_v1_minder_proto_msgTypes[187]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11770,7 +11818,7 @@ func (x *EvaluationHistoryEntity) String() string {
 func (*EvaluationHistoryEntity) ProtoMessage() {}
 
 func (x *EvaluationHistoryEntity) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[186]
+	mi := &file_minder_v1_minder_proto_msgTypes[187]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11783,7 +11831,7 @@ func (x *EvaluationHistoryEntity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EvaluationHistoryEntity.ProtoReflect.Descriptor instead.
 func (*EvaluationHistoryEntity) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{186}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{187}
 }
 
 func (x *EvaluationHistoryEntity) GetId() string {
@@ -11823,7 +11871,7 @@ type EvaluationHistoryRule struct {
 
 func (x *EvaluationHistoryRule) Reset() {
 	*x = EvaluationHistoryRule{}
-	mi := &file_minder_v1_minder_proto_msgTypes[187]
+	mi := &file_minder_v1_minder_proto_msgTypes[188]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11835,7 +11883,7 @@ func (x *EvaluationHistoryRule) String() string {
 func (*EvaluationHistoryRule) ProtoMessage() {}
 
 func (x *EvaluationHistoryRule) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[187]
+	mi := &file_minder_v1_minder_proto_msgTypes[188]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11848,7 +11896,7 @@ func (x *EvaluationHistoryRule) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EvaluationHistoryRule.ProtoReflect.Descriptor instead.
 func (*EvaluationHistoryRule) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{187}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{188}
 }
 
 func (x *EvaluationHistoryRule) GetName() string {
@@ -11898,7 +11946,7 @@ type EvaluationHistoryStatus struct {
 
 func (x *EvaluationHistoryStatus) Reset() {
 	*x = EvaluationHistoryStatus{}
-	mi := &file_minder_v1_minder_proto_msgTypes[188]
+	mi := &file_minder_v1_minder_proto_msgTypes[189]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11910,7 +11958,7 @@ func (x *EvaluationHistoryStatus) String() string {
 func (*EvaluationHistoryStatus) ProtoMessage() {}
 
 func (x *EvaluationHistoryStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[188]
+	mi := &file_minder_v1_minder_proto_msgTypes[189]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11923,7 +11971,7 @@ func (x *EvaluationHistoryStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EvaluationHistoryStatus.ProtoReflect.Descriptor instead.
 func (*EvaluationHistoryStatus) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{188}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{189}
 }
 
 func (x *EvaluationHistoryStatus) GetStatus() string {
@@ -11961,7 +12009,7 @@ type EvaluationHistoryRemediation struct {
 
 func (x *EvaluationHistoryRemediation) Reset() {
 	*x = EvaluationHistoryRemediation{}
-	mi := &file_minder_v1_minder_proto_msgTypes[189]
+	mi := &file_minder_v1_minder_proto_msgTypes[190]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -11973,7 +12021,7 @@ func (x *EvaluationHistoryRemediation) String() string {
 func (*EvaluationHistoryRemediation) ProtoMessage() {}
 
 func (x *EvaluationHistoryRemediation) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[189]
+	mi := &file_minder_v1_minder_proto_msgTypes[190]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -11986,7 +12034,7 @@ func (x *EvaluationHistoryRemediation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EvaluationHistoryRemediation.ProtoReflect.Descriptor instead.
 func (*EvaluationHistoryRemediation) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{189}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{190}
 }
 
 func (x *EvaluationHistoryRemediation) GetStatus() string {
@@ -12017,7 +12065,7 @@ type EvaluationHistoryAlert struct {
 
 func (x *EvaluationHistoryAlert) Reset() {
 	*x = EvaluationHistoryAlert{}
-	mi := &file_minder_v1_minder_proto_msgTypes[190]
+	mi := &file_minder_v1_minder_proto_msgTypes[191]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12029,7 +12077,7 @@ func (x *EvaluationHistoryAlert) String() string {
 func (*EvaluationHistoryAlert) ProtoMessage() {}
 
 func (x *EvaluationHistoryAlert) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[190]
+	mi := &file_minder_v1_minder_proto_msgTypes[191]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12042,7 +12090,7 @@ func (x *EvaluationHistoryAlert) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EvaluationHistoryAlert.ProtoReflect.Descriptor instead.
 func (*EvaluationHistoryAlert) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{190}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{191}
 }
 
 func (x *EvaluationHistoryAlert) GetStatus() string {
@@ -12083,7 +12131,7 @@ type EntityInstance struct {
 
 func (x *EntityInstance) Reset() {
 	*x = EntityInstance{}
-	mi := &file_minder_v1_minder_proto_msgTypes[191]
+	mi := &file_minder_v1_minder_proto_msgTypes[192]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12095,7 +12143,7 @@ func (x *EntityInstance) String() string {
 func (*EntityInstance) ProtoMessage() {}
 
 func (x *EntityInstance) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[191]
+	mi := &file_minder_v1_minder_proto_msgTypes[192]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12108,7 +12156,7 @@ func (x *EntityInstance) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EntityInstance.ProtoReflect.Descriptor instead.
 func (*EntityInstance) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{191}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{192}
 }
 
 func (x *EntityInstance) GetId() string {
@@ -12168,7 +12216,7 @@ type ListEntitiesRequest struct {
 
 func (x *ListEntitiesRequest) Reset() {
 	*x = ListEntitiesRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[192]
+	mi := &file_minder_v1_minder_proto_msgTypes[193]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12180,7 +12228,7 @@ func (x *ListEntitiesRequest) String() string {
 func (*ListEntitiesRequest) ProtoMessage() {}
 
 func (x *ListEntitiesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[192]
+	mi := &file_minder_v1_minder_proto_msgTypes[193]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12193,7 +12241,7 @@ func (x *ListEntitiesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListEntitiesRequest.ProtoReflect.Descriptor instead.
 func (*ListEntitiesRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{192}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{193}
 }
 
 func (x *ListEntitiesRequest) GetContext() *ContextV2 {
@@ -12230,7 +12278,7 @@ type ListEntitiesResponse struct {
 
 func (x *ListEntitiesResponse) Reset() {
 	*x = ListEntitiesResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[193]
+	mi := &file_minder_v1_minder_proto_msgTypes[194]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12242,7 +12290,7 @@ func (x *ListEntitiesResponse) String() string {
 func (*ListEntitiesResponse) ProtoMessage() {}
 
 func (x *ListEntitiesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[193]
+	mi := &file_minder_v1_minder_proto_msgTypes[194]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12255,7 +12303,7 @@ func (x *ListEntitiesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListEntitiesResponse.ProtoReflect.Descriptor instead.
 func (*ListEntitiesResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{193}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{194}
 }
 
 func (x *ListEntitiesResponse) GetResults() []*EntityInstance {
@@ -12285,7 +12333,7 @@ type GetEntityByIdRequest struct {
 
 func (x *GetEntityByIdRequest) Reset() {
 	*x = GetEntityByIdRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[194]
+	mi := &file_minder_v1_minder_proto_msgTypes[195]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12297,7 +12345,7 @@ func (x *GetEntityByIdRequest) String() string {
 func (*GetEntityByIdRequest) ProtoMessage() {}
 
 func (x *GetEntityByIdRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[194]
+	mi := &file_minder_v1_minder_proto_msgTypes[195]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12310,7 +12358,7 @@ func (x *GetEntityByIdRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEntityByIdRequest.ProtoReflect.Descriptor instead.
 func (*GetEntityByIdRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{194}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{195}
 }
 
 func (x *GetEntityByIdRequest) GetContext() *ContextV2 {
@@ -12338,7 +12386,7 @@ type GetEntityByIdResponse struct {
 
 func (x *GetEntityByIdResponse) Reset() {
 	*x = GetEntityByIdResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[195]
+	mi := &file_minder_v1_minder_proto_msgTypes[196]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12350,7 +12398,7 @@ func (x *GetEntityByIdResponse) String() string {
 func (*GetEntityByIdResponse) ProtoMessage() {}
 
 func (x *GetEntityByIdResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[195]
+	mi := &file_minder_v1_minder_proto_msgTypes[196]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12363,7 +12411,7 @@ func (x *GetEntityByIdResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEntityByIdResponse.ProtoReflect.Descriptor instead.
 func (*GetEntityByIdResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{195}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{196}
 }
 
 func (x *GetEntityByIdResponse) GetEntity() *EntityInstance {
@@ -12388,7 +12436,7 @@ type GetEntityByNameRequest struct {
 
 func (x *GetEntityByNameRequest) Reset() {
 	*x = GetEntityByNameRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[196]
+	mi := &file_minder_v1_minder_proto_msgTypes[197]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12400,7 +12448,7 @@ func (x *GetEntityByNameRequest) String() string {
 func (*GetEntityByNameRequest) ProtoMessage() {}
 
 func (x *GetEntityByNameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[196]
+	mi := &file_minder_v1_minder_proto_msgTypes[197]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12413,7 +12461,7 @@ func (x *GetEntityByNameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEntityByNameRequest.ProtoReflect.Descriptor instead.
 func (*GetEntityByNameRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{196}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{197}
 }
 
 func (x *GetEntityByNameRequest) GetContext() *ContextV2 {
@@ -12448,7 +12496,7 @@ type GetEntityByNameResponse struct {
 
 func (x *GetEntityByNameResponse) Reset() {
 	*x = GetEntityByNameResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[197]
+	mi := &file_minder_v1_minder_proto_msgTypes[198]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12460,7 +12508,7 @@ func (x *GetEntityByNameResponse) String() string {
 func (*GetEntityByNameResponse) ProtoMessage() {}
 
 func (x *GetEntityByNameResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[197]
+	mi := &file_minder_v1_minder_proto_msgTypes[198]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12473,7 +12521,7 @@ func (x *GetEntityByNameResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEntityByNameResponse.ProtoReflect.Descriptor instead.
 func (*GetEntityByNameResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{197}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{198}
 }
 
 func (x *GetEntityByNameResponse) GetEntity() *EntityInstance {
@@ -12496,7 +12544,7 @@ type DeleteEntityByIdRequest struct {
 
 func (x *DeleteEntityByIdRequest) Reset() {
 	*x = DeleteEntityByIdRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[198]
+	mi := &file_minder_v1_minder_proto_msgTypes[199]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12508,7 +12556,7 @@ func (x *DeleteEntityByIdRequest) String() string {
 func (*DeleteEntityByIdRequest) ProtoMessage() {}
 
 func (x *DeleteEntityByIdRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[198]
+	mi := &file_minder_v1_minder_proto_msgTypes[199]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12521,7 +12569,7 @@ func (x *DeleteEntityByIdRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteEntityByIdRequest.ProtoReflect.Descriptor instead.
 func (*DeleteEntityByIdRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{198}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{199}
 }
 
 func (x *DeleteEntityByIdRequest) GetContext() *ContextV2 {
@@ -12549,7 +12597,7 @@ type DeleteEntityByIdResponse struct {
 
 func (x *DeleteEntityByIdResponse) Reset() {
 	*x = DeleteEntityByIdResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[199]
+	mi := &file_minder_v1_minder_proto_msgTypes[200]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12561,7 +12609,7 @@ func (x *DeleteEntityByIdResponse) String() string {
 func (*DeleteEntityByIdResponse) ProtoMessage() {}
 
 func (x *DeleteEntityByIdResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[199]
+	mi := &file_minder_v1_minder_proto_msgTypes[200]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12574,7 +12622,7 @@ func (x *DeleteEntityByIdResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteEntityByIdResponse.ProtoReflect.Descriptor instead.
 func (*DeleteEntityByIdResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{199}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{200}
 }
 
 func (x *DeleteEntityByIdResponse) GetId() string {
@@ -12602,7 +12650,7 @@ type RegisterEntityRequest struct {
 
 func (x *RegisterEntityRequest) Reset() {
 	*x = RegisterEntityRequest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[200]
+	mi := &file_minder_v1_minder_proto_msgTypes[201]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12614,7 +12662,7 @@ func (x *RegisterEntityRequest) String() string {
 func (*RegisterEntityRequest) ProtoMessage() {}
 
 func (x *RegisterEntityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[200]
+	mi := &file_minder_v1_minder_proto_msgTypes[201]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12627,7 +12675,7 @@ func (x *RegisterEntityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterEntityRequest.ProtoReflect.Descriptor instead.
 func (*RegisterEntityRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{200}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{201}
 }
 
 func (x *RegisterEntityRequest) GetContext() *ContextV2 {
@@ -12662,7 +12710,7 @@ type RegisterEntityResponse struct {
 
 func (x *RegisterEntityResponse) Reset() {
 	*x = RegisterEntityResponse{}
-	mi := &file_minder_v1_minder_proto_msgTypes[201]
+	mi := &file_minder_v1_minder_proto_msgTypes[202]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12674,7 +12722,7 @@ func (x *RegisterEntityResponse) String() string {
 func (*RegisterEntityResponse) ProtoMessage() {}
 
 func (x *RegisterEntityResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[201]
+	mi := &file_minder_v1_minder_proto_msgTypes[202]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12687,7 +12735,7 @@ func (x *RegisterEntityResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterEntityResponse.ProtoReflect.Descriptor instead.
 func (*RegisterEntityResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{201}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{202}
 }
 
 func (x *RegisterEntityResponse) GetEntity() *EntityInstance {
@@ -12719,7 +12767,7 @@ type UpstreamEntityRef struct {
 
 func (x *UpstreamEntityRef) Reset() {
 	*x = UpstreamEntityRef{}
-	mi := &file_minder_v1_minder_proto_msgTypes[202]
+	mi := &file_minder_v1_minder_proto_msgTypes[203]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12731,7 +12779,7 @@ func (x *UpstreamEntityRef) String() string {
 func (*UpstreamEntityRef) ProtoMessage() {}
 
 func (x *UpstreamEntityRef) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[202]
+	mi := &file_minder_v1_minder_proto_msgTypes[203]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12744,7 +12792,7 @@ func (x *UpstreamEntityRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpstreamEntityRef.ProtoReflect.Descriptor instead.
 func (*UpstreamEntityRef) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{202}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{203}
 }
 
 func (x *UpstreamEntityRef) GetContext() *ContextV2 {
@@ -12800,7 +12848,7 @@ type DataSource struct {
 
 func (x *DataSource) Reset() {
 	*x = DataSource{}
-	mi := &file_minder_v1_minder_proto_msgTypes[203]
+	mi := &file_minder_v1_minder_proto_msgTypes[204]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12812,7 +12860,7 @@ func (x *DataSource) String() string {
 func (*DataSource) ProtoMessage() {}
 
 func (x *DataSource) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[203]
+	mi := &file_minder_v1_minder_proto_msgTypes[204]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12825,7 +12873,7 @@ func (x *DataSource) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DataSource.ProtoReflect.Descriptor instead.
 func (*DataSource) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{203}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{204}
 }
 
 func (x *DataSource) GetVersion() string {
@@ -12917,7 +12965,7 @@ type StructDataSource struct {
 
 func (x *StructDataSource) Reset() {
 	*x = StructDataSource{}
-	mi := &file_minder_v1_minder_proto_msgTypes[204]
+	mi := &file_minder_v1_minder_proto_msgTypes[205]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12929,7 +12977,7 @@ func (x *StructDataSource) String() string {
 func (*StructDataSource) ProtoMessage() {}
 
 func (x *StructDataSource) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[204]
+	mi := &file_minder_v1_minder_proto_msgTypes[205]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12942,7 +12990,7 @@ func (x *StructDataSource) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StructDataSource.ProtoReflect.Descriptor instead.
 func (*StructDataSource) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{204}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{205}
 }
 
 func (x *StructDataSource) GetDef() map[string]*StructDataSource_Def {
@@ -12967,7 +13015,7 @@ type RestDataSource struct {
 
 func (x *RestDataSource) Reset() {
 	*x = RestDataSource{}
-	mi := &file_minder_v1_minder_proto_msgTypes[205]
+	mi := &file_minder_v1_minder_proto_msgTypes[206]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -12979,7 +13027,7 @@ func (x *RestDataSource) String() string {
 func (*RestDataSource) ProtoMessage() {}
 
 func (x *RestDataSource) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[205]
+	mi := &file_minder_v1_minder_proto_msgTypes[206]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -12992,7 +13040,7 @@ func (x *RestDataSource) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestDataSource.ProtoReflect.Descriptor instead.
 func (*RestDataSource) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{205}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{206}
 }
 
 func (x *RestDataSource) GetDef() map[string]*RestDataSource_Def {
@@ -13026,7 +13074,7 @@ type DataSourceReference struct {
 
 func (x *DataSourceReference) Reset() {
 	*x = DataSourceReference{}
-	mi := &file_minder_v1_minder_proto_msgTypes[206]
+	mi := &file_minder_v1_minder_proto_msgTypes[207]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13038,7 +13086,7 @@ func (x *DataSourceReference) String() string {
 func (*DataSourceReference) ProtoMessage() {}
 
 func (x *DataSourceReference) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[206]
+	mi := &file_minder_v1_minder_proto_msgTypes[207]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13051,7 +13099,7 @@ func (x *DataSourceReference) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DataSourceReference.ProtoReflect.Descriptor instead.
 func (*DataSourceReference) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{206}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{207}
 }
 
 func (x *DataSourceReference) GetName() string {
@@ -13078,7 +13126,7 @@ type RegisterRepoResult_Status struct {
 
 func (x *RegisterRepoResult_Status) Reset() {
 	*x = RegisterRepoResult_Status{}
-	mi := &file_minder_v1_minder_proto_msgTypes[207]
+	mi := &file_minder_v1_minder_proto_msgTypes[208]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13090,7 +13138,7 @@ func (x *RegisterRepoResult_Status) String() string {
 func (*RegisterRepoResult_Status) ProtoMessage() {}
 
 func (x *RegisterRepoResult_Status) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[207]
+	mi := &file_minder_v1_minder_proto_msgTypes[208]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13133,7 +13181,7 @@ type ListEvaluationResultsResponse_EntityProfileEvaluationResults struct {
 
 func (x *ListEvaluationResultsResponse_EntityProfileEvaluationResults) Reset() {
 	*x = ListEvaluationResultsResponse_EntityProfileEvaluationResults{}
-	mi := &file_minder_v1_minder_proto_msgTypes[210]
+	mi := &file_minder_v1_minder_proto_msgTypes[211]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13145,7 +13193,7 @@ func (x *ListEvaluationResultsResponse_EntityProfileEvaluationResults) String() 
 func (*ListEvaluationResultsResponse_EntityProfileEvaluationResults) ProtoMessage() {}
 
 func (x *ListEvaluationResultsResponse_EntityProfileEvaluationResults) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[210]
+	mi := &file_minder_v1_minder_proto_msgTypes[211]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13158,7 +13206,7 @@ func (x *ListEvaluationResultsResponse_EntityProfileEvaluationResults) ProtoRefl
 
 // Deprecated: Use ListEvaluationResultsResponse_EntityProfileEvaluationResults.ProtoReflect.Descriptor instead.
 func (*ListEvaluationResultsResponse_EntityProfileEvaluationResults) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{120, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{121, 0}
 }
 
 func (x *ListEvaluationResultsResponse_EntityProfileEvaluationResults) GetProfileStatus() *ProfileStatus {
@@ -13185,7 +13233,7 @@ type ListEvaluationResultsResponse_EntityEvaluationResults struct {
 
 func (x *ListEvaluationResultsResponse_EntityEvaluationResults) Reset() {
 	*x = ListEvaluationResultsResponse_EntityEvaluationResults{}
-	mi := &file_minder_v1_minder_proto_msgTypes[211]
+	mi := &file_minder_v1_minder_proto_msgTypes[212]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13197,7 +13245,7 @@ func (x *ListEvaluationResultsResponse_EntityEvaluationResults) String() string 
 func (*ListEvaluationResultsResponse_EntityEvaluationResults) ProtoMessage() {}
 
 func (x *ListEvaluationResultsResponse_EntityEvaluationResults) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[211]
+	mi := &file_minder_v1_minder_proto_msgTypes[212]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13210,7 +13258,7 @@ func (x *ListEvaluationResultsResponse_EntityEvaluationResults) ProtoReflect() p
 
 // Deprecated: Use ListEvaluationResultsResponse_EntityEvaluationResults.ProtoReflect.Descriptor instead.
 func (*ListEvaluationResultsResponse_EntityEvaluationResults) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{120, 1}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{121, 1}
 }
 
 func (x *ListEvaluationResultsResponse_EntityEvaluationResults) GetEntity() *EntityTypedId {
@@ -13238,7 +13286,7 @@ type RestType_Fallback struct {
 
 func (x *RestType_Fallback) Reset() {
 	*x = RestType_Fallback{}
-	mi := &file_minder_v1_minder_proto_msgTypes[212]
+	mi := &file_minder_v1_minder_proto_msgTypes[213]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13250,7 +13298,7 @@ func (x *RestType_Fallback) String() string {
 func (*RestType_Fallback) ProtoMessage() {}
 
 func (x *RestType_Fallback) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[212]
+	mi := &file_minder_v1_minder_proto_msgTypes[213]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13263,7 +13311,7 @@ func (x *RestType_Fallback) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestType_Fallback.ProtoReflect.Descriptor instead.
 func (*RestType_Fallback) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{121, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{122, 0}
 }
 
 func (x *RestType_Fallback) GetHttpCode() int32 {
@@ -13292,7 +13340,7 @@ type DiffType_Ecosystem struct {
 
 func (x *DiffType_Ecosystem) Reset() {
 	*x = DiffType_Ecosystem{}
-	mi := &file_minder_v1_minder_proto_msgTypes[213]
+	mi := &file_minder_v1_minder_proto_msgTypes[214]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13304,7 +13352,7 @@ func (x *DiffType_Ecosystem) String() string {
 func (*DiffType_Ecosystem) ProtoMessage() {}
 
 func (x *DiffType_Ecosystem) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[213]
+	mi := &file_minder_v1_minder_proto_msgTypes[214]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13317,7 +13365,7 @@ func (x *DiffType_Ecosystem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiffType_Ecosystem.ProtoReflect.Descriptor instead.
 func (*DiffType_Ecosystem) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{125, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{126, 0}
 }
 
 func (x *DiffType_Ecosystem) GetName() string {
@@ -13345,7 +13393,7 @@ type DepsType_RepoConfigs struct {
 
 func (x *DepsType_RepoConfigs) Reset() {
 	*x = DepsType_RepoConfigs{}
-	mi := &file_minder_v1_minder_proto_msgTypes[214]
+	mi := &file_minder_v1_minder_proto_msgTypes[215]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13357,7 +13405,7 @@ func (x *DepsType_RepoConfigs) String() string {
 func (*DepsType_RepoConfigs) ProtoMessage() {}
 
 func (x *DepsType_RepoConfigs) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[214]
+	mi := &file_minder_v1_minder_proto_msgTypes[215]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13370,7 +13418,7 @@ func (x *DepsType_RepoConfigs) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DepsType_RepoConfigs.ProtoReflect.Descriptor instead.
 func (*DepsType_RepoConfigs) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{126, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{127, 0}
 }
 
 func (x *DepsType_RepoConfigs) GetBranch() string {
@@ -13390,7 +13438,7 @@ type DepsType_PullRequestConfigs struct {
 
 func (x *DepsType_PullRequestConfigs) Reset() {
 	*x = DepsType_PullRequestConfigs{}
-	mi := &file_minder_v1_minder_proto_msgTypes[215]
+	mi := &file_minder_v1_minder_proto_msgTypes[216]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13402,7 +13450,7 @@ func (x *DepsType_PullRequestConfigs) String() string {
 func (*DepsType_PullRequestConfigs) ProtoMessage() {}
 
 func (x *DepsType_PullRequestConfigs) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[215]
+	mi := &file_minder_v1_minder_proto_msgTypes[216]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13415,7 +13463,7 @@ func (x *DepsType_PullRequestConfigs) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DepsType_PullRequestConfigs.ProtoReflect.Descriptor instead.
 func (*DepsType_PullRequestConfigs) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{126, 1}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{127, 1}
 }
 
 func (x *DepsType_PullRequestConfigs) GetFilter() string {
@@ -13459,7 +13507,7 @@ type RuleType_Definition struct {
 
 func (x *RuleType_Definition) Reset() {
 	*x = RuleType_Definition{}
-	mi := &file_minder_v1_minder_proto_msgTypes[216]
+	mi := &file_minder_v1_minder_proto_msgTypes[217]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13471,7 +13519,7 @@ func (x *RuleType_Definition) String() string {
 func (*RuleType_Definition) ProtoMessage() {}
 
 func (x *RuleType_Definition) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[216]
+	mi := &file_minder_v1_minder_proto_msgTypes[217]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13484,7 +13532,7 @@ func (x *RuleType_Definition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RuleType_Definition.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 0}
 }
 
 func (x *RuleType_Definition) GetInEntity() string {
@@ -13572,7 +13620,7 @@ type RuleType_Definition_Ingest struct {
 
 func (x *RuleType_Definition_Ingest) Reset() {
 	*x = RuleType_Definition_Ingest{}
-	mi := &file_minder_v1_minder_proto_msgTypes[217]
+	mi := &file_minder_v1_minder_proto_msgTypes[218]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13584,7 +13632,7 @@ func (x *RuleType_Definition_Ingest) String() string {
 func (*RuleType_Definition_Ingest) ProtoMessage() {}
 
 func (x *RuleType_Definition_Ingest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[217]
+	mi := &file_minder_v1_minder_proto_msgTypes[218]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13597,7 +13645,7 @@ func (x *RuleType_Definition_Ingest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RuleType_Definition_Ingest.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Ingest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128, 0, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 0, 0}
 }
 
 func (x *RuleType_Definition_Ingest) GetType() string {
@@ -13682,7 +13730,7 @@ type RuleType_Definition_Eval struct {
 
 func (x *RuleType_Definition_Eval) Reset() {
 	*x = RuleType_Definition_Eval{}
-	mi := &file_minder_v1_minder_proto_msgTypes[218]
+	mi := &file_minder_v1_minder_proto_msgTypes[219]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13694,7 +13742,7 @@ func (x *RuleType_Definition_Eval) String() string {
 func (*RuleType_Definition_Eval) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[218]
+	mi := &file_minder_v1_minder_proto_msgTypes[219]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13707,7 +13755,7 @@ func (x *RuleType_Definition_Eval) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RuleType_Definition_Eval.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Eval) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128, 0, 1}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 0, 1}
 }
 
 func (x *RuleType_Definition_Eval) GetType() string {
@@ -13777,7 +13825,7 @@ type RuleType_Definition_Remediate struct {
 
 func (x *RuleType_Definition_Remediate) Reset() {
 	*x = RuleType_Definition_Remediate{}
-	mi := &file_minder_v1_minder_proto_msgTypes[219]
+	mi := &file_minder_v1_minder_proto_msgTypes[220]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13789,7 +13837,7 @@ func (x *RuleType_Definition_Remediate) String() string {
 func (*RuleType_Definition_Remediate) ProtoMessage() {}
 
 func (x *RuleType_Definition_Remediate) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[219]
+	mi := &file_minder_v1_minder_proto_msgTypes[220]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13802,7 +13850,7 @@ func (x *RuleType_Definition_Remediate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RuleType_Definition_Remediate.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Remediate) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128, 0, 2}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 0, 2}
 }
 
 func (x *RuleType_Definition_Remediate) GetType() string {
@@ -13861,7 +13909,7 @@ type RuleType_Definition_Alert struct {
 
 func (x *RuleType_Definition_Alert) Reset() {
 	*x = RuleType_Definition_Alert{}
-	mi := &file_minder_v1_minder_proto_msgTypes[220]
+	mi := &file_minder_v1_minder_proto_msgTypes[221]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13873,7 +13921,7 @@ func (x *RuleType_Definition_Alert) String() string {
 func (*RuleType_Definition_Alert) ProtoMessage() {}
 
 func (x *RuleType_Definition_Alert) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[220]
+	mi := &file_minder_v1_minder_proto_msgTypes[221]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13886,7 +13934,7 @@ func (x *RuleType_Definition_Alert) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RuleType_Definition_Alert.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Alert) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128, 0, 3}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 0, 3}
 }
 
 func (x *RuleType_Definition_Alert) GetType() string {
@@ -13926,7 +13974,7 @@ type RuleType_Definition_Eval_JQComparison struct {
 
 func (x *RuleType_Definition_Eval_JQComparison) Reset() {
 	*x = RuleType_Definition_Eval_JQComparison{}
-	mi := &file_minder_v1_minder_proto_msgTypes[221]
+	mi := &file_minder_v1_minder_proto_msgTypes[222]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -13938,7 +13986,7 @@ func (x *RuleType_Definition_Eval_JQComparison) String() string {
 func (*RuleType_Definition_Eval_JQComparison) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_JQComparison) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[221]
+	mi := &file_minder_v1_minder_proto_msgTypes[222]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -13951,7 +13999,7 @@ func (x *RuleType_Definition_Eval_JQComparison) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use RuleType_Definition_Eval_JQComparison.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Eval_JQComparison) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128, 0, 1, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 0, 1, 0}
 }
 
 func (x *RuleType_Definition_Eval_JQComparison) GetIngested() *RuleType_Definition_Eval_JQComparison_Operator {
@@ -14001,7 +14049,7 @@ type RuleType_Definition_Eval_Rego struct {
 
 func (x *RuleType_Definition_Eval_Rego) Reset() {
 	*x = RuleType_Definition_Eval_Rego{}
-	mi := &file_minder_v1_minder_proto_msgTypes[222]
+	mi := &file_minder_v1_minder_proto_msgTypes[223]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14013,7 +14061,7 @@ func (x *RuleType_Definition_Eval_Rego) String() string {
 func (*RuleType_Definition_Eval_Rego) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_Rego) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[222]
+	mi := &file_minder_v1_minder_proto_msgTypes[223]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14026,7 +14074,7 @@ func (x *RuleType_Definition_Eval_Rego) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RuleType_Definition_Eval_Rego.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Eval_Rego) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128, 0, 1, 1}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 0, 1, 1}
 }
 
 func (x *RuleType_Definition_Eval_Rego) GetType() string {
@@ -14058,7 +14106,7 @@ type RuleType_Definition_Eval_Vulncheck struct {
 
 func (x *RuleType_Definition_Eval_Vulncheck) Reset() {
 	*x = RuleType_Definition_Eval_Vulncheck{}
-	mi := &file_minder_v1_minder_proto_msgTypes[223]
+	mi := &file_minder_v1_minder_proto_msgTypes[224]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14070,7 +14118,7 @@ func (x *RuleType_Definition_Eval_Vulncheck) String() string {
 func (*RuleType_Definition_Eval_Vulncheck) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_Vulncheck) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[223]
+	mi := &file_minder_v1_minder_proto_msgTypes[224]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14083,7 +14131,7 @@ func (x *RuleType_Definition_Eval_Vulncheck) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use RuleType_Definition_Eval_Vulncheck.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Eval_Vulncheck) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128, 0, 1, 2}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 0, 1, 2}
 }
 
 type RuleType_Definition_Eval_Trusty struct {
@@ -14097,7 +14145,7 @@ type RuleType_Definition_Eval_Trusty struct {
 
 func (x *RuleType_Definition_Eval_Trusty) Reset() {
 	*x = RuleType_Definition_Eval_Trusty{}
-	mi := &file_minder_v1_minder_proto_msgTypes[224]
+	mi := &file_minder_v1_minder_proto_msgTypes[225]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14109,7 +14157,7 @@ func (x *RuleType_Definition_Eval_Trusty) String() string {
 func (*RuleType_Definition_Eval_Trusty) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_Trusty) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[224]
+	mi := &file_minder_v1_minder_proto_msgTypes[225]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14122,7 +14170,7 @@ func (x *RuleType_Definition_Eval_Trusty) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RuleType_Definition_Eval_Trusty.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Eval_Trusty) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128, 0, 1, 3}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 0, 1, 3}
 }
 
 func (x *RuleType_Definition_Eval_Trusty) GetEndpoint() string {
@@ -14141,7 +14189,7 @@ type RuleType_Definition_Eval_Homoglyphs struct {
 
 func (x *RuleType_Definition_Eval_Homoglyphs) Reset() {
 	*x = RuleType_Definition_Eval_Homoglyphs{}
-	mi := &file_minder_v1_minder_proto_msgTypes[225]
+	mi := &file_minder_v1_minder_proto_msgTypes[226]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14153,7 +14201,7 @@ func (x *RuleType_Definition_Eval_Homoglyphs) String() string {
 func (*RuleType_Definition_Eval_Homoglyphs) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_Homoglyphs) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[225]
+	mi := &file_minder_v1_minder_proto_msgTypes[226]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14166,7 +14214,7 @@ func (x *RuleType_Definition_Eval_Homoglyphs) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use RuleType_Definition_Eval_Homoglyphs.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Eval_Homoglyphs) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128, 0, 1, 4}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 0, 1, 4}
 }
 
 func (x *RuleType_Definition_Eval_Homoglyphs) GetType() string {
@@ -14185,7 +14233,7 @@ type RuleType_Definition_Eval_JQComparison_Operator struct {
 
 func (x *RuleType_Definition_Eval_JQComparison_Operator) Reset() {
 	*x = RuleType_Definition_Eval_JQComparison_Operator{}
-	mi := &file_minder_v1_minder_proto_msgTypes[226]
+	mi := &file_minder_v1_minder_proto_msgTypes[227]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14197,7 +14245,7 @@ func (x *RuleType_Definition_Eval_JQComparison_Operator) String() string {
 func (*RuleType_Definition_Eval_JQComparison_Operator) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_JQComparison_Operator) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[226]
+	mi := &file_minder_v1_minder_proto_msgTypes[227]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14210,7 +14258,7 @@ func (x *RuleType_Definition_Eval_JQComparison_Operator) ProtoReflect() protoref
 
 // Deprecated: Use RuleType_Definition_Eval_JQComparison_Operator.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Eval_JQComparison_Operator) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128, 0, 1, 0, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 0, 1, 0, 0}
 }
 
 func (x *RuleType_Definition_Eval_JQComparison_Operator) GetDef() string {
@@ -14229,7 +14277,7 @@ type RuleType_Definition_Remediate_GhBranchProtectionType struct {
 
 func (x *RuleType_Definition_Remediate_GhBranchProtectionType) Reset() {
 	*x = RuleType_Definition_Remediate_GhBranchProtectionType{}
-	mi := &file_minder_v1_minder_proto_msgTypes[227]
+	mi := &file_minder_v1_minder_proto_msgTypes[228]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14241,7 +14289,7 @@ func (x *RuleType_Definition_Remediate_GhBranchProtectionType) String() string {
 func (*RuleType_Definition_Remediate_GhBranchProtectionType) ProtoMessage() {}
 
 func (x *RuleType_Definition_Remediate_GhBranchProtectionType) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[227]
+	mi := &file_minder_v1_minder_proto_msgTypes[228]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14254,7 +14302,7 @@ func (x *RuleType_Definition_Remediate_GhBranchProtectionType) ProtoReflect() pr
 
 // Deprecated: Use RuleType_Definition_Remediate_GhBranchProtectionType.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Remediate_GhBranchProtectionType) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128, 0, 2, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 0, 2, 0}
 }
 
 func (x *RuleType_Definition_Remediate_GhBranchProtectionType) GetPatch() string {
@@ -14299,7 +14347,7 @@ type RuleType_Definition_Remediate_PullRequestRemediation struct {
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation) Reset() {
 	*x = RuleType_Definition_Remediate_PullRequestRemediation{}
-	mi := &file_minder_v1_minder_proto_msgTypes[228]
+	mi := &file_minder_v1_minder_proto_msgTypes[229]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14311,7 +14359,7 @@ func (x *RuleType_Definition_Remediate_PullRequestRemediation) String() string {
 func (*RuleType_Definition_Remediate_PullRequestRemediation) ProtoMessage() {}
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[228]
+	mi := &file_minder_v1_minder_proto_msgTypes[229]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14324,7 +14372,7 @@ func (x *RuleType_Definition_Remediate_PullRequestRemediation) ProtoReflect() pr
 
 // Deprecated: Use RuleType_Definition_Remediate_PullRequestRemediation.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Remediate_PullRequestRemediation) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128, 0, 2, 1}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 0, 2, 1}
 }
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation) GetTitle() string {
@@ -14397,7 +14445,7 @@ type RuleType_Definition_Remediate_IssueRemediation struct {
 
 func (x *RuleType_Definition_Remediate_IssueRemediation) Reset() {
 	*x = RuleType_Definition_Remediate_IssueRemediation{}
-	mi := &file_minder_v1_minder_proto_msgTypes[229]
+	mi := &file_minder_v1_minder_proto_msgTypes[230]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14409,7 +14457,7 @@ func (x *RuleType_Definition_Remediate_IssueRemediation) String() string {
 func (*RuleType_Definition_Remediate_IssueRemediation) ProtoMessage() {}
 
 func (x *RuleType_Definition_Remediate_IssueRemediation) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[229]
+	mi := &file_minder_v1_minder_proto_msgTypes[230]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14422,7 +14470,7 @@ func (x *RuleType_Definition_Remediate_IssueRemediation) ProtoReflect() protoref
 
 // Deprecated: Use RuleType_Definition_Remediate_IssueRemediation.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Remediate_IssueRemediation) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128, 0, 2, 2}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 0, 2, 2}
 }
 
 func (x *RuleType_Definition_Remediate_IssueRemediation) GetTitle() string {
@@ -14472,7 +14520,7 @@ type RuleType_Definition_Remediate_PullRequestRemediation_Content struct {
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_Content) Reset() {
 	*x = RuleType_Definition_Remediate_PullRequestRemediation_Content{}
-	mi := &file_minder_v1_minder_proto_msgTypes[230]
+	mi := &file_minder_v1_minder_proto_msgTypes[231]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14484,7 +14532,7 @@ func (x *RuleType_Definition_Remediate_PullRequestRemediation_Content) String() 
 func (*RuleType_Definition_Remediate_PullRequestRemediation_Content) ProtoMessage() {}
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_Content) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[230]
+	mi := &file_minder_v1_minder_proto_msgTypes[231]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14497,7 +14545,7 @@ func (x *RuleType_Definition_Remediate_PullRequestRemediation_Content) ProtoRefl
 
 // Deprecated: Use RuleType_Definition_Remediate_PullRequestRemediation_Content.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Remediate_PullRequestRemediation_Content) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128, 0, 2, 1, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 0, 2, 1, 0}
 }
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_Content) GetPath() string {
@@ -14538,7 +14586,7 @@ type RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWith
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha) Reset() {
 	*x = RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha{}
-	mi := &file_minder_v1_minder_proto_msgTypes[231]
+	mi := &file_minder_v1_minder_proto_msgTypes[232]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14551,7 +14599,7 @@ func (*RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWi
 }
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[231]
+	mi := &file_minder_v1_minder_proto_msgTypes[232]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14564,7 +14612,7 @@ func (x *RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTags
 
 // Deprecated: Use RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128, 0, 2, 1, 1}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 0, 2, 1, 1}
 }
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha) GetExclude() []string {
@@ -14583,7 +14631,7 @@ type RuleType_Definition_Alert_AlertTypeSA struct {
 
 func (x *RuleType_Definition_Alert_AlertTypeSA) Reset() {
 	*x = RuleType_Definition_Alert_AlertTypeSA{}
-	mi := &file_minder_v1_minder_proto_msgTypes[232]
+	mi := &file_minder_v1_minder_proto_msgTypes[233]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14595,7 +14643,7 @@ func (x *RuleType_Definition_Alert_AlertTypeSA) String() string {
 func (*RuleType_Definition_Alert_AlertTypeSA) ProtoMessage() {}
 
 func (x *RuleType_Definition_Alert_AlertTypeSA) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[232]
+	mi := &file_minder_v1_minder_proto_msgTypes[233]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14608,7 +14656,7 @@ func (x *RuleType_Definition_Alert_AlertTypeSA) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use RuleType_Definition_Alert_AlertTypeSA.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Alert_AlertTypeSA) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128, 0, 3, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 0, 3, 0}
 }
 
 func (x *RuleType_Definition_Alert_AlertTypeSA) GetSeverity() string {
@@ -14631,7 +14679,7 @@ type RuleType_Definition_Alert_AlertTypePRComment struct {
 
 func (x *RuleType_Definition_Alert_AlertTypePRComment) Reset() {
 	*x = RuleType_Definition_Alert_AlertTypePRComment{}
-	mi := &file_minder_v1_minder_proto_msgTypes[233]
+	mi := &file_minder_v1_minder_proto_msgTypes[234]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14643,7 +14691,7 @@ func (x *RuleType_Definition_Alert_AlertTypePRComment) String() string {
 func (*RuleType_Definition_Alert_AlertTypePRComment) ProtoMessage() {}
 
 func (x *RuleType_Definition_Alert_AlertTypePRComment) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[233]
+	mi := &file_minder_v1_minder_proto_msgTypes[234]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14656,7 +14704,7 @@ func (x *RuleType_Definition_Alert_AlertTypePRComment) ProtoReflect() protorefle
 
 // Deprecated: Use RuleType_Definition_Alert_AlertTypePRComment.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Alert_AlertTypePRComment) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{128, 0, 3, 1}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 0, 3, 1}
 }
 
 func (x *RuleType_Definition_Alert_AlertTypePRComment) GetReviewMessage() string {
@@ -14692,7 +14740,7 @@ type Profile_Rule struct {
 
 func (x *Profile_Rule) Reset() {
 	*x = Profile_Rule{}
-	mi := &file_minder_v1_minder_proto_msgTypes[234]
+	mi := &file_minder_v1_minder_proto_msgTypes[235]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14704,7 +14752,7 @@ func (x *Profile_Rule) String() string {
 func (*Profile_Rule) ProtoMessage() {}
 
 func (x *Profile_Rule) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[234]
+	mi := &file_minder_v1_minder_proto_msgTypes[235]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14717,7 +14765,7 @@ func (x *Profile_Rule) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Profile_Rule.ProtoReflect.Descriptor instead.
 func (*Profile_Rule) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{130, 0}
 }
 
 func (x *Profile_Rule) GetType() string {
@@ -14764,7 +14812,7 @@ type Profile_Selector struct {
 
 func (x *Profile_Selector) Reset() {
 	*x = Profile_Selector{}
-	mi := &file_minder_v1_minder_proto_msgTypes[235]
+	mi := &file_minder_v1_minder_proto_msgTypes[236]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14776,7 +14824,7 @@ func (x *Profile_Selector) String() string {
 func (*Profile_Selector) ProtoMessage() {}
 
 func (x *Profile_Selector) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[235]
+	mi := &file_minder_v1_minder_proto_msgTypes[236]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14789,7 +14837,7 @@ func (x *Profile_Selector) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Profile_Selector.ProtoReflect.Descriptor instead.
 func (*Profile_Selector) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{129, 1}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{130, 1}
 }
 
 func (x *Profile_Selector) GetId() string {
@@ -14830,7 +14878,7 @@ type StructDataSource_Def struct {
 
 func (x *StructDataSource_Def) Reset() {
 	*x = StructDataSource_Def{}
-	mi := &file_minder_v1_minder_proto_msgTypes[237]
+	mi := &file_minder_v1_minder_proto_msgTypes[238]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14842,7 +14890,7 @@ func (x *StructDataSource_Def) String() string {
 func (*StructDataSource_Def) ProtoMessage() {}
 
 func (x *StructDataSource_Def) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[237]
+	mi := &file_minder_v1_minder_proto_msgTypes[238]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14855,7 +14903,7 @@ func (x *StructDataSource_Def) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StructDataSource_Def.ProtoReflect.Descriptor instead.
 func (*StructDataSource_Def) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{204, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{205, 0}
 }
 
 func (x *StructDataSource_Def) GetPath() *StructDataSource_Def_Path {
@@ -14875,7 +14923,7 @@ type StructDataSource_Def_Path struct {
 
 func (x *StructDataSource_Def_Path) Reset() {
 	*x = StructDataSource_Def_Path{}
-	mi := &file_minder_v1_minder_proto_msgTypes[239]
+	mi := &file_minder_v1_minder_proto_msgTypes[240]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14887,7 +14935,7 @@ func (x *StructDataSource_Def_Path) String() string {
 func (*StructDataSource_Def_Path) ProtoMessage() {}
 
 func (x *StructDataSource_Def_Path) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[239]
+	mi := &file_minder_v1_minder_proto_msgTypes[240]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14900,7 +14948,7 @@ func (x *StructDataSource_Def_Path) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StructDataSource_Def_Path.ProtoReflect.Descriptor instead.
 func (*StructDataSource_Def_Path) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{204, 0, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{205, 0, 0}
 }
 
 func (x *StructDataSource_Def_Path) GetFileName() string {
@@ -14955,7 +15003,7 @@ type RestDataSource_Def struct {
 
 func (x *RestDataSource_Def) Reset() {
 	*x = RestDataSource_Def{}
-	mi := &file_minder_v1_minder_proto_msgTypes[240]
+	mi := &file_minder_v1_minder_proto_msgTypes[241]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -14967,7 +15015,7 @@ func (x *RestDataSource_Def) String() string {
 func (*RestDataSource_Def) ProtoMessage() {}
 
 func (x *RestDataSource_Def) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[240]
+	mi := &file_minder_v1_minder_proto_msgTypes[241]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -14980,7 +15028,7 @@ func (x *RestDataSource_Def) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestDataSource_Def.ProtoReflect.Descriptor instead.
 func (*RestDataSource_Def) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{205, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{206, 0}
 }
 
 func (x *RestDataSource_Def) GetEndpoint() string {
@@ -15104,7 +15152,7 @@ type RestDataSource_Def_Fallback struct {
 
 func (x *RestDataSource_Def_Fallback) Reset() {
 	*x = RestDataSource_Def_Fallback{}
-	mi := &file_minder_v1_minder_proto_msgTypes[243]
+	mi := &file_minder_v1_minder_proto_msgTypes[244]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -15116,7 +15164,7 @@ func (x *RestDataSource_Def_Fallback) String() string {
 func (*RestDataSource_Def_Fallback) ProtoMessage() {}
 
 func (x *RestDataSource_Def_Fallback) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[243]
+	mi := &file_minder_v1_minder_proto_msgTypes[244]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -15129,7 +15177,7 @@ func (x *RestDataSource_Def_Fallback) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestDataSource_Def_Fallback.ProtoReflect.Descriptor instead.
 func (*RestDataSource_Def_Fallback) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{205, 0, 1}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{206, 0, 1}
 }
 
 func (x *RestDataSource_Def_Fallback) GetHttpStatus() int32 {
@@ -15610,6 +15658,10 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\n" +
 	"_namespace\"E\n" +
 	"\x12GHCRProviderConfig\x12!\n" +
+	"\tnamespace\x18\x01 \x01(\tH\x00R\tnamespace\x88\x01\x01B\f\n" +
+	"\n" +
+	"_namespace\"E\n" +
+	"\x12QuayProviderConfig\x12!\n" +
 	"\tnamespace\x18\x01 \x01(\tH\x00R\tnamespace\x88\x01\x01B\f\n" +
 	"\n" +
 	"_namespace\"\xfa\x01\n" +
@@ -16453,7 +16505,7 @@ func file_minder_v1_minder_proto_rawDescGZIP() []byte {
 }
 
 var file_minder_v1_minder_proto_enumTypes = make([]protoimpl.EnumInfo, 10)
-var file_minder_v1_minder_proto_msgTypes = make([]protoimpl.MessageInfo, 244)
+var file_minder_v1_minder_proto_msgTypes = make([]protoimpl.MessageInfo, 245)
 var file_minder_v1_minder_proto_goTypes = []any{
 	(ObjectOwner)(0),                                   // 0: minder.v1.ObjectOwner
 	(Relation)(0),                                      // 1: minder.v1.Relation
@@ -16570,441 +16622,442 @@ var file_minder_v1_minder_proto_goTypes = []any{
 	(*GitLabProviderConfig)(nil),                       // 112: minder.v1.GitLabProviderConfig
 	(*DockerHubProviderConfig)(nil),                    // 113: minder.v1.DockerHubProviderConfig
 	(*GHCRProviderConfig)(nil),                         // 114: minder.v1.GHCRProviderConfig
-	(*Context)(nil),                                    // 115: minder.v1.Context
-	(*ContextV2)(nil),                                  // 116: minder.v1.ContextV2
-	(*ListRuleTypesRequest)(nil),                       // 117: minder.v1.ListRuleTypesRequest
-	(*ListRuleTypesResponse)(nil),                      // 118: minder.v1.ListRuleTypesResponse
-	(*GetRuleTypeByNameRequest)(nil),                   // 119: minder.v1.GetRuleTypeByNameRequest
-	(*GetRuleTypeByNameResponse)(nil),                  // 120: minder.v1.GetRuleTypeByNameResponse
-	(*GetRuleTypeByIdRequest)(nil),                     // 121: minder.v1.GetRuleTypeByIdRequest
-	(*GetRuleTypeByIdResponse)(nil),                    // 122: minder.v1.GetRuleTypeByIdResponse
-	(*CreateRuleTypeRequest)(nil),                      // 123: minder.v1.CreateRuleTypeRequest
-	(*CreateRuleTypeResponse)(nil),                     // 124: minder.v1.CreateRuleTypeResponse
-	(*UpdateRuleTypeRequest)(nil),                      // 125: minder.v1.UpdateRuleTypeRequest
-	(*UpdateRuleTypeResponse)(nil),                     // 126: minder.v1.UpdateRuleTypeResponse
-	(*DeleteRuleTypeRequest)(nil),                      // 127: minder.v1.DeleteRuleTypeRequest
-	(*DeleteRuleTypeResponse)(nil),                     // 128: minder.v1.DeleteRuleTypeResponse
-	(*ListEvaluationResultsRequest)(nil),               // 129: minder.v1.ListEvaluationResultsRequest
-	(*ListEvaluationResultsResponse)(nil),              // 130: minder.v1.ListEvaluationResultsResponse
-	(*RestType)(nil),                                   // 131: minder.v1.RestType
-	(*BuiltinType)(nil),                                // 132: minder.v1.BuiltinType
-	(*ArtifactType)(nil),                               // 133: minder.v1.ArtifactType
-	(*GitType)(nil),                                    // 134: minder.v1.GitType
-	(*DiffType)(nil),                                   // 135: minder.v1.DiffType
-	(*DepsType)(nil),                                   // 136: minder.v1.DepsType
-	(*Severity)(nil),                                   // 137: minder.v1.Severity
-	(*RuleType)(nil),                                   // 138: minder.v1.RuleType
-	(*Profile)(nil),                                    // 139: minder.v1.Profile
-	(*ListProjectsRequest)(nil),                        // 140: minder.v1.ListProjectsRequest
-	(*ListProjectsResponse)(nil),                       // 141: minder.v1.ListProjectsResponse
-	(*CreateProjectRequest)(nil),                       // 142: minder.v1.CreateProjectRequest
-	(*CreateProjectResponse)(nil),                      // 143: minder.v1.CreateProjectResponse
-	(*DeleteProjectRequest)(nil),                       // 144: minder.v1.DeleteProjectRequest
-	(*DeleteProjectResponse)(nil),                      // 145: minder.v1.DeleteProjectResponse
-	(*UpdateProjectRequest)(nil),                       // 146: minder.v1.UpdateProjectRequest
-	(*UpdateProjectResponse)(nil),                      // 147: minder.v1.UpdateProjectResponse
-	(*ProjectPatch)(nil),                               // 148: minder.v1.ProjectPatch
-	(*PatchProjectRequest)(nil),                        // 149: minder.v1.PatchProjectRequest
-	(*PatchProjectResponse)(nil),                       // 150: minder.v1.PatchProjectResponse
-	(*ListChildProjectsRequest)(nil),                   // 151: minder.v1.ListChildProjectsRequest
-	(*ListChildProjectsResponse)(nil),                  // 152: minder.v1.ListChildProjectsResponse
-	(*CreateEntityReconciliationTaskRequest)(nil),      // 153: minder.v1.CreateEntityReconciliationTaskRequest
-	(*CreateEntityReconciliationTaskResponse)(nil),     // 154: minder.v1.CreateEntityReconciliationTaskResponse
-	(*ListRolesRequest)(nil),                           // 155: minder.v1.ListRolesRequest
-	(*ListRolesResponse)(nil),                          // 156: minder.v1.ListRolesResponse
-	(*ListRoleAssignmentsRequest)(nil),                 // 157: minder.v1.ListRoleAssignmentsRequest
-	(*ListRoleAssignmentsResponse)(nil),                // 158: minder.v1.ListRoleAssignmentsResponse
-	(*AssignRoleRequest)(nil),                          // 159: minder.v1.AssignRoleRequest
-	(*AssignRoleResponse)(nil),                         // 160: minder.v1.AssignRoleResponse
-	(*UpdateRoleRequest)(nil),                          // 161: minder.v1.UpdateRoleRequest
-	(*UpdateRoleResponse)(nil),                         // 162: minder.v1.UpdateRoleResponse
-	(*RemoveRoleRequest)(nil),                          // 163: minder.v1.RemoveRoleRequest
-	(*RemoveRoleResponse)(nil),                         // 164: minder.v1.RemoveRoleResponse
-	(*Role)(nil),                                       // 165: minder.v1.Role
-	(*RoleAssignment)(nil),                             // 166: minder.v1.RoleAssignment
-	(*ListInvitationsRequest)(nil),                     // 167: minder.v1.ListInvitationsRequest
-	(*ListInvitationsResponse)(nil),                    // 168: minder.v1.ListInvitationsResponse
-	(*ResolveInvitationRequest)(nil),                   // 169: minder.v1.ResolveInvitationRequest
-	(*ResolveInvitationResponse)(nil),                  // 170: minder.v1.ResolveInvitationResponse
-	(*Invitation)(nil),                                 // 171: minder.v1.Invitation
-	(*GetProviderRequest)(nil),                         // 172: minder.v1.GetProviderRequest
-	(*GetProviderResponse)(nil),                        // 173: minder.v1.GetProviderResponse
-	(*ListProvidersRequest)(nil),                       // 174: minder.v1.ListProvidersRequest
-	(*ListProvidersResponse)(nil),                      // 175: minder.v1.ListProvidersResponse
-	(*CreateProviderRequest)(nil),                      // 176: minder.v1.CreateProviderRequest
-	(*CreateProviderResponse)(nil),                     // 177: minder.v1.CreateProviderResponse
-	(*DeleteProviderRequest)(nil),                      // 178: minder.v1.DeleteProviderRequest
-	(*DeleteProviderResponse)(nil),                     // 179: minder.v1.DeleteProviderResponse
-	(*DeleteProviderByIDRequest)(nil),                  // 180: minder.v1.DeleteProviderByIDRequest
-	(*DeleteProviderByIDResponse)(nil),                 // 181: minder.v1.DeleteProviderByIDResponse
-	(*ListProviderClassesRequest)(nil),                 // 182: minder.v1.ListProviderClassesRequest
-	(*ProviderClassInfo)(nil),                          // 183: minder.v1.ProviderClassInfo
-	(*ListProviderClassesResponse)(nil),                // 184: minder.v1.ListProviderClassesResponse
-	(*PatchProviderRequest)(nil),                       // 185: minder.v1.PatchProviderRequest
-	(*PatchProviderResponse)(nil),                      // 186: minder.v1.PatchProviderResponse
-	(*AuthorizationParams)(nil),                        // 187: minder.v1.AuthorizationParams
-	(*ProviderParameter)(nil),                          // 188: minder.v1.ProviderParameter
-	(*GitHubAppParams)(nil),                            // 189: minder.v1.GitHubAppParams
-	(*Provider)(nil),                                   // 190: minder.v1.Provider
-	(*GetEvaluationHistoryRequest)(nil),                // 191: minder.v1.GetEvaluationHistoryRequest
-	(*ListEvaluationHistoryRequest)(nil),               // 192: minder.v1.ListEvaluationHistoryRequest
-	(*GetEvaluationHistoryResponse)(nil),               // 193: minder.v1.GetEvaluationHistoryResponse
-	(*ListEvaluationHistoryResponse)(nil),              // 194: minder.v1.ListEvaluationHistoryResponse
-	(*EvaluationHistory)(nil),                          // 195: minder.v1.EvaluationHistory
-	(*EvaluationHistoryEntity)(nil),                    // 196: minder.v1.EvaluationHistoryEntity
-	(*EvaluationHistoryRule)(nil),                      // 197: minder.v1.EvaluationHistoryRule
-	(*EvaluationHistoryStatus)(nil),                    // 198: minder.v1.EvaluationHistoryStatus
-	(*EvaluationHistoryRemediation)(nil),               // 199: minder.v1.EvaluationHistoryRemediation
-	(*EvaluationHistoryAlert)(nil),                     // 200: minder.v1.EvaluationHistoryAlert
-	(*EntityInstance)(nil),                             // 201: minder.v1.EntityInstance
-	(*ListEntitiesRequest)(nil),                        // 202: minder.v1.ListEntitiesRequest
-	(*ListEntitiesResponse)(nil),                       // 203: minder.v1.ListEntitiesResponse
-	(*GetEntityByIdRequest)(nil),                       // 204: minder.v1.GetEntityByIdRequest
-	(*GetEntityByIdResponse)(nil),                      // 205: minder.v1.GetEntityByIdResponse
-	(*GetEntityByNameRequest)(nil),                     // 206: minder.v1.GetEntityByNameRequest
-	(*GetEntityByNameResponse)(nil),                    // 207: minder.v1.GetEntityByNameResponse
-	(*DeleteEntityByIdRequest)(nil),                    // 208: minder.v1.DeleteEntityByIdRequest
-	(*DeleteEntityByIdResponse)(nil),                   // 209: minder.v1.DeleteEntityByIdResponse
-	(*RegisterEntityRequest)(nil),                      // 210: minder.v1.RegisterEntityRequest
-	(*RegisterEntityResponse)(nil),                     // 211: minder.v1.RegisterEntityResponse
-	(*UpstreamEntityRef)(nil),                          // 212: minder.v1.UpstreamEntityRef
-	(*DataSource)(nil),                                 // 213: minder.v1.DataSource
-	(*StructDataSource)(nil),                           // 214: minder.v1.StructDataSource
-	(*RestDataSource)(nil),                             // 215: minder.v1.RestDataSource
-	(*DataSourceReference)(nil),                        // 216: minder.v1.DataSourceReference
-	(*RegisterRepoResult_Status)(nil),                  // 217: minder.v1.RegisterRepoResult.Status
-	nil,                                                // 218: minder.v1.RuleEvaluationStatus.EntityInfoEntry
-	nil,                                                // 219: minder.v1.AutoRegistration.EntitiesEntry
-	(*ListEvaluationResultsResponse_EntityProfileEvaluationResults)(nil), // 220: minder.v1.ListEvaluationResultsResponse.EntityProfileEvaluationResults
-	(*ListEvaluationResultsResponse_EntityEvaluationResults)(nil),        // 221: minder.v1.ListEvaluationResultsResponse.EntityEvaluationResults
-	(*RestType_Fallback)(nil),                                                              // 222: minder.v1.RestType.Fallback
-	(*DiffType_Ecosystem)(nil),                                                             // 223: minder.v1.DiffType.Ecosystem
-	(*DepsType_RepoConfigs)(nil),                                                           // 224: minder.v1.DepsType.RepoConfigs
-	(*DepsType_PullRequestConfigs)(nil),                                                    // 225: minder.v1.DepsType.PullRequestConfigs
-	(*RuleType_Definition)(nil),                                                            // 226: minder.v1.RuleType.Definition
-	(*RuleType_Definition_Ingest)(nil),                                                     // 227: minder.v1.RuleType.Definition.Ingest
-	(*RuleType_Definition_Eval)(nil),                                                       // 228: minder.v1.RuleType.Definition.Eval
-	(*RuleType_Definition_Remediate)(nil),                                                  // 229: minder.v1.RuleType.Definition.Remediate
-	(*RuleType_Definition_Alert)(nil),                                                      // 230: minder.v1.RuleType.Definition.Alert
-	(*RuleType_Definition_Eval_JQComparison)(nil),                                          // 231: minder.v1.RuleType.Definition.Eval.JQComparison
-	(*RuleType_Definition_Eval_Rego)(nil),                                                  // 232: minder.v1.RuleType.Definition.Eval.Rego
-	(*RuleType_Definition_Eval_Vulncheck)(nil),                                             // 233: minder.v1.RuleType.Definition.Eval.Vulncheck
-	(*RuleType_Definition_Eval_Trusty)(nil),                                                // 234: minder.v1.RuleType.Definition.Eval.Trusty
-	(*RuleType_Definition_Eval_Homoglyphs)(nil),                                            // 235: minder.v1.RuleType.Definition.Eval.Homoglyphs
-	(*RuleType_Definition_Eval_JQComparison_Operator)(nil),                                 // 236: minder.v1.RuleType.Definition.Eval.JQComparison.Operator
-	(*RuleType_Definition_Remediate_GhBranchProtectionType)(nil),                           // 237: minder.v1.RuleType.Definition.Remediate.GhBranchProtectionType
-	(*RuleType_Definition_Remediate_PullRequestRemediation)(nil),                           // 238: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation
-	(*RuleType_Definition_Remediate_IssueRemediation)(nil),                                 // 239: minder.v1.RuleType.Definition.Remediate.IssueRemediation
-	(*RuleType_Definition_Remediate_PullRequestRemediation_Content)(nil),                   // 240: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.Content
-	(*RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha)(nil), // 241: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha
-	(*RuleType_Definition_Alert_AlertTypeSA)(nil),                                          // 242: minder.v1.RuleType.Definition.Alert.AlertTypeSA
-	(*RuleType_Definition_Alert_AlertTypePRComment)(nil),                                   // 243: minder.v1.RuleType.Definition.Alert.AlertTypePRComment
-	(*Profile_Rule)(nil),                                                                   // 244: minder.v1.Profile.Rule
-	(*Profile_Selector)(nil),                                                               // 245: minder.v1.Profile.Selector
-	nil,                                                                                    // 246: minder.v1.RegisterEntityRequest.IdentifyingPropertiesEntry
-	(*StructDataSource_Def)(nil),                                                           // 247: minder.v1.StructDataSource.Def
-	nil,                                                                                    // 248: minder.v1.StructDataSource.DefEntry
-	(*StructDataSource_Def_Path)(nil),                                                      // 249: minder.v1.StructDataSource.Def.Path
-	(*RestDataSource_Def)(nil),                                                             // 250: minder.v1.RestDataSource.Def
-	nil,                                                                                    // 251: minder.v1.RestDataSource.DefEntry
-	nil,                                                                                    // 252: minder.v1.RestDataSource.Def.HeadersEntry
-	(*RestDataSource_Def_Fallback)(nil),                                                    // 253: minder.v1.RestDataSource.Def.Fallback
-	(*timestamppb.Timestamp)(nil),                                                          // 254: google.protobuf.Timestamp
-	(*structpb.Struct)(nil),                                                                // 255: google.protobuf.Struct
-	(*fieldmaskpb.FieldMask)(nil),                                                          // 256: google.protobuf.FieldMask
-	(*structpb.Value)(nil),                                                                 // 257: google.protobuf.Value
-	(*descriptorpb.EnumValueOptions)(nil),                                                  // 258: google.protobuf.EnumValueOptions
-	(*descriptorpb.MethodOptions)(nil),                                                     // 259: google.protobuf.MethodOptions
+	(*QuayProviderConfig)(nil),                         // 115: minder.v1.QuayProviderConfig
+	(*Context)(nil),                                    // 116: minder.v1.Context
+	(*ContextV2)(nil),                                  // 117: minder.v1.ContextV2
+	(*ListRuleTypesRequest)(nil),                       // 118: minder.v1.ListRuleTypesRequest
+	(*ListRuleTypesResponse)(nil),                      // 119: minder.v1.ListRuleTypesResponse
+	(*GetRuleTypeByNameRequest)(nil),                   // 120: minder.v1.GetRuleTypeByNameRequest
+	(*GetRuleTypeByNameResponse)(nil),                  // 121: minder.v1.GetRuleTypeByNameResponse
+	(*GetRuleTypeByIdRequest)(nil),                     // 122: minder.v1.GetRuleTypeByIdRequest
+	(*GetRuleTypeByIdResponse)(nil),                    // 123: minder.v1.GetRuleTypeByIdResponse
+	(*CreateRuleTypeRequest)(nil),                      // 124: minder.v1.CreateRuleTypeRequest
+	(*CreateRuleTypeResponse)(nil),                     // 125: minder.v1.CreateRuleTypeResponse
+	(*UpdateRuleTypeRequest)(nil),                      // 126: minder.v1.UpdateRuleTypeRequest
+	(*UpdateRuleTypeResponse)(nil),                     // 127: minder.v1.UpdateRuleTypeResponse
+	(*DeleteRuleTypeRequest)(nil),                      // 128: minder.v1.DeleteRuleTypeRequest
+	(*DeleteRuleTypeResponse)(nil),                     // 129: minder.v1.DeleteRuleTypeResponse
+	(*ListEvaluationResultsRequest)(nil),               // 130: minder.v1.ListEvaluationResultsRequest
+	(*ListEvaluationResultsResponse)(nil),              // 131: minder.v1.ListEvaluationResultsResponse
+	(*RestType)(nil),                                   // 132: minder.v1.RestType
+	(*BuiltinType)(nil),                                // 133: minder.v1.BuiltinType
+	(*ArtifactType)(nil),                               // 134: minder.v1.ArtifactType
+	(*GitType)(nil),                                    // 135: minder.v1.GitType
+	(*DiffType)(nil),                                   // 136: minder.v1.DiffType
+	(*DepsType)(nil),                                   // 137: minder.v1.DepsType
+	(*Severity)(nil),                                   // 138: minder.v1.Severity
+	(*RuleType)(nil),                                   // 139: minder.v1.RuleType
+	(*Profile)(nil),                                    // 140: minder.v1.Profile
+	(*ListProjectsRequest)(nil),                        // 141: minder.v1.ListProjectsRequest
+	(*ListProjectsResponse)(nil),                       // 142: minder.v1.ListProjectsResponse
+	(*CreateProjectRequest)(nil),                       // 143: minder.v1.CreateProjectRequest
+	(*CreateProjectResponse)(nil),                      // 144: minder.v1.CreateProjectResponse
+	(*DeleteProjectRequest)(nil),                       // 145: minder.v1.DeleteProjectRequest
+	(*DeleteProjectResponse)(nil),                      // 146: minder.v1.DeleteProjectResponse
+	(*UpdateProjectRequest)(nil),                       // 147: minder.v1.UpdateProjectRequest
+	(*UpdateProjectResponse)(nil),                      // 148: minder.v1.UpdateProjectResponse
+	(*ProjectPatch)(nil),                               // 149: minder.v1.ProjectPatch
+	(*PatchProjectRequest)(nil),                        // 150: minder.v1.PatchProjectRequest
+	(*PatchProjectResponse)(nil),                       // 151: minder.v1.PatchProjectResponse
+	(*ListChildProjectsRequest)(nil),                   // 152: minder.v1.ListChildProjectsRequest
+	(*ListChildProjectsResponse)(nil),                  // 153: minder.v1.ListChildProjectsResponse
+	(*CreateEntityReconciliationTaskRequest)(nil),      // 154: minder.v1.CreateEntityReconciliationTaskRequest
+	(*CreateEntityReconciliationTaskResponse)(nil),     // 155: minder.v1.CreateEntityReconciliationTaskResponse
+	(*ListRolesRequest)(nil),                           // 156: minder.v1.ListRolesRequest
+	(*ListRolesResponse)(nil),                          // 157: minder.v1.ListRolesResponse
+	(*ListRoleAssignmentsRequest)(nil),                 // 158: minder.v1.ListRoleAssignmentsRequest
+	(*ListRoleAssignmentsResponse)(nil),                // 159: minder.v1.ListRoleAssignmentsResponse
+	(*AssignRoleRequest)(nil),                          // 160: minder.v1.AssignRoleRequest
+	(*AssignRoleResponse)(nil),                         // 161: minder.v1.AssignRoleResponse
+	(*UpdateRoleRequest)(nil),                          // 162: minder.v1.UpdateRoleRequest
+	(*UpdateRoleResponse)(nil),                         // 163: minder.v1.UpdateRoleResponse
+	(*RemoveRoleRequest)(nil),                          // 164: minder.v1.RemoveRoleRequest
+	(*RemoveRoleResponse)(nil),                         // 165: minder.v1.RemoveRoleResponse
+	(*Role)(nil),                                       // 166: minder.v1.Role
+	(*RoleAssignment)(nil),                             // 167: minder.v1.RoleAssignment
+	(*ListInvitationsRequest)(nil),                     // 168: minder.v1.ListInvitationsRequest
+	(*ListInvitationsResponse)(nil),                    // 169: minder.v1.ListInvitationsResponse
+	(*ResolveInvitationRequest)(nil),                   // 170: minder.v1.ResolveInvitationRequest
+	(*ResolveInvitationResponse)(nil),                  // 171: minder.v1.ResolveInvitationResponse
+	(*Invitation)(nil),                                 // 172: minder.v1.Invitation
+	(*GetProviderRequest)(nil),                         // 173: minder.v1.GetProviderRequest
+	(*GetProviderResponse)(nil),                        // 174: minder.v1.GetProviderResponse
+	(*ListProvidersRequest)(nil),                       // 175: minder.v1.ListProvidersRequest
+	(*ListProvidersResponse)(nil),                      // 176: minder.v1.ListProvidersResponse
+	(*CreateProviderRequest)(nil),                      // 177: minder.v1.CreateProviderRequest
+	(*CreateProviderResponse)(nil),                     // 178: minder.v1.CreateProviderResponse
+	(*DeleteProviderRequest)(nil),                      // 179: minder.v1.DeleteProviderRequest
+	(*DeleteProviderResponse)(nil),                     // 180: minder.v1.DeleteProviderResponse
+	(*DeleteProviderByIDRequest)(nil),                  // 181: minder.v1.DeleteProviderByIDRequest
+	(*DeleteProviderByIDResponse)(nil),                 // 182: minder.v1.DeleteProviderByIDResponse
+	(*ListProviderClassesRequest)(nil),                 // 183: minder.v1.ListProviderClassesRequest
+	(*ProviderClassInfo)(nil),                          // 184: minder.v1.ProviderClassInfo
+	(*ListProviderClassesResponse)(nil),                // 185: minder.v1.ListProviderClassesResponse
+	(*PatchProviderRequest)(nil),                       // 186: minder.v1.PatchProviderRequest
+	(*PatchProviderResponse)(nil),                      // 187: minder.v1.PatchProviderResponse
+	(*AuthorizationParams)(nil),                        // 188: minder.v1.AuthorizationParams
+	(*ProviderParameter)(nil),                          // 189: minder.v1.ProviderParameter
+	(*GitHubAppParams)(nil),                            // 190: minder.v1.GitHubAppParams
+	(*Provider)(nil),                                   // 191: minder.v1.Provider
+	(*GetEvaluationHistoryRequest)(nil),                // 192: minder.v1.GetEvaluationHistoryRequest
+	(*ListEvaluationHistoryRequest)(nil),               // 193: minder.v1.ListEvaluationHistoryRequest
+	(*GetEvaluationHistoryResponse)(nil),               // 194: minder.v1.GetEvaluationHistoryResponse
+	(*ListEvaluationHistoryResponse)(nil),              // 195: minder.v1.ListEvaluationHistoryResponse
+	(*EvaluationHistory)(nil),                          // 196: minder.v1.EvaluationHistory
+	(*EvaluationHistoryEntity)(nil),                    // 197: minder.v1.EvaluationHistoryEntity
+	(*EvaluationHistoryRule)(nil),                      // 198: minder.v1.EvaluationHistoryRule
+	(*EvaluationHistoryStatus)(nil),                    // 199: minder.v1.EvaluationHistoryStatus
+	(*EvaluationHistoryRemediation)(nil),               // 200: minder.v1.EvaluationHistoryRemediation
+	(*EvaluationHistoryAlert)(nil),                     // 201: minder.v1.EvaluationHistoryAlert
+	(*EntityInstance)(nil),                             // 202: minder.v1.EntityInstance
+	(*ListEntitiesRequest)(nil),                        // 203: minder.v1.ListEntitiesRequest
+	(*ListEntitiesResponse)(nil),                       // 204: minder.v1.ListEntitiesResponse
+	(*GetEntityByIdRequest)(nil),                       // 205: minder.v1.GetEntityByIdRequest
+	(*GetEntityByIdResponse)(nil),                      // 206: minder.v1.GetEntityByIdResponse
+	(*GetEntityByNameRequest)(nil),                     // 207: minder.v1.GetEntityByNameRequest
+	(*GetEntityByNameResponse)(nil),                    // 208: minder.v1.GetEntityByNameResponse
+	(*DeleteEntityByIdRequest)(nil),                    // 209: minder.v1.DeleteEntityByIdRequest
+	(*DeleteEntityByIdResponse)(nil),                   // 210: minder.v1.DeleteEntityByIdResponse
+	(*RegisterEntityRequest)(nil),                      // 211: minder.v1.RegisterEntityRequest
+	(*RegisterEntityResponse)(nil),                     // 212: minder.v1.RegisterEntityResponse
+	(*UpstreamEntityRef)(nil),                          // 213: minder.v1.UpstreamEntityRef
+	(*DataSource)(nil),                                 // 214: minder.v1.DataSource
+	(*StructDataSource)(nil),                           // 215: minder.v1.StructDataSource
+	(*RestDataSource)(nil),                             // 216: minder.v1.RestDataSource
+	(*DataSourceReference)(nil),                        // 217: minder.v1.DataSourceReference
+	(*RegisterRepoResult_Status)(nil),                  // 218: minder.v1.RegisterRepoResult.Status
+	nil,                                                // 219: minder.v1.RuleEvaluationStatus.EntityInfoEntry
+	nil,                                                // 220: minder.v1.AutoRegistration.EntitiesEntry
+	(*ListEvaluationResultsResponse_EntityProfileEvaluationResults)(nil), // 221: minder.v1.ListEvaluationResultsResponse.EntityProfileEvaluationResults
+	(*ListEvaluationResultsResponse_EntityEvaluationResults)(nil),        // 222: minder.v1.ListEvaluationResultsResponse.EntityEvaluationResults
+	(*RestType_Fallback)(nil),                                                              // 223: minder.v1.RestType.Fallback
+	(*DiffType_Ecosystem)(nil),                                                             // 224: minder.v1.DiffType.Ecosystem
+	(*DepsType_RepoConfigs)(nil),                                                           // 225: minder.v1.DepsType.RepoConfigs
+	(*DepsType_PullRequestConfigs)(nil),                                                    // 226: minder.v1.DepsType.PullRequestConfigs
+	(*RuleType_Definition)(nil),                                                            // 227: minder.v1.RuleType.Definition
+	(*RuleType_Definition_Ingest)(nil),                                                     // 228: minder.v1.RuleType.Definition.Ingest
+	(*RuleType_Definition_Eval)(nil),                                                       // 229: minder.v1.RuleType.Definition.Eval
+	(*RuleType_Definition_Remediate)(nil),                                                  // 230: minder.v1.RuleType.Definition.Remediate
+	(*RuleType_Definition_Alert)(nil),                                                      // 231: minder.v1.RuleType.Definition.Alert
+	(*RuleType_Definition_Eval_JQComparison)(nil),                                          // 232: minder.v1.RuleType.Definition.Eval.JQComparison
+	(*RuleType_Definition_Eval_Rego)(nil),                                                  // 233: minder.v1.RuleType.Definition.Eval.Rego
+	(*RuleType_Definition_Eval_Vulncheck)(nil),                                             // 234: minder.v1.RuleType.Definition.Eval.Vulncheck
+	(*RuleType_Definition_Eval_Trusty)(nil),                                                // 235: minder.v1.RuleType.Definition.Eval.Trusty
+	(*RuleType_Definition_Eval_Homoglyphs)(nil),                                            // 236: minder.v1.RuleType.Definition.Eval.Homoglyphs
+	(*RuleType_Definition_Eval_JQComparison_Operator)(nil),                                 // 237: minder.v1.RuleType.Definition.Eval.JQComparison.Operator
+	(*RuleType_Definition_Remediate_GhBranchProtectionType)(nil),                           // 238: minder.v1.RuleType.Definition.Remediate.GhBranchProtectionType
+	(*RuleType_Definition_Remediate_PullRequestRemediation)(nil),                           // 239: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation
+	(*RuleType_Definition_Remediate_IssueRemediation)(nil),                                 // 240: minder.v1.RuleType.Definition.Remediate.IssueRemediation
+	(*RuleType_Definition_Remediate_PullRequestRemediation_Content)(nil),                   // 241: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.Content
+	(*RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha)(nil), // 242: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha
+	(*RuleType_Definition_Alert_AlertTypeSA)(nil),                                          // 243: minder.v1.RuleType.Definition.Alert.AlertTypeSA
+	(*RuleType_Definition_Alert_AlertTypePRComment)(nil),                                   // 244: minder.v1.RuleType.Definition.Alert.AlertTypePRComment
+	(*Profile_Rule)(nil),                                                                   // 245: minder.v1.Profile.Rule
+	(*Profile_Selector)(nil),                                                               // 246: minder.v1.Profile.Selector
+	nil,                                                                                    // 247: minder.v1.RegisterEntityRequest.IdentifyingPropertiesEntry
+	(*StructDataSource_Def)(nil),                                                           // 248: minder.v1.StructDataSource.Def
+	nil,                                                                                    // 249: minder.v1.StructDataSource.DefEntry
+	(*StructDataSource_Def_Path)(nil),                                                      // 250: minder.v1.StructDataSource.Def.Path
+	(*RestDataSource_Def)(nil),                                                             // 251: minder.v1.RestDataSource.Def
+	nil,                                                                                    // 252: minder.v1.RestDataSource.DefEntry
+	nil,                                                                                    // 253: minder.v1.RestDataSource.Def.HeadersEntry
+	(*RestDataSource_Def_Fallback)(nil),                                                    // 254: minder.v1.RestDataSource.Def.Fallback
+	(*timestamppb.Timestamp)(nil),                                                          // 255: google.protobuf.Timestamp
+	(*structpb.Struct)(nil),                                                                // 256: google.protobuf.Struct
+	(*fieldmaskpb.FieldMask)(nil),                                                          // 257: google.protobuf.FieldMask
+	(*structpb.Value)(nil),                                                                 // 258: google.protobuf.Value
+	(*descriptorpb.EnumValueOptions)(nil),                                                  // 259: google.protobuf.EnumValueOptions
+	(*descriptorpb.MethodOptions)(nil),                                                     // 260: google.protobuf.MethodOptions
 }
 var file_minder_v1_minder_proto_depIdxs = []int32{
 	2,   // 0: minder.v1.RpcOptions.target_resource:type_name -> minder.v1.TargetResource
 	1,   // 1: minder.v1.RpcOptions.relation:type_name -> minder.v1.Relation
 	11,  // 2: minder.v1.CursorPage.next:type_name -> minder.v1.Cursor
 	11,  // 3: minder.v1.CursorPage.prev:type_name -> minder.v1.Cursor
-	115, // 4: minder.v1.ListArtifactsRequest.context:type_name -> minder.v1.Context
+	116, // 4: minder.v1.ListArtifactsRequest.context:type_name -> minder.v1.Context
 	17,  // 5: minder.v1.ListArtifactsResponse.results:type_name -> minder.v1.Artifact
 	18,  // 6: minder.v1.Artifact.versions:type_name -> minder.v1.ArtifactVersion
-	254, // 7: minder.v1.Artifact.created_at:type_name -> google.protobuf.Timestamp
-	115, // 8: minder.v1.Artifact.context:type_name -> minder.v1.Context
-	254, // 9: minder.v1.ArtifactVersion.created_at:type_name -> google.protobuf.Timestamp
-	115, // 10: minder.v1.GetArtifactByIdRequest.context:type_name -> minder.v1.Context
+	255, // 7: minder.v1.Artifact.created_at:type_name -> google.protobuf.Timestamp
+	116, // 8: minder.v1.Artifact.context:type_name -> minder.v1.Context
+	255, // 9: minder.v1.ArtifactVersion.created_at:type_name -> google.protobuf.Timestamp
+	116, // 10: minder.v1.GetArtifactByIdRequest.context:type_name -> minder.v1.Context
 	17,  // 11: minder.v1.GetArtifactByIdResponse.artifact:type_name -> minder.v1.Artifact
 	18,  // 12: minder.v1.GetArtifactByIdResponse.versions:type_name -> minder.v1.ArtifactVersion
-	115, // 13: minder.v1.GetArtifactByNameRequest.context:type_name -> minder.v1.Context
+	116, // 13: minder.v1.GetArtifactByNameRequest.context:type_name -> minder.v1.Context
 	17,  // 14: minder.v1.GetArtifactByNameResponse.artifact:type_name -> minder.v1.Artifact
 	18,  // 15: minder.v1.GetArtifactByNameResponse.versions:type_name -> minder.v1.ArtifactVersion
-	254, // 16: minder.v1.GetInviteDetailsResponse.expires_at:type_name -> google.protobuf.Timestamp
-	115, // 17: minder.v1.GetAuthorizationURLRequest.context:type_name -> minder.v1.Context
-	255, // 18: minder.v1.GetAuthorizationURLRequest.config:type_name -> google.protobuf.Struct
-	115, // 19: minder.v1.StoreProviderTokenRequest.context:type_name -> minder.v1.Context
-	254, // 20: minder.v1.Project.created_at:type_name -> google.protobuf.Timestamp
-	254, // 21: minder.v1.Project.updated_at:type_name -> google.protobuf.Timestamp
-	115, // 22: minder.v1.ListRemoteRepositoriesFromProviderRequest.context:type_name -> minder.v1.Context
+	255, // 16: minder.v1.GetInviteDetailsResponse.expires_at:type_name -> google.protobuf.Timestamp
+	116, // 17: minder.v1.GetAuthorizationURLRequest.context:type_name -> minder.v1.Context
+	256, // 18: minder.v1.GetAuthorizationURLRequest.config:type_name -> google.protobuf.Struct
+	116, // 19: minder.v1.StoreProviderTokenRequest.context:type_name -> minder.v1.Context
+	255, // 20: minder.v1.Project.created_at:type_name -> google.protobuf.Timestamp
+	255, // 21: minder.v1.Project.updated_at:type_name -> google.protobuf.Timestamp
+	116, // 22: minder.v1.ListRemoteRepositoriesFromProviderRequest.context:type_name -> minder.v1.Context
 	39,  // 23: minder.v1.ListRemoteRepositoriesFromProviderResponse.results:type_name -> minder.v1.UpstreamRepositoryRef
 	38,  // 24: minder.v1.ListRemoteRepositoriesFromProviderResponse.entities:type_name -> minder.v1.RegistrableUpstreamEntityRef
-	212, // 25: minder.v1.RegistrableUpstreamEntityRef.entity:type_name -> minder.v1.UpstreamEntityRef
-	115, // 26: minder.v1.UpstreamRepositoryRef.context:type_name -> minder.v1.Context
-	115, // 27: minder.v1.Repository.context:type_name -> minder.v1.Context
-	254, // 28: minder.v1.Repository.created_at:type_name -> google.protobuf.Timestamp
-	254, // 29: minder.v1.Repository.updated_at:type_name -> google.protobuf.Timestamp
-	255, // 30: minder.v1.Repository.properties:type_name -> google.protobuf.Struct
+	213, // 25: minder.v1.RegistrableUpstreamEntityRef.entity:type_name -> minder.v1.UpstreamEntityRef
+	116, // 26: minder.v1.UpstreamRepositoryRef.context:type_name -> minder.v1.Context
+	116, // 27: minder.v1.Repository.context:type_name -> minder.v1.Context
+	255, // 28: minder.v1.Repository.created_at:type_name -> google.protobuf.Timestamp
+	255, // 29: minder.v1.Repository.updated_at:type_name -> google.protobuf.Timestamp
+	256, // 30: minder.v1.Repository.properties:type_name -> google.protobuf.Struct
 	39,  // 31: minder.v1.RegisterRepositoryRequest.repository:type_name -> minder.v1.UpstreamRepositoryRef
-	115, // 32: minder.v1.RegisterRepositoryRequest.context:type_name -> minder.v1.Context
-	212, // 33: minder.v1.RegisterRepositoryRequest.entity:type_name -> minder.v1.UpstreamEntityRef
+	116, // 32: minder.v1.RegisterRepositoryRequest.context:type_name -> minder.v1.Context
+	213, // 33: minder.v1.RegisterRepositoryRequest.entity:type_name -> minder.v1.UpstreamEntityRef
 	40,  // 34: minder.v1.RegisterRepoResult.repository:type_name -> minder.v1.Repository
-	217, // 35: minder.v1.RegisterRepoResult.status:type_name -> minder.v1.RegisterRepoResult.Status
+	218, // 35: minder.v1.RegisterRepoResult.status:type_name -> minder.v1.RegisterRepoResult.Status
 	42,  // 36: minder.v1.RegisterRepositoryResponse.result:type_name -> minder.v1.RegisterRepoResult
-	115, // 37: minder.v1.GetRepositoryByIdRequest.context:type_name -> minder.v1.Context
+	116, // 37: minder.v1.GetRepositoryByIdRequest.context:type_name -> minder.v1.Context
 	40,  // 38: minder.v1.GetRepositoryByIdResponse.repository:type_name -> minder.v1.Repository
-	115, // 39: minder.v1.DeleteRepositoryByIdRequest.context:type_name -> minder.v1.Context
-	115, // 40: minder.v1.GetRepositoryByNameRequest.context:type_name -> minder.v1.Context
+	116, // 39: minder.v1.DeleteRepositoryByIdRequest.context:type_name -> minder.v1.Context
+	116, // 40: minder.v1.GetRepositoryByNameRequest.context:type_name -> minder.v1.Context
 	40,  // 41: minder.v1.GetRepositoryByNameResponse.repository:type_name -> minder.v1.Repository
-	115, // 42: minder.v1.DeleteRepositoryByNameRequest.context:type_name -> minder.v1.Context
-	115, // 43: minder.v1.ListRepositoriesRequest.context:type_name -> minder.v1.Context
+	116, // 42: minder.v1.DeleteRepositoryByNameRequest.context:type_name -> minder.v1.Context
+	116, // 43: minder.v1.ListRepositoriesRequest.context:type_name -> minder.v1.Context
 	40,  // 44: minder.v1.ListRepositoriesResponse.results:type_name -> minder.v1.Repository
-	115, // 45: minder.v1.ReconcileEntityRegistrationRequest.context:type_name -> minder.v1.Context
-	254, // 46: minder.v1.VerifyProviderTokenFromRequest.timestamp:type_name -> google.protobuf.Timestamp
-	115, // 47: minder.v1.VerifyProviderTokenFromRequest.context:type_name -> minder.v1.Context
-	115, // 48: minder.v1.VerifyProviderCredentialRequest.context:type_name -> minder.v1.Context
-	254, // 49: minder.v1.CreateUserResponse.created_at:type_name -> google.protobuf.Timestamp
-	115, // 50: minder.v1.CreateUserResponse.context:type_name -> minder.v1.Context
-	254, // 51: minder.v1.UserRecord.created_at:type_name -> google.protobuf.Timestamp
-	254, // 52: minder.v1.UserRecord.updated_at:type_name -> google.protobuf.Timestamp
-	165, // 53: minder.v1.ProjectRole.role:type_name -> minder.v1.Role
+	116, // 45: minder.v1.ReconcileEntityRegistrationRequest.context:type_name -> minder.v1.Context
+	255, // 46: minder.v1.VerifyProviderTokenFromRequest.timestamp:type_name -> google.protobuf.Timestamp
+	116, // 47: minder.v1.VerifyProviderTokenFromRequest.context:type_name -> minder.v1.Context
+	116, // 48: minder.v1.VerifyProviderCredentialRequest.context:type_name -> minder.v1.Context
+	255, // 49: minder.v1.CreateUserResponse.created_at:type_name -> google.protobuf.Timestamp
+	116, // 50: minder.v1.CreateUserResponse.context:type_name -> minder.v1.Context
+	255, // 51: minder.v1.UserRecord.created_at:type_name -> google.protobuf.Timestamp
+	255, // 52: minder.v1.UserRecord.updated_at:type_name -> google.protobuf.Timestamp
+	166, // 53: minder.v1.ProjectRole.role:type_name -> minder.v1.Role
 	35,  // 54: minder.v1.ProjectRole.project:type_name -> minder.v1.Project
 	64,  // 55: minder.v1.GetUserResponse.user:type_name -> minder.v1.UserRecord
 	35,  // 56: minder.v1.GetUserResponse.projects:type_name -> minder.v1.Project
 	65,  // 57: minder.v1.GetUserResponse.project_roles:type_name -> minder.v1.ProjectRole
-	213, // 58: minder.v1.CreateDataSourceRequest.data_source:type_name -> minder.v1.DataSource
-	213, // 59: minder.v1.CreateDataSourceResponse.data_source:type_name -> minder.v1.DataSource
-	116, // 60: minder.v1.GetDataSourceByIdRequest.context:type_name -> minder.v1.ContextV2
-	213, // 61: minder.v1.GetDataSourceByIdResponse.data_source:type_name -> minder.v1.DataSource
-	116, // 62: minder.v1.GetDataSourceByNameRequest.context:type_name -> minder.v1.ContextV2
-	213, // 63: minder.v1.GetDataSourceByNameResponse.data_source:type_name -> minder.v1.DataSource
-	116, // 64: minder.v1.ListDataSourcesRequest.context:type_name -> minder.v1.ContextV2
-	213, // 65: minder.v1.ListDataSourcesResponse.data_sources:type_name -> minder.v1.DataSource
-	213, // 66: minder.v1.UpdateDataSourceRequest.data_source:type_name -> minder.v1.DataSource
-	213, // 67: minder.v1.UpdateDataSourceResponse.data_source:type_name -> minder.v1.DataSource
-	116, // 68: minder.v1.DeleteDataSourceByIdRequest.context:type_name -> minder.v1.ContextV2
-	116, // 69: minder.v1.DeleteDataSourceByNameRequest.context:type_name -> minder.v1.ContextV2
-	139, // 70: minder.v1.CreateProfileRequest.profile:type_name -> minder.v1.Profile
-	139, // 71: minder.v1.CreateProfileResponse.profile:type_name -> minder.v1.Profile
-	139, // 72: minder.v1.UpdateProfileRequest.profile:type_name -> minder.v1.Profile
-	139, // 73: minder.v1.UpdateProfileResponse.profile:type_name -> minder.v1.Profile
-	115, // 74: minder.v1.PatchProfileRequest.context:type_name -> minder.v1.Context
-	139, // 75: minder.v1.PatchProfileRequest.patch:type_name -> minder.v1.Profile
-	256, // 76: minder.v1.PatchProfileRequest.update_mask:type_name -> google.protobuf.FieldMask
-	139, // 77: minder.v1.PatchProfileResponse.profile:type_name -> minder.v1.Profile
-	115, // 78: minder.v1.DeleteProfileRequest.context:type_name -> minder.v1.Context
-	115, // 79: minder.v1.ListProfilesRequest.context:type_name -> minder.v1.Context
-	139, // 80: minder.v1.ListProfilesResponse.profiles:type_name -> minder.v1.Profile
-	115, // 81: minder.v1.GetProfileByIdRequest.context:type_name -> minder.v1.Context
-	139, // 82: minder.v1.GetProfileByIdResponse.profile:type_name -> minder.v1.Profile
-	115, // 83: minder.v1.GetProfileByNameRequest.context:type_name -> minder.v1.Context
-	139, // 84: minder.v1.GetProfileByNameResponse.profile:type_name -> minder.v1.Profile
-	254, // 85: minder.v1.ProfileStatus.last_updated:type_name -> google.protobuf.Timestamp
-	254, // 86: minder.v1.EvalResultAlert.last_updated:type_name -> google.protobuf.Timestamp
-	254, // 87: minder.v1.RuleEvaluationStatus.last_updated:type_name -> google.protobuf.Timestamp
-	218, // 88: minder.v1.RuleEvaluationStatus.entity_info:type_name -> minder.v1.RuleEvaluationStatus.EntityInfoEntry
-	254, // 89: minder.v1.RuleEvaluationStatus.remediation_last_updated:type_name -> google.protobuf.Timestamp
+	214, // 58: minder.v1.CreateDataSourceRequest.data_source:type_name -> minder.v1.DataSource
+	214, // 59: minder.v1.CreateDataSourceResponse.data_source:type_name -> minder.v1.DataSource
+	117, // 60: minder.v1.GetDataSourceByIdRequest.context:type_name -> minder.v1.ContextV2
+	214, // 61: minder.v1.GetDataSourceByIdResponse.data_source:type_name -> minder.v1.DataSource
+	117, // 62: minder.v1.GetDataSourceByNameRequest.context:type_name -> minder.v1.ContextV2
+	214, // 63: minder.v1.GetDataSourceByNameResponse.data_source:type_name -> minder.v1.DataSource
+	117, // 64: minder.v1.ListDataSourcesRequest.context:type_name -> minder.v1.ContextV2
+	214, // 65: minder.v1.ListDataSourcesResponse.data_sources:type_name -> minder.v1.DataSource
+	214, // 66: minder.v1.UpdateDataSourceRequest.data_source:type_name -> minder.v1.DataSource
+	214, // 67: minder.v1.UpdateDataSourceResponse.data_source:type_name -> minder.v1.DataSource
+	117, // 68: minder.v1.DeleteDataSourceByIdRequest.context:type_name -> minder.v1.ContextV2
+	117, // 69: minder.v1.DeleteDataSourceByNameRequest.context:type_name -> minder.v1.ContextV2
+	140, // 70: minder.v1.CreateProfileRequest.profile:type_name -> minder.v1.Profile
+	140, // 71: minder.v1.CreateProfileResponse.profile:type_name -> minder.v1.Profile
+	140, // 72: minder.v1.UpdateProfileRequest.profile:type_name -> minder.v1.Profile
+	140, // 73: minder.v1.UpdateProfileResponse.profile:type_name -> minder.v1.Profile
+	116, // 74: minder.v1.PatchProfileRequest.context:type_name -> minder.v1.Context
+	140, // 75: minder.v1.PatchProfileRequest.patch:type_name -> minder.v1.Profile
+	257, // 76: minder.v1.PatchProfileRequest.update_mask:type_name -> google.protobuf.FieldMask
+	140, // 77: minder.v1.PatchProfileResponse.profile:type_name -> minder.v1.Profile
+	116, // 78: minder.v1.DeleteProfileRequest.context:type_name -> minder.v1.Context
+	116, // 79: minder.v1.ListProfilesRequest.context:type_name -> minder.v1.Context
+	140, // 80: minder.v1.ListProfilesResponse.profiles:type_name -> minder.v1.Profile
+	116, // 81: minder.v1.GetProfileByIdRequest.context:type_name -> minder.v1.Context
+	140, // 82: minder.v1.GetProfileByIdResponse.profile:type_name -> minder.v1.Profile
+	116, // 83: minder.v1.GetProfileByNameRequest.context:type_name -> minder.v1.Context
+	140, // 84: minder.v1.GetProfileByNameResponse.profile:type_name -> minder.v1.Profile
+	255, // 85: minder.v1.ProfileStatus.last_updated:type_name -> google.protobuf.Timestamp
+	255, // 86: minder.v1.EvalResultAlert.last_updated:type_name -> google.protobuf.Timestamp
+	255, // 87: minder.v1.RuleEvaluationStatus.last_updated:type_name -> google.protobuf.Timestamp
+	219, // 88: minder.v1.RuleEvaluationStatus.entity_info:type_name -> minder.v1.RuleEvaluationStatus.EntityInfoEntry
+	255, // 89: minder.v1.RuleEvaluationStatus.remediation_last_updated:type_name -> google.protobuf.Timestamp
 	97,  // 90: minder.v1.RuleEvaluationStatus.alert:type_name -> minder.v1.EvalResultAlert
-	137, // 91: minder.v1.RuleEvaluationStatus.severity:type_name -> minder.v1.Severity
+	138, // 91: minder.v1.RuleEvaluationStatus.severity:type_name -> minder.v1.Severity
 	4,   // 92: minder.v1.RuleEvaluationStatus.release_phase:type_name -> minder.v1.RuleTypeReleasePhase
-	257, // 93: minder.v1.RuleEvaluationStatus.output:type_name -> google.protobuf.Value
+	258, // 93: minder.v1.RuleEvaluationStatus.output:type_name -> google.protobuf.Value
 	3,   // 94: minder.v1.EntityTypedId.type:type_name -> minder.v1.Entity
-	115, // 95: minder.v1.GetProfileStatusByNameRequest.context:type_name -> minder.v1.Context
+	116, // 95: minder.v1.GetProfileStatusByNameRequest.context:type_name -> minder.v1.Context
 	99,  // 96: minder.v1.GetProfileStatusByNameRequest.entity:type_name -> minder.v1.EntityTypedId
 	96,  // 97: minder.v1.GetProfileStatusByNameResponse.profile_status:type_name -> minder.v1.ProfileStatus
 	98,  // 98: minder.v1.GetProfileStatusByNameResponse.rule_evaluation_status:type_name -> minder.v1.RuleEvaluationStatus
-	115, // 99: minder.v1.GetProfileStatusByIdRequest.context:type_name -> minder.v1.Context
+	116, // 99: minder.v1.GetProfileStatusByIdRequest.context:type_name -> minder.v1.Context
 	99,  // 100: minder.v1.GetProfileStatusByIdRequest.entity:type_name -> minder.v1.EntityTypedId
 	96,  // 101: minder.v1.GetProfileStatusByIdResponse.profile_status:type_name -> minder.v1.ProfileStatus
 	98,  // 102: minder.v1.GetProfileStatusByIdResponse.rule_evaluation_status:type_name -> minder.v1.RuleEvaluationStatus
-	115, // 103: minder.v1.GetProfileStatusByProjectRequest.context:type_name -> minder.v1.Context
+	116, // 103: minder.v1.GetProfileStatusByProjectRequest.context:type_name -> minder.v1.Context
 	96,  // 104: minder.v1.GetProfileStatusByProjectResponse.profile_status:type_name -> minder.v1.ProfileStatus
-	219, // 105: minder.v1.AutoRegistration.entities:type_name -> minder.v1.AutoRegistration.EntitiesEntry
+	220, // 105: minder.v1.AutoRegistration.entities:type_name -> minder.v1.AutoRegistration.EntitiesEntry
 	107, // 106: minder.v1.ProviderConfig.auto_registration:type_name -> minder.v1.AutoRegistration
-	115, // 107: minder.v1.ListRuleTypesRequest.context:type_name -> minder.v1.Context
-	138, // 108: minder.v1.ListRuleTypesResponse.rule_types:type_name -> minder.v1.RuleType
-	115, // 109: minder.v1.GetRuleTypeByNameRequest.context:type_name -> minder.v1.Context
-	138, // 110: minder.v1.GetRuleTypeByNameResponse.rule_type:type_name -> minder.v1.RuleType
-	115, // 111: minder.v1.GetRuleTypeByIdRequest.context:type_name -> minder.v1.Context
-	138, // 112: minder.v1.GetRuleTypeByIdResponse.rule_type:type_name -> minder.v1.RuleType
-	138, // 113: minder.v1.CreateRuleTypeRequest.rule_type:type_name -> minder.v1.RuleType
-	138, // 114: minder.v1.CreateRuleTypeResponse.rule_type:type_name -> minder.v1.RuleType
-	138, // 115: minder.v1.UpdateRuleTypeRequest.rule_type:type_name -> minder.v1.RuleType
-	138, // 116: minder.v1.UpdateRuleTypeResponse.rule_type:type_name -> minder.v1.RuleType
-	115, // 117: minder.v1.DeleteRuleTypeRequest.context:type_name -> minder.v1.Context
-	115, // 118: minder.v1.ListEvaluationResultsRequest.context:type_name -> minder.v1.Context
+	116, // 107: minder.v1.ListRuleTypesRequest.context:type_name -> minder.v1.Context
+	139, // 108: minder.v1.ListRuleTypesResponse.rule_types:type_name -> minder.v1.RuleType
+	116, // 109: minder.v1.GetRuleTypeByNameRequest.context:type_name -> minder.v1.Context
+	139, // 110: minder.v1.GetRuleTypeByNameResponse.rule_type:type_name -> minder.v1.RuleType
+	116, // 111: minder.v1.GetRuleTypeByIdRequest.context:type_name -> minder.v1.Context
+	139, // 112: minder.v1.GetRuleTypeByIdResponse.rule_type:type_name -> minder.v1.RuleType
+	139, // 113: minder.v1.CreateRuleTypeRequest.rule_type:type_name -> minder.v1.RuleType
+	139, // 114: minder.v1.CreateRuleTypeResponse.rule_type:type_name -> minder.v1.RuleType
+	139, // 115: minder.v1.UpdateRuleTypeRequest.rule_type:type_name -> minder.v1.RuleType
+	139, // 116: minder.v1.UpdateRuleTypeResponse.rule_type:type_name -> minder.v1.RuleType
+	116, // 117: minder.v1.DeleteRuleTypeRequest.context:type_name -> minder.v1.Context
+	116, // 118: minder.v1.ListEvaluationResultsRequest.context:type_name -> minder.v1.Context
 	99,  // 119: minder.v1.ListEvaluationResultsRequest.entity:type_name -> minder.v1.EntityTypedId
-	221, // 120: minder.v1.ListEvaluationResultsResponse.entities:type_name -> minder.v1.ListEvaluationResultsResponse.EntityEvaluationResults
-	222, // 121: minder.v1.RestType.fallback:type_name -> minder.v1.RestType.Fallback
-	223, // 122: minder.v1.DiffType.ecosystems:type_name -> minder.v1.DiffType.Ecosystem
-	224, // 123: minder.v1.DepsType.repo:type_name -> minder.v1.DepsType.RepoConfigs
-	225, // 124: minder.v1.DepsType.pr:type_name -> minder.v1.DepsType.PullRequestConfigs
+	222, // 120: minder.v1.ListEvaluationResultsResponse.entities:type_name -> minder.v1.ListEvaluationResultsResponse.EntityEvaluationResults
+	223, // 121: minder.v1.RestType.fallback:type_name -> minder.v1.RestType.Fallback
+	224, // 122: minder.v1.DiffType.ecosystems:type_name -> minder.v1.DiffType.Ecosystem
+	225, // 123: minder.v1.DepsType.repo:type_name -> minder.v1.DepsType.RepoConfigs
+	226, // 124: minder.v1.DepsType.pr:type_name -> minder.v1.DepsType.PullRequestConfigs
 	9,   // 125: minder.v1.Severity.value:type_name -> minder.v1.Severity.Value
-	115, // 126: minder.v1.RuleType.context:type_name -> minder.v1.Context
-	226, // 127: minder.v1.RuleType.def:type_name -> minder.v1.RuleType.Definition
-	137, // 128: minder.v1.RuleType.severity:type_name -> minder.v1.Severity
+	116, // 126: minder.v1.RuleType.context:type_name -> minder.v1.Context
+	227, // 127: minder.v1.RuleType.def:type_name -> minder.v1.RuleType.Definition
+	138, // 128: minder.v1.RuleType.severity:type_name -> minder.v1.Severity
 	4,   // 129: minder.v1.RuleType.release_phase:type_name -> minder.v1.RuleTypeReleasePhase
-	115, // 130: minder.v1.Profile.context:type_name -> minder.v1.Context
-	244, // 131: minder.v1.Profile.repository:type_name -> minder.v1.Profile.Rule
-	244, // 132: minder.v1.Profile.build_environment:type_name -> minder.v1.Profile.Rule
-	244, // 133: minder.v1.Profile.artifact:type_name -> minder.v1.Profile.Rule
-	244, // 134: minder.v1.Profile.pull_request:type_name -> minder.v1.Profile.Rule
-	244, // 135: minder.v1.Profile.release:type_name -> minder.v1.Profile.Rule
-	244, // 136: minder.v1.Profile.pipeline_run:type_name -> minder.v1.Profile.Rule
-	244, // 137: minder.v1.Profile.task_run:type_name -> minder.v1.Profile.Rule
-	244, // 138: minder.v1.Profile.build:type_name -> minder.v1.Profile.Rule
-	245, // 139: minder.v1.Profile.selection:type_name -> minder.v1.Profile.Selector
+	116, // 130: minder.v1.Profile.context:type_name -> minder.v1.Context
+	245, // 131: minder.v1.Profile.repository:type_name -> minder.v1.Profile.Rule
+	245, // 132: minder.v1.Profile.build_environment:type_name -> minder.v1.Profile.Rule
+	245, // 133: minder.v1.Profile.artifact:type_name -> minder.v1.Profile.Rule
+	245, // 134: minder.v1.Profile.pull_request:type_name -> minder.v1.Profile.Rule
+	245, // 135: minder.v1.Profile.release:type_name -> minder.v1.Profile.Rule
+	245, // 136: minder.v1.Profile.pipeline_run:type_name -> minder.v1.Profile.Rule
+	245, // 137: minder.v1.Profile.task_run:type_name -> minder.v1.Profile.Rule
+	245, // 138: minder.v1.Profile.build:type_name -> minder.v1.Profile.Rule
+	246, // 139: minder.v1.Profile.selection:type_name -> minder.v1.Profile.Selector
 	35,  // 140: minder.v1.ListProjectsResponse.projects:type_name -> minder.v1.Project
-	115, // 141: minder.v1.CreateProjectRequest.context:type_name -> minder.v1.Context
+	116, // 141: minder.v1.CreateProjectRequest.context:type_name -> minder.v1.Context
 	35,  // 142: minder.v1.CreateProjectResponse.project:type_name -> minder.v1.Project
-	115, // 143: minder.v1.DeleteProjectRequest.context:type_name -> minder.v1.Context
-	115, // 144: minder.v1.UpdateProjectRequest.context:type_name -> minder.v1.Context
+	116, // 143: minder.v1.DeleteProjectRequest.context:type_name -> minder.v1.Context
+	116, // 144: minder.v1.UpdateProjectRequest.context:type_name -> minder.v1.Context
 	35,  // 145: minder.v1.UpdateProjectResponse.project:type_name -> minder.v1.Project
-	115, // 146: minder.v1.PatchProjectRequest.context:type_name -> minder.v1.Context
-	148, // 147: minder.v1.PatchProjectRequest.patch:type_name -> minder.v1.ProjectPatch
-	256, // 148: minder.v1.PatchProjectRequest.update_mask:type_name -> google.protobuf.FieldMask
+	116, // 146: minder.v1.PatchProjectRequest.context:type_name -> minder.v1.Context
+	149, // 147: minder.v1.PatchProjectRequest.patch:type_name -> minder.v1.ProjectPatch
+	257, // 148: minder.v1.PatchProjectRequest.update_mask:type_name -> google.protobuf.FieldMask
 	35,  // 149: minder.v1.PatchProjectResponse.project:type_name -> minder.v1.Project
-	116, // 150: minder.v1.ListChildProjectsRequest.context:type_name -> minder.v1.ContextV2
+	117, // 150: minder.v1.ListChildProjectsRequest.context:type_name -> minder.v1.ContextV2
 	35,  // 151: minder.v1.ListChildProjectsResponse.projects:type_name -> minder.v1.Project
 	99,  // 152: minder.v1.CreateEntityReconciliationTaskRequest.entity:type_name -> minder.v1.EntityTypedId
-	115, // 153: minder.v1.CreateEntityReconciliationTaskRequest.context:type_name -> minder.v1.Context
-	115, // 154: minder.v1.ListRolesRequest.context:type_name -> minder.v1.Context
-	165, // 155: minder.v1.ListRolesResponse.roles:type_name -> minder.v1.Role
-	115, // 156: minder.v1.ListRoleAssignmentsRequest.context:type_name -> minder.v1.Context
-	166, // 157: minder.v1.ListRoleAssignmentsResponse.role_assignments:type_name -> minder.v1.RoleAssignment
-	171, // 158: minder.v1.ListRoleAssignmentsResponse.invitations:type_name -> minder.v1.Invitation
-	115, // 159: minder.v1.AssignRoleRequest.context:type_name -> minder.v1.Context
-	166, // 160: minder.v1.AssignRoleRequest.role_assignment:type_name -> minder.v1.RoleAssignment
-	166, // 161: minder.v1.AssignRoleResponse.role_assignment:type_name -> minder.v1.RoleAssignment
-	171, // 162: minder.v1.AssignRoleResponse.invitation:type_name -> minder.v1.Invitation
-	115, // 163: minder.v1.UpdateRoleRequest.context:type_name -> minder.v1.Context
-	166, // 164: minder.v1.UpdateRoleResponse.role_assignments:type_name -> minder.v1.RoleAssignment
-	171, // 165: minder.v1.UpdateRoleResponse.invitations:type_name -> minder.v1.Invitation
-	115, // 166: minder.v1.RemoveRoleRequest.context:type_name -> minder.v1.Context
-	166, // 167: minder.v1.RemoveRoleRequest.role_assignment:type_name -> minder.v1.RoleAssignment
-	166, // 168: minder.v1.RemoveRoleResponse.role_assignment:type_name -> minder.v1.RoleAssignment
-	171, // 169: minder.v1.RemoveRoleResponse.invitation:type_name -> minder.v1.Invitation
-	171, // 170: minder.v1.ListInvitationsResponse.invitations:type_name -> minder.v1.Invitation
-	254, // 171: minder.v1.Invitation.created_at:type_name -> google.protobuf.Timestamp
-	254, // 172: minder.v1.Invitation.expires_at:type_name -> google.protobuf.Timestamp
-	115, // 173: minder.v1.GetProviderRequest.context:type_name -> minder.v1.Context
-	190, // 174: minder.v1.GetProviderResponse.provider:type_name -> minder.v1.Provider
-	115, // 175: minder.v1.ListProvidersRequest.context:type_name -> minder.v1.Context
-	190, // 176: minder.v1.ListProvidersResponse.providers:type_name -> minder.v1.Provider
-	115, // 177: minder.v1.CreateProviderRequest.context:type_name -> minder.v1.Context
-	190, // 178: minder.v1.CreateProviderRequest.provider:type_name -> minder.v1.Provider
-	190, // 179: minder.v1.CreateProviderResponse.provider:type_name -> minder.v1.Provider
-	187, // 180: minder.v1.CreateProviderResponse.authorization:type_name -> minder.v1.AuthorizationParams
-	115, // 181: minder.v1.DeleteProviderRequest.context:type_name -> minder.v1.Context
-	115, // 182: minder.v1.DeleteProviderByIDRequest.context:type_name -> minder.v1.Context
-	115, // 183: minder.v1.ListProviderClassesRequest.context:type_name -> minder.v1.Context
+	116, // 153: minder.v1.CreateEntityReconciliationTaskRequest.context:type_name -> minder.v1.Context
+	116, // 154: minder.v1.ListRolesRequest.context:type_name -> minder.v1.Context
+	166, // 155: minder.v1.ListRolesResponse.roles:type_name -> minder.v1.Role
+	116, // 156: minder.v1.ListRoleAssignmentsRequest.context:type_name -> minder.v1.Context
+	167, // 157: minder.v1.ListRoleAssignmentsResponse.role_assignments:type_name -> minder.v1.RoleAssignment
+	172, // 158: minder.v1.ListRoleAssignmentsResponse.invitations:type_name -> minder.v1.Invitation
+	116, // 159: minder.v1.AssignRoleRequest.context:type_name -> minder.v1.Context
+	167, // 160: minder.v1.AssignRoleRequest.role_assignment:type_name -> minder.v1.RoleAssignment
+	167, // 161: minder.v1.AssignRoleResponse.role_assignment:type_name -> minder.v1.RoleAssignment
+	172, // 162: minder.v1.AssignRoleResponse.invitation:type_name -> minder.v1.Invitation
+	116, // 163: minder.v1.UpdateRoleRequest.context:type_name -> minder.v1.Context
+	167, // 164: minder.v1.UpdateRoleResponse.role_assignments:type_name -> minder.v1.RoleAssignment
+	172, // 165: minder.v1.UpdateRoleResponse.invitations:type_name -> minder.v1.Invitation
+	116, // 166: minder.v1.RemoveRoleRequest.context:type_name -> minder.v1.Context
+	167, // 167: minder.v1.RemoveRoleRequest.role_assignment:type_name -> minder.v1.RoleAssignment
+	167, // 168: minder.v1.RemoveRoleResponse.role_assignment:type_name -> minder.v1.RoleAssignment
+	172, // 169: minder.v1.RemoveRoleResponse.invitation:type_name -> minder.v1.Invitation
+	172, // 170: minder.v1.ListInvitationsResponse.invitations:type_name -> minder.v1.Invitation
+	255, // 171: minder.v1.Invitation.created_at:type_name -> google.protobuf.Timestamp
+	255, // 172: minder.v1.Invitation.expires_at:type_name -> google.protobuf.Timestamp
+	116, // 173: minder.v1.GetProviderRequest.context:type_name -> minder.v1.Context
+	191, // 174: minder.v1.GetProviderResponse.provider:type_name -> minder.v1.Provider
+	116, // 175: minder.v1.ListProvidersRequest.context:type_name -> minder.v1.Context
+	191, // 176: minder.v1.ListProvidersResponse.providers:type_name -> minder.v1.Provider
+	116, // 177: minder.v1.CreateProviderRequest.context:type_name -> minder.v1.Context
+	191, // 178: minder.v1.CreateProviderRequest.provider:type_name -> minder.v1.Provider
+	191, // 179: minder.v1.CreateProviderResponse.provider:type_name -> minder.v1.Provider
+	188, // 180: minder.v1.CreateProviderResponse.authorization:type_name -> minder.v1.AuthorizationParams
+	116, // 181: minder.v1.DeleteProviderRequest.context:type_name -> minder.v1.Context
+	116, // 182: minder.v1.DeleteProviderByIDRequest.context:type_name -> minder.v1.Context
+	116, // 183: minder.v1.ListProviderClassesRequest.context:type_name -> minder.v1.Context
 	5,   // 184: minder.v1.ProviderClassInfo.supported_provider_types:type_name -> minder.v1.ProviderType
 	7,   // 185: minder.v1.ProviderClassInfo.supported_auth_flows:type_name -> minder.v1.AuthorizationFlow
 	3,   // 186: minder.v1.ProviderClassInfo.supported_entities:type_name -> minder.v1.Entity
-	183, // 187: minder.v1.ListProviderClassesResponse.provider_class_infos:type_name -> minder.v1.ProviderClassInfo
-	115, // 188: minder.v1.PatchProviderRequest.context:type_name -> minder.v1.Context
-	190, // 189: minder.v1.PatchProviderRequest.patch:type_name -> minder.v1.Provider
-	256, // 190: minder.v1.PatchProviderRequest.update_mask:type_name -> google.protobuf.FieldMask
-	190, // 191: minder.v1.PatchProviderResponse.provider:type_name -> minder.v1.Provider
-	189, // 192: minder.v1.ProviderParameter.github_app:type_name -> minder.v1.GitHubAppParams
+	184, // 187: minder.v1.ListProviderClassesResponse.provider_class_infos:type_name -> minder.v1.ProviderClassInfo
+	116, // 188: minder.v1.PatchProviderRequest.context:type_name -> minder.v1.Context
+	191, // 189: minder.v1.PatchProviderRequest.patch:type_name -> minder.v1.Provider
+	257, // 190: minder.v1.PatchProviderRequest.update_mask:type_name -> google.protobuf.FieldMask
+	191, // 191: minder.v1.PatchProviderResponse.provider:type_name -> minder.v1.Provider
+	190, // 192: minder.v1.ProviderParameter.github_app:type_name -> minder.v1.GitHubAppParams
 	5,   // 193: minder.v1.Provider.implements:type_name -> minder.v1.ProviderType
-	255, // 194: minder.v1.Provider.config:type_name -> google.protobuf.Struct
+	256, // 194: minder.v1.Provider.config:type_name -> google.protobuf.Struct
 	7,   // 195: minder.v1.Provider.auth_flows:type_name -> minder.v1.AuthorizationFlow
-	188, // 196: minder.v1.Provider.parameters:type_name -> minder.v1.ProviderParameter
-	115, // 197: minder.v1.GetEvaluationHistoryRequest.context:type_name -> minder.v1.Context
-	115, // 198: minder.v1.ListEvaluationHistoryRequest.context:type_name -> minder.v1.Context
-	254, // 199: minder.v1.ListEvaluationHistoryRequest.from:type_name -> google.protobuf.Timestamp
-	254, // 200: minder.v1.ListEvaluationHistoryRequest.to:type_name -> google.protobuf.Timestamp
+	189, // 196: minder.v1.Provider.parameters:type_name -> minder.v1.ProviderParameter
+	116, // 197: minder.v1.GetEvaluationHistoryRequest.context:type_name -> minder.v1.Context
+	116, // 198: minder.v1.ListEvaluationHistoryRequest.context:type_name -> minder.v1.Context
+	255, // 199: minder.v1.ListEvaluationHistoryRequest.from:type_name -> google.protobuf.Timestamp
+	255, // 200: minder.v1.ListEvaluationHistoryRequest.to:type_name -> google.protobuf.Timestamp
 	11,  // 201: minder.v1.ListEvaluationHistoryRequest.cursor:type_name -> minder.v1.Cursor
-	195, // 202: minder.v1.GetEvaluationHistoryResponse.evaluation:type_name -> minder.v1.EvaluationHistory
-	195, // 203: minder.v1.ListEvaluationHistoryResponse.data:type_name -> minder.v1.EvaluationHistory
+	196, // 202: minder.v1.GetEvaluationHistoryResponse.evaluation:type_name -> minder.v1.EvaluationHistory
+	196, // 203: minder.v1.ListEvaluationHistoryResponse.data:type_name -> minder.v1.EvaluationHistory
 	12,  // 204: minder.v1.ListEvaluationHistoryResponse.page:type_name -> minder.v1.CursorPage
-	196, // 205: minder.v1.EvaluationHistory.entity:type_name -> minder.v1.EvaluationHistoryEntity
-	197, // 206: minder.v1.EvaluationHistory.rule:type_name -> minder.v1.EvaluationHistoryRule
-	198, // 207: minder.v1.EvaluationHistory.status:type_name -> minder.v1.EvaluationHistoryStatus
-	200, // 208: minder.v1.EvaluationHistory.alert:type_name -> minder.v1.EvaluationHistoryAlert
-	199, // 209: minder.v1.EvaluationHistory.remediation:type_name -> minder.v1.EvaluationHistoryRemediation
-	254, // 210: minder.v1.EvaluationHistory.evaluated_at:type_name -> google.protobuf.Timestamp
+	197, // 205: minder.v1.EvaluationHistory.entity:type_name -> minder.v1.EvaluationHistoryEntity
+	198, // 206: minder.v1.EvaluationHistory.rule:type_name -> minder.v1.EvaluationHistoryRule
+	199, // 207: minder.v1.EvaluationHistory.status:type_name -> minder.v1.EvaluationHistoryStatus
+	201, // 208: minder.v1.EvaluationHistory.alert:type_name -> minder.v1.EvaluationHistoryAlert
+	200, // 209: minder.v1.EvaluationHistory.remediation:type_name -> minder.v1.EvaluationHistoryRemediation
+	255, // 210: minder.v1.EvaluationHistory.evaluated_at:type_name -> google.protobuf.Timestamp
 	3,   // 211: minder.v1.EvaluationHistoryEntity.type:type_name -> minder.v1.Entity
-	137, // 212: minder.v1.EvaluationHistoryRule.severity:type_name -> minder.v1.Severity
-	257, // 213: minder.v1.EvaluationHistoryStatus.output:type_name -> google.protobuf.Value
-	116, // 214: minder.v1.EntityInstance.context:type_name -> minder.v1.ContextV2
+	138, // 212: minder.v1.EvaluationHistoryRule.severity:type_name -> minder.v1.Severity
+	258, // 213: minder.v1.EvaluationHistoryStatus.output:type_name -> google.protobuf.Value
+	117, // 214: minder.v1.EntityInstance.context:type_name -> minder.v1.ContextV2
 	3,   // 215: minder.v1.EntityInstance.type:type_name -> minder.v1.Entity
-	255, // 216: minder.v1.EntityInstance.properties:type_name -> google.protobuf.Struct
-	116, // 217: minder.v1.ListEntitiesRequest.context:type_name -> minder.v1.ContextV2
+	256, // 216: minder.v1.EntityInstance.properties:type_name -> google.protobuf.Struct
+	117, // 217: minder.v1.ListEntitiesRequest.context:type_name -> minder.v1.ContextV2
 	3,   // 218: minder.v1.ListEntitiesRequest.entity_type:type_name -> minder.v1.Entity
 	11,  // 219: minder.v1.ListEntitiesRequest.cursor:type_name -> minder.v1.Cursor
-	201, // 220: minder.v1.ListEntitiesResponse.results:type_name -> minder.v1.EntityInstance
+	202, // 220: minder.v1.ListEntitiesResponse.results:type_name -> minder.v1.EntityInstance
 	12,  // 221: minder.v1.ListEntitiesResponse.page:type_name -> minder.v1.CursorPage
-	116, // 222: minder.v1.GetEntityByIdRequest.context:type_name -> minder.v1.ContextV2
-	201, // 223: minder.v1.GetEntityByIdResponse.entity:type_name -> minder.v1.EntityInstance
-	116, // 224: minder.v1.GetEntityByNameRequest.context:type_name -> minder.v1.ContextV2
+	117, // 222: minder.v1.GetEntityByIdRequest.context:type_name -> minder.v1.ContextV2
+	202, // 223: minder.v1.GetEntityByIdResponse.entity:type_name -> minder.v1.EntityInstance
+	117, // 224: minder.v1.GetEntityByNameRequest.context:type_name -> minder.v1.ContextV2
 	3,   // 225: minder.v1.GetEntityByNameRequest.entity_type:type_name -> minder.v1.Entity
-	201, // 226: minder.v1.GetEntityByNameResponse.entity:type_name -> minder.v1.EntityInstance
-	116, // 227: minder.v1.DeleteEntityByIdRequest.context:type_name -> minder.v1.ContextV2
-	116, // 228: minder.v1.RegisterEntityRequest.context:type_name -> minder.v1.ContextV2
+	202, // 226: minder.v1.GetEntityByNameResponse.entity:type_name -> minder.v1.EntityInstance
+	117, // 227: minder.v1.DeleteEntityByIdRequest.context:type_name -> minder.v1.ContextV2
+	117, // 228: minder.v1.RegisterEntityRequest.context:type_name -> minder.v1.ContextV2
 	3,   // 229: minder.v1.RegisterEntityRequest.entity_type:type_name -> minder.v1.Entity
-	246, // 230: minder.v1.RegisterEntityRequest.identifying_properties:type_name -> minder.v1.RegisterEntityRequest.IdentifyingPropertiesEntry
-	201, // 231: minder.v1.RegisterEntityResponse.entity:type_name -> minder.v1.EntityInstance
-	116, // 232: minder.v1.UpstreamEntityRef.context:type_name -> minder.v1.ContextV2
+	247, // 230: minder.v1.RegisterEntityRequest.identifying_properties:type_name -> minder.v1.RegisterEntityRequest.IdentifyingPropertiesEntry
+	202, // 231: minder.v1.RegisterEntityResponse.entity:type_name -> minder.v1.EntityInstance
+	117, // 232: minder.v1.UpstreamEntityRef.context:type_name -> minder.v1.ContextV2
 	3,   // 233: minder.v1.UpstreamEntityRef.type:type_name -> minder.v1.Entity
-	255, // 234: minder.v1.UpstreamEntityRef.properties:type_name -> google.protobuf.Struct
-	116, // 235: minder.v1.DataSource.context:type_name -> minder.v1.ContextV2
-	214, // 236: minder.v1.DataSource.structured:type_name -> minder.v1.StructDataSource
-	215, // 237: minder.v1.DataSource.rest:type_name -> minder.v1.RestDataSource
-	248, // 238: minder.v1.StructDataSource.def:type_name -> minder.v1.StructDataSource.DefEntry
-	251, // 239: minder.v1.RestDataSource.def:type_name -> minder.v1.RestDataSource.DefEntry
+	256, // 234: minder.v1.UpstreamEntityRef.properties:type_name -> google.protobuf.Struct
+	117, // 235: minder.v1.DataSource.context:type_name -> minder.v1.ContextV2
+	215, // 236: minder.v1.DataSource.structured:type_name -> minder.v1.StructDataSource
+	216, // 237: minder.v1.DataSource.rest:type_name -> minder.v1.RestDataSource
+	249, // 238: minder.v1.StructDataSource.def:type_name -> minder.v1.StructDataSource.DefEntry
+	252, // 239: minder.v1.RestDataSource.def:type_name -> minder.v1.RestDataSource.DefEntry
 	106, // 240: minder.v1.AutoRegistration.EntitiesEntry.value:type_name -> minder.v1.EntityAutoRegistrationConfig
 	96,  // 241: minder.v1.ListEvaluationResultsResponse.EntityProfileEvaluationResults.profile_status:type_name -> minder.v1.ProfileStatus
 	98,  // 242: minder.v1.ListEvaluationResultsResponse.EntityProfileEvaluationResults.results:type_name -> minder.v1.RuleEvaluationStatus
 	99,  // 243: minder.v1.ListEvaluationResultsResponse.EntityEvaluationResults.entity:type_name -> minder.v1.EntityTypedId
-	220, // 244: minder.v1.ListEvaluationResultsResponse.EntityEvaluationResults.profiles:type_name -> minder.v1.ListEvaluationResultsResponse.EntityProfileEvaluationResults
-	255, // 245: minder.v1.RuleType.Definition.rule_schema:type_name -> google.protobuf.Struct
-	255, // 246: minder.v1.RuleType.Definition.param_schema:type_name -> google.protobuf.Struct
-	227, // 247: minder.v1.RuleType.Definition.ingest:type_name -> minder.v1.RuleType.Definition.Ingest
-	228, // 248: minder.v1.RuleType.Definition.eval:type_name -> minder.v1.RuleType.Definition.Eval
-	229, // 249: minder.v1.RuleType.Definition.remediate:type_name -> minder.v1.RuleType.Definition.Remediate
-	230, // 250: minder.v1.RuleType.Definition.alert:type_name -> minder.v1.RuleType.Definition.Alert
-	131, // 251: minder.v1.RuleType.Definition.Ingest.rest:type_name -> minder.v1.RestType
-	132, // 252: minder.v1.RuleType.Definition.Ingest.builtin:type_name -> minder.v1.BuiltinType
-	133, // 253: minder.v1.RuleType.Definition.Ingest.artifact:type_name -> minder.v1.ArtifactType
-	134, // 254: minder.v1.RuleType.Definition.Ingest.git:type_name -> minder.v1.GitType
-	135, // 255: minder.v1.RuleType.Definition.Ingest.diff:type_name -> minder.v1.DiffType
-	136, // 256: minder.v1.RuleType.Definition.Ingest.deps:type_name -> minder.v1.DepsType
-	231, // 257: minder.v1.RuleType.Definition.Eval.jq:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison
-	232, // 258: minder.v1.RuleType.Definition.Eval.rego:type_name -> minder.v1.RuleType.Definition.Eval.Rego
-	233, // 259: minder.v1.RuleType.Definition.Eval.vulncheck:type_name -> minder.v1.RuleType.Definition.Eval.Vulncheck
-	234, // 260: minder.v1.RuleType.Definition.Eval.trusty:type_name -> minder.v1.RuleType.Definition.Eval.Trusty
-	235, // 261: minder.v1.RuleType.Definition.Eval.homoglyphs:type_name -> minder.v1.RuleType.Definition.Eval.Homoglyphs
-	216, // 262: minder.v1.RuleType.Definition.Eval.data_sources:type_name -> minder.v1.DataSourceReference
-	131, // 263: minder.v1.RuleType.Definition.Remediate.rest:type_name -> minder.v1.RestType
-	237, // 264: minder.v1.RuleType.Definition.Remediate.gh_branch_protection:type_name -> minder.v1.RuleType.Definition.Remediate.GhBranchProtectionType
-	238, // 265: minder.v1.RuleType.Definition.Remediate.pull_request:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation
-	243, // 266: minder.v1.RuleType.Definition.Remediate.pull_request_comment:type_name -> minder.v1.RuleType.Definition.Alert.AlertTypePRComment
-	239, // 267: minder.v1.RuleType.Definition.Remediate.issue:type_name -> minder.v1.RuleType.Definition.Remediate.IssueRemediation
-	242, // 268: minder.v1.RuleType.Definition.Alert.security_advisory:type_name -> minder.v1.RuleType.Definition.Alert.AlertTypeSA
-	243, // 269: minder.v1.RuleType.Definition.Alert.pull_request_comment:type_name -> minder.v1.RuleType.Definition.Alert.AlertTypePRComment
-	236, // 270: minder.v1.RuleType.Definition.Eval.JQComparison.ingested:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison.Operator
-	236, // 271: minder.v1.RuleType.Definition.Eval.JQComparison.profile:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison.Operator
-	257, // 272: minder.v1.RuleType.Definition.Eval.JQComparison.constant:type_name -> google.protobuf.Value
-	240, // 273: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.contents:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.Content
-	255, // 274: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.params:type_name -> google.protobuf.Struct
-	241, // 275: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.actions_replace_tags_with_sha:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha
-	255, // 276: minder.v1.Profile.Rule.params:type_name -> google.protobuf.Struct
-	255, // 277: minder.v1.Profile.Rule.def:type_name -> google.protobuf.Struct
-	257, // 278: minder.v1.RegisterEntityRequest.IdentifyingPropertiesEntry.value:type_name -> google.protobuf.Value
-	249, // 279: minder.v1.StructDataSource.Def.path:type_name -> minder.v1.StructDataSource.Def.Path
-	247, // 280: minder.v1.StructDataSource.DefEntry.value:type_name -> minder.v1.StructDataSource.Def
-	252, // 281: minder.v1.RestDataSource.Def.headers:type_name -> minder.v1.RestDataSource.Def.HeadersEntry
-	255, // 282: minder.v1.RestDataSource.Def.bodyobj:type_name -> google.protobuf.Struct
-	253, // 283: minder.v1.RestDataSource.Def.fallback:type_name -> minder.v1.RestDataSource.Def.Fallback
-	255, // 284: minder.v1.RestDataSource.Def.input_schema:type_name -> google.protobuf.Struct
-	250, // 285: minder.v1.RestDataSource.DefEntry.value:type_name -> minder.v1.RestDataSource.Def
-	258, // 286: minder.v1.name:extendee -> google.protobuf.EnumValueOptions
-	259, // 287: minder.v1.rpc_options:extendee -> google.protobuf.MethodOptions
+	221, // 244: minder.v1.ListEvaluationResultsResponse.EntityEvaluationResults.profiles:type_name -> minder.v1.ListEvaluationResultsResponse.EntityProfileEvaluationResults
+	256, // 245: minder.v1.RuleType.Definition.rule_schema:type_name -> google.protobuf.Struct
+	256, // 246: minder.v1.RuleType.Definition.param_schema:type_name -> google.protobuf.Struct
+	228, // 247: minder.v1.RuleType.Definition.ingest:type_name -> minder.v1.RuleType.Definition.Ingest
+	229, // 248: minder.v1.RuleType.Definition.eval:type_name -> minder.v1.RuleType.Definition.Eval
+	230, // 249: minder.v1.RuleType.Definition.remediate:type_name -> minder.v1.RuleType.Definition.Remediate
+	231, // 250: minder.v1.RuleType.Definition.alert:type_name -> minder.v1.RuleType.Definition.Alert
+	132, // 251: minder.v1.RuleType.Definition.Ingest.rest:type_name -> minder.v1.RestType
+	133, // 252: minder.v1.RuleType.Definition.Ingest.builtin:type_name -> minder.v1.BuiltinType
+	134, // 253: minder.v1.RuleType.Definition.Ingest.artifact:type_name -> minder.v1.ArtifactType
+	135, // 254: minder.v1.RuleType.Definition.Ingest.git:type_name -> minder.v1.GitType
+	136, // 255: minder.v1.RuleType.Definition.Ingest.diff:type_name -> minder.v1.DiffType
+	137, // 256: minder.v1.RuleType.Definition.Ingest.deps:type_name -> minder.v1.DepsType
+	232, // 257: minder.v1.RuleType.Definition.Eval.jq:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison
+	233, // 258: minder.v1.RuleType.Definition.Eval.rego:type_name -> minder.v1.RuleType.Definition.Eval.Rego
+	234, // 259: minder.v1.RuleType.Definition.Eval.vulncheck:type_name -> minder.v1.RuleType.Definition.Eval.Vulncheck
+	235, // 260: minder.v1.RuleType.Definition.Eval.trusty:type_name -> minder.v1.RuleType.Definition.Eval.Trusty
+	236, // 261: minder.v1.RuleType.Definition.Eval.homoglyphs:type_name -> minder.v1.RuleType.Definition.Eval.Homoglyphs
+	217, // 262: minder.v1.RuleType.Definition.Eval.data_sources:type_name -> minder.v1.DataSourceReference
+	132, // 263: minder.v1.RuleType.Definition.Remediate.rest:type_name -> minder.v1.RestType
+	238, // 264: minder.v1.RuleType.Definition.Remediate.gh_branch_protection:type_name -> minder.v1.RuleType.Definition.Remediate.GhBranchProtectionType
+	239, // 265: minder.v1.RuleType.Definition.Remediate.pull_request:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation
+	244, // 266: minder.v1.RuleType.Definition.Remediate.pull_request_comment:type_name -> minder.v1.RuleType.Definition.Alert.AlertTypePRComment
+	240, // 267: minder.v1.RuleType.Definition.Remediate.issue:type_name -> minder.v1.RuleType.Definition.Remediate.IssueRemediation
+	243, // 268: minder.v1.RuleType.Definition.Alert.security_advisory:type_name -> minder.v1.RuleType.Definition.Alert.AlertTypeSA
+	244, // 269: minder.v1.RuleType.Definition.Alert.pull_request_comment:type_name -> minder.v1.RuleType.Definition.Alert.AlertTypePRComment
+	237, // 270: minder.v1.RuleType.Definition.Eval.JQComparison.ingested:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison.Operator
+	237, // 271: minder.v1.RuleType.Definition.Eval.JQComparison.profile:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison.Operator
+	258, // 272: minder.v1.RuleType.Definition.Eval.JQComparison.constant:type_name -> google.protobuf.Value
+	241, // 273: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.contents:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.Content
+	256, // 274: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.params:type_name -> google.protobuf.Struct
+	242, // 275: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.actions_replace_tags_with_sha:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha
+	256, // 276: minder.v1.Profile.Rule.params:type_name -> google.protobuf.Struct
+	256, // 277: minder.v1.Profile.Rule.def:type_name -> google.protobuf.Struct
+	258, // 278: minder.v1.RegisterEntityRequest.IdentifyingPropertiesEntry.value:type_name -> google.protobuf.Value
+	250, // 279: minder.v1.StructDataSource.Def.path:type_name -> minder.v1.StructDataSource.Def.Path
+	248, // 280: minder.v1.StructDataSource.DefEntry.value:type_name -> minder.v1.StructDataSource.Def
+	253, // 281: minder.v1.RestDataSource.Def.headers:type_name -> minder.v1.RestDataSource.Def.HeadersEntry
+	256, // 282: minder.v1.RestDataSource.Def.bodyobj:type_name -> google.protobuf.Struct
+	254, // 283: minder.v1.RestDataSource.Def.fallback:type_name -> minder.v1.RestDataSource.Def.Fallback
+	256, // 284: minder.v1.RestDataSource.Def.input_schema:type_name -> google.protobuf.Struct
+	251, // 285: minder.v1.RestDataSource.DefEntry.value:type_name -> minder.v1.RestDataSource.Def
+	259, // 286: minder.v1.name:extendee -> google.protobuf.EnumValueOptions
+	260, // 287: minder.v1.rpc_options:extendee -> google.protobuf.MethodOptions
 	10,  // 288: minder.v1.rpc_options:type_name -> minder.v1.RpcOptions
 	29,  // 289: minder.v1.HealthService.CheckHealth:input_type -> minder.v1.CheckHealthRequest
 	13,  // 290: minder.v1.HealthService.GetVersion:input_type -> minder.v1.GetVersionRequest
@@ -17025,8 +17078,8 @@ var file_minder_v1_minder_proto_depIdxs = []int32{
 	60,  // 305: minder.v1.UserService.CreateUser:input_type -> minder.v1.CreateUserRequest
 	62,  // 306: minder.v1.UserService.DeleteUser:input_type -> minder.v1.DeleteUserRequest
 	66,  // 307: minder.v1.UserService.GetUser:input_type -> minder.v1.GetUserRequest
-	167, // 308: minder.v1.UserService.ListInvitations:input_type -> minder.v1.ListInvitationsRequest
-	169, // 309: minder.v1.UserService.ResolveInvitation:input_type -> minder.v1.ResolveInvitationRequest
+	168, // 308: minder.v1.UserService.ListInvitations:input_type -> minder.v1.ListInvitationsRequest
+	170, // 309: minder.v1.UserService.ResolveInvitation:input_type -> minder.v1.ResolveInvitationRequest
 	82,  // 310: minder.v1.ProfileService.CreateProfile:input_type -> minder.v1.CreateProfileRequest
 	84,  // 311: minder.v1.ProfileService.UpdateProfile:input_type -> minder.v1.UpdateProfileRequest
 	86,  // 312: minder.v1.ProfileService.PatchProfile:input_type -> minder.v1.PatchProfileRequest
@@ -17044,41 +17097,41 @@ var file_minder_v1_minder_proto_depIdxs = []int32{
 	76,  // 324: minder.v1.DataSourceService.UpdateDataSource:input_type -> minder.v1.UpdateDataSourceRequest
 	78,  // 325: minder.v1.DataSourceService.DeleteDataSourceById:input_type -> minder.v1.DeleteDataSourceByIdRequest
 	80,  // 326: minder.v1.DataSourceService.DeleteDataSourceByName:input_type -> minder.v1.DeleteDataSourceByNameRequest
-	117, // 327: minder.v1.RuleTypeService.ListRuleTypes:input_type -> minder.v1.ListRuleTypesRequest
-	119, // 328: minder.v1.RuleTypeService.GetRuleTypeByName:input_type -> minder.v1.GetRuleTypeByNameRequest
-	121, // 329: minder.v1.RuleTypeService.GetRuleTypeById:input_type -> minder.v1.GetRuleTypeByIdRequest
-	123, // 330: minder.v1.RuleTypeService.CreateRuleType:input_type -> minder.v1.CreateRuleTypeRequest
-	125, // 331: minder.v1.RuleTypeService.UpdateRuleType:input_type -> minder.v1.UpdateRuleTypeRequest
-	127, // 332: minder.v1.RuleTypeService.DeleteRuleType:input_type -> minder.v1.DeleteRuleTypeRequest
-	129, // 333: minder.v1.EvalResultsService.ListEvaluationResults:input_type -> minder.v1.ListEvaluationResultsRequest
-	192, // 334: minder.v1.EvalResultsService.ListEvaluationHistory:input_type -> minder.v1.ListEvaluationHistoryRequest
-	191, // 335: minder.v1.EvalResultsService.GetEvaluationHistory:input_type -> minder.v1.GetEvaluationHistoryRequest
-	155, // 336: minder.v1.PermissionsService.ListRoles:input_type -> minder.v1.ListRolesRequest
-	157, // 337: minder.v1.PermissionsService.ListRoleAssignments:input_type -> minder.v1.ListRoleAssignmentsRequest
-	159, // 338: minder.v1.PermissionsService.AssignRole:input_type -> minder.v1.AssignRoleRequest
-	161, // 339: minder.v1.PermissionsService.UpdateRole:input_type -> minder.v1.UpdateRoleRequest
-	163, // 340: minder.v1.PermissionsService.RemoveRole:input_type -> minder.v1.RemoveRoleRequest
-	140, // 341: minder.v1.ProjectsService.ListProjects:input_type -> minder.v1.ListProjectsRequest
-	142, // 342: minder.v1.ProjectsService.CreateProject:input_type -> minder.v1.CreateProjectRequest
-	151, // 343: minder.v1.ProjectsService.ListChildProjects:input_type -> minder.v1.ListChildProjectsRequest
-	144, // 344: minder.v1.ProjectsService.DeleteProject:input_type -> minder.v1.DeleteProjectRequest
-	146, // 345: minder.v1.ProjectsService.UpdateProject:input_type -> minder.v1.UpdateProjectRequest
-	149, // 346: minder.v1.ProjectsService.PatchProject:input_type -> minder.v1.PatchProjectRequest
-	153, // 347: minder.v1.ProjectsService.CreateEntityReconciliationTask:input_type -> minder.v1.CreateEntityReconciliationTaskRequest
-	185, // 348: minder.v1.ProvidersService.PatchProvider:input_type -> minder.v1.PatchProviderRequest
-	172, // 349: minder.v1.ProvidersService.GetProvider:input_type -> minder.v1.GetProviderRequest
-	174, // 350: minder.v1.ProvidersService.ListProviders:input_type -> minder.v1.ListProvidersRequest
-	176, // 351: minder.v1.ProvidersService.CreateProvider:input_type -> minder.v1.CreateProviderRequest
-	178, // 352: minder.v1.ProvidersService.DeleteProvider:input_type -> minder.v1.DeleteProviderRequest
-	180, // 353: minder.v1.ProvidersService.DeleteProviderByID:input_type -> minder.v1.DeleteProviderByIDRequest
-	182, // 354: minder.v1.ProvidersService.ListProviderClasses:input_type -> minder.v1.ListProviderClassesRequest
+	118, // 327: minder.v1.RuleTypeService.ListRuleTypes:input_type -> minder.v1.ListRuleTypesRequest
+	120, // 328: minder.v1.RuleTypeService.GetRuleTypeByName:input_type -> minder.v1.GetRuleTypeByNameRequest
+	122, // 329: minder.v1.RuleTypeService.GetRuleTypeById:input_type -> minder.v1.GetRuleTypeByIdRequest
+	124, // 330: minder.v1.RuleTypeService.CreateRuleType:input_type -> minder.v1.CreateRuleTypeRequest
+	126, // 331: minder.v1.RuleTypeService.UpdateRuleType:input_type -> minder.v1.UpdateRuleTypeRequest
+	128, // 332: minder.v1.RuleTypeService.DeleteRuleType:input_type -> minder.v1.DeleteRuleTypeRequest
+	130, // 333: minder.v1.EvalResultsService.ListEvaluationResults:input_type -> minder.v1.ListEvaluationResultsRequest
+	193, // 334: minder.v1.EvalResultsService.ListEvaluationHistory:input_type -> minder.v1.ListEvaluationHistoryRequest
+	192, // 335: minder.v1.EvalResultsService.GetEvaluationHistory:input_type -> minder.v1.GetEvaluationHistoryRequest
+	156, // 336: minder.v1.PermissionsService.ListRoles:input_type -> minder.v1.ListRolesRequest
+	158, // 337: minder.v1.PermissionsService.ListRoleAssignments:input_type -> minder.v1.ListRoleAssignmentsRequest
+	160, // 338: minder.v1.PermissionsService.AssignRole:input_type -> minder.v1.AssignRoleRequest
+	162, // 339: minder.v1.PermissionsService.UpdateRole:input_type -> minder.v1.UpdateRoleRequest
+	164, // 340: minder.v1.PermissionsService.RemoveRole:input_type -> minder.v1.RemoveRoleRequest
+	141, // 341: minder.v1.ProjectsService.ListProjects:input_type -> minder.v1.ListProjectsRequest
+	143, // 342: minder.v1.ProjectsService.CreateProject:input_type -> minder.v1.CreateProjectRequest
+	152, // 343: minder.v1.ProjectsService.ListChildProjects:input_type -> minder.v1.ListChildProjectsRequest
+	145, // 344: minder.v1.ProjectsService.DeleteProject:input_type -> minder.v1.DeleteProjectRequest
+	147, // 345: minder.v1.ProjectsService.UpdateProject:input_type -> minder.v1.UpdateProjectRequest
+	150, // 346: minder.v1.ProjectsService.PatchProject:input_type -> minder.v1.PatchProjectRequest
+	154, // 347: minder.v1.ProjectsService.CreateEntityReconciliationTask:input_type -> minder.v1.CreateEntityReconciliationTaskRequest
+	186, // 348: minder.v1.ProvidersService.PatchProvider:input_type -> minder.v1.PatchProviderRequest
+	173, // 349: minder.v1.ProvidersService.GetProvider:input_type -> minder.v1.GetProviderRequest
+	175, // 350: minder.v1.ProvidersService.ListProviders:input_type -> minder.v1.ListProvidersRequest
+	177, // 351: minder.v1.ProvidersService.CreateProvider:input_type -> minder.v1.CreateProviderRequest
+	179, // 352: minder.v1.ProvidersService.DeleteProvider:input_type -> minder.v1.DeleteProviderRequest
+	181, // 353: minder.v1.ProvidersService.DeleteProviderByID:input_type -> minder.v1.DeleteProviderByIDRequest
+	183, // 354: minder.v1.ProvidersService.ListProviderClasses:input_type -> minder.v1.ListProviderClassesRequest
 	54,  // 355: minder.v1.ProvidersService.ReconcileEntityRegistration:input_type -> minder.v1.ReconcileEntityRegistrationRequest
 	27,  // 356: minder.v1.InviteService.GetInviteDetails:input_type -> minder.v1.GetInviteDetailsRequest
-	202, // 357: minder.v1.EntityInstanceService.ListEntities:input_type -> minder.v1.ListEntitiesRequest
-	204, // 358: minder.v1.EntityInstanceService.GetEntityById:input_type -> minder.v1.GetEntityByIdRequest
-	206, // 359: minder.v1.EntityInstanceService.GetEntityByName:input_type -> minder.v1.GetEntityByNameRequest
-	208, // 360: minder.v1.EntityInstanceService.DeleteEntityById:input_type -> minder.v1.DeleteEntityByIdRequest
-	210, // 361: minder.v1.EntityInstanceService.RegisterEntity:input_type -> minder.v1.RegisterEntityRequest
+	203, // 357: minder.v1.EntityInstanceService.ListEntities:input_type -> minder.v1.ListEntitiesRequest
+	205, // 358: minder.v1.EntityInstanceService.GetEntityById:input_type -> minder.v1.GetEntityByIdRequest
+	207, // 359: minder.v1.EntityInstanceService.GetEntityByName:input_type -> minder.v1.GetEntityByNameRequest
+	209, // 360: minder.v1.EntityInstanceService.DeleteEntityById:input_type -> minder.v1.DeleteEntityByIdRequest
+	211, // 361: minder.v1.EntityInstanceService.RegisterEntity:input_type -> minder.v1.RegisterEntityRequest
 	30,  // 362: minder.v1.HealthService.CheckHealth:output_type -> minder.v1.CheckHealthResponse
 	14,  // 363: minder.v1.HealthService.GetVersion:output_type -> minder.v1.GetVersionResponse
 	16,  // 364: minder.v1.ArtifactService.ListArtifacts:output_type -> minder.v1.ListArtifactsResponse
@@ -17098,8 +17151,8 @@ var file_minder_v1_minder_proto_depIdxs = []int32{
 	61,  // 378: minder.v1.UserService.CreateUser:output_type -> minder.v1.CreateUserResponse
 	63,  // 379: minder.v1.UserService.DeleteUser:output_type -> minder.v1.DeleteUserResponse
 	67,  // 380: minder.v1.UserService.GetUser:output_type -> minder.v1.GetUserResponse
-	168, // 381: minder.v1.UserService.ListInvitations:output_type -> minder.v1.ListInvitationsResponse
-	170, // 382: minder.v1.UserService.ResolveInvitation:output_type -> minder.v1.ResolveInvitationResponse
+	169, // 381: minder.v1.UserService.ListInvitations:output_type -> minder.v1.ListInvitationsResponse
+	171, // 382: minder.v1.UserService.ResolveInvitation:output_type -> minder.v1.ResolveInvitationResponse
 	83,  // 383: minder.v1.ProfileService.CreateProfile:output_type -> minder.v1.CreateProfileResponse
 	85,  // 384: minder.v1.ProfileService.UpdateProfile:output_type -> minder.v1.UpdateProfileResponse
 	87,  // 385: minder.v1.ProfileService.PatchProfile:output_type -> minder.v1.PatchProfileResponse
@@ -17117,41 +17170,41 @@ var file_minder_v1_minder_proto_depIdxs = []int32{
 	77,  // 397: minder.v1.DataSourceService.UpdateDataSource:output_type -> minder.v1.UpdateDataSourceResponse
 	79,  // 398: minder.v1.DataSourceService.DeleteDataSourceById:output_type -> minder.v1.DeleteDataSourceByIdResponse
 	81,  // 399: minder.v1.DataSourceService.DeleteDataSourceByName:output_type -> minder.v1.DeleteDataSourceByNameResponse
-	118, // 400: minder.v1.RuleTypeService.ListRuleTypes:output_type -> minder.v1.ListRuleTypesResponse
-	120, // 401: minder.v1.RuleTypeService.GetRuleTypeByName:output_type -> minder.v1.GetRuleTypeByNameResponse
-	122, // 402: minder.v1.RuleTypeService.GetRuleTypeById:output_type -> minder.v1.GetRuleTypeByIdResponse
-	124, // 403: minder.v1.RuleTypeService.CreateRuleType:output_type -> minder.v1.CreateRuleTypeResponse
-	126, // 404: minder.v1.RuleTypeService.UpdateRuleType:output_type -> minder.v1.UpdateRuleTypeResponse
-	128, // 405: minder.v1.RuleTypeService.DeleteRuleType:output_type -> minder.v1.DeleteRuleTypeResponse
-	130, // 406: minder.v1.EvalResultsService.ListEvaluationResults:output_type -> minder.v1.ListEvaluationResultsResponse
-	194, // 407: minder.v1.EvalResultsService.ListEvaluationHistory:output_type -> minder.v1.ListEvaluationHistoryResponse
-	193, // 408: minder.v1.EvalResultsService.GetEvaluationHistory:output_type -> minder.v1.GetEvaluationHistoryResponse
-	156, // 409: minder.v1.PermissionsService.ListRoles:output_type -> minder.v1.ListRolesResponse
-	158, // 410: minder.v1.PermissionsService.ListRoleAssignments:output_type -> minder.v1.ListRoleAssignmentsResponse
-	160, // 411: minder.v1.PermissionsService.AssignRole:output_type -> minder.v1.AssignRoleResponse
-	162, // 412: minder.v1.PermissionsService.UpdateRole:output_type -> minder.v1.UpdateRoleResponse
-	164, // 413: minder.v1.PermissionsService.RemoveRole:output_type -> minder.v1.RemoveRoleResponse
-	141, // 414: minder.v1.ProjectsService.ListProjects:output_type -> minder.v1.ListProjectsResponse
-	143, // 415: minder.v1.ProjectsService.CreateProject:output_type -> minder.v1.CreateProjectResponse
-	152, // 416: minder.v1.ProjectsService.ListChildProjects:output_type -> minder.v1.ListChildProjectsResponse
-	145, // 417: minder.v1.ProjectsService.DeleteProject:output_type -> minder.v1.DeleteProjectResponse
-	147, // 418: minder.v1.ProjectsService.UpdateProject:output_type -> minder.v1.UpdateProjectResponse
-	150, // 419: minder.v1.ProjectsService.PatchProject:output_type -> minder.v1.PatchProjectResponse
-	154, // 420: minder.v1.ProjectsService.CreateEntityReconciliationTask:output_type -> minder.v1.CreateEntityReconciliationTaskResponse
-	186, // 421: minder.v1.ProvidersService.PatchProvider:output_type -> minder.v1.PatchProviderResponse
-	173, // 422: minder.v1.ProvidersService.GetProvider:output_type -> minder.v1.GetProviderResponse
-	175, // 423: minder.v1.ProvidersService.ListProviders:output_type -> minder.v1.ListProvidersResponse
-	177, // 424: minder.v1.ProvidersService.CreateProvider:output_type -> minder.v1.CreateProviderResponse
-	179, // 425: minder.v1.ProvidersService.DeleteProvider:output_type -> minder.v1.DeleteProviderResponse
-	181, // 426: minder.v1.ProvidersService.DeleteProviderByID:output_type -> minder.v1.DeleteProviderByIDResponse
-	184, // 427: minder.v1.ProvidersService.ListProviderClasses:output_type -> minder.v1.ListProviderClassesResponse
+	119, // 400: minder.v1.RuleTypeService.ListRuleTypes:output_type -> minder.v1.ListRuleTypesResponse
+	121, // 401: minder.v1.RuleTypeService.GetRuleTypeByName:output_type -> minder.v1.GetRuleTypeByNameResponse
+	123, // 402: minder.v1.RuleTypeService.GetRuleTypeById:output_type -> minder.v1.GetRuleTypeByIdResponse
+	125, // 403: minder.v1.RuleTypeService.CreateRuleType:output_type -> minder.v1.CreateRuleTypeResponse
+	127, // 404: minder.v1.RuleTypeService.UpdateRuleType:output_type -> minder.v1.UpdateRuleTypeResponse
+	129, // 405: minder.v1.RuleTypeService.DeleteRuleType:output_type -> minder.v1.DeleteRuleTypeResponse
+	131, // 406: minder.v1.EvalResultsService.ListEvaluationResults:output_type -> minder.v1.ListEvaluationResultsResponse
+	195, // 407: minder.v1.EvalResultsService.ListEvaluationHistory:output_type -> minder.v1.ListEvaluationHistoryResponse
+	194, // 408: minder.v1.EvalResultsService.GetEvaluationHistory:output_type -> minder.v1.GetEvaluationHistoryResponse
+	157, // 409: minder.v1.PermissionsService.ListRoles:output_type -> minder.v1.ListRolesResponse
+	159, // 410: minder.v1.PermissionsService.ListRoleAssignments:output_type -> minder.v1.ListRoleAssignmentsResponse
+	161, // 411: minder.v1.PermissionsService.AssignRole:output_type -> minder.v1.AssignRoleResponse
+	163, // 412: minder.v1.PermissionsService.UpdateRole:output_type -> minder.v1.UpdateRoleResponse
+	165, // 413: minder.v1.PermissionsService.RemoveRole:output_type -> minder.v1.RemoveRoleResponse
+	142, // 414: minder.v1.ProjectsService.ListProjects:output_type -> minder.v1.ListProjectsResponse
+	144, // 415: minder.v1.ProjectsService.CreateProject:output_type -> minder.v1.CreateProjectResponse
+	153, // 416: minder.v1.ProjectsService.ListChildProjects:output_type -> minder.v1.ListChildProjectsResponse
+	146, // 417: minder.v1.ProjectsService.DeleteProject:output_type -> minder.v1.DeleteProjectResponse
+	148, // 418: minder.v1.ProjectsService.UpdateProject:output_type -> minder.v1.UpdateProjectResponse
+	151, // 419: minder.v1.ProjectsService.PatchProject:output_type -> minder.v1.PatchProjectResponse
+	155, // 420: minder.v1.ProjectsService.CreateEntityReconciliationTask:output_type -> minder.v1.CreateEntityReconciliationTaskResponse
+	187, // 421: minder.v1.ProvidersService.PatchProvider:output_type -> minder.v1.PatchProviderResponse
+	174, // 422: minder.v1.ProvidersService.GetProvider:output_type -> minder.v1.GetProviderResponse
+	176, // 423: minder.v1.ProvidersService.ListProviders:output_type -> minder.v1.ListProvidersResponse
+	178, // 424: minder.v1.ProvidersService.CreateProvider:output_type -> minder.v1.CreateProviderResponse
+	180, // 425: minder.v1.ProvidersService.DeleteProvider:output_type -> minder.v1.DeleteProviderResponse
+	182, // 426: minder.v1.ProvidersService.DeleteProviderByID:output_type -> minder.v1.DeleteProviderByIDResponse
+	185, // 427: minder.v1.ProvidersService.ListProviderClasses:output_type -> minder.v1.ListProviderClassesResponse
 	55,  // 428: minder.v1.ProvidersService.ReconcileEntityRegistration:output_type -> minder.v1.ReconcileEntityRegistrationResponse
 	28,  // 429: minder.v1.InviteService.GetInviteDetails:output_type -> minder.v1.GetInviteDetailsResponse
-	203, // 430: minder.v1.EntityInstanceService.ListEntities:output_type -> minder.v1.ListEntitiesResponse
-	205, // 431: minder.v1.EntityInstanceService.GetEntityById:output_type -> minder.v1.GetEntityByIdResponse
-	207, // 432: minder.v1.EntityInstanceService.GetEntityByName:output_type -> minder.v1.GetEntityByNameResponse
-	209, // 433: minder.v1.EntityInstanceService.DeleteEntityById:output_type -> minder.v1.DeleteEntityByIdResponse
-	211, // 434: minder.v1.EntityInstanceService.RegisterEntity:output_type -> minder.v1.RegisterEntityResponse
+	204, // 430: minder.v1.EntityInstanceService.ListEntities:output_type -> minder.v1.ListEntitiesResponse
+	206, // 431: minder.v1.EntityInstanceService.GetEntityById:output_type -> minder.v1.GetEntityByIdResponse
+	208, // 432: minder.v1.EntityInstanceService.GetEntityByName:output_type -> minder.v1.GetEntityByNameResponse
+	210, // 433: minder.v1.EntityInstanceService.DeleteEntityById:output_type -> minder.v1.DeleteEntityByIdResponse
+	212, // 434: minder.v1.EntityInstanceService.RegisterEntity:output_type -> minder.v1.RegisterEntityResponse
 	362, // [362:435] is the sub-list for method output_type
 	289, // [289:362] is the sub-list for method input_type
 	288, // [288:289] is the sub-list for extension type_name
@@ -17177,37 +17230,38 @@ func file_minder_v1_minder_proto_init() {
 	file_minder_v1_minder_proto_msgTypes[103].OneofWrappers = []any{}
 	file_minder_v1_minder_proto_msgTypes[104].OneofWrappers = []any{}
 	file_minder_v1_minder_proto_msgTypes[105].OneofWrappers = []any{}
-	file_minder_v1_minder_proto_msgTypes[119].OneofWrappers = []any{
+	file_minder_v1_minder_proto_msgTypes[106].OneofWrappers = []any{}
+	file_minder_v1_minder_proto_msgTypes[120].OneofWrappers = []any{
 		(*ListEvaluationResultsRequest_Profile)(nil),
 		(*ListEvaluationResultsRequest_LabelFilter)(nil),
 	}
-	file_minder_v1_minder_proto_msgTypes[121].OneofWrappers = []any{}
-	file_minder_v1_minder_proto_msgTypes[126].OneofWrappers = []any{
+	file_minder_v1_minder_proto_msgTypes[122].OneofWrappers = []any{}
+	file_minder_v1_minder_proto_msgTypes[127].OneofWrappers = []any{
 		(*DepsType_Repo)(nil),
 		(*DepsType_Pr)(nil),
 	}
-	file_minder_v1_minder_proto_msgTypes[128].OneofWrappers = []any{}
 	file_minder_v1_minder_proto_msgTypes[129].OneofWrappers = []any{}
-	file_minder_v1_minder_proto_msgTypes[138].OneofWrappers = []any{}
-	file_minder_v1_minder_proto_msgTypes[156].OneofWrappers = []any{}
-	file_minder_v1_minder_proto_msgTypes[178].OneofWrappers = []any{
+	file_minder_v1_minder_proto_msgTypes[130].OneofWrappers = []any{}
+	file_minder_v1_minder_proto_msgTypes[139].OneofWrappers = []any{}
+	file_minder_v1_minder_proto_msgTypes[157].OneofWrappers = []any{}
+	file_minder_v1_minder_proto_msgTypes[179].OneofWrappers = []any{
 		(*ProviderParameter_GithubApp)(nil),
 	}
-	file_minder_v1_minder_proto_msgTypes[203].OneofWrappers = []any{
+	file_minder_v1_minder_proto_msgTypes[204].OneofWrappers = []any{
 		(*DataSource_Structured)(nil),
 		(*DataSource_Rest)(nil),
 	}
-	file_minder_v1_minder_proto_msgTypes[207].OneofWrappers = []any{}
-	file_minder_v1_minder_proto_msgTypes[216].OneofWrappers = []any{}
+	file_minder_v1_minder_proto_msgTypes[208].OneofWrappers = []any{}
 	file_minder_v1_minder_proto_msgTypes[217].OneofWrappers = []any{}
 	file_minder_v1_minder_proto_msgTypes[218].OneofWrappers = []any{}
 	file_minder_v1_minder_proto_msgTypes[219].OneofWrappers = []any{}
 	file_minder_v1_minder_proto_msgTypes[220].OneofWrappers = []any{}
-	file_minder_v1_minder_proto_msgTypes[222].OneofWrappers = []any{}
-	file_minder_v1_minder_proto_msgTypes[228].OneofWrappers = []any{}
-	file_minder_v1_minder_proto_msgTypes[230].OneofWrappers = []any{}
-	file_minder_v1_minder_proto_msgTypes[233].OneofWrappers = []any{}
-	file_minder_v1_minder_proto_msgTypes[240].OneofWrappers = []any{
+	file_minder_v1_minder_proto_msgTypes[221].OneofWrappers = []any{}
+	file_minder_v1_minder_proto_msgTypes[223].OneofWrappers = []any{}
+	file_minder_v1_minder_proto_msgTypes[229].OneofWrappers = []any{}
+	file_minder_v1_minder_proto_msgTypes[231].OneofWrappers = []any{}
+	file_minder_v1_minder_proto_msgTypes[234].OneofWrappers = []any{}
+	file_minder_v1_minder_proto_msgTypes[241].OneofWrappers = []any{
 		(*RestDataSource_Def_Bodyobj)(nil),
 		(*RestDataSource_Def_Bodystr)(nil),
 		(*RestDataSource_Def_BodyFromField)(nil),
@@ -17218,7 +17272,7 @@ func file_minder_v1_minder_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_minder_v1_minder_proto_rawDesc), len(file_minder_v1_minder_proto_rawDesc)),
 			NumEnums:      10,
-			NumMessages:   244,
+			NumMessages:   245,
 			NumExtensions: 2,
 			NumServices:   14,
 		},

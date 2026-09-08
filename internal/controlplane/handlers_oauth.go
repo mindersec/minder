@@ -71,6 +71,10 @@ func (s *Server) GetAuthorizationURL(
 		!flags.Bool(ctx, s.featureFlags, flags.DockerHubProvider) {
 		return nil, util.UserVisibleError(codes.Unimplemented, "DockerHub provider is not enabled")
 	}
+	if providerClass == string(db.ProviderClassQuay) &&
+		!flags.Bool(ctx, s.featureFlags, flags.QuayProvider) {
+		return nil, util.UserVisibleError(codes.Unimplemented, "Quay provider is not enabled")
+	}
 	if providerClass == string(db.ProviderClassGitlab) &&
 		!flags.Bool(ctx, s.featureFlags, flags.GitLabProvider) {
 		return nil, util.UserVisibleError(codes.Unimplemented, "GitLab provider is not enabled")
