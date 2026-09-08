@@ -79,11 +79,6 @@ func (tr *testCaseRunner) Error(args ...any) {
 	tr.failures = append(tr.failures, fmt.Sprint(args...))
 }
 
-// UsedRules returns a set of rule names that were evaluated during the test case execution.
-func (tr *testCaseRunner) UsedRules() map[string]struct{} {
-	return maps.Clone(tr.usedRules)
-}
-
 // TestResult holds the outcome of a single Starlark test function.
 type TestResult struct {
 	Filename string
@@ -213,7 +208,7 @@ func (r *Runner) runOneTest(
 	}
 
 	result.Failures = append(result.Failures, tr.failures...)
-	result.EvaluatedRules = tr.UsedRules()
+	result.EvaluatedRules = maps.Clone(tr.usedRules)
 
 	return result
 }

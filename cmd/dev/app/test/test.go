@@ -71,8 +71,7 @@ func CmdTest() *cobra.Command {
 			for _, run := range results {
 				for _, res := range run.Results {
 					if len(res.Failures)+len(res.Errors) > 0 {
-						finalErr = errors.New("one or more tests failed")
-						break
+						return errors.New("one or more tests failed")
 					}
 				}
 			}
@@ -109,7 +108,6 @@ func formatFailuresHuman(cmd *cobra.Command, results []ruletest.TestRun) {
 				cmd.Printf("PASS: %s/%s\n", res.Filename, res.Name)
 			}
 		}
-		// TODO: hide this behind a flag
 		if uncovered := run.UncoveredRules(); coverage && len(uncovered) > 0 {
 			cmd.Printf("UNCOVERED RULES:\n")
 			for _, rule := range uncovered {
