@@ -297,6 +297,17 @@ type GitHub interface {
 	UpdateCheckRun(context.Context, string, string, int64, *github.UpdateCheckRunOptions) (*github.CheckRun, error)
 }
 
+// GitLab is the interface for interacting with the GitLab REST API
+// Add methods here for interacting with the GitLab REST API
+type GitLab interface {
+	Provider
+	RepoLister
+	REST
+	Git
+
+	GetCredential() GitLabCredential
+}
+
 // ImageLister is the interface for listing images
 type ImageLister interface {
 	Provider
@@ -352,6 +363,7 @@ func ParseAndValidate(rawConfig json.RawMessage, to any) error {
 // must implement to support it.
 var providerTypeMap = map[minderv1.ProviderType]reflect.Type{
 	minderv1.ProviderType_PROVIDER_TYPE_GITHUB:       reflect.TypeOf((*GitHub)(nil)).Elem(),
+	minderv1.ProviderType_PROVIDER_TYPE_GITLAB:       reflect.TypeOf((*GitLab)(nil)).Elem(),
 	minderv1.ProviderType_PROVIDER_TYPE_REST:         reflect.TypeOf((*REST)(nil)).Elem(),
 	minderv1.ProviderType_PROVIDER_TYPE_GIT:          reflect.TypeOf((*Git)(nil)).Elem(),
 	minderv1.ProviderType_PROVIDER_TYPE_OCI:          reflect.TypeOf((*OCI)(nil)).Elem(),

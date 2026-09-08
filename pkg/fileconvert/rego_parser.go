@@ -98,8 +98,10 @@ func (r *regoDecoder) Decode(v any) error {
 }
 
 // metadataExtractor extracts the YAML document
-var metadataExtractor = regexp.MustCompile("(?m)^# +METADATA *\r?\n((?:#(?: [^\n]*)?\n)+)")
-var removeCommentPrefix = regexp.MustCompile("(?m)^# ")
+var (
+	metadataExtractor   = regexp.MustCompile("(?m)^# +METADATA *\r?\n((?:#(?: [^\r\n]*)?\r?\n)+)")
+	removeCommentPrefix = regexp.MustCompile("(?m)^# ?") // default greedy
+)
 
 // OPA uses YAML metadata inside a specially-headered comment.  Extracting
 // the metadata requires finding the comment block, then stripping the comment
