@@ -23,16 +23,12 @@ func (*providerClassManager) NewOAuthConfig(_ db.ProviderClass, _ bool) (*oauth2
 
 // ValidateCredentials implements the providerClassOAuthManager interface.
 // Quay credentials are supplied directly by the user (a Quay.io Robot
-// account token) rather than obtained via an OAuth2 exchange, so
-// validation is limited to a basic sanity check.
+// account token) via the user-input flow, so this always receives a raw
+// token string, never an OAuth2-derived credential.
 func (*providerClassManager) ValidateCredentials(
 	_ context.Context, cred provv1.Credential, _ *manager.CredentialVerifyParams,
 ) error {
 	switch c := cred.(type) {
-	case provv1.OAuth2TokenCredential:
-		if _, err := c.GetAsOAuth2TokenSource().Token(); err != nil {
-			return fmt.Errorf("cannot get token from credential: %w", err)
-		}
 	case string:
 		if c == "" {
 			return fmt.Errorf("token must not be empty")

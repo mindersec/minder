@@ -43,12 +43,15 @@ func TestValidateCredentials(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("oauth2 token credential", func(t *testing.T) {
+	t.Run("oauth2 token credential is unsupported", func(t *testing.T) {
 		t.Parallel()
+		// Quay only supports the user-input flow, so ValidateCredentials
+		// never receives an OAuth2-derived credential in practice; this
+		// asserts it is rejected rather than silently accepted.
 		err := pcm.ValidateCredentials(
 			context.Background(), credentials.NewOAuth2TokenCredential("a-valid-token"), &manager.CredentialVerifyParams{},
 		)
-		assert.NoError(t, err)
+		assert.Error(t, err)
 	})
 
 	t.Run("unsupported credential type", func(t *testing.T) {
