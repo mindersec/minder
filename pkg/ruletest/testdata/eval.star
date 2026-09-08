@@ -51,3 +51,10 @@ def test_skip_eval_missing_provider_trait():
     )
     assert.eq(res["status"], "skip")
     assert.true(res["message"] != "")
+
+def test_json():
+    obj = {"key": "value", "list": [1, 2, None], "nested": [{"bool": True}]}
+    json_str = json.encode(obj)
+    assert.eq('{"key":"value","list":[1,2,null],"nested":[{"bool":true}]}', json_str)
+    got = json.decode(json_str)
+    assert.eq(obj, got)
