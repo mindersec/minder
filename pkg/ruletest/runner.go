@@ -16,6 +16,7 @@ import (
 	"sort"
 	"strings"
 
+	"go.starlark.net/lib/json"
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarktest"
 	"go.starlark.net/syntax"
@@ -60,6 +61,7 @@ func (r *Runner) newTestCaseRunner(
 	tr.predeclared["txtar"] = starlark.NewBuiltin("txtar", builtinTxtar)
 	tr.predeclared["body"] = starlark.NewBuiltin("body", builtinBody)
 	tr.predeclared["code"] = starlark.NewBuiltin("code", builtinCode)
+	tr.predeclared["json"] = json.Module
 
 	for k, v := range r.assertMod {
 		tr.predeclared[k] = v
