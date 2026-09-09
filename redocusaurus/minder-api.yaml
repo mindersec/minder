@@ -4,10 +4,14 @@ info:
   version: version not set
 tags:
   - name: HealthService
+    description: |-
+      Simple Health Check Service
+      replies with OK
   - name: ArtifactService
   - name: OAuthService
   - name: RepositoryService
   - name: UserService
+    description: manage Users CRUD
   - name: ProfileService
   - name: DataSourceService
   - name: RuleTypeService
@@ -17,6 +21,7 @@ tags:
   - name: ProvidersService
   - name: InviteService
   - name: EntityInstanceService
+    description: EntityInstanceService provides API endpoints for managing entity instances
 consumes:
   - application/json
 produces:
