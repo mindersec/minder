@@ -16,7 +16,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
-	github.com/charmbracelet/glamour v0.10.0
+	github.com/charmbracelet/glamour v1.0.0
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
 	github.com/cloudevents/sdk-go/observability/opentelemetry/v2 v2.16.2
 	github.com/cloudevents/sdk-go/protocol/nats_jetstream/v2 v2.16.2
@@ -139,7 +139,7 @@ require (
 	github.com/Yiling-J/theine-go v0.6.2 // indirect
 	github.com/a8m/envsubst v1.4.3 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
-	github.com/alecthomas/chroma/v2 v2.18.0 // indirect
+	github.com/alecthomas/chroma/v2 v2.20.0 // indirect
 	github.com/alecthomas/participle/v2 v2.1.4 // indirect
 	github.com/anchore/go-struct-converter v0.1.0 // indirect
 	github.com/antithesishq/antithesis-sdk-go v0.7.2-default-no-op // indirect
