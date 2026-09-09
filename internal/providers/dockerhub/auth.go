@@ -7,26 +7,25 @@ import (
 	"context"
 	"fmt"
 
-	"golang.org/x/oauth2"
-
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/providers/manager"
 	provv1 "github.com/mindersec/minder/pkg/providers/v1"
+	"golang.org/x/oauth2"
 )
 
-// NewOAuthConfig implements the providerClassOAuthManager interface.
-// DockerHub only supports the user-input (token) authorization flow, so
-// there is no OAuth2 authorization code flow to configure.
-func (*providerClassManager) NewOAuthConfig(_ db.ProviderClass, _ bool) (*oauth2.Config, error) {
+// NewOAuthConfig is not supported by DockerHub.
+func (*providerClassManager) NewOAuthConfig(
+	_ db.ProviderClass,
+	_ bool,
+) (*oauth2.Config, error) {
 	return nil, fmt.Errorf("dockerhub provider does not support the OAuth2 authorization code flow")
 }
 
-// ValidateCredentials implements the providerClassOAuthManager interface.
-// DockerHub credentials are supplied directly by the user (a Docker Hub
-// Personal Access Token or account password) rather than obtained via an
-// OAuth2 exchange, so validation is limited to a basic sanity check.
+// ValidateCredentials checks that the provided DockerHub credential is valid.
 func (*providerClassManager) ValidateCredentials(
-	_ context.Context, cred provv1.Credential, _ *manager.CredentialVerifyParams,
+	_ context.Context,
+	cred provv1.Credential,
+	_ *manager.CredentialVerifyParams,
 ) error {
 	switch c := cred.(type) {
 	case provv1.OAuth2TokenCredential:
