@@ -267,18 +267,34 @@ func (filter *artifactListFilter) listArtifacts(
 		return nil, fmt.Errorf("failed to get artifact entities: %w", err)
 	}
 
+	// Resolve repo slugs to entity IDs once, before the loop.
+	allowedRepoIDs := make(map[uuid.UUID]struct{}, len(filter.repoSlubList))
+	for _, slug := range filter.repoSlubList {
+		repoEnt, err := filter.store.GetEntityByName(ctx, db.GetEntityByNameParams{
+			ProjectID:  projectID,
+			EntityType: db.EntitiesRepository,
+			Name:       slug,
+			ProviderID: provider.ID,
+		})
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				continue
+			}
+			return nil, fmt.Errorf("failed to look up repository %q: %w", slug, err)
+		}
+		allowedRepoIDs[repoEnt.ID] = struct{}{}
+	}
+
 	// Filter by repository if needed and convert to protobuf
 	results := []*pb.Artifact{}
 	for _, ent := range artifactEnts {
-		// Apply repository filter if specified
 		if len(filter.repoSlubList) > 0 {
-			// Check if artifact originates from one of the filtered repos
 			if !ent.OriginatedFrom.Valid {
 				continue
 			}
-			// We need to check if the originated_from repository matches the filter
-			// For now, skip filtering - this requires loading the parent repo
-			// TODO: Implement efficient repo filtering
+			if _, ok := allowedRepoIDs[ent.OriginatedFrom.UUID]; !ok {
+				continue
+			}
 		}
 
 		// The entity name is the artifact name directly
