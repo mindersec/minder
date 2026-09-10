@@ -246,12 +246,32 @@ func (di *Diff) getScalibrTypeDiff(ctx context.Context, _ int, pr *pbinternal.Pu
 
 func inventorySorter(a *extractor.Package, b *extractor.Package) int {
 	// If we compare by name and version first, we can avoid serializing Locations to strings
-	return cmp.Or(
+	simple := cmp.Or(
 		cmp.Compare(a.Name, b.Name),
 		cmp.Compare(a.Version, b.Version),
 		cmp.Compare(a.Location.PathOrEmpty(), b.Location.PathOrEmpty()),
 		cmp.Compare(a.ID, b.ID),
 	)
+	if simple != 0 {
+		return simple
+	}
+	plugins := cmp.Compare(
+		strings.Join(slices.Sorted(slices.Values(a.Plugins)), ","),
+		strings.Join(slices.Sorted(slices.Values(b.Plugins)), ","))
+	if plugins != 0 {
+		return plugins
+	}
+	aExtra := make([]string, 0, len(a.Location.Related))
+	for _, f := range a.Location.Related {
+		aExtra = append(aExtra, f.PathOrEmpty())
+	}
+	slices.Sort(aExtra)
+	bExtra := make([]string, 0, len(b.Location.Related))
+	for _, f := range b.Location.Related {
+		bExtra = append(bExtra, f.PathOrEmpty())
+	}
+	slices.Sort(bExtra)
+	return cmp.Compare(strings.Join(aExtra, ","), strings.Join(bExtra, ","))
 }
 
 func (di *Diff) scalibrInventory(ctx context.Context, repoURL string, ref string) ([]*extractor.Package, error) {
