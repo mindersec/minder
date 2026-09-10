@@ -1,0 +1,8 @@
+{
+  "roleAssignment": {
+    "displayName": "Mock User",
+    "subject": "mock-subject-123",
+    "role": "admin",
+    "project": "00000000-0000-0000-0000-000000000001"
+  }
+}
