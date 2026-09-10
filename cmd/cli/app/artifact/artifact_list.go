@@ -4,14 +4,12 @@
 package artifact
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util"
@@ -25,12 +23,22 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List artifacts from a provider",
 	Long:  `The artifact list subcommand will list artifacts from a provider.`,
-	RunE:  cli.GRPCClientWrapRunE(listCommand),
+	RunE:  listCommand,
 }
 
 // listCommand is the artifact list subcommand
-func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewArtifactServiceClient(conn)
+func listCommand(cmd *cobra.Command, _ []string) error {
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+		return fmt.Errorf("error binding flags: %w", err)
+	}
+
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewArtifactServiceClient)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	ctx := cmd.Context()
 
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
@@ -74,17 +82,24 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		}
 		t.Render()
 	case app.JSON:
-		out, err := util.GetJsonFromProto(artifactList)
-		if err != nil {
-			return cli.MessageAndError("Error getting json from proto", err)
+		// Emit each artifact as a separate JSON object (JSON stream)
+		for _, art := range artifactList.Results {
+			out, err := util.GetJsonFromProto(art)
+			if err != nil {
+				return cli.MessageAndError("Error getting json from proto", err)
+			}
+			if _, err := cmd.OutOrStdout().Write([]byte(out + "\n")); err != nil {
+				return cli.MessageAndError("Error writing json to stdout", err)
+			}
 		}
-		cmd.Println(out)
 	case app.YAML:
 		out, err := util.GetYamlFromProto(artifactList)
 		if err != nil {
 			return cli.MessageAndError("Error getting yaml from proto", err)
 		}
-		cmd.Println(out)
+		if _, err := cmd.OutOrStdout().Write([]byte(out + "\n")); err != nil {
+			return cli.MessageAndError("Error writing yaml to stdout", err)
+		}
 	}
 
 	return nil
