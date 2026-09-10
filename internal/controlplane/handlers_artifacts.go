@@ -201,7 +201,7 @@ const (
 type artifactListFilter struct {
 	store db.Store
 
-	repoSlubList []string
+	repoSlugList []string
 	source       artifactSource
 	filter       string
 }
@@ -222,11 +222,11 @@ func parseArtifactListFrom(store db.Store, from string) (*artifactListFilter, er
 	source := parts[0]
 	filter := parts[1]
 
-	var repoSlubList []string
+	var repoSlugList []string
 
 	switch source {
 	case string(artifactSourceRepo):
-		repoSlubList = strings.Split(filter, ",")
+		repoSlugList = strings.Split(filter, ",")
 	default:
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid filter source, only repository is supported")
 	}
@@ -235,7 +235,7 @@ func parseArtifactListFrom(store db.Store, from string) (*artifactListFilter, er
 		store:        store,
 		source:       artifactSource(source),
 		filter:       filter,
-		repoSlubList: repoSlubList,
+		repoSlugList: repoSlugList,
 	}, nil
 }
 
@@ -268,8 +268,12 @@ func (filter *artifactListFilter) listArtifacts(
 	}
 
 	// Resolve repo slugs to entity IDs once, before the loop.
-	allowedRepoIDs := make(map[uuid.UUID]struct{}, len(filter.repoSlubList))
-	for _, slug := range filter.repoSlubList {
+	// repoSlugList contains GitHub repository slugs (owner/repo format).
+	// Artifacts are included only if their OriginatedFrom repo matches one of
+	// these slugs. This is a GitHub-specific concept; DockerHub and Quay.io
+	// providers do not populate OriginatedFrom in the same way.
+	allowedRepoIDs := make(map[uuid.UUID]struct{}, len(filter.repoSlugList))
+	for _, slug := range filter.repoSlugList {
 		repoEnt, err := filter.store.GetEntityByName(ctx, db.GetEntityByNameParams{
 			ProjectID:  projectID,
 			EntityType: db.EntitiesRepository,
@@ -288,7 +292,7 @@ func (filter *artifactListFilter) listArtifacts(
 	// Filter by repository if needed and convert to protobuf
 	results := []*pb.Artifact{}
 	for _, ent := range artifactEnts {
-		if len(filter.repoSlubList) > 0 {
+		if len(allowedRepoIDs) > 0 {
 			if !ent.OriginatedFrom.Valid {
 				continue
 			}
