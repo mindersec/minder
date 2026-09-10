@@ -2131,6 +2131,15 @@ message GHCRProviderConfig {
     optional string namespace = 1;
 }
 
+// QuayProviderConfig contains the configuration for the Quay.io provider.
+//
+// Namespace: is the namespace for the Quay.io provider.
+//
+message QuayProviderConfig {
+    // namespace is the namespace for the Quay.io provider.
+    optional string namespace = 1;
+}
+
 // Context defines the context in which a rule is evaluated.
 // this normally refers to a combination of the provider, organization and project.
 message Context {

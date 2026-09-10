@@ -6,6 +6,8 @@ package flags
 const (
 	// DockerHubProvider enables the DockerHub provider.
 	DockerHubProvider Experiment = "dockerhub_provider"
+	// QuayProvider enables the Quay.io provider.
+	QuayProvider Experiment = "quay_provider"
 	// GitLabProvider enables the GitLab provider.
 	GitLabProvider Experiment = "gitlab_provider"
 	// AlternateMessageDriver enables an an alternate message driver.

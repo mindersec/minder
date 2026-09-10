@@ -473,6 +473,8 @@ func testProviderClassInfo(class db.ProviderClass) *pb.ProviderClassInfo {
 		fallthrough
 	case db.ProviderClassDockerhub:
 		fallthrough
+	case db.ProviderClassQuay:
+		fallthrough
 	case db.ProviderClassGitlab:
 		fallthrough
 	default:
