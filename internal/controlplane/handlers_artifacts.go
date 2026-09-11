@@ -292,7 +292,7 @@ func (filter *artifactListFilter) listArtifacts(
 	// Filter by repository if needed and convert to protobuf
 	results := []*pb.Artifact{}
 	for _, ent := range artifactEnts {
-		if len(allowedRepoIDs) > 0 {
+		if len(filter.repoSlugList) > 0 {
 			if !ent.OriginatedFrom.Valid {
 				continue
 			}
