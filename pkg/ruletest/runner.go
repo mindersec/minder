@@ -36,6 +36,7 @@ type testCaseRunner struct {
 	predeclared starlark.StringDict
 	failures    []string
 	ruleTypes   map[string]*minderv1.RuleType
+	usedRules   map[string]struct{}
 }
 
 func (r *Runner) newTestCaseRunner(
@@ -49,6 +50,7 @@ func (r *Runner) newTestCaseRunner(
 		baseDir:     baseDir,
 		predeclared: starlark.StringDict{},
 		ruleTypes:   ruleTypes,
+		usedRules:   make(map[string]struct{}),
 	}
 	tr.thread = &starlark.Thread{
 		Name:  name,
@@ -74,6 +76,7 @@ func (tr *testCaseRunner) runFile(filename string, src any) (starlark.StringDict
 	return starlark.ExecFileOptions(&syntax.FileOptions{}, tr.thread, filename, src, tr.predeclared)
 }
 
+// Error is called by the starlarktest.Reporter interface when a test case fails.
 func (tr *testCaseRunner) Error(args ...any) {
 	tr.failures = append(tr.failures, fmt.Sprint(args...))
 }
@@ -83,11 +86,39 @@ type TestResult struct {
 	Filename string
 	Name     string
 	Failures []string
+	Errors   []string
+
+	// TODO: collect print output from Rego print() and Starlark (print?)
+
+	// EvaluatedRules is a set of rule names that were evaluated during the test.
+	EvaluatedRules map[string]struct{}
 }
 
 // Passed returns true if the test had no failures.
 func (tr *TestResult) Passed() bool {
-	return len(tr.Failures) == 0
+	return len(tr.Failures) == 0 && len(tr.Errors) == 0
+}
+
+// TestRun represents a run of all the tests in a given directory.
+type TestRun struct {
+	// BaseDir is the directory from which the test run was initiated.
+	BaseDir string
+	// LoadedRules is a list of rule names that were loaded from disk for the run.
+	LoadedRules []string
+	// Results is a list of test results for each test function executed.
+	Results []TestResult
+}
+
+// UncoveredRules returns a list of rule names that were loaded but not evaluated during the test run.
+func (tr *TestRun) UncoveredRules() []string {
+	uncovered := slices.Clone(tr.LoadedRules)
+	for _, res := range tr.Results {
+		uncovered = slices.DeleteFunc(uncovered, func(rule string) bool {
+			_, ok := res.EvaluatedRules[rule]
+			return ok
+		})
+	}
+	return uncovered
 }
 
 // Runner loads and executes Starlark test files.
@@ -168,16 +199,18 @@ func (r *Runner) runOneTest(
 	tr := r.newTestCaseRunner(name, fileSystem, baseDir, ruleTypes)
 	result := TestResult{Name: name}
 
+	// TODO: capture output from print statements in Starlark and Rego
 	_, err := starlark.Call(tr.thread, fn, nil, nil)
 	if err != nil {
 		if evalErr, ok := errors.AsType[*starlark.EvalError](err); ok {
-			result.Failures = append(result.Failures, evalErr.Backtrace())
+			result.Errors = append(result.Errors, evalErr.Backtrace())
 		} else {
-			result.Failures = append(result.Failures, err.Error())
+			result.Errors = append(result.Errors, err.Error())
 		}
 	}
 
 	result.Failures = append(result.Failures, tr.failures...)
+	result.EvaluatedRules = maps.Clone(tr.usedRules)
 
 	return result
 }
@@ -245,7 +278,7 @@ func loadSingleRule(path string) (*minderv1.RuleType, error) {
 // files recursively. Tests are grouped by their immediate directory, and any
 // *.yaml rules in that same directory are loaded and made available to the tests.
 // It collects errors instead of returning early on the first error.
-func (r *Runner) RunPaths(paths []string) ([]TestResult, error) {
+func (r *Runner) RunPaths(paths []string) ([]TestRun, error) {
 	expanded, err := util.ExpandFileArgs(paths...)
 	if err != nil {
 		return nil, fmt.Errorf("expanding paths: %w", err)
@@ -264,7 +297,7 @@ func (r *Runner) RunPaths(paths []string) ([]TestResult, error) {
 		}
 	}
 
-	var allResults []TestResult
+	var runs []TestRun
 	var errs []error
 
 	// Ensure deterministic execution order by sorting directories
@@ -280,14 +313,21 @@ func (r *Runner) RunPaths(paths []string) ([]TestResult, error) {
 			continue
 		}
 
+		run := TestRun{
+			BaseDir:     dir,
+			LoadedRules: slices.Sorted(maps.Keys(ruleTypes)),
+		}
+
 		for _, file := range files {
 			res, err := r.RunFile(file, nil, ruleTypes)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("error running file %s: %w", file, err))
 				continue
 			}
-			allResults = append(allResults, res...)
+			run.Results = append(run.Results, res...)
 		}
+		runs = append(runs, run)
 	}
-	return allResults, errors.Join(errs...)
+
+	return runs, errors.Join(errs...)
 }

@@ -5,90 +5,145 @@ package ruletest
 
 import (
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestAsJUnit_PassingResultsMultipleSuites(t *testing.T) {
 	t.Parallel()
-	results := []TestResult{
-		{Filename: "file_a.star", Name: "test_one"},
-		{Filename: "file_a.star", Name: "test_two"},
-		{Filename: "file_b.star", Name: "test_three"},
-	}
 
-	suites := AsJUnit(results)
+	coverage100 := []Property{{
+		Name:  "coverage.statements.pct",
+		Value: "100",
+	}}
 
-	if len(suites.TestSuites) != 2 {
-		t.Fatalf("expected 2 suites, got %d", len(suites.TestSuites))
-	}
+	tests := []struct {
+		name     string
+		results  []TestRun
+		expected JUnitTestSuites
+	}{{
+		name: "passing results multiple suites",
+		results: []TestRun{
+			{
+				BaseDir:     "foo",
+				LoadedRules: []string{"rule_a", "rule_b"},
+				Results: []TestResult{
+					{Filename: "file_a.star", Name: "test_one", EvaluatedRules: map[string]struct{}{"rule_a": {}}},
+					{Filename: "file_a.star", Name: "test_two", EvaluatedRules: map[string]struct{}{"rule_a": {}}},
+					{Filename: "file_b.star", Name: "test_three", EvaluatedRules: map[string]struct{}{"rule_b": {}}},
+				},
+			},
+			{
+				BaseDir:     "bar",
+				LoadedRules: []string{"rule_c", "rule_d"},
+				Results: []TestResult{
+					{Filename: "file_b.star", Name: "test_one", EvaluatedRules: map[string]struct{}{"rule_c": {}}},
+				},
+			},
+		},
+		expected: JUnitTestSuites{
+			Tests: 4,
+			TestSuites: []JUnitTestSuite{
+				{
+					File: "bar/",
+					Name: "no-tests:rule_d",
+					Properties: &[]Property{{
+						Name:  "coverage.statements.pct",
+						Value: "0",
+					}},
+				},
+				{
+					File:       "bar/file_b.star",
+					Name:       "file_b.star",
+					Tests:      1,
+					Properties: &coverage100,
+					TestCases:  []JUnitTestCase{{Name: "test_one", ClassName: "file_b.star"}},
+				},
+				{
+					File:       "foo/file_a.star",
+					Name:       "file_a.star",
+					Tests:      2,
+					Properties: &coverage100,
+					TestCases: []JUnitTestCase{
+						{Name: "test_one", ClassName: "file_a.star"},
+						{Name: "test_two", ClassName: "file_a.star"},
+					},
+				},
+				{
+					File:       "foo/file_b.star",
+					Name:       "file_b.star",
+					Tests:      1,
+					Properties: &coverage100,
+					TestCases:  []JUnitTestCase{{Name: "test_three", ClassName: "file_b.star"}},
+				},
+			},
+		},
+	}, {
+		name: "failure aggregation",
+		results: []TestRun{
+			{
+				BaseDir:     "suite",
+				LoadedRules: []string{},
+				Results: []TestResult{
+					{Filename: "suite.star", Name: "test_fail_one", Failures: []string{"err1", "err2"}},
+					{Filename: "suite.star", Name: "test_fail_two", Failures: []string{"err3"}},
+					{Filename: "suite.star", Name: "test_pass"},
+					{Filename: "other.star", Name: "test_other", Errors: []string{"err4"}},
+				},
+			},
+		},
+		expected: JUnitTestSuites{
+			Tests:    4,
+			Failures: 2,
+			Errors:   1,
+			TestSuites: []JUnitTestSuite{
+				{
+					File:       "suite/other.star",
+					Name:       "other.star",
+					Tests:      1,
+					Errors:     1,
+					Properties: &coverage100,
+					TestCases: []JUnitTestCase{
+						{
+							Name: "test_other", ClassName: "other.star",
+							Error: &JUnitFailure{Message: "Test error", Body: "err4"},
+						},
+					},
+				},
+				{
+					File:       "suite/suite.star",
+					Name:       "suite.star",
+					Tests:      3,
+					Failures:   2,
+					Properties: &coverage100,
+					TestCases: []JUnitTestCase{
+						{
+							Name: "test_fail_one", ClassName: "suite.star",
+							Failure: &JUnitFailure{Message: "Test failed", Body: "err1\nerr2"},
+						},
+						{
+							Name: "test_fail_two", ClassName: "suite.star",
+							Failure: &JUnitFailure{Message: "Test failed", Body: "err3"},
+						},
+						{Name: "test_pass", ClassName: "suite.star"},
+					},
+				},
+			},
+		},
+	}, {
+		name:     "empty input",
+		results:  nil,
+		expected: JUnitTestSuites{},
+	}}
 
-	suiteMap := make(map[string]JUnitTestSuite)
-	for _, s := range suites.TestSuites {
-		suiteMap[s.Name] = s
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			suites := AsJUnit(tt.results)
 
-	a := suiteMap["file_a.star"]
-	if a.Tests != 2 {
-		t.Errorf("file_a.star: expected 2 tests, got %d", a.Tests)
-	}
-	if a.Failures != 0 {
-		t.Errorf("file_a.star: expected 0 failures, got %d", a.Failures)
-	}
-
-	b := suiteMap["file_b.star"]
-	if b.Tests != 1 {
-		t.Errorf("file_b.star: expected 1 test, got %d", b.Tests)
-	}
-	if b.Failures != 0 {
-		t.Errorf("file_b.star: expected 0 failures, got %d", b.Failures)
-	}
-}
-
-func TestAsJUnit_FailuresAggregated(t *testing.T) {
-	t.Parallel()
-	results := []TestResult{
-		{Filename: "suite.star", Name: "test_fail_one", Failures: []string{"err1", "err2"}},
-		{Filename: "suite.star", Name: "test_fail_two", Failures: []string{"err3"}},
-		{Filename: "suite.star", Name: "test_pass"},
-	}
-
-	suites := AsJUnit(results)
-
-	if len(suites.TestSuites) != 1 {
-		t.Fatalf("expected 1 suite, got %d", len(suites.TestSuites))
-	}
-
-	suite := suites.TestSuites[0]
-	if suite.Tests != 3 {
-		t.Errorf("expected 3 tests, got %d", suite.Tests)
-	}
-	if suite.Failures != 2 {
-		t.Errorf("expected 2 failures, got %d", suite.Failures)
-	}
-
-	tcMap := make(map[string]JUnitTestCase)
-	for _, tc := range suite.TestCases {
-		tcMap[tc.Name] = tc
-	}
-
-	failOne := tcMap["test_fail_one"]
-	if failOne.Failure == nil {
-		t.Fatal("test_fail_one: expected a failure")
-	}
-	if failOne.Failure.Body != "err1\nerr2" {
-		t.Errorf("test_fail_one: expected joined failures, got %q", failOne.Failure.Body)
-	}
-
-	pass := tcMap["test_pass"]
-	if pass.Failure != nil {
-		t.Error("test_pass: expected no failure")
-	}
-}
-
-func TestAsJUnit_EmptyInput(t *testing.T) {
-	t.Parallel()
-	suites := AsJUnit(nil)
-
-	if len(suites.TestSuites) != 0 {
-		t.Errorf("expected 0 suites, got %d", len(suites.TestSuites))
+			if diff := cmp.Diff(tt.expected, suites); diff != "" {
+				t.Errorf("mismatch (-expected +got):\n%s", diff)
+			}
+		})
 	}
 }
