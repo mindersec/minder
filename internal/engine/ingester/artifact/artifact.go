@@ -277,6 +277,11 @@ func getRegistryForProvider(prov interfaces.Provider) string {
 // the provider's configured base URL at setup time rather than tracked per
 // artifact (see internal/providers/dockerhub.New), so artifact.Owner is empty
 // and the repository is just the artifact name.
+//
+// This assumes only GitHub-backed artifacts populate artifact.Owner today
+// (verified: no DockerHub/Quay properties package sets it). If a future OCI
+// provider starts populating Owner as well, this needs to be revisited so
+// its artifacts don't get an incorrect owner/name repository path.
 func buildRepository(artifact *pb.Artifact) string {
 	if artifact.Owner == "" {
 		return artifact.Name

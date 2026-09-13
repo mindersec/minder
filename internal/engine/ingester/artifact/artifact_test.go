@@ -193,6 +193,11 @@ func TestArtifactIngestMatching(t *testing.T) {
 				"name": "matching-name-but-not-tags",
 				"tags": []string{"main", "production", "dev"},
 			},
+			wantIdentity: &imageIdentity{
+				Repository: "stacklok/matching-name-but-not-tags",
+				Tags:       []string{"main", "production", "dev"},
+				Digest:     "sha256:1234",
+			},
 		},
 		{
 			name:          "not-matching-name",
