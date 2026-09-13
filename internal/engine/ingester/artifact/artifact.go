@@ -61,6 +61,15 @@ type verifiedAttestation struct {
 	Predicate     any    `json:"predicate,omitempty"`
 }
 
+// imageIdentity captures how to locate an artifact version in its registry,
+// independently of its provenance/verification status.
+type imageIdentity struct {
+	Registry   string   `json:"registry,omitempty"`
+	Repository string   `json:"repository"`
+	Tags       []string `json:"tags,omitempty"`
+	Digest     string   `json:"digest"`
+}
+
 // NewArtifactDataIngest creates a new artifact rule data ingest engine
 func NewArtifactDataIngest(prov interfaces.Provider) (*Ingest, error) {
 	return &Ingest{
@@ -129,24 +138,16 @@ func (i *Ingest) getApplicableArtifactVersions(
 		return nil, err
 	}
 
-	// Get all artifact checksums filtering out those that don't apply to this rule
-	checksums, err := getAndFilterArtifactVersions(ctx, cfg, vers, artifact)
+	// Get all artifact versions filtering out those that don't apply to this rule
+	versions, err := getAndFilterArtifactVersions(ctx, cfg, vers, artifact)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get the provenance info for all artifact versions that apply to this rule
-	verificationResults, err := i.getVerificationResult(ctx, cfg, artifact, checksums)
+	// Get the identity and provenance info for all artifact versions that apply to this rule
+	result, err := i.getVerificationResult(ctx, cfg, artifact, versions)
 	if err != nil {
 		return nil, err
-	}
-
-	// Build the result to be returned to the rule engine as a slice of map["Verification"]any
-	result := make([]map[string]any, 0, len(verificationResults))
-	for _, item := range verificationResults {
-		result = append(result, map[string]any{
-			"Verification": item,
-		})
 	}
 
 	zerolog.Ctx(ctx).Debug().Any("result", result).Msg("ingestion result")
@@ -180,31 +181,41 @@ func (i *Ingest) getVerificationResult(
 	ctx context.Context,
 	cfg *ingesterConfig,
 	artifact *pb.Artifact,
-	checksums []string,
-) ([]verification, error) {
-	var versionResults []verification
+	versions []*pb.ArtifactVersion,
+) ([]map[string]any, error) {
+	var results []map[string]any
 	// Get the verifier for sigstore
 	artifactVerifier, err := getVerifier(i, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("error getting verifier: %w", err)
 	}
 
+	registry := getRegistryForProvider(i.prov)
+	repository := buildRepository(artifact)
+
 	// Loop through all artifact versions that apply to this rule and get the provenance info for each
-	for _, artifactChecksum := range checksums {
+	for _, version := range versions {
+		identity := imageIdentity{
+			Registry:   registry,
+			Repository: repository,
+			Tags:       version.Tags,
+			Digest:     version.Sha,
+		}
+
 		// Try getting provenance info for the artifact version
-		results, err := artifactVerifier.Verify(ctx, verifyif.ArtifactTypeContainer,
-			artifact.Owner, artifact.Name, artifactChecksum)
+		verResults, err := artifactVerifier.Verify(ctx, verifyif.ArtifactTypeContainer,
+			artifact.Owner, artifact.Name, version.Sha)
 		if err != nil {
 			// We consider err != nil as a fatal error, so we'll fail the rule evaluation here
-			artifactName := container.BuildImageRef("", artifact.Owner, artifact.Name, artifactChecksum)
+			artifactName := container.BuildImageRef("", artifact.Owner, artifact.Name, version.Sha)
 			zerolog.Ctx(ctx).Debug().Err(err).Str("name", artifactName).Msg("failed getting signature information")
 			return nil, fmt.Errorf("failed getting signature information: %w", err)
 		}
 		// Loop through all results and build the verification result for each
-		for _, res := range results {
+		for _, res := range verResults {
 			// Log a debug message in case we failed to find or verify any signature information for the artifact version
 			if !res.IsSigned || !res.IsVerified {
-				artifactName := container.BuildImageRef("", artifact.Owner, artifact.Name, artifactChecksum)
+				artifactName := container.BuildImageRef("", artifact.Owner, artifact.Name, version.Sha)
 				zerolog.Ctx(ctx).Debug().Str("name", artifactName).Msg("failed to find or verify signature information")
 			}
 
@@ -234,11 +245,43 @@ func (i *Ingest) getVerificationResult(
 					Predicate:     res.Statement.Predicate,
 				}
 			}
-			// Append the verification result to the list
-			versionResults = append(versionResults, *verResult)
+			// Append the identity and verification result to the list
+			results = append(results, map[string]any{
+				"Identity":     identity,
+				"Verification": *verResult,
+			})
 		}
 	}
-	return versionResults, nil
+	return results, nil
+}
+
+// getRegistryForProvider returns the registry hostname for providers that
+// expose one generically via the OCI interface (e.g. DockerHub). GitHub/GHCR
+// artifacts don't go through this interface today and ghcr.io isn't tracked
+// anywhere generic enough to surface here, so we leave it empty rather than
+// hardcode a value that may not hold for every GitHub-backed registry.
+func getRegistryForProvider(prov interfaces.Provider) string {
+	ocicli, err := interfaces.As[provifv1.OCI](prov)
+	if err != nil {
+		return ""
+	}
+	return ocicli.GetRegistry()
+}
+
+// buildRepository returns the artifact's path within its registry.
+//
+// For GitHub/GHCR, the owner is a distinct path segment (ghcr.io/<owner>/<name>)
+// and is tracked per-artifact via artifact.Owner, so we reconstruct that path here.
+//
+// For generic OCI providers (e.g. DockerHub), the owner/namespace is baked into
+// the provider's configured base URL at setup time rather than tracked per
+// artifact (see internal/providers/dockerhub.New), so artifact.Owner is empty
+// and the repository is just the artifact name.
+func buildRepository(artifact *pb.Artifact) string {
+	if artifact.Owner == "" {
+		return artifact.Name
+	}
+	return artifact.Owner + "/" + artifact.Name
 }
 
 func getVerifier(i *Ingest, cfg *ingesterConfig) (verifyif.ArtifactVerifier, error) {
@@ -271,39 +314,31 @@ func getVerifier(i *Ingest, cfg *ingesterConfig) (verifyif.ArtifactVerifier, err
 }
 
 // getAndFilterArtifactVersions fetches the available versions and filters the
-// ones that apply to the rule. Note that this returns the checksums of the
-// applicable artifact versions.
+// ones that apply to the rule.
 func getAndFilterArtifactVersions(
 	ctx context.Context,
 	cfg *ingesterConfig,
 	vers provifv1.ArtifactProvider,
 	artifact *pb.Artifact,
-) ([]string, error) {
-	var res []string
-
+) ([]*pb.ArtifactVersion, error) {
 	// Build a tag filter based on the configuration
 	filter, err := artif.BuildFilter(cfg.Tags, cfg.TagRegex)
 	if err != nil {
 		return nil, fmt.Errorf("error building filter from artifact ingester config: %w", err)
 	}
 
-	// Fetch all available versions of the artifact
+	// Fetch all available versions of the artifact, already filtered by the provider
 	upstreamVersions, err := vers.GetArtifactVersions(ctx, artifact, filter)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving artifact versions: %w", err)
 	}
 
-	for _, version := range upstreamVersions {
-		res = append(res, version.Sha)
-	}
-
 	// If no applicable artifact versions were found for this rule, we can go ahead and fail the rule evaluation here
-	if len(res) == 0 {
+	if len(upstreamVersions) == 0 {
 		return nil, evalerrors.NewErrEvaluationFailed("no applicable artifact versions found")
 	}
 
-	// Return the list of applicable artifact versions, i.e. []string{"digest1", "digest2", ...}
-	return res, nil
+	return upstreamVersions, nil
 }
 
 var (
