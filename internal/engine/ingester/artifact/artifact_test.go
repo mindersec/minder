@@ -58,6 +58,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 		mockSetup     func(*mockghclient.MockGitHub, *mockverify.MockArtifactVerifier)
 		artifact      *pb.Artifact
 		params        map[string]interface{}
+		wantIdentity  *imageIdentity
 	}{
 		{
 			name:          "matching-name",
@@ -90,6 +91,11 @@ func TestArtifactIngestMatching(t *testing.T) {
 			params: map[string]interface{}{
 				"name": "matching-name",
 				// missing tags means wildcard match any tag
+			},
+			wantIdentity: &imageIdentity{
+				Repository: "stacklok/matching-name",
+				Tags:       []string{"latest"},
+				Digest:     "sha256:1234",
 			},
 		},
 		{
@@ -124,6 +130,11 @@ func TestArtifactIngestMatching(t *testing.T) {
 			params: map[string]interface{}{
 				"name": "matching-name-and-tag",
 				"tags": []string{"latest"},
+			},
+			wantIdentity: &imageIdentity{
+				Repository: "stacklok/matching-name-and-tag",
+				Tags:       []string{"latest"},
+				Digest:     "sha256:1234",
 			},
 		},
 		{
@@ -181,6 +192,11 @@ func TestArtifactIngestMatching(t *testing.T) {
 			params: map[string]interface{}{
 				"name": "matching-name-but-not-tags",
 				"tags": []string{"main", "production", "dev"},
+			},
+			wantIdentity: &imageIdentity{
+				Repository: "stacklok/matching-name-but-not-tags",
+				Tags:       []string{"main", "production", "dev"},
+				Digest:     "sha256:1234",
 			},
 		},
 		{
@@ -246,6 +262,16 @@ func TestArtifactIngestMatching(t *testing.T) {
 				require.NotNil(t, got, "expected non-nil result")
 			} else {
 				require.Nil(t, got, "expected nil result")
+			}
+
+			if tt.wantIdentity != nil {
+				results, ok := got.Object.([]map[string]any)
+				require.True(t, ok, "expected result object to be []map[string]any")
+				require.NotEmpty(t, results, "expected at least one result")
+
+				identity, ok := results[0]["Identity"].(imageIdentity)
+				require.True(t, ok, "expected result to have an Identity")
+				require.Equal(t, *tt.wantIdentity, identity)
 			}
 		})
 	}
