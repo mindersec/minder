@@ -255,17 +255,25 @@ func (i *Ingest) getVerificationResult(
 	return results, nil
 }
 
-// getRegistryForProvider returns the registry hostname for providers that
-// expose one generically via the OCI interface (e.g. DockerHub). GitHub/GHCR
-// artifacts don't go through this interface today and ghcr.io isn't tracked
-// anywhere generic enough to surface here, so we leave it empty rather than
-// hardcode a value that may not hold for every GitHub-backed registry.
+// ghcrRegistry is the registry GitHub-backed artifacts are resolved against.
+// This mirrors the default used by the sigstore verifier itself: newContainerAuth
+// in internal/verifier/sigstore/container/container.go defaults to "ghcr.io"
+// unless a provider overrides it via WithRegistry (the OCI-provider case below).
+const ghcrRegistry = "ghcr.io"
+
+// getRegistryForProvider returns the registry hostname for the artifact's
+// provider. Providers that expose one generically via the OCI interface
+// (e.g. DockerHub) report their own; GitHub is handled as a special case
+// since it authenticates against GHCR without implementing the OCI
+// interface. Any other provider type leaves this empty rather than guess.
 func getRegistryForProvider(prov interfaces.Provider) string {
-	ocicli, err := interfaces.As[provifv1.OCI](prov)
-	if err != nil {
-		return ""
+	if ocicli, err := interfaces.As[provifv1.OCI](prov); err == nil {
+		return ocicli.GetRegistry()
 	}
-	return ocicli.GetRegistry()
+	if _, err := interfaces.As[provifv1.GitHub](prov); err == nil {
+		return ghcrRegistry
+	}
+	return ""
 }
 
 // buildRepository returns the artifact's path within its registry.
