@@ -2822,6 +2822,21 @@ func (mr *MockOCIMockRecorder) GetManifest(ctx, name, tag any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManifest", reflect.TypeOf((*MockOCI)(nil).GetManifest), ctx, name, tag)
 }
 
+// GetRawManifest mocks base method.
+func (m *MockOCI) GetRawManifest(ctx context.Context, name, digest string) (*v11.RawManifest, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRawManifest", ctx, name, digest)
+	ret0, _ := ret[0].(*v11.RawManifest)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRawManifest indicates an expected call of GetRawManifest.
+func (mr *MockOCIMockRecorder) GetRawManifest(ctx, name, digest any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRawManifest", reflect.TypeOf((*MockOCI)(nil).GetRawManifest), ctx, name, digest)
+}
+
 // GetReferrer mocks base method.
 func (m *MockOCI) GetReferrer(ctx context.Context, name, tag, artifactType string) (any, error) {
 	m.ctrl.T.Helper()
