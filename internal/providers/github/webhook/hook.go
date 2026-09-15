@@ -11,7 +11,6 @@ import (
 	"io"
 	"mime"
 	"net/http"
-	"strings"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/go-github/v63/github"
@@ -91,10 +90,6 @@ func HandleWebhookEvent(
 		// See https://docs.github.com/en/developers/webhooks-and-events/webhooks/securing-your-webhooks
 		// for more information. Note that this is not required for the GitHub App
 		// webhook secret, but it is required for OAuth2 App.
-		// it returns a uuid for the webhook, but we are not currently using it
-		segments := strings.Split(r.URL.Path, "/")
-		_ = segments[len(segments)-1]
-
 		rawWBPayload, err := validatePayloadSignature(r, whconfig)
 		if err != nil {
 			l.Info().Err(err).Msg("Error validating webhook payload")
