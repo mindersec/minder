@@ -4,23 +4,40 @@
 package oci
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
 )
+
+// MockCredential implements provifv1.Credential and provifv1.OAuth2TokenCredential
+type MockCredential struct {
+	token string
+}
+
+type mockTokenSource struct {
+	token string
+}
+
+func (m mockTokenSource) Token() (*oauth2.Token, error) {
+	return &oauth2.Token{AccessToken: m.token}, nil
+}
+
+func (m MockCredential) GetAsOAuth2TokenSource() oauth2.TokenSource {
+	return mockTokenSource{token: m.token}
+}
 
 func TestResolveCreatedAt(t *testing.T) {
 	t.Parallel()
 
 	buildTime := time.Date(2024, time.January, 2, 3, 4, 5, 0, time.UTC)
-	// poison is returned by the config getter for cases where the annotation is
-	// present: if the implementation wrongly consulted the config, the assertion
-	// against buildTime (or the expected error) would fail.
 	poison := time.Date(1999, time.December, 31, 23, 59, 59, 0, time.UTC)
 	epoch := time.Unix(0, 0).UTC()
 
@@ -85,7 +102,6 @@ func TestResolveCreatedAt(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-
 			got, err := resolveCreatedAt(tc.man, tc.configFile)
 			if tc.wantErr {
 				require.Error(t, err)
@@ -95,4 +111,56 @@ func TestResolveCreatedAt(t *testing.T) {
 			assert.Truef(t, got.Equal(tc.want), "got %s, want %s", got, tc.want)
 		})
 	}
+}
+
+func TestOCI_Basic(t *testing.T) {
+	t.Parallel()
+
+	o := New(nil, "invalid.registry.local", "invalid.registry.local/myrepo")
+	ctx := context.Background()
+
+	assert.True(t, o.CanImplement(minderv1.ProviderType_PROVIDER_TYPE_OCI))
+	assert.False(t, o.CanImplement(minderv1.ProviderType_PROVIDER_TYPE_GITHUB))
+	assert.Equal(t, "invalid.registry.local", o.GetRegistry())
+
+	// These should all return errors because we have no real registry,
+	// but they will hit the lines in oci.go.
+	_, err := o.ListTags(ctx, "image")
+	assert.Error(t, err)
+
+	_, err = o.GetDigest(ctx, "image", "latest")
+	assert.Error(t, err)
+
+	_, err = o.GetReferrer(ctx, "image", "latest", "type")
+	assert.Error(t, err)
+
+	_, err = o.GetManifest(ctx, "image", "latest")
+	assert.Error(t, err)
+}
+
+func TestOCI_Auth(t *testing.T) {
+	t.Parallel()
+
+	t.Run("anonymous auth", func(t *testing.T) {
+		o := New(nil, "invalid.registry.local", "invalid.registry.local/myrepo")
+		auth, err := o.GetAuthenticator()
+		require.NoError(t, err)
+		assert.NotNil(t, auth)
+	})
+
+	t.Run("valid oauth2 auth", func(t *testing.T) {
+		cred := MockCredential{token: "secret-token"}
+		o := New(cred, "registry.com", "registry.com/myrepo")
+		auth, err := o.GetAuthenticator()
+		require.NoError(t, err)
+		assert.NotNil(t, auth)
+	})
+
+	t.Run("invalid credential type", func(t *testing.T) {
+		// Using a string instead of a struct that implements the interface
+		o := New("not-an-oauth-cred", "registry.com", "registry.com/myrepo")
+		_, err := o.GetAuthenticator()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "credential is not an OAuth2 token credential")
+	})
 }
