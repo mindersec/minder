@@ -61,13 +61,22 @@ type verifiedAttestation struct {
 	Predicate     any    `json:"predicate,omitempty"`
 }
 
-// imageIdentity captures how to locate an artifact version in its registry,
+// imageRef captures how to locate an artifact version in its registry,
 // independently of its provenance/verification status.
-type imageIdentity struct {
+type imageRef struct {
 	Registry   string   `json:"registry,omitempty"`
 	Repository string   `json:"repository"`
 	Tags       []string `json:"tags,omitempty"`
 	Digest     string   `json:"digest"`
+}
+
+// imageInfo is the typed result returned per artifact version. Field
+// names are capitalized (Go-exported) rather than JSON-tagged, matching
+// how this is currently keyed when accessed from Rego ("Identity",
+// "Verification") -- this preserves that shape exactly.
+type imageInfo struct {
+	Verification verification
+	Identity     imageRef
 }
 
 // NewArtifactDataIngest creates a new artifact rule data ingest engine
@@ -128,7 +137,7 @@ func (i *Ingest) getApplicableArtifactVersions(
 	ctx context.Context,
 	artifact *pb.Artifact,
 	cfg *ingesterConfig,
-) ([]map[string]any, error) {
+) ([]imageInfo, error) {
 	if err := validateConfiguration(artifact, cfg); err != nil {
 		return nil, err
 	}
@@ -182,8 +191,8 @@ func (i *Ingest) getVerificationResult(
 	cfg *ingesterConfig,
 	artifact *pb.Artifact,
 	versions []*pb.ArtifactVersion,
-) ([]map[string]any, error) {
-	var results []map[string]any
+) ([]imageInfo, error) {
+	var results []imageInfo
 	// Get the verifier for sigstore
 	artifactVerifier, err := getVerifier(i, cfg)
 	if err != nil {
@@ -195,7 +204,10 @@ func (i *Ingest) getVerificationResult(
 
 	// Loop through all artifact versions that apply to this rule and get the provenance info for each
 	for _, version := range versions {
-		identity := imageIdentity{
+		if version == nil {
+			continue
+		}
+		identity := imageRef{
 			Registry:   registry,
 			Repository: repository,
 			Tags:       version.Tags,
@@ -246,20 +258,14 @@ func (i *Ingest) getVerificationResult(
 				}
 			}
 			// Append the identity and verification result to the list
-			results = append(results, map[string]any{
-				"Identity":     identity,
-				"Verification": *verResult,
+			results = append(results, imageInfo{
+				Identity:     identity,
+				Verification: *verResult,
 			})
 		}
 	}
 	return results, nil
 }
-
-// ghcrRegistry is the registry GitHub-backed artifacts are resolved against.
-// This mirrors the default used by the sigstore verifier itself: newContainerAuth
-// in internal/verifier/sigstore/container/container.go defaults to "ghcr.io"
-// unless a provider overrides it via WithRegistry (the OCI-provider case below).
-const ghcrRegistry = "ghcr.io"
 
 // getRegistryForProvider returns the registry hostname for the artifact's
 // provider. Providers that expose one generically via the OCI interface
@@ -271,7 +277,7 @@ func getRegistryForProvider(prov interfaces.Provider) string {
 		return ocicli.GetRegistry()
 	}
 	if _, err := interfaces.As[provifv1.GitHub](prov); err == nil {
-		return ghcrRegistry
+		return container.GHCRRegistry
 	}
 	return ""
 }
@@ -281,10 +287,10 @@ func getRegistryForProvider(prov interfaces.Provider) string {
 // For GitHub/GHCR, the owner is a distinct path segment (ghcr.io/<owner>/<name>)
 // and is tracked per-artifact via artifact.Owner, so we reconstruct that path here.
 //
-// For generic OCI providers (e.g. DockerHub), the owner/namespace is baked into
-// the provider's configured base URL at setup time rather than tracked per
-// artifact (see internal/providers/dockerhub.New), so artifact.Owner is empty
-// and the repository is just the artifact name.
+// For generic OCI providers (e.g. DockerHub), the owner/namespace is tracked
+// via the provider's config (see cfg.Namespace() in the DockerHub/Quay
+// provider config) rather than exposed through the OCI interface today, so
+// artifact.Owner is empty here and the repository is just the artifact name.
 //
 // This assumes only GitHub-backed artifacts populate artifact.Owner today
 // (verified: no DockerHub/Quay properties package sets it). If a future OCI

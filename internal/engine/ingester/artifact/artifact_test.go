@@ -19,6 +19,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/github/properties"
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	"github.com/mindersec/minder/internal/providers/telemetry"
+	"github.com/mindersec/minder/internal/verifier/sigstore/container"
 	"github.com/mindersec/minder/internal/verifier/verifyif"
 	mockverify "github.com/mindersec/minder/internal/verifier/verifyif/mock"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -59,7 +60,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 		mockSetup     func(*mockghclient.MockGitHub, *mockverify.MockArtifactVerifier)
 		artifact      *pb.Artifact
 		params        map[string]interface{}
-		wantIdentity  *imageIdentity
+		wantIdentity  *imageRef
 	}{
 		{
 			name:          "matching-name",
@@ -93,7 +94,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 				"name": "matching-name",
 				// missing tags means wildcard match any tag
 			},
-			wantIdentity: &imageIdentity{
+			wantIdentity: &imageRef{
 				Registry:   "ghcr.io",
 				Repository: "stacklok/matching-name",
 				Tags:       []string{"latest"},
@@ -133,7 +134,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 				"name": "matching-name-and-tag",
 				"tags": []string{"latest"},
 			},
-			wantIdentity: &imageIdentity{
+			wantIdentity: &imageRef{
 				Registry:   "ghcr.io",
 				Repository: "stacklok/matching-name-and-tag",
 				Tags:       []string{"latest"},
@@ -196,7 +197,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 				"name": "matching-name-but-not-tags",
 				"tags": []string{"main", "production", "dev"},
 			},
-			wantIdentity: &imageIdentity{
+			wantIdentity: &imageRef{
 				Registry:   "ghcr.io",
 				Repository: "stacklok/matching-name-but-not-tags",
 				Tags:       []string{"main", "production", "dev"},
@@ -235,7 +236,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 			params: map[string]interface{}{
 				"name": "matching-name-empty-owner",
 			},
-			wantIdentity: &imageIdentity{
+			wantIdentity: &imageRef{
 				Registry:   "ghcr.io",
 				Repository: "matching-name-empty-owner",
 				Tags:       []string{"latest"},
@@ -308,13 +309,11 @@ func TestArtifactIngestMatching(t *testing.T) {
 			}
 
 			if tt.wantIdentity != nil {
-				results, ok := got.Object.([]map[string]any)
-				require.True(t, ok, "expected result object to be []map[string]any")
+				results, ok := got.Object.([]imageInfo)
+				require.True(t, ok, "expected result object to be []imageInfo")
 				require.NotEmpty(t, results, "expected at least one result")
 
-				identity, ok := results[0]["Identity"].(imageIdentity)
-				require.True(t, ok, "expected result to have an Identity")
-				require.Equal(t, *tt.wantIdentity, identity)
+				require.Equal(t, *tt.wantIdentity, results[0].Identity)
 			}
 		})
 	}
@@ -337,7 +336,7 @@ func TestGetRegistryForProvider(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		mockGH := mockghclient.NewMockGitHub(ctrl)
 
-		require.Equal(t, ghcrRegistry, getRegistryForProvider(mockGH))
+		require.Equal(t, container.GHCRRegistry, getRegistryForProvider(mockGH))
 	})
 
 	t.Run("other-provider", func(t *testing.T) {
