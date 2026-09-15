@@ -1,0 +1,6 @@
+roles:
+  - description: Administrator role with full access
+    name: admin
+  - description: Read-only access role
+    name: viewer
+
