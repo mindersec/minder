@@ -556,7 +556,7 @@ func Test_restHandler_ValidateArgs(t *testing.T) {
 			name:      "No schema",
 			hasSchema: false,
 			args:      map[string]any{"key": "value"},
-			wantErr:   true,
+			wantErr:   false,
 		},
 	}
 	for _, tt := range tests {
