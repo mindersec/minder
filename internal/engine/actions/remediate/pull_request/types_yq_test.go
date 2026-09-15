@@ -6,13 +6,13 @@ package pull_request
 import (
 	"context"
 	"fmt"
+	"maps"
 	"path/filepath"
 	"testing"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/mindersec/minder/internal/engine/interfaces"
