@@ -72,9 +72,15 @@ func (c *containerAuth) getAuthenticator(owner string) authn.Authenticator {
 	return authn.Anonymous
 }
 
+// GHCRRegistry is the default registry hostname used for GitHub-backed
+// container artifacts, both here and in the artifact ingester
+// (internal/engine/ingester/artifact), which mirrors this default for
+// providers that don't implement the OCI interface.
+const GHCRRegistry = "ghcr.io"
+
 func newContainerAuth(authOpts ...AuthMethod) *containerAuth {
 	auth := containerAuth{
-		registry: "ghcr.io",
+		registry: GHCRRegistry,
 	}
 	for _, opt := range authOpts {
 		opt(&auth)
