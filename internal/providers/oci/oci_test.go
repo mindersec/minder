@@ -38,7 +38,7 @@ func (m mockTokenSource) Token() (*oauth2.Token, error) {
 }
 
 func (m MockCredential) GetAsOAuth2TokenSource() oauth2.TokenSource {
-	return mockTokenSource{token: m.token}
+	return mockTokenSource(m)
 }
 
 func TestResolveCreatedAt(t *testing.T) {
@@ -167,6 +167,7 @@ func TestOCI_Auth(t *testing.T) {
 	t.Parallel()
 
 	t.Run("anonymous auth", func(t *testing.T) {
+		t.Parallel()
 		o := New(nil, "invalid.registry.local", "invalid.registry.local/myrepo")
 		auth, err := o.GetAuthenticator()
 		require.NoError(t, err)
@@ -174,6 +175,7 @@ func TestOCI_Auth(t *testing.T) {
 	})
 
 	t.Run("valid oauth2 auth", func(t *testing.T) {
+		t.Parallel()
 		cred := MockCredential{token: "secret-token"}
 		o := New(cred, "registry.com", "registry.com/myrepo")
 		auth, err := o.GetAuthenticator()
@@ -182,6 +184,7 @@ func TestOCI_Auth(t *testing.T) {
 	})
 
 	t.Run("invalid credential type", func(t *testing.T) {
+		t.Parallel()
 		o := New("not-an-oauth-cred", "registry.com", "registry.com/myrepo")
 		_, err := o.GetAuthenticator()
 		assert.Error(t, err)
