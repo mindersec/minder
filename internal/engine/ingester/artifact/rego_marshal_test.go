@@ -6,22 +6,19 @@ package artifact
 import (
 	"testing"
 
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/util"
 	"github.com/stretchr/testify/require"
+
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
-// TestImageInfoRegoInputShape verifies that []imageInfo survives the exact
-// conversion the rego evaluator applies to interfaces.Ingested.Object before
-// handing it to a policy as input.ingested. internal/engine/eval/rego/eval.go's
-// Eval sets Input.Ingested = res.Object and passes the Input to
-// rego.EvalInput; OPA's rego package then round-trips that value through
-// encoding/json (util.RoundTrip) before converting it to an ast.Value via
-// ast.InterfaceToValue -- so the conversion is JSON-tag-aware, not raw
-// reflection. Since imageInfo's own Identity/Verification fields carry no
-// json tags, the round trip is expected to preserve "Identity" and
-// "Verification" as capitalized top-level keys, matching the shape
-// previously produced by the map[string]any this struct replaced.
+// TestImageInfoRegoInputShape checks that []imageInfo round-trips through
+// OPA's actual conversion path (eval.go -> rego.EvalInput -> util.RoundTrip
+// -> ast.InterfaceToValue), the same one input.ingested goes through in
+// production, and still exposes Identity/Verification/Manifest as top-level
+// keys.
 func TestImageInfoRegoInputShape(t *testing.T) {
 	t.Parallel()
 
@@ -36,6 +33,13 @@ func TestImageInfoRegoInputShape(t *testing.T) {
 			IsSigned:   true,
 			IsVerified: true,
 			Repository: "https://github.com/stacklok/test",
+		},
+		Manifest: &provifv1.RawManifest{
+			Descriptor: v1.Descriptor{
+				MediaType: "application/vnd.oci.image.manifest.v1+json",
+				Digest:    v1.Hash{Algorithm: "sha256", Hex: "1234"},
+			},
+			Content: []byte(`{"schemaVersion":2}`),
 		},
 	}
 
@@ -67,4 +71,10 @@ func TestImageInfoRegoInputShape(t *testing.T) {
 	require.True(t, ok, "expected Verification key to survive the rego round trip")
 	require.Equal(t, true, verificationOut["is_signed"])
 	require.Equal(t, true, verificationOut["is_verified"])
+
+	manifestOut, ok := entry["Manifest"].(map[string]any)
+	require.True(t, ok, "expected Manifest key to survive the rego round trip")
+	require.Equal(t, "application/vnd.oci.image.manifest.v1+json", manifestOut["mediaType"])
+	require.Equal(t, "sha256:1234", manifestOut["digest"])
+	require.NotEmpty(t, manifestOut["content"])
 }

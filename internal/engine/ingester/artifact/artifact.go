@@ -283,11 +283,10 @@ func (i *Ingest) getVerificationResult(
 }
 
 // getRegistryForProvider returns the registry hostname for the artifact's
-// provider. OCI-interface providers (DockerHub, Quay) report their own
-// registry. GitHub returns ghcrRegistry, consistent with the sigstore
-// verifier's existing assumption (see newContainerAuth in
-// internal/verifier/sigstore/container/container.go). Any other provider
-// type returns "" -- genuinely unknown, not silently swallowed.
+// provider. Providers that expose one generically via the OCI interface
+// (e.g. DockerHub) report their own; GitHub is handled as a special case
+// since it authenticates against GHCR without implementing the OCI
+// interface. Any other provider type leaves this empty rather than guess.
 func getRegistryForProvider(prov interfaces.Provider) string {
 	if ocicli, err := interfaces.As[provifv1.OCI](prov); err == nil {
 		return ocicli.GetRegistry()
@@ -297,13 +296,6 @@ func getRegistryForProvider(prov interfaces.Provider) string {
 	}
 	return ""
 }
-
-// ghcrRegistry mirrors the default the sigstore verifier already assumes
-// for GitHub-backed artifacts (see newContainerAuth in
-// internal/verifier/sigstore/container/container.go, which defaults to
-// "ghcr.io" when the GitHub path never calls WithRegistry). GitHub-hosted
-// container artifacts are treated as ghcr.io today throughout minder.
-const ghcrRegistry = "ghcr.io"
 
 // buildRepository returns the artifact's path within its registry.
 //
