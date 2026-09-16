@@ -90,6 +90,12 @@ func HandleWebhookEvent(
 		// See https://docs.github.com/en/developers/webhooks-and-events/webhooks/securing-your-webhooks
 		// for more information. Note that this is not required for the GitHub App
 		// webhook secret, but it is required for OAuth2 App.
+		//
+		// Note: the URL path also contains a per-repository hookUUID (the last path
+		// segment, stored as github/hook_uiid in entity properties). This could be
+		// used to look up the repo and validate that the UUID matches the registered
+		// hook, providing an additional check that the event originates from a known
+		// repository.
 		rawWBPayload, err := validatePayloadSignature(r, whconfig)
 		if err != nil {
 			l.Info().Err(err).Msg("Error validating webhook payload")
