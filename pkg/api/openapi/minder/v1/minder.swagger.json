@@ -6,8 +6,7 @@
   },
   "tags": [
     {
-      "name": "HealthService",
-      "description": "Simple Health Check Service\nreplies with OK"
+      "name": "HealthService"
     },
     {
       "name": "ArtifactService"
@@ -19,8 +18,7 @@
       "name": "RepositoryService"
     },
     {
-      "name": "UserService",
-      "description": "manage Users CRUD"
+      "name": "UserService"
     },
     {
       "name": "ProfileService"
@@ -47,8 +45,7 @@
       "name": "InviteService"
     },
     {
-      "name": "EntityInstanceService",
-      "description": "EntityInstanceService provides API endpoints for managing entity instances"
+      "name": "EntityInstanceService"
     }
   ],
   "consumes": [
