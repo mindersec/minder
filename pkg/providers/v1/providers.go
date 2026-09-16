@@ -319,6 +319,14 @@ type ImageLister interface {
 	GetNamespaceURL() string
 }
 
+// RawManifest captures an OCI manifest or image index exactly as returned by
+// the registry, without resolving a multi-platform index down to a single
+// platform's manifest.
+type RawManifest struct {
+	v1.Descriptor
+	Content []byte `json:"content"`
+}
+
 // OCI is the interface for interacting with OCI registries
 type OCI interface {
 	Provider
@@ -343,6 +351,11 @@ type OCI interface {
 
 	// GetAuthenticator returns the authenticator for the OCI provider
 	GetAuthenticator() (authn.Authenticator, error)
+
+	// GetRawManifest returns the manifest or image index exactly as
+	// returned by the registry, keyed by digest. Unlike GetManifest, it
+	// does not resolve a multi-platform index down to a single platform.
+	GetRawManifest(ctx context.Context, name, digest string) (*RawManifest, error)
 }
 
 // ParseAndValidate parses the given provider configuration and validates it.
