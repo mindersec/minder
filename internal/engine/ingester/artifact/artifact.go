@@ -1,5 +1,3 @@
-// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
-// SPDX-License-Identifier: Apache-2.0
 
 // Package artifact provides the artifact ingestion engine
 package artifact
@@ -61,8 +59,8 @@ type verifiedAttestation struct {
 	Predicate     any    `json:"predicate,omitempty"`
 }
 
-// imageRef captures how to locate an artifact version in its registry,
-// independently of its provenance/verification status.
+// imageRef locates an artifact version in its registry, independent of
+// verification status.
 type imageRef struct {
 	Registry   string   `json:"registry,omitempty"`
 	Repository string   `json:"repository"`
@@ -70,9 +68,9 @@ type imageRef struct {
 	Digest     string   `json:"digest"`
 }
 
-// imageInfo is the typed result returned per artifact version. Fields
-// are capitalized rather than JSON-tagged so Rego still sees "Identity",
-// "Verification", and "Manifest" as the keys.
+// imageInfo is the typed result per artifact version. Fields are
+// capitalized (not JSON-tagged) so Rego sees "Identity", "Verification",
+// "Manifest" as keys.
 type imageInfo struct {
 	Verification verification
 	Identity     imageRef
@@ -201,10 +199,8 @@ func (i *Ingest) getVerificationResult(
 
 	registry := getRegistryForProvider(i.prov)
 	repository := buildRepository(artifact)
-	// Raw-manifest support is scoped to providers implementing the OCI
-	// interface (DockerHub, Quay) for now. GitHub/GHCR doesn't implement
-	// this interface today; that's a known, documented gap pending a
-	// decision on whether/how to extend GHCR.
+	// Raw-manifest needs the OCI interface (DockerHub, Quay); GHCR doesn't
+	// implement it yet (#6778).
 	ocicli, _ := interfaces.As[provifv1.OCI](i.prov)
 
 	// Loop through all artifact versions that apply to this rule and get the provenance info for each
@@ -282,11 +278,9 @@ func (i *Ingest) getVerificationResult(
 	return results, nil
 }
 
-// getRegistryForProvider returns the registry hostname for the artifact's
-// provider. Providers that expose one generically via the OCI interface
-// (e.g. DockerHub) report their own; GitHub is handled as a special case
-// since it authenticates against GHCR without implementing the OCI
-// interface. Any other provider type leaves this empty rather than guess.
+// getRegistryForProvider returns the registry hostname. OCI providers
+// report their own; GitHub falls back to container.GHCRRegistry. Anything
+// else returns empty.
 func getRegistryForProvider(prov interfaces.Provider) string {
 	if ocicli, err := interfaces.As[provifv1.OCI](prov); err == nil {
 		return ocicli.GetRegistry()
@@ -297,20 +291,12 @@ func getRegistryForProvider(prov interfaces.Provider) string {
 	return ""
 }
 
-// buildRepository returns the artifact's path within its registry.
-//
-// For GitHub/GHCR, the owner is a distinct path segment (ghcr.io/<owner>/<name>)
-// and is tracked per-artifact via artifact.Owner, so we reconstruct that path here.
-//
-// For generic OCI providers (e.g. DockerHub), the owner/namespace is tracked
-// via the provider's config (see cfg.Namespace() in the DockerHub/Quay
-// provider config) rather than exposed through the OCI interface today, so
-// artifact.Owner is empty here and the repository is just the artifact name.
-//
-// This assumes only GitHub-backed artifacts populate artifact.Owner today
-// (verified: no DockerHub/Quay properties package sets it). If a future OCI
-// provider starts populating Owner as well, this needs to be revisited so
-// its artifacts don't get an incorrect owner/name repository path.
+// buildRepository returns the artifact's registry path.
+// GHCR tracks owner separately (artifact.Owner); DockerHub/Quay keep it in
+// the provider config instead, so artifact.Owner is empty there and the
+// repository is just the name.
+// Assumes only GitHub populates Owner today (verified). Revisit if that
+// changes.
 func buildRepository(artifact *pb.Artifact) string {
 	if artifact.Owner == "" {
 		return artifact.Name

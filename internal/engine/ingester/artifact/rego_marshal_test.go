@@ -1,5 +1,3 @@
-// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
-// SPDX-License-Identifier: Apache-2.0
 
 package artifact
 
@@ -14,11 +12,10 @@ import (
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
-// TestImageInfoRegoInputShape checks that []imageInfo round-trips through
-// OPA's actual conversion path (eval.go -> rego.EvalInput -> util.RoundTrip
-// -> ast.InterfaceToValue), the same one input.ingested goes through in
-// production, and still exposes Identity/Verification/Manifest as top-level
-// keys.
+// TestImageInfoRegoInputShape checks []imageInfo round-trips through OPA's
+// actual conversion path (eval.go -> rego.EvalInput -> util.RoundTrip ->
+// ast.InterfaceToValue) and still exposes Identity/Verification/Manifest
+// as top-level keys.
 func TestImageInfoRegoInputShape(t *testing.T) {
 	t.Parallel()
 
@@ -43,8 +40,6 @@ func TestImageInfoRegoInputShape(t *testing.T) {
 		},
 	}
 
-	// Mirror eval.go: Input.Ingested is `any`, populated with the ingester's
-	// []imageInfo result and handed to rego.EvalInput.
 	raw := util.Reference(any([]imageInfo{info}))
 	require.NoError(t, util.RoundTrip(raw))
 
