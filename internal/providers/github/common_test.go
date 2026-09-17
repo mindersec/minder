@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-github/v63/github"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,8 +23,10 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/providers/github/ghcr"
 	mock_github "github.com/mindersec/minder/internal/providers/github/mock"
 	mock_ratecache "github.com/mindersec/minder/internal/providers/ratecache/mock"
+	"github.com/mindersec/minder/internal/verifier/sigstore/container"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	config "github.com/mindersec/minder/pkg/config/server"
 	engerrors "github.com/mindersec/minder/pkg/engine/errors"
@@ -239,6 +242,14 @@ type mockCredential struct {
 func (m *mockCredential) GetCacheKey() string {
 	_ = m
 	return "mock-cache-key"
+}
+
+func (m *mockCredential) GetAsContainerAuthenticator(owner string) authn.Authenticator {
+	_ = m
+	return &authn.Basic{
+		Username: owner,
+		Password: "mock-token",
+	}
 }
 
 func TestListPackagesByRepository(t *testing.T) {
@@ -1659,6 +1670,25 @@ func TestCreateSecurityAdvisory(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetRegistry(t *testing.T) {
+	t.Parallel()
+
+	th := setupTest(t)
+	assert.Equal(t, container.GHCRRegistry, th.gh.GetRegistry())
+}
+
+func TestGetAuthenticator(t *testing.T) {
+	t.Parallel()
+
+	th := setupTest(t)
+	th.gh.ghcrwrap = ghcr.FromGitHubClient(th.client, "test-owner")
+	th.delegate.EXPECT().GetCredential().Return(&mockCredential{})
+
+	authenticator, err := th.gh.GetAuthenticator()
+	require.NoError(t, err)
+	assert.Equal(t, &authn.Basic{Username: "test-owner", Password: "mock-token"}, authenticator)
 }
 
 func TestCloseSecurityAdvisory(t *testing.T) {
