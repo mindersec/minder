@@ -35,6 +35,8 @@ type Querier interface {
 	CreateEntity(ctx context.Context, arg CreateEntityParams) (EntityInstance, error)
 	// CreateEntityWithID adds an entry to the entities table with a specific ID so it can be tracked by Minder.
 	CreateEntityWithID(ctx context.Context, arg CreateEntityWithIDParams) (EntityInstance, error)
+	// CreateException adds an exception for a project
+	CreateException(ctx context.Context, arg CreateExceptionParams) (Exception, error)
 	// CreateInvitation creates a new invitation. The code is a secret that is sent
 	// to the invitee, and the email is the address to which the invitation will be
 	// sent. The role is the role that the invitee will have when they accept the
@@ -64,6 +66,8 @@ type Querier interface {
 	DeleteEntity(ctx context.Context, arg DeleteEntityParams) error
 	DeleteEvaluationHistoryByIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
 	DeleteEvaluationOutputsByEvaluationIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
+	// DeleteException removes an exception from a project
+	DeleteException(ctx context.Context, arg DeleteExceptionParams) error
 	DeleteExpiredSessionStates(ctx context.Context) (int64, error)
 	DeleteInstallationIDByAppID(ctx context.Context, appInstallationID int64) error
 	// DeleteInvitation deletes an invitation by its code. This is intended to be
@@ -211,6 +215,8 @@ type Querier interface {
 	ListEntitiesAfterID(ctx context.Context, arg ListEntitiesAfterIDParams) ([]EntityInstance, error)
 	ListEvaluationHistory(ctx context.Context, arg ListEvaluationHistoryParams) ([]ListEvaluationHistoryRow, error)
 	ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error)
+	// ListExceptions lists active exceptions for a project
+	ListExceptions(ctx context.Context, projectID uuid.UUID) ([]Exception, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
 	// ListInvitationsForProject collects the information visible to project
 	// administrators after an invitation has been issued.  In particular, it
