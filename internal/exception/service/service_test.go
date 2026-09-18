@@ -24,31 +24,31 @@ func TestCreate(t *testing.T) {
 	svc := NewService(store)
 
 	projectID := uuid.New()
-	providerID := uuid.New()
+	entityID := uuid.New()
 	ruleTypeID := uuid.New()
 	expiresAt := time.Now().Add(24 * time.Hour)
 
 	req := CreateRequest{
 		ProjectID:  projectID,
-		ProviderID: providerID,
+		EntityID:   entityID,
 		EntityName: "owner/repo",
 		RuleTypeID: ruleTypeID,
 		ExpiresAt:  expiresAt,
 	}
 
-	expected := db.AcceptedRisk{
+	expected := db.Exception{
 		ID:         uuid.New(),
 		ProjectID:  projectID,
-		ProviderID: providerID,
+		EntityID:   entityID,
 		EntityName: "owner/repo",
 		RuleTypeID: ruleTypeID,
 		ExpiresAt:  expiresAt,
 	}
 
 	store.EXPECT().
-		CreateAcceptedRisk(gomock.Any(), db.CreateAcceptedRiskParams{
+		CreateException(gomock.Any(), db.CreateExceptionParams{
 			ProjectID:  projectID,
-			ProviderID: providerID,
+			EntityID:   entityID,
 			EntityName: "owner/repo",
 			RuleTypeID: ruleTypeID,
 			ExpiresAt:  expiresAt,
@@ -58,7 +58,13 @@ func TestCreate(t *testing.T) {
 	got, err := svc.Create(context.Background(), req)
 
 	require.NoError(t, err)
-	require.Equal(t, &expected, got)
+	require.Equal(t, expected.ID, got.ID)
+	require.Equal(t, expected.ProjectID, got.ProjectID)
+	require.Equal(t, expected.EntityID, got.EntityID)
+	require.Equal(t, expected.EntityName, got.EntityName)
+	require.Equal(t, expected.RuleTypeID, got.RuleTypeID)
+	require.Equal(t, expected.ExpiresAt, got.ExpiresAt)
+	require.Equal(t, expected.CreatedAt, got.CreatedAt)
 }
 
 func TestCreateError(t *testing.T) {
@@ -71,15 +77,15 @@ func TestCreateError(t *testing.T) {
 
 	req := CreateRequest{
 		ProjectID:  uuid.New(),
-		ProviderID: uuid.New(),
+		EntityID:   uuid.New(),
 		EntityName: "owner/repo",
 		RuleTypeID: uuid.New(),
 		ExpiresAt:  time.Now().Add(24 * time.Hour),
 	}
 
 	store.EXPECT().
-		CreateAcceptedRisk(gomock.Any(), gomock.Any()).
-		Return(db.AcceptedRisk{}, dbErr)
+		CreateException(gomock.Any(), gomock.Any()).
+		Return(db.Exception{}, dbErr)
 
 	got, err := svc.Create(context.Background(), req)
 
@@ -94,11 +100,11 @@ func TestList(t *testing.T) {
 	svc := NewService(store)
 
 	projectID := uuid.New()
-	expected := []db.AcceptedRisk{
+	expected := []db.Exception{
 		{
 			ID:         uuid.New(),
 			ProjectID:  projectID,
-			ProviderID: uuid.New(),
+			EntityID:   uuid.New(),
 			EntityName: "owner/repo",
 			RuleTypeID: uuid.New(),
 			ExpiresAt:  time.Now().Add(24 * time.Hour),
@@ -106,13 +112,20 @@ func TestList(t *testing.T) {
 	}
 
 	store.EXPECT().
-		ListAcceptedRisks(gomock.Any(), projectID).
+		ListExceptions(gomock.Any(), projectID).
 		Return(expected, nil)
 
 	got, err := svc.List(context.Background(), projectID)
 
 	require.NoError(t, err)
-	require.Equal(t, expected, got)
+	require.Len(t, got, 1)
+	require.Equal(t, expected[0].ID, got[0].ID)
+	require.Equal(t, expected[0].ProjectID, got[0].ProjectID)
+	require.Equal(t, expected[0].EntityID, got[0].EntityID)
+	require.Equal(t, expected[0].EntityName, got[0].EntityName)
+	require.Equal(t, expected[0].RuleTypeID, got[0].RuleTypeID)
+	require.Equal(t, expected[0].ExpiresAt, got[0].ExpiresAt)
+	require.Equal(t, expected[0].CreatedAt, got[0].CreatedAt)
 }
 
 func TestListError(t *testing.T) {
@@ -125,7 +138,7 @@ func TestListError(t *testing.T) {
 	projectID := uuid.New()
 
 	store.EXPECT().
-		ListAcceptedRisks(gomock.Any(), projectID).
+		ListExceptions(gomock.Any(), projectID).
 		Return(nil, dbErr)
 
 	got, err := svc.List(context.Background(), projectID)
@@ -144,7 +157,7 @@ func TestDelete(t *testing.T) {
 	projectID := uuid.New()
 
 	store.EXPECT().
-		DeleteAcceptedRisk(gomock.Any(), db.DeleteAcceptedRiskParams{
+		DeleteException(gomock.Any(), db.DeleteExceptionParams{
 			ID:        id,
 			ProjectID: projectID,
 		}).
@@ -166,7 +179,7 @@ func TestDeleteError(t *testing.T) {
 	projectID := uuid.New()
 
 	store.EXPECT().
-		DeleteAcceptedRisk(gomock.Any(), db.DeleteAcceptedRiskParams{
+		DeleteException(gomock.Any(), db.DeleteExceptionParams{
 			ID:        id,
 			ProjectID: projectID,
 		}).

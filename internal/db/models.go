@@ -467,16 +467,6 @@ func (ns NullSeverity) Value() (driver.Value, error) {
 	return string(ns.Severity), nil
 }
 
-type AcceptedRisk struct {
-	ID         uuid.UUID `json:"id"`
-	ProjectID  uuid.UUID `json:"project_id"`
-	ProviderID uuid.UUID `json:"provider_id"`
-	EntityName string    `json:"entity_name"`
-	RuleTypeID uuid.UUID `json:"rule_type_id"`
-	ExpiresAt  time.Time `json:"expires_at"`
-	CreatedAt  time.Time `json:"created_at"`
-}
-
 type AlertEvent struct {
 	ID           uuid.UUID        `json:"id"`
 	EvaluationID uuid.UUID        `json:"evaluation_id"`
@@ -570,6 +560,16 @@ type EvaluationStatus struct {
 	Details        string          `json:"details"`
 	EvaluationTime time.Time       `json:"evaluation_time"`
 	Checkpoint     json.RawMessage `json:"checkpoint"`
+}
+
+type Exception struct {
+	ID         uuid.UUID `json:"id"`
+	ProjectID  uuid.UUID `json:"project_id"`
+	EntityName string    `json:"entity_name"`
+	EntityID   uuid.UUID `json:"entity_id"`
+	RuleTypeID uuid.UUID `json:"rule_type_id"`
+	ExpiresAt  time.Time `json:"expires_at"`
+	CreatedAt  time.Time `json:"created_at"`
 }
 
 type Feature struct {

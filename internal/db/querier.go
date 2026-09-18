@@ -28,8 +28,6 @@ type Querier interface {
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
 	CountProfilesByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
-	// CreateAcceptedRisk adds an accepted risk for a project
-	CreateAcceptedRisk(ctx context.Context, arg CreateAcceptedRiskParams) (AcceptedRisk, error)
 	// CreateDataSource creates a new datasource in a given project.
 	CreateDataSource(ctx context.Context, arg CreateDataSourceParams) (DataSource, error)
 	CreateEntitlements(ctx context.Context, arg CreateEntitlementsParams) error
@@ -37,6 +35,8 @@ type Querier interface {
 	CreateEntity(ctx context.Context, arg CreateEntityParams) (EntityInstance, error)
 	// CreateEntityWithID adds an entry to the entities table with a specific ID so it can be tracked by Minder.
 	CreateEntityWithID(ctx context.Context, arg CreateEntityWithIDParams) (EntityInstance, error)
+	// CreateException adds an exception for a project
+	CreateException(ctx context.Context, arg CreateExceptionParams) (Exception, error)
 	// CreateInvitation creates a new invitation. The code is a secret that is sent
 	// to the invitee, and the email is the address to which the invitation will be
 	// sent. The role is the role that the invitee will have when they accept the
@@ -56,8 +56,6 @@ type Querier interface {
 	// Subscriptions --
 	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error)
 	CreateUser(ctx context.Context, identitySubject string) (User, error)
-	// DeleteAcceptedRisk removes an accepted risk from a project
-	DeleteAcceptedRisk(ctx context.Context, arg DeleteAcceptedRiskParams) error
 	DeleteAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) error
 	DeleteDataSource(ctx context.Context, arg DeleteDataSourceParams) (DataSource, error)
 	DeleteDataSourceFunction(ctx context.Context, arg DeleteDataSourceFunctionParams) (DataSourcesFunction, error)
@@ -68,6 +66,8 @@ type Querier interface {
 	DeleteEntity(ctx context.Context, arg DeleteEntityParams) error
 	DeleteEvaluationHistoryByIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
 	DeleteEvaluationOutputsByEvaluationIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
+	// DeleteException removes an exception from a project
+	DeleteException(ctx context.Context, arg DeleteExceptionParams) error
 	DeleteExpiredSessionStates(ctx context.Context) (int64, error)
 	DeleteInstallationIDByAppID(ctx context.Context, appInstallationID int64) error
 	// DeleteInvitation deletes an invitation by its code. This is intended to be
@@ -202,8 +202,6 @@ type Querier interface {
 	InsertEvaluationRuleEntity(ctx context.Context, arg InsertEvaluationRuleEntityParams) (uuid.UUID, error)
 	InsertEvaluationStatus(ctx context.Context, arg InsertEvaluationStatusParams) (uuid.UUID, error)
 	InsertRemediationEvent(ctx context.Context, arg InsertRemediationEventParams) error
-	// ListAcceptedRisks lists active accepted risks for a project
-	ListAcceptedRisks(ctx context.Context, projectID uuid.UUID) ([]AcceptedRisk, error)
 	ListAllRootProjects(ctx context.Context) ([]Project, error)
 	// ListDataSourceFunctions retrieves all functions for a datasource.
 	ListDataSourceFunctions(ctx context.Context, arg ListDataSourceFunctionsParams) ([]DataSourcesFunction, error)
@@ -217,6 +215,8 @@ type Querier interface {
 	ListEntitiesAfterID(ctx context.Context, arg ListEntitiesAfterIDParams) ([]EntityInstance, error)
 	ListEvaluationHistory(ctx context.Context, arg ListEvaluationHistoryParams) ([]ListEvaluationHistoryRow, error)
 	ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error)
+	// ListExceptions lists active exceptions for a project
+	ListExceptions(ctx context.Context, projectID uuid.UUID) ([]Exception, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
 	// ListInvitationsForProject collects the information visible to project
 	// administrators after an invitation has been issued.  In particular, it

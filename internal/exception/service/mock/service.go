@@ -14,8 +14,7 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	service "github.com/mindersec/minder/internal/acceptedrisk/service"
-	db "github.com/mindersec/minder/internal/db"
+	service "github.com/mindersec/minder/internal/exception/service"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -44,10 +43,10 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockService) Create(ctx context.Context, req service.CreateRequest) (*db.AcceptedRisk, error) {
+func (m *MockService) Create(ctx context.Context, req service.CreateRequest) (*service.Exception, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", ctx, req)
-	ret0, _ := ret[0].(*db.AcceptedRisk)
+	ret0, _ := ret[0].(*service.Exception)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -73,10 +72,10 @@ func (mr *MockServiceMockRecorder) Delete(ctx, id, projectID any) *gomock.Call {
 }
 
 // List mocks base method.
-func (m *MockService) List(ctx context.Context, projectID uuid.UUID) ([]db.AcceptedRisk, error) {
+func (m *MockService) List(ctx context.Context, projectID uuid.UUID) ([]service.Exception, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "List", ctx, projectID)
-	ret0, _ := ret[0].([]db.AcceptedRisk)
+	ret0, _ := ret[0].([]service.Exception)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
