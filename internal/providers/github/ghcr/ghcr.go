@@ -83,6 +83,11 @@ func (g *ImageLister) getNamespace() string {
 	return g.cfg.GetNamespace()
 }
 
+// Namespace returns the configured GHCR namespace.
+func (g *ImageLister) Namespace() string {
+	return g.getNamespace()
+}
+
 // ListImages lists the containers in the GHCR
 func (g *ImageLister) ListImages(ctx context.Context) ([]string, error) {
 	pageNumber := 0
