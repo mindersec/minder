@@ -193,6 +193,9 @@ func NewGitHub(
 		delegate:             delegate,
 		providerClass:        providerClass,
 		ghcrwrap:             ghcrwrap,
+		// TODO: this credential isn't used by ghcrOCI's GetDigest/GetManifest/GetRawManifest
+		// today -- see the "private GHCR images" known limitation in PR #6791. Wire it in
+		// when that gets fixed.
 		ghcrOCI: oci.New(
 			delegate.GetCredential(),
 			container.GHCRRegistry,

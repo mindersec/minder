@@ -75,17 +75,12 @@ func FromGitHubClient(client *github.Client, namespace string) *ImageLister {
 
 // GetNamespaceURL returns the URL of the GHCR container namespace
 func (g *ImageLister) GetNamespaceURL() string {
-	return fmt.Sprintf("ghcr.io/%s", g.getNamespace())
-}
-
-// getNamespace returns the namespace of the GHCR client
-func (g *ImageLister) getNamespace() string {
-	return g.cfg.GetNamespace()
+	return fmt.Sprintf("ghcr.io/%s", g.Namespace())
 }
 
 // Namespace returns the configured GHCR namespace.
 func (g *ImageLister) Namespace() string {
-	return g.getNamespace()
+	return g.cfg.GetNamespace()
 }
 
 // ListImages lists the containers in the GHCR
@@ -109,11 +104,11 @@ func (g *ImageLister) ListImages(ctx context.Context) ([]string, error) {
 
 		// TODO: handle organizations
 		// artifacts, resp, err = g.client.Organizations.ListPackages(ctx, g.namespace, opt)
-		artifacts, resp, err = g.client.Users.ListPackages(ctx, g.getNamespace(), opt)
+		artifacts, resp, err = g.client.Users.ListPackages(ctx, g.Namespace(), opt)
 		if err != nil {
 			if resp.StatusCode == http.StatusNotFound {
 				return allContainers, fmt.Errorf("packages not found for namespace %s: %w",
-					g.getNamespace(), errors.New("not found"))
+					g.Namespace(), errors.New("not found"))
 			}
 
 			return allContainers, err
