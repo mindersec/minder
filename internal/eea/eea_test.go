@@ -90,12 +90,14 @@ func TestAggregator(t *testing.T) {
 	// This tests that flushing sends messages to the executor engine
 	evt.Register(constants.TopicQueueEntityEvaluate, flushedMessages.Add, aggr.AggregateMiddleware)
 
+	runErr := make(chan error, 1)
 	go func() {
-		t.Log("Running eventer")
-		err := evt.Run(ctx)
-		assert.NoError(t, err, "expected no error when running eventer")
+		runErr <- evt.Run(ctx)
 	}()
-	defer evt.Close()
+	defer func() {
+		require.NoError(t, evt.Close())
+		require.NoError(t, <-runErr)
+	}()
 
 	inf := entities.NewEntityInfoWrapper().
 		WithRepository(&minderv1.Repository{}).
@@ -106,6 +108,7 @@ func TestAggregator(t *testing.T) {
 	require.NoError(t, err, "expected no error when building message")
 
 	<-evt.Running()
+	t.Log("Running eventer")
 
 	t.Log("Publishing events")
 	var wg sync.WaitGroup
@@ -355,10 +358,9 @@ func TestFlushAll(t *testing.T) {
 			flushedMessages := newTestPubSub()
 			evt.Register(constants.TopicQueueEntityEvaluate, flushedMessages.Add)
 
+			runErr := make(chan error, 1)
 			go func() {
-				t.Log("Running eventer")
-				err := evt.Run(ctx)
-				assert.NoError(t, err, "expected no error when running eventer")
+				runErr <- evt.Run(ctx)
 			}()
 
 			<-evt.Running()
@@ -372,15 +374,21 @@ func TestFlushAll(t *testing.T) {
 			tt.mockDBSetup(ctx, mockStore)
 			tt.mockPropSvcSetup(propsvc)
 
+			flushErr := make(chan error, 1)
 			go func() {
-				t.Log("Flushing all")
-				require.NoError(t, aggr.FlushAll(ctx), "expected no error")
+				flushErr <- aggr.FlushAll(ctx)
 			}()
 
 			t.Log("Waiting for flush")
 			flushedMessages.Wait()
+			require.NoError(t, <-flushErr)
 
 			assert.Equal(t, int32(1), flushedMessages.count.Load(), "expected one message")
+
+			// Cancel now so evt.Run sees ctx.Done() and returns -- otherwise
+			// receiving from runErr below would block forever.
+			cancel()
+			require.NoError(t, <-runErr)
 		})
 	}
 }
