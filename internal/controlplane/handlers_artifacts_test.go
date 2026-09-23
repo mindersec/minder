@@ -13,11 +13,18 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	mockdb "github.com/mindersec/minder/database/mock"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
+	entmodels "github.com/mindersec/minder/internal/entities/models"
+	mockpropssvc "github.com/mindersec/minder/internal/entities/properties/service/mock"
+	ghprops "github.com/mindersec/minder/internal/providers/github/properties"
+	mockproviders "github.com/mindersec/minder/internal/providers/mock"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
 func TestListArtifacts_RepoFilter(t *testing.T) {
@@ -193,6 +200,134 @@ func TestListArtifacts_RepoFilter(t *testing.T) {
 				assert.Empty(t, names)
 			} else {
 				assert.ElementsMatch(t, tc.wantArtifacts, names)
+			}
+		})
+	}
+}
+
+func TestGetArtifactByName(t *testing.T) {
+	t.Parallel()
+
+	projectID := uuid.New()
+	providerID := uuid.New()
+	artifactID := uuid.New()
+	providerName := "github"
+
+	baseCtx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+		Project:  engcontext.Project{ID: projectID},
+		Provider: engcontext.Provider{Name: providerName},
+	})
+
+	validProvider := &db.Provider{ID: providerID, Name: providerName}
+
+	makeEWP := func(repoFullName string) *entmodels.EntityWithProperties {
+		propsObj := properties.NewProperties(map[string]any{
+			ghprops.ArtifactPropertyRepo: repoFullName,
+		})
+		return entmodels.NewEntityWithPropertiesFromInstance(
+			entmodels.EntityInstance{
+				ID:        artifactID,
+				Type:      pb.Entity_ENTITY_ARTIFACTS,
+				ProjectID: projectID,
+			}, propsObj)
+	}
+
+	tests := []struct {
+		name        string
+		artifactRef string
+		setupMocks  func(*mockdb.MockStore, *mockproviders.MockProviderStore, *mockpropssvc.MockPropertiesService)
+		wantCode    codes.Code
+	}{
+		{
+			name:        "invalid name — too few parts",
+			artifactRef: "myorg/myartifact",
+			setupMocks:  func(_ *mockdb.MockStore, _ *mockproviders.MockProviderStore, _ *mockpropssvc.MockPropertiesService) {},
+			wantCode:    codes.InvalidArgument,
+		},
+		{
+			name:        "provider not found",
+			artifactRef: "myorg/myrepo/myartifact",
+			setupMocks: func(_ *mockdb.MockStore, ps *mockproviders.MockProviderStore, _ *mockpropssvc.MockPropertiesService) {
+				ps.EXPECT().GetByName(gomock.Any(), projectID, providerName).Return(nil, sql.ErrNoRows)
+			},
+			wantCode: codes.NotFound,
+		},
+		{
+			name:        "artifact not found in DB",
+			artifactRef: "myorg/myrepo/myartifact",
+			setupMocks: func(store *mockdb.MockStore, ps *mockproviders.MockProviderStore, _ *mockpropssvc.MockPropertiesService) {
+				ps.EXPECT().GetByName(gomock.Any(), projectID, providerName).Return(validProvider, nil)
+				store.EXPECT().GetTypedEntitiesByPropertyV1(
+					gomock.Any(), db.EntitiesArtifact, properties.PropertyName, "myorg/myartifact",
+					db.GetTypedEntitiesOptions{ProjectID: projectID, ProviderID: providerID},
+				).Return(nil, nil)
+			},
+			wantCode: codes.NotFound,
+		},
+		{
+			name:        "repo mismatch — wrong repo in name",
+			artifactRef: "myorg/wrong-repo/myartifact",
+			setupMocks: func(store *mockdb.MockStore, ps *mockproviders.MockProviderStore, props *mockpropssvc.MockPropertiesService) {
+				ps.EXPECT().GetByName(gomock.Any(), projectID, providerName).Return(validProvider, nil)
+				store.EXPECT().GetTypedEntitiesByPropertyV1(
+					gomock.Any(), db.EntitiesArtifact, properties.PropertyName, "myorg/myartifact",
+					db.GetTypedEntitiesOptions{ProjectID: projectID, ProviderID: providerID},
+				).Return([]db.EntityInstance{{ID: artifactID}}, nil)
+				props.EXPECT().EntityWithPropertiesByID(gomock.Any(), artifactID, gomock.Any()).
+					Return(makeEWP("myorg/real-repo"), nil)
+			},
+			wantCode: codes.NotFound,
+		},
+		{
+			name:        "success — owner and repo match",
+			artifactRef: "myorg/myrepo/myartifact",
+			setupMocks: func(store *mockdb.MockStore, ps *mockproviders.MockProviderStore, props *mockpropssvc.MockPropertiesService) {
+				ps.EXPECT().GetByName(gomock.Any(), projectID, providerName).Return(validProvider, nil)
+				store.EXPECT().GetTypedEntitiesByPropertyV1(
+					gomock.Any(), db.EntitiesArtifact, properties.PropertyName, "myorg/myartifact",
+					db.GetTypedEntitiesOptions{ProjectID: projectID, ProviderID: providerID},
+				).Return([]db.EntityInstance{{ID: artifactID}}, nil)
+				ewp := makeEWP("myorg/myrepo")
+				props.EXPECT().EntityWithPropertiesByID(gomock.Any(), artifactID, gomock.Any()).Return(ewp, nil)
+				props.EXPECT().RetrieveAllPropertiesForEntity(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				props.EXPECT().EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(&pb.Artifact{}, nil)
+			},
+			wantCode: codes.OK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			mockProvStore := mockproviders.NewMockProviderStore(ctrl)
+			mockProps := mockpropssvc.NewMockPropertiesService(ctrl)
+
+			tt.setupMocks(mockStore, mockProvStore, mockProps)
+
+			server := Server{
+				store:         mockStore,
+				providerStore: mockProvStore,
+				props:         mockProps,
+			}
+
+			resp, err := server.GetArtifactByName(baseCtx, &pb.GetArtifactByNameRequest{
+				Name: tt.artifactRef,
+			})
+
+			if tt.wantCode == codes.OK {
+				require.NoError(t, err)
+				require.NotNil(t, resp)
+			} else {
+				require.Error(t, err)
+				st, ok := status.FromError(err)
+				require.True(t, ok)
+				require.Equal(t, tt.wantCode, st.Code())
 			}
 		})
 	}
