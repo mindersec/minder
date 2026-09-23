@@ -4,15 +4,42 @@
 package oci
 
 import (
+	"context"
 	"errors"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/registry"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/random"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
+
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
+
+// MockCredential implements provifv1.Credential and provifv1.OAuth2TokenCredential
+type MockCredential struct {
+	token string
+}
+
+type mockTokenSource struct {
+	token string
+}
+
+func (m mockTokenSource) Token() (*oauth2.Token, error) {
+	return &oauth2.Token{AccessToken: m.token}, nil
+}
+
+func (m MockCredential) GetAsOAuth2TokenSource() oauth2.TokenSource {
+	return mockTokenSource(m)
+}
 
 func TestResolveCreatedAt(t *testing.T) {
 	t.Parallel()
@@ -85,7 +112,6 @@ func TestResolveCreatedAt(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-
 			got, err := resolveCreatedAt(tc.man, tc.configFile)
 			if tc.wantErr {
 				require.Error(t, err)
@@ -95,4 +121,73 @@ func TestResolveCreatedAt(t *testing.T) {
 			assert.Truef(t, got.Equal(tc.want), "got %s, want %s", got, tc.want)
 		})
 	}
+}
+
+func TestOCI_Basic(t *testing.T) {
+	t.Parallel()
+
+	o := New(nil, "invalid.registry.local", "invalid.registry.local/myrepo")
+	assert.True(t, o.CanImplement(minderv1.ProviderType_PROVIDER_TYPE_OCI))
+	assert.False(t, o.CanImplement(minderv1.ProviderType_PROVIDER_TYPE_GITHUB))
+	assert.Equal(t, "invalid.registry.local", o.GetRegistry())
+}
+
+func TestOCI_WithRegistry(t *testing.T) {
+	t.Parallel()
+
+	s := httptest.NewServer(registry.New())
+	t.Cleanup(s.Close)
+	host := strings.TrimPrefix(s.URL, "http://")
+
+	// Push a random image to the test registry so we have something to read back.
+	img, err := random.Image(1024, 1)
+	require.NoError(t, err)
+
+	ref, err := name.NewTag(host + "/myimage:v1.0")
+	require.NoError(t, err)
+	require.NoError(t, remote.Write(ref, img))
+
+	o := New(nil, host, host)
+	ctx := context.Background()
+
+	tags, err := o.ListTags(ctx, "myimage")
+	require.NoError(t, err)
+	assert.Contains(t, tags, "v1.0")
+
+	digest, err := o.GetDigest(ctx, "myimage", "v1.0")
+	require.NoError(t, err)
+	assert.True(t, strings.HasPrefix(digest, "sha256:"), "expected sha256 digest, got %s", digest)
+
+	manifest, err := o.GetManifest(ctx, "myimage", "v1.0")
+	require.NoError(t, err)
+	assert.NotNil(t, manifest)
+}
+
+func TestOCI_Auth(t *testing.T) {
+	t.Parallel()
+
+	t.Run("anonymous auth", func(t *testing.T) {
+		t.Parallel()
+		o := New(nil, "invalid.registry.local", "invalid.registry.local/myrepo")
+		auth, err := o.GetAuthenticator()
+		require.NoError(t, err)
+		assert.NotNil(t, auth)
+	})
+
+	t.Run("valid oauth2 auth", func(t *testing.T) {
+		t.Parallel()
+		cred := MockCredential{token: "secret-token"}
+		o := New(cred, "registry.com", "registry.com/myrepo")
+		auth, err := o.GetAuthenticator()
+		require.NoError(t, err)
+		assert.NotNil(t, auth)
+	})
+
+	t.Run("invalid credential type", func(t *testing.T) {
+		t.Parallel()
+		o := New("not-an-oauth-cred", "registry.com", "registry.com/myrepo")
+		_, err := o.GetAuthenticator()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "credential is not an OAuth2 token credential")
+	})
 }
