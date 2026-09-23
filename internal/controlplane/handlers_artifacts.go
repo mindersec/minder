@@ -18,6 +18,7 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/logger"
+	ghprops "github.com/mindersec/minder/internal/providers/github/properties"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -62,6 +63,11 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 
 	logger.BusinessRecord(ctx).Provider = providerName
 
+	repoOwner := nameParts[0]
+	repoName := nameParts[1]
+	// PropertyName for artifacts is stored as "owner/artifactName"
+	fullArtifactName := repoOwner + "/" + strings.Join(nameParts[2:], "/")
+
 	// Get provider ID from name
 	provider, err := s.providerStore.GetByName(ctx, projectID, providerName)
 	if err != nil {
@@ -71,15 +77,12 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 		return nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
 	}
 
-	// the artifact name is the rest of the parts
-	artifactName := strings.Join(nameParts[2:], "/")
-
-	// Search for artifact by name property using V1 helper
+	// Search for artifact by its full owner/artifactName
 	entities, err := s.store.GetTypedEntitiesByPropertyV1(
 		ctx,
 		db.EntitiesArtifact,
 		properties.PropertyName,
-		artifactName,
+		fullArtifactName,
 		db.GetTypedEntitiesOptions{
 			ProjectID:  projectID,
 			ProviderID: provider.ID,
@@ -100,6 +103,12 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 			return nil, status.Errorf(codes.NotFound, "artifact not found")
 		}
 		return nil, status.Errorf(codes.Unknown, "failed to get artifact: %s", err)
+	}
+
+	// Validate the artifact belongs to the requested repository
+	storedRepo := ewp.Properties.GetProperty(ghprops.ArtifactPropertyRepo).GetString()
+	if storedRepo != "" && storedRepo != repoOwner+"/"+repoName {
+		return nil, status.Errorf(codes.NotFound, "artifact not found")
 	}
 
 	// Retrieve all properties from provider
