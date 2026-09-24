@@ -176,9 +176,9 @@ func formatEvalResult(res *interfaces.EvaluationResult, evalErr error) *starlark
 	case errors.Is(evalErr, interfaces.ErrEvaluationFailed):
 		status = "fail"
 		msg = evalErr.Error()
-		var details interfaces.EvalError
-		if errors.As(evalErr, &details) {
-			msg = fmt.Sprintf("%s: %s", msg, details.Details())
+		// Don't combine error and details, as they are shown in different places
+		if details, ok := errors.AsType[interfaces.EvalError](evalErr); ok {
+			_ = result.SetKey(starlark.String("details"), starlark.String(details.Details()))
 		}
 	case errors.Is(evalErr, interfaces.ErrEvaluationSkipped):
 		status = "skip"
