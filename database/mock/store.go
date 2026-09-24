@@ -281,6 +281,21 @@ func (mr *MockStoreMockRecorder) CreateEntityWithID(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEntityWithID", reflect.TypeOf((*MockStore)(nil).CreateEntityWithID), ctx, arg)
 }
 
+// CreateException mocks base method.
+func (m *MockStore) CreateException(ctx context.Context, arg db.CreateExceptionParams) (db.Exception, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateException", ctx, arg)
+	ret0, _ := ret[0].(db.Exception)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateException indicates an expected call of CreateException.
+func (mr *MockStoreMockRecorder) CreateException(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateException", reflect.TypeOf((*MockStore)(nil).CreateException), ctx, arg)
+}
+
 // CreateInvitation mocks base method.
 func (m *MockStore) CreateInvitation(ctx context.Context, arg db.CreateInvitationParams) (db.UserInvite, error) {
 	m.ctrl.T.Helper()
@@ -562,6 +577,20 @@ func (m *MockStore) DeleteEvaluationOutputsByEvaluationIDs(ctx context.Context, 
 func (mr *MockStoreMockRecorder) DeleteEvaluationOutputsByEvaluationIDs(ctx, evaluationids any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEvaluationOutputsByEvaluationIDs", reflect.TypeOf((*MockStore)(nil).DeleteEvaluationOutputsByEvaluationIDs), ctx, evaluationids)
+}
+
+// DeleteException mocks base method.
+func (m *MockStore) DeleteException(ctx context.Context, arg db.DeleteExceptionParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteException", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteException indicates an expected call of DeleteException.
+func (mr *MockStoreMockRecorder) DeleteException(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteException", reflect.TypeOf((*MockStore)(nil).DeleteException), ctx, arg)
 }
 
 // DeleteExpiredSessionStates mocks base method.
@@ -1956,6 +1985,21 @@ func (m *MockStore) ListEvaluationHistoryStaleRecords(ctx context.Context, arg d
 func (mr *MockStoreMockRecorder) ListEvaluationHistoryStaleRecords(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEvaluationHistoryStaleRecords", reflect.TypeOf((*MockStore)(nil).ListEvaluationHistoryStaleRecords), ctx, arg)
+}
+
+// ListExceptions mocks base method.
+func (m *MockStore) ListExceptions(ctx context.Context, projectID uuid.UUID) ([]db.Exception, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListExceptions", ctx, projectID)
+	ret0, _ := ret[0].([]db.Exception)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListExceptions indicates an expected call of ListExceptions.
+func (mr *MockStoreMockRecorder) ListExceptions(ctx, projectID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListExceptions", reflect.TypeOf((*MockStore)(nil).ListExceptions), ctx, projectID)
 }
 
 // ListFlushCache mocks base method.
