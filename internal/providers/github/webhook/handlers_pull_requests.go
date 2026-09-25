@@ -22,23 +22,20 @@ import (
 // pullRequestEvent are events related to pull requests issued around
 // a specific repository
 type pullRequestEvent struct {
-	Action      *string      `json:"action,omitempty"`
-	Repo        *repo        `json:"repository,omitempty"`
-	PullRequest *pullRequest `json:"pull_request,omitempty"`
+	Action      *string     `json:"action,omitempty"`
+	Repo        repo        `json:"repository,omitempty"`
+	PullRequest pullRequest `json:"pull_request,omitempty"`
 }
 
-func (p *pullRequestEvent) GetAction() string {
-	if p.Action != nil {
-		return *p.Action
-	}
-	return ""
+func (p pullRequestEvent) GetAction() string {
+	return orDefault(p.Action)
 }
 
-func (p *pullRequestEvent) GetRepo() *repo {
+func (p pullRequestEvent) GetRepo() repo {
 	return p.Repo
 }
 
-func (p *pullRequestEvent) GetPullRequest() *pullRequest {
+func (p pullRequestEvent) GetPullRequest() pullRequest {
 	return p.PullRequest
 }
 
@@ -46,31 +43,22 @@ type pullRequest struct {
 	ID     *int64  `json:"id,omitempty"`
 	URL    *string `json:"url,omitempty"`
 	Number *int64  `json:"number,omitempty"`
-	User   *user   `json:"user,omitempty"`
+	User   user    `json:"user,omitempty"`
 }
 
-func (p *pullRequest) GetID() int64 {
-	if p.ID != nil {
-		return *p.ID
-	}
-	return 0
+func (p pullRequest) GetID() int64 {
+	return orDefault(p.ID)
 }
 
-func (p *pullRequest) GetURL() string {
-	if p.URL != nil {
-		return *p.URL
-	}
-	return ""
+func (p pullRequest) GetURL() string {
+	return orDefault(p.URL)
 }
 
-func (p *pullRequest) GetNumber() int64 {
-	if p.Number != nil {
-		return *p.Number
-	}
-	return 0
+func (p pullRequest) GetNumber() int64 {
+	return orDefault(p.Number)
 }
 
-func (p *pullRequest) GetUser() *user {
+func (p pullRequest) GetUser() user {
 	return p.User
 }
 
@@ -80,7 +68,7 @@ func processPullRequestEvent(
 ) (*processingResult, error) {
 	l := zerolog.Ctx(ctx)
 
-	var event *pullRequestEvent
+	var event pullRequestEvent
 	if err := json.Unmarshal(payload, &event); err != nil {
 		return nil, err
 	}
@@ -88,20 +76,14 @@ func processPullRequestEvent(
 	if event.GetAction() == "" {
 		return nil, errors.New("invalid event: action is nil")
 	}
-	if event.GetRepo() == nil {
+	if event.GetRepo().GetID() == 0 {
 		return nil, errors.New("invalid event: repo is nil")
-	}
-	if event.GetPullRequest() == nil {
-		return nil, errors.New("invalid event: pull request is nil")
 	}
 	if event.GetPullRequest().GetURL() == "" {
 		return nil, errors.New("invalid pull request: URL is nil")
 	}
 	if event.GetPullRequest().GetNumber() == 0 {
 		return nil, errors.New("invalid pull request: number is 0")
-	}
-	if event.GetPullRequest().GetUser() == nil {
-		return nil, errors.New("invalid pull request: user is nil")
 	}
 	if event.GetPullRequest().GetUser().GetID() == 0 {
 		return nil, errors.New("invalid user: id is 0")

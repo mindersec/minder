@@ -505,6 +505,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 		},
 		{
+			name: "ping null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
+			event:      "ping",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
+		},
+		{
 			name: "package published",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
 			event: "package",
@@ -774,6 +781,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			rawPayload: []byte("ceci n'est pas une JSON"),
 			statusCode: http.StatusInternalServerError,
+		},
+		{
+			name: "package null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
+			event:      "package",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
 		},
 
 		// Testing package mandatory fields
@@ -1054,6 +1068,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			},
 		},
 		{
+			name: "meta null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#meta
+			event:      "meta",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
+		},
+		{
 			name: "branch_protection_rule created",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#branch_protection_rule
 			event: "branch_protection_rule",
@@ -1138,6 +1159,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			},
 		},
 		{
+			name: "branch_protection_rule null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#branch_protection_rule
+			event:      "branch_protection_rule",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
+		},
+		{
 			name: "code_scanning_alert",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#code_scanning_alert
 			event: "code_scanning_alert",
@@ -1166,6 +1194,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			},
 		},
 		{
+			name: "code_scanning_alert null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#code_scanning_alert
+			event:      "code_scanning_alert",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
+		},
+		{
 			name: "create",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#create
 			event: "create",
@@ -1191,6 +1226,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				received = withTimeout(ch, timeout)
 				require.Nil(t, received)
 			},
+		},
+		{
+			name: "create null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#create
+			event:      "create",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
 		},
 		{
 			name: "member",
@@ -1221,6 +1263,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			},
 		},
 		{
+			name: "member null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#member
+			event:      "member",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
+		},
+		{
 			name: "public",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#public
 			event: "public",
@@ -1246,6 +1295,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				received = withTimeout(ch, timeout)
 				require.Nil(t, received)
 			},
+		},
+		{
+			name: "public null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#public
+			event:      "public",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
 		},
 		{
 			name: "repository archived",
@@ -1644,6 +1700,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Nil(t, received)
 			},
 		},
+		{
+			name: "repository null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#repository
+			event:      "repository",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
+		},
 
 		{
 			name: "repository_import",
@@ -1671,6 +1734,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				received = withTimeout(ch, timeout)
 				require.Nil(t, received)
 			},
+		},
+		{
+			name: "repository_import null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#repository_import
+			event:      "repository_import",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
 		},
 		{
 			name: "secret_scanning_alert created",
@@ -1813,6 +1883,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			},
 		},
 		{
+			name: "secret_scanning_alert null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#secret_scanning_alert
+			event:      "secret_scanning_alert",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
+		},
+		{
 			name: "team_add",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#team_add
 			event: "team_add",
@@ -1838,6 +1915,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				received = withTimeout(ch, timeout)
 				require.Nil(t, received)
 			},
+		},
+		{
+			name: "team_add null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#team_add
+			event:      "team_add",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
 		},
 		{
 			name: "team added_to_repository",
@@ -1980,6 +2064,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			},
 		},
 		{
+			name: "team null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#team
+			event:      "team",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
+		},
+		{
 			name: "repository_vulnerability_alert create",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#repository_vulnerability_alert
 			event: "repository_vulnerability_alert",
@@ -2092,6 +2183,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			},
 		},
 		{
+			name: "repository_vulnerability_alert null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#repository_vulnerability_alert
+			event:      "repository_vulnerability_alert",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
+		},
+		{
 			name: "security_advisory",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#security_advisory
 			event: "security_advisory",
@@ -2117,6 +2215,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				received = withTimeout(ch, timeout)
 				require.Nil(t, received)
 			},
+		},
+		{
+			name: "security_advisory null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#security_advisory
+			event:      "security_advisory",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
 		},
 		{
 			name: "security_and_analysis",
@@ -2146,6 +2251,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			},
 		},
 		{
+			name: "security_and_analysis null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#security_and_analysis
+			event:      "security_and_analysis",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
+		},
+		{
 			name: "org_block",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#org_block
 			event: "org_block",
@@ -2154,6 +2266,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			topic:      constants.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
 			queued:     nil,
+		},
+		{
+			name: "security_advisory null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#security_advisory
+			event:      "security_advisory",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
 		},
 
 		{
@@ -2202,6 +2321,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				received = withTimeout(ch, timeout)
 				require.Nil(t, received)
 			},
+		},
+		{
+			name: "push null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
+			event:      "push",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
 		},
 
 		// The following test cases are related to events not
@@ -2278,6 +2404,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			},
 		},
 		{
+			name: "branch_protection_configuration null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#branch_protection_configuration
+			event:      "branch_protection_configuration",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
+		},
+		{
 			name: "repository_advisory published",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#repository_advisory
 			event: "repository_advisory",
@@ -2328,6 +2461,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				received = withTimeout(ch, timeout)
 				require.Nil(t, received)
 			},
+		},
+		{
+			name: "repository_advisory null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#repository_advisory
+			event:      "repository_advisory",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
 		},
 		{
 			name: "repository_ruleset created",
@@ -2408,6 +2548,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			},
 		},
 		{
+			name: "repository_ruleset null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#repository_ruleset
+			event:      "repository_ruleset",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
+		},
+		{
 			name: "secret_scanning_alert_location",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#secret_scanning_alert_location
 			event: "secret_scanning_alert_location",
@@ -2432,6 +2579,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				received = withTimeout(ch, timeout)
 				require.Nil(t, received)
 			},
+		},
+		{
+			name: "secret_scanning_alert_location null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#secret_scanning_alert_location
+			event:      "secret_scanning_alert_location",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusOK,
 		},
 
 		// package/artifact specific tests
@@ -2655,6 +2809,13 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			topic:      constants.TopicQueueEntityEvaluate,
 			statusCode: http.StatusInternalServerError,
 			queued:     nil,
+		},
+		{
+			name: "pull_request null object",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request
+			event:      "pull_request",
+			rawPayload: []byte("null"),
+			statusCode: http.StatusInternalServerError,
 		},
 
 		// garbage
