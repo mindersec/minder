@@ -16,11 +16,11 @@ import (
 // just reporting the source.
 type pingEvent struct {
 	HookID *int64 `json:"hook_id,omitempty"`
-	Repo   *repo  `json:"repository,omitempty"`
-	Sender *user  `json:"sender,omitempty"`
+	Repo   repo   `json:"repository,omitempty"`
+	Sender user   `json:"sender,omitempty"`
 }
 
-func (p *pingEvent) GetRepo() *repo {
+func (p *pingEvent) GetRepo() repo {
 	return p.Repo
 }
 
@@ -31,7 +31,7 @@ func (p *pingEvent) GetHookID() int64 {
 	return 0
 }
 
-func (p *pingEvent) GetSender() *user {
+func (p *pingEvent) GetSender() user {
 	return p.Sender
 }
 
@@ -46,17 +46,17 @@ func processPingEvent(
 ) {
 	l := zerolog.Ctx(ctx).With().Logger()
 
-	var event *pingEvent
+	var event pingEvent
 	if err := json.Unmarshal(payload, &event); err != nil {
 		l.Info().Err(err).Msg("received malformed ping event")
 		return
 	}
 
-	if event.GetRepo() != nil {
+	if event.GetRepo().GetID() != 0 {
 		l = l.With().Int64("github-repository-id", event.GetRepo().GetID()).Logger()
 		l = l.With().Str("github-repository-url", event.GetRepo().GetHTMLURL()).Logger()
 	}
-	if event.GetSender() != nil {
+	if event.GetSender().GetLogin() != "" {
 		l = l.With().Str("sender-login", event.GetSender().GetLogin()).Logger()
 		l = l.With().Str("github-repository-url", event.GetSender().GetHTMLURL()).Logger()
 		if strings.Contains(event.GetSender().GetHTMLURL(), "github.com/apps") {

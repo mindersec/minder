@@ -510,23 +510,23 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			payload: &packageEvent{
-				Action: github.String("published"),
-				Package: &pkg{
+				Action: "published",
+				Package: pkg{
 					ID:          github.Int64(123),
 					Name:        github.String("package-name"),
 					PackageType: github.String("package-type"),
 					// .package.package_version.container_metadata.tag.name
-					PackageVersion: &packageVersion{
+					PackageVersion: packageVersion{
 						ID:      github.Int64(1),
 						Version: github.String("version"),
-						ContainerMetadata: &containerMetadata{
-							Tag: &tag{
+						ContainerMetadata: containerMetadata{
+							Tag: tag{
 								Digest: github.String("digest"),
 								Name:   github.String("tag"),
 							},
 						},
 					},
-					Owner: &user{
+					Owner: user{
 						Login: github.String("login"),
 					},
 				},
@@ -582,22 +582,22 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			payload: &packageEvent{
-				Action: github.String("updated"),
-				Package: &pkg{
+				Action: "updated",
+				Package: pkg{
 					Name:        github.String("package-name"),
 					PackageType: github.String("package-type"),
 					// .package.package_version.container_metadata.tag.name
-					PackageVersion: &packageVersion{
+					PackageVersion: packageVersion{
 						ID:      github.Int64(1),
 						Version: github.String("version"),
-						ContainerMetadata: &containerMetadata{
-							Tag: &tag{
+						ContainerMetadata: containerMetadata{
+							Tag: tag{
 								Digest: github.String("digest"),
 								Name:   github.String("tag"),
 							},
 						},
 					},
-					Owner: &user{
+					Owner: user{
 						Login: github.String("login"),
 					},
 				},
@@ -636,26 +636,26 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			payload: &packageEvent{
-				Action: github.String("updated"),
-				Package: &pkg{
+				Action: "updated",
+				Package: pkg{
 					Name:        github.String("package-name"),
 					PackageType: github.String("package-type"),
 					// .package.package_version.container_metadata.tag.name
-					PackageVersion: &packageVersion{
+					PackageVersion: packageVersion{
 						ID:      github.Int64(1),
 						Version: github.String("version"),
-						ContainerMetadata: &containerMetadata{
-							Tag: &tag{
+						ContainerMetadata: containerMetadata{
+							Tag: tag{
 								Digest: github.String("digest"),
 								Name:   github.String("tag"),
 							},
 						},
 					},
-					Owner: &user{
+					Owner: user{
 						Login: github.String("login"),
 					},
 				},
-				Repo: &repo{
+				Repo: repo{
 					ID:       github.Int64(12345),
 					FullName: nil,
 					HTMLURL:  github.String("https://example.com/random/url"),
@@ -671,26 +671,26 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			payload: &packageEvent{
-				Action: github.String("updated"),
-				Package: &pkg{
+				Action: "updated",
+				Package: pkg{
 					Name:        nil,
 					PackageType: github.String("package-type"),
 					// .package.package_version.container_metadata.tag.name
-					PackageVersion: &packageVersion{
+					PackageVersion: packageVersion{
 						ID:      github.Int64(1),
 						Version: github.String("version"),
-						ContainerMetadata: &containerMetadata{
-							Tag: &tag{
+						ContainerMetadata: containerMetadata{
+							Tag: tag{
 								Digest: github.String("digest"),
 								Name:   github.String("tag"),
 							},
 						},
 					},
-					Owner: &user{
+					Owner: user{
 						Login: github.String("login"),
 					},
 				},
-				Repo: &repo{
+				Repo: repo{
 					ID:       github.Int64(12345),
 					FullName: github.String("mindersec/minder"),
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
@@ -706,26 +706,26 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			payload: &packageEvent{
-				Action: github.String("updated"),
-				Package: &pkg{
+				Action: "updated",
+				Package: pkg{
 					Name:        github.String("package-name"),
 					PackageType: nil,
 					// .package.package_version.container_metadata.tag.name
-					PackageVersion: &packageVersion{
+					PackageVersion: packageVersion{
 						ID:      github.Int64(1),
 						Version: github.String("version"),
-						ContainerMetadata: &containerMetadata{
-							Tag: &tag{
+						ContainerMetadata: containerMetadata{
+							Tag: tag{
 								Digest: github.String("digest"),
 								Name:   github.String("tag"),
 							},
 						},
 					},
-					Owner: &user{
+					Owner: user{
 						Login: github.String("login"),
 					},
 				},
-				Repo: &repo{
+				Repo: repo{
 					ID:       github.Int64(12345),
 					FullName: github.String("mindersec/minder"),
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
@@ -741,23 +741,23 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			payload: &packageEvent{
-				Action: github.String("updated"),
-				Package: &pkg{
+				Action: "updated",
+				Package: pkg{
 					Name:        github.String("package-name"),
 					PackageType: github.String("package-type"),
 					// .package.package_version.container_metadata.tag.name
-					PackageVersion: &packageVersion{
+					PackageVersion: packageVersion{
 						ID:      github.Int64(1),
 						Version: github.String("version"),
-						ContainerMetadata: &containerMetadata{
-							Tag: &tag{
+						ContainerMetadata: containerMetadata{
+							Tag: tag{
 								Digest: github.String("digest"),
 								Name:   github.String("tag"),
 							},
 						},
 					},
 				},
-				Repo: &repo{
+				Repo: repo{
 					ID:       github.Int64(12345),
 					FullName: github.String("mindersec/minder"),
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
@@ -782,27 +782,27 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
-			payload: &packageEvent{
-				Action: github.String("updated"),
-				Package: &pkg{
+			payload: packageEvent{
+				Action: "updated",
+				Package: pkg{
 					Name:        github.String("package-name"),
 					PackageType: github.String("package-type"),
 					// .package.package_version.container_metadata.tag.name
-					PackageVersion: &packageVersion{
+					PackageVersion: packageVersion{
 						ID:      github.Int64(1),
 						Version: github.String("version"),
-						ContainerMetadata: &containerMetadata{
-							Tag: &tag{
+						ContainerMetadata: containerMetadata{
+							Tag: tag{
 								Digest: github.String("digest"),
 								Name:   github.String("tag"),
 							},
 						},
 					},
-					Owner: &user{
+					Owner: user{
 						Login: github.String("login"),
 					},
 				},
-				Repo: &repo{
+				Repo: repo{
 					ID:       github.Int64(12345),
 					FullName: nil,
 					HTMLURL:  github.String("https://example.com/random/url"),
@@ -818,26 +818,26 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			payload: &packageEvent{
-				Action: github.String("updated"),
-				Package: &pkg{
+				Action: "updated",
+				Package: pkg{
 					Name:        nil,
 					PackageType: github.String("package-type"),
 					// .package.package_version.container_metadata.tag.name
-					PackageVersion: &packageVersion{
+					PackageVersion: packageVersion{
 						ID:      github.Int64(1),
 						Version: github.String("version"),
-						ContainerMetadata: &containerMetadata{
-							Tag: &tag{
+						ContainerMetadata: containerMetadata{
+							Tag: tag{
 								Digest: github.String("digest"),
 								Name:   github.String("tag"),
 							},
 						},
 					},
-					Owner: &user{
+					Owner: user{
 						Login: github.String("login"),
 					},
 				},
-				Repo: &repo{
+				Repo: repo{
 					ID:       github.Int64(12345),
 					FullName: github.String("mindersec/minder"),
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
@@ -853,26 +853,26 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			payload: &packageEvent{
-				Action: github.String("updated"),
-				Package: &pkg{
+				Action: "updated",
+				Package: pkg{
 					Name:        github.String("package-name"),
 					PackageType: nil,
 					// .package.package_version.container_metadata.tag.name
-					PackageVersion: &packageVersion{
+					PackageVersion: packageVersion{
 						ID:      github.Int64(1),
 						Version: github.String("version"),
-						ContainerMetadata: &containerMetadata{
-							Tag: &tag{
+						ContainerMetadata: containerMetadata{
+							Tag: tag{
 								Digest: github.String("digest"),
 								Name:   github.String("tag"),
 							},
 						},
 					},
-					Owner: &user{
+					Owner: user{
 						Login: github.String("login"),
 					},
 				},
-				Repo: &repo{
+				Repo: repo{
 					ID:       github.Int64(12345),
 					FullName: github.String("mindersec/minder"),
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
@@ -888,23 +888,23 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			payload: &packageEvent{
-				Action: github.String("updated"),
-				Package: &pkg{
+				Action: "updated",
+				Package: pkg{
 					Name:        github.String("package-name"),
 					PackageType: github.String("package-type"),
 					// .package.package_version.container_metadata.tag.name
-					PackageVersion: &packageVersion{
+					PackageVersion: packageVersion{
 						ID:      github.Int64(1),
 						Version: github.String("version"),
-						ContainerMetadata: &containerMetadata{
-							Tag: &tag{
+						ContainerMetadata: containerMetadata{
+							Tag: tag{
 								Digest: github.String("digest"),
 								Name:   github.String("tag"),
 							},
 						},
 					},
 				},
-				Repo: &repo{
+				Repo: repo{
 					ID:       github.Int64(12345),
 					FullName: github.String("mindersec/minder"),
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
@@ -921,6 +921,26 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			rawPayload: []byte("ceci n'est pas une JSON"),
 			statusCode: http.StatusInternalServerError,
+		},
+		{
+			name: "package JSON corrupt",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
+			event: "package",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
+			// Note that this is missing fields like `repository.id` and `package.owner.login`
+			rawPayload: []byte(`{
+				  "action": "published",
+				  "repository": {"id": null, "owner": "mindersec", "full_name": "mindersec/minder"},
+				  "package": {"name": "minder", "full_name": "mindersec/minder", "url": "https://github.com/mindersec/minder",
+				      "package_type": "oci", "owner": {"id": 1234}}
+				}`),
+			statusCode: http.StatusOK,
+			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
+				t.Helper()
+				received := withTimeout(ch, timeout)
+				// Don't expect an event, but _do_ expect no crash / panic
+				require.Nil(t, received, "expected no event within %s", timeout)
+			},
 		},
 		{
 			name: "meta",
@@ -3404,8 +3424,8 @@ func newGitHubRepo(id int, name, fullname, url string) *github.Repository {
 }
 
 //nolint:unparam
-func newRepo(id int, fullname, url string) *repo {
-	return &repo{
+func newRepo(id int, fullname, url string) repo {
+	return repo{
 		ID:       github.Int64(int64(id)),
 		FullName: github.String(fullname),
 		HTMLURL:  github.String(url),

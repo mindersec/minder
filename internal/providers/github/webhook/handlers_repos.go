@@ -6,7 +6,6 @@ package webhook
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strings"
 
 	"github.com/rs/zerolog"
@@ -22,26 +21,20 @@ import (
 // repoEvent represents any event related to a repository.
 type repoEvent struct {
 	Action *string `json:"action,omitempty"`
-	Repo   *repo   `json:"repository,omitempty"`
+	Repo   repo    `json:"repository,omitempty"`
 	HookID *int64  `json:"hook_id,omitempty"`
 }
 
 func (r *repoEvent) GetAction() string {
-	if r.Action != nil {
-		return *r.Action
-	}
-	return ""
+	return orDefault(r.Action)
 }
 
-func (r *repoEvent) GetRepo() *repo {
+func (r *repoEvent) GetRepo() repo {
 	return r.Repo
 }
 
 func (r *repoEvent) GetHookID() int64 {
-	if r.HookID != nil {
-		return *r.HookID
-	}
-	return 0
+	return orDefault(r.HookID)
 }
 
 type repo struct {
@@ -52,39 +45,24 @@ type repo struct {
 	Private  *bool   `json:"private,omitempty"`
 }
 
-func (r *repo) GetID() int64 {
-	if r.ID != nil {
-		return *r.ID
-	}
-	return 0
+func (r repo) GetID() int64 {
+	return orDefault(r.ID)
 }
 
-func (r *repo) GetName() string {
-	if r.Name != nil {
-		return *r.Name
-	}
-	return ""
+func (r repo) GetName() string {
+	return orDefault(r.Name)
 }
 
-func (r *repo) GetFullName() string {
-	if r.FullName != nil {
-		return *r.FullName
-	}
-	return ""
+func (r repo) GetFullName() string {
+	return orDefault(r.FullName)
 }
 
-func (r *repo) GetHTMLURL() string {
-	if r.HTMLURL != nil {
-		return *r.HTMLURL
-	}
-	return ""
+func (r repo) GetHTMLURL() string {
+	return orDefault(r.HTMLURL)
 }
 
-func (r *repo) GetPrivate() bool {
-	if r.Private != nil {
-		return *r.Private
-	}
-	return false
+func (r repo) GetPrivate() bool {
+	return orDefault(r.Private)
 }
 
 func (r *repo) GetOwner() string {
@@ -102,13 +80,13 @@ func processRepositoryEvent(
 	ctx context.Context,
 	payload []byte,
 ) (*processingResult, error) {
-	var event *repoEvent
+	var event repoEvent
 	if err := json.Unmarshal(payload, &event); err != nil {
 		return nil, err
 	}
 
 	// Check fields mandatory for processing the event
-	if event.GetRepo() == nil {
+	if event.GetRepo().GetID() == 0 {
 		return nil, errRepoNotFound
 	}
 
@@ -118,17 +96,13 @@ func processRepositoryEvent(
 		Str("github-repository-url", event.GetRepo().GetHTMLURL()).
 		Logger()
 
-	if event.GetRepo().GetID() == 0 {
-		return nil, errors.New("invalid repo: id is 0")
-	}
-
 	l.Info().Msg("handling event for repository")
 
 	return sendEvaluateRepoMessage(event.GetRepo(), constants.TopicQueueRefreshEntityAndEvaluate), nil
 }
 
 func sendEvaluateRepoMessage(
-	repo *repo,
+	repo repo,
 	handler string,
 ) *processingResult {
 	lookByProps := properties.NewProperties(map[string]any{
@@ -149,13 +123,13 @@ func processRelevantRepositoryEvent(
 	ctx context.Context,
 	payload []byte,
 ) (*processingResult, error) {
-	var event *repoEvent
+	var event repoEvent
 	if err := json.Unmarshal(payload, &event); err != nil {
 		return nil, err
 	}
 
 	// Check fields mandatory for processing the event
-	if event.GetRepo() == nil {
+	if event.GetRepo().GetID() == 0 {
 		return nil, errRepoNotFound
 	}
 
@@ -164,10 +138,6 @@ func processRelevantRepositoryEvent(
 		Int64("github-repository-id", event.GetRepo().GetID()).
 		Str("github-repository-url", event.GetRepo().GetHTMLURL()).
 		Logger()
-
-	if event.GetRepo().GetID() == 0 {
-		return nil, errors.New("invalid repo: id is 0")
-	}
 
 	l.Info().Msg("handling event for repository")
 

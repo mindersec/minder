@@ -23,17 +23,17 @@ import (
 // packageEvent represent any event related to a repository and one of
 // its packages.
 type packageEvent struct {
-	Action  *string `json:"action,omitempty"`
-	Repo    *repo   `json:"repository,omitempty"`
-	Package *pkg    `json:"package,omitempty"`
+	Action  string `json:"action,omitempty"`
+	Repo    repo   `json:"repository,omitempty"`
+	Package pkg    `json:"package,omitempty"`
 }
 
 type pkg struct {
-	ID             *int64          `json:"id,omitempty"`
-	Name           *string         `json:"name,omitempty"`
-	PackageType    *string         `json:"package_type,omitempty"`
-	PackageVersion *packageVersion `json:"package_version,omitempty"`
-	Owner          *user           `json:"owner,omitempty"`
+	ID             *int64         `json:"id,omitempty"`
+	Name           *string        `json:"name,omitempty"`
+	PackageType    *string        `json:"package_type,omitempty"`
+	PackageVersion packageVersion `json:"package_version,omitempty"`
+	Owner          user           `json:"owner,omitempty"`
 }
 
 type user struct {
@@ -42,35 +42,26 @@ type user struct {
 	HTMLURL *string `json:"html_url,omitempty"`
 }
 
-func (u *user) GetID() int64 {
-	if u.ID != nil {
-		return *u.ID
-	}
-	return 0
+func (u user) GetID() int64 {
+	return orDefault(u.ID)
 }
 
-func (u *user) GetLogin() string {
-	if u.Login != nil {
-		return *u.Login
-	}
-	return ""
+func (u user) GetLogin() string {
+	return orDefault(u.Login)
 }
 
-func (u *user) GetHTMLURL() string {
-	if u.HTMLURL != nil {
-		return *u.HTMLURL
-	}
-	return ""
+func (u user) GetHTMLURL() string {
+	return orDefault(u.HTMLURL)
 }
 
 type packageVersion struct {
-	ID                *int64             `json:"id,omitempty"`
-	Version           *string            `json:"version,omitempty"`
-	ContainerMetadata *containerMetadata `json:"container_metadata,omitempty"`
+	ID                *int64            `json:"id,omitempty"`
+	Version           *string           `json:"version,omitempty"`
+	ContainerMetadata containerMetadata `json:"container_metadata,omitempty"`
 }
 
 type containerMetadata struct {
-	Tag *tag `json:"tag,omitempty"`
+	Tag tag `json:"tag,omitempty"`
 }
 
 type tag struct {
@@ -84,27 +75,24 @@ func processPackageEvent(
 ) (*processingResult, error) {
 	l := zerolog.Ctx(ctx)
 
-	var event *packageEvent
+	var event packageEvent
 	if err := json.Unmarshal(payload, &event); err != nil {
 		return nil, err
 	}
 
-	if event.Action == nil {
-		return nil, errors.New("invalid event: action is nil")
-	}
-	if event.Package == nil || event.Repo == nil {
+	if orDefault(event.Package.ID) == 0 || event.Repo.GetFullName() == "" {
 		l.Info().Msg("could not determine relevant entity for event. Skipping execution.")
 		return nil, errNotHandled
 	}
 
 	// We only process events "package" with action "published",
 	// i.e. we do not react to action "updated".
-	if *event.Action != webhookActionEventPublished {
+	if event.Action != webhookActionEventPublished {
 		return nil, errNotHandled
 	}
 
-	if event.Package.Owner == nil {
-		return nil, errors.New("invalid package: owner is nil")
+	if event.Package.Owner.GetLogin() == "" {
+		return nil, errors.New("invalid package: owner is blank")
 	}
 
 	repoProps := properties.NewProperties(map[string]any{
@@ -128,7 +116,7 @@ func processPackageEvent(
 // the upper layer and accesses package and repo without checking for
 // nulls.
 func packageEventToProperties(
-	event *packageEvent,
+	event packageEvent,
 ) (*properties.Properties, error) {
 	if event.Repo.GetFullName() == "" {
 		return nil, errors.New("invalid package: full name is nil")
@@ -140,16 +128,11 @@ func packageEventToProperties(
 		return nil, errors.New("invalid package: package type is nil")
 	}
 
-	owner := ""
-	if event.Package.Owner != nil {
-		owner = event.Package.Owner.GetLogin()
-	}
-
 	return properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(*event.Package.ID),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(orDefault(event.Package.ID)),
 		// we need these to look up the package properties
-		ghprop.ArtifactPropertyOwner: owner,
-		ghprop.ArtifactPropertyName:  *event.Package.Name,
-		ghprop.ArtifactPropertyType:  strings.ToLower(*event.Package.PackageType),
+		ghprop.ArtifactPropertyOwner: event.Package.Owner.GetLogin(),
+		ghprop.ArtifactPropertyName:  orDefault(event.Package.Name),
+		ghprop.ArtifactPropertyType:  strings.ToLower(orDefault(event.Package.PackageType)),
 	}), nil
 }

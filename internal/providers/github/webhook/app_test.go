@@ -54,14 +54,14 @@ func TestProcessInstallationRepositoriesAppEvent_BatchResilience(t *testing.T) {
 			payload: &installationRepositoriesEvent{
 				Action:              ptr.Ptr("added"),
 				RepositorySelection: ptr.Ptr("selected"),
-				RepositoriesAdded: []*repo{
+				RepositoriesAdded: []repo{
 					newValidRepo(111, "repo-a", "org/repo-a"),
 					newValidRepo(222, "repo-b", "org/repo-b"),
 				},
-				RepositoriesRemoved: []*repo{
+				RepositoriesRemoved: []repo{
 					newValidRepo(333, "repo-c", "org/repo-c"),
 				},
-				Installation: &installation{ID: ptr.Ptr(int64(54321))},
+				Installation: installation{ID: ptr.Ptr(int64(54321))},
 			},
 			expectedCount: 3,
 		},
@@ -70,12 +70,12 @@ func TestProcessInstallationRepositoriesAppEvent_BatchResilience(t *testing.T) {
 			payload: &installationRepositoriesEvent{
 				Action:              ptr.Ptr("added"),
 				RepositorySelection: ptr.Ptr("selected"),
-				RepositoriesAdded: []*repo{
+				RepositoriesAdded: []repo{
 					newValidRepo(111, "repo-a", "org/repo-a"),
 					newInvalidRepo(), // empty name → skipped
 					newValidRepo(333, "repo-c", "org/repo-c"),
 				},
-				Installation: &installation{ID: ptr.Ptr(int64(54321))},
+				Installation: installation{ID: ptr.Ptr(int64(54321))},
 			},
 			expectedCount: 2,
 		},
@@ -84,12 +84,12 @@ func TestProcessInstallationRepositoriesAppEvent_BatchResilience(t *testing.T) {
 			payload: &installationRepositoriesEvent{
 				Action:              ptr.Ptr("removed"),
 				RepositorySelection: ptr.Ptr("selected"),
-				RepositoriesRemoved: []*repo{
+				RepositoriesRemoved: []repo{
 					newValidRepo(111, "repo-a", "org/repo-a"),
 					newZeroIDRepo(), // id=0 → skipped
 					newValidRepo(333, "repo-c", "org/repo-c"),
 				},
-				Installation: &installation{ID: ptr.Ptr(int64(54321))},
+				Installation: installation{ID: ptr.Ptr(int64(54321))},
 			},
 			expectedCount: 2,
 		},
@@ -120,8 +120,8 @@ func TestProcessInstallationRepositoriesAppEvent_BatchResilience(t *testing.T) {
 }
 
 // newValidRepo constructs a repo with all required fields set.
-func newValidRepo(id int64, name, fullName string) *repo {
-	return &repo{
+func newValidRepo(id int64, name, fullName string) repo {
+	return repo{
 		ID:       ptr.Ptr(id),
 		Name:     ptr.Ptr(name),
 		FullName: ptr.Ptr(fullName),
@@ -130,16 +130,16 @@ func newValidRepo(id int64, name, fullName string) *repo {
 
 // newInvalidRepo constructs a repo with an empty name, which triggers
 // a repositoryAdded validation error and causes the entry to be skipped.
-func newInvalidRepo() *repo {
-	return &repo{
+func newInvalidRepo() repo {
+	return repo{
 		Name: ptr.Ptr(""),
 	}
 }
 
 // newZeroIDRepo constructs a repo with ID=0, which triggers a
 // repositoryRemoved validation error and causes the entry to be skipped.
-func newZeroIDRepo() *repo {
-	return &repo{
+func newZeroIDRepo() repo {
+	return repo{
 		ID:   ptr.Ptr(int64(0)),
 		Name: ptr.Ptr("bad-repo"),
 	}

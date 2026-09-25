@@ -32,18 +32,15 @@ import (
 // installationEvent are events related the GitHub App. Minder uses
 // them for provider enrollement.
 type installationEvent struct {
-	Action       *string       `json:"action,omitempty"`
-	Installation *installation `json:"installation,omitempty"`
+	Action       *string      `json:"action,omitempty"`
+	Installation installation `json:"installation,omitempty"`
 }
 
-func (i *installationEvent) GetAction() string {
-	if i.Action != nil {
-		return *i.Action
-	}
-	return ""
+func (i installationEvent) GetAction() string {
+	return orDefault(i.Action)
 }
 
-func (i *installationEvent) GetInstallation() *installation {
+func (i installationEvent) GetInstallation() installation {
 	return i.Installation
 }
 
@@ -51,41 +48,35 @@ func (i *installationEvent) GetInstallation() *installation {
 // activity relating to which repositories a GitHub App installation
 // can access.
 type installationRepositoriesEvent struct {
-	Action              *string       `json:"action,omitempty"`
-	RepositoriesAdded   []*repo       `json:"repositories_added,omitempty"`
-	RepositoriesRemoved []*repo       `json:"repositories_removed,omitempty"`
-	RepositorySelection *string       `json:"repository_selection,omitempty"`
-	Sender              *user         `json:"sender,omitempty"`
-	Installation        *installation `json:"installation,omitempty"`
+	Action              *string      `json:"action,omitempty"`
+	RepositoriesAdded   []repo       `json:"repositories_added,omitempty"`
+	RepositoriesRemoved []repo       `json:"repositories_removed,omitempty"`
+	RepositorySelection *string      `json:"repository_selection,omitempty"`
+	Sender              user         `json:"sender,omitempty"`
+	Installation        installation `json:"installation,omitempty"`
 }
 
-func (i *installationRepositoriesEvent) GetAction() string {
-	if i.Action != nil {
-		return *i.Action
-	}
-	return ""
+func (i installationRepositoriesEvent) GetAction() string {
+	return orDefault(i.Action)
 }
 
-func (i *installationRepositoriesEvent) GetRepositoriesAdded() []*repo {
+func (i installationRepositoriesEvent) GetRepositoriesAdded() []repo {
 	return i.RepositoriesAdded
 }
 
-func (i *installationRepositoriesEvent) GetRepositoriesRemoved() []*repo {
+func (i installationRepositoriesEvent) GetRepositoriesRemoved() []repo {
 	return i.RepositoriesRemoved
 }
 
-func (i *installationRepositoriesEvent) GetRepositorySelection() string {
-	if i.RepositorySelection != nil {
-		return *i.RepositorySelection
-	}
-	return ""
+func (i installationRepositoriesEvent) GetRepositorySelection() string {
+	return orDefault(i.RepositorySelection)
 }
 
-func (i *installationRepositoriesEvent) GetSender() *user {
+func (i installationRepositoriesEvent) GetSender() user {
 	return i.Sender
 }
 
-func (i *installationRepositoriesEvent) GetInstallation() *installation {
+func (i installationRepositoriesEvent) GetInstallation() installation {
 	return i.Installation
 }
 
@@ -93,11 +84,8 @@ type installation struct {
 	ID *int64 `json:"id,omitempty"`
 }
 
-func (i *installation) GetID() int64 {
-	if i.ID != nil {
-		return *i.ID
-	}
-	return 0
+func (i installation) GetID() int64 {
+	return orDefault(i.ID)
 }
 
 // HandleGitHubAppWebhook handles incoming GitHub App webhooks
@@ -178,6 +166,9 @@ func HandleGitHubAppWebhook(
 
 		for _, res := range results {
 			l.Info().Str("message-id", m.UUID).Msg("publishing event for execution")
+			if res == nil {
+				continue
+			}
 			if res.wrapper != nil {
 				if err := res.wrapper.ToMessage(m); err != nil {
 					wes.Error = true
@@ -214,7 +205,7 @@ func processInstallationAppEvent(
 	_ context.Context,
 	payload []byte,
 ) ([]*processingResult, error) {
-	var event *installationEvent
+	var event installationEvent
 	if err := json.Unmarshal(payload, &event); err != nil {
 		return nil, err
 	}
@@ -227,9 +218,6 @@ func processInstallationAppEvent(
 		return nil, newErrNotHandled(`event "installation" with action %s not handled`,
 			event.GetAction(),
 		)
-	}
-	if event.GetInstallation() == nil {
-		return nil, errors.New("invalid event: installation is nil")
 	}
 	if event.GetInstallation().GetID() == 0 {
 		return nil, errors.New("invalid installation: id is 0")
@@ -265,7 +253,7 @@ func processInstallationRepositoriesAppEvent(
 	store db.Store,
 	payload []byte,
 ) ([]*processingResult, error) {
-	var event *installationRepositoriesEvent
+	var event installationRepositoriesEvent
 	if err := json.Unmarshal(payload, &event); err != nil {
 		return nil, err
 	}
@@ -273,9 +261,6 @@ func processInstallationRepositoriesAppEvent(
 	// Check fields mandatory for processing the event
 	if event.GetAction() == "" {
 		return nil, errors.New("invalid event: action is nil")
-	}
-	if event.GetInstallation() == nil {
-		return nil, errors.New("invalid event: installation is nil")
 	}
 	if event.GetInstallation().GetID() == 0 {
 		return nil, errors.New("invalid installation: id is 0")
@@ -306,7 +291,7 @@ func processInstallationRepositoriesAppEvent(
 		return nil, fmt.Errorf("could not parse provider config: %v", err)
 	}
 
-	addedRepos := make([]*repo, 0)
+	addedRepos := make([]repo, 0)
 	autoRegEntities := providerConfig.GetAutoRegistration().GetEntities()
 	repoAutoReg, ok := autoRegEntities[string(pb.RepositoryEntity)]
 	if ok && repoAutoReg.GetEnabled() {
@@ -346,13 +331,13 @@ func processInstallationRepositoriesAppEvent(
 	return results, nil
 }
 
-func repositoryRemoved(repo *repo) *processingResult {
+func repositoryRemoved(repo repo) *processingResult {
 	return sendEvaluateRepoMessage(repo, constants.TopicQueueGetEntityAndDelete)
 }
 
 func repositoryAdded(
 	_ context.Context,
-	repo *repo,
+	repo repo,
 	installation db.ProviderGithubAppInstallation,
 ) (*processingResult, error) {
 	if repo.GetName() == "" {
