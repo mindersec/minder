@@ -12,12 +12,14 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/providers/oci"
+	"github.com/mindersec/minder/internal/verifier/verifyif"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
@@ -28,6 +30,8 @@ const Quay = "quay"
 
 const (
 	quayioBaseURL = "quay.io"
+
+	defaultTag = "latest"
 )
 
 // Implements is the list of provider types that the Quay provider implements
@@ -168,12 +172,59 @@ func (q *quayImageLister) ListImages(ctx context.Context) ([]string, error) {
 	return containers, nil
 }
 
+func parseImageRef(ref string) (string, string, error) {
+	repo, tag, hasTag := strings.Cut(ref, ":")
+	if repo == "" {
+		return "", "", fmt.Errorf("invalid image reference %q: missing repository", ref)
+	}
+	if hasTag && tag == "" {
+		return "", "", fmt.Errorf("invalid image reference %q: empty tag", ref)
+	}
+	if !hasTag {
+		tag = defaultTag
+	}
+	return repo, tag, nil
+}
+
+func artifactNameFromProperties(props *properties.Properties) (string, error) {
+	name, err := props.GetProperty(properties.PropertyName).AsString()
+	if err != nil {
+		return "", fmt.Errorf("failed to get artifact name: %w", err)
+	}
+	if name == "" {
+		return "", errors.New("artifact name is empty")
+	}
+	return name, nil
+}
+
 // FetchAllProperties implements the provider interface
-// TODO: Implement this
-func (*quayImageLister) FetchAllProperties(
-	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ *properties.Properties,
+func (q *quayImageLister) FetchAllProperties(
+	ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity, _ *properties.Properties,
 ) (*properties.Properties, error) {
-	return nil, nil
+	if !q.SupportsEntity(entType) {
+		return nil, provifv1.ErrUnsupportedEntity
+	}
+
+	name, err := artifactNameFromProperties(getByProps)
+	if err != nil {
+		return nil, err
+	}
+
+	repo, tag, err := parseImageRef(name)
+	if err != nil {
+		return nil, err
+	}
+
+	digest, err := q.GetDigest(ctx, repo, tag)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve digest for %q: %w", name, err)
+	}
+
+	return properties.NewProperties(map[string]any{
+		properties.PropertyName:         name,
+		properties.PropertyUpstreamID:   digest,
+		properties.ArtifactPropertyType: string(verifyif.ArtifactTypeContainer),
+	}), nil
 }
 
 // FetchProperty implements the provider interface
@@ -184,21 +235,31 @@ func (*quayImageLister) FetchProperty(
 }
 
 // GetEntityName implements the provider interface
-// TODO: Implement this
-func (*quayImageLister) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
-	return "", nil
+func (q *quayImageLister) GetEntityName(
+	entType minderv1.Entity, props *properties.Properties,
+) (string, error) {
+	if !q.SupportsEntity(entType) {
+		return "", fmt.Errorf("entity type %s not supported", entType)
+	}
+
+	return artifactNameFromProperties(props)
 }
 
 // SupportsEntity implements the Provider interface
-func (*quayImageLister) SupportsEntity(_ minderv1.Entity) bool {
-	// TODO: implement
-	return false
+func (*quayImageLister) SupportsEntity(entType minderv1.Entity) bool {
+	return entType == minderv1.Entity_ENTITY_ARTIFACTS
 }
 
 // CreationOptions implements the Provider interface
-func (*quayImageLister) CreationOptions(_ minderv1.Entity) *provifv1.EntityCreationOptions {
-	// Quay doesn't support any entities yet
-	return nil
+func (q *quayImageLister) CreationOptions(entType minderv1.Entity) *provifv1.EntityCreationOptions {
+	if !q.SupportsEntity(entType) {
+		return nil
+	}
+
+	return &provifv1.EntityCreationOptions{
+		RegisterWithProvider:       false,
+		PublishReconciliationEvent: false,
+	}
 }
 
 // RegisterEntity implements the Provider interface
