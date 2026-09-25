@@ -18,80 +18,40 @@ import (
 )
 
 type releaseEvent struct {
-	Action  *string  `json:"action,omitempty"`
-	Release *release `json:"release,omitempty"`
-	Repo    *repo    `json:"repository,omitempty"`
-}
-
-func (r *releaseEvent) GetAction() string {
-	if r.Action != nil {
-		return *r.Action
-	}
-	return ""
-}
-
-func (r *releaseEvent) GetRelease() *release {
-	return r.Release
-}
-
-func (r *releaseEvent) GetRepo() *repo {
-	return r.Repo
+	Action  string  `json:"action,omitempty"`
+	Release release `json:"release,omitempty"`
+	Repo    repo    `json:"repository,omitempty"`
 }
 
 type release struct {
-	ID      *int64  `json:"id,omitempty"`
-	TagName *string `json:"tag_name,omitempty"`
-	Target  *string `json:"target_commitish,omitempty"`
-}
-
-func (r *release) GetID() int64 {
-	if r.ID != nil {
-		return *r.ID
-	}
-	return 0
-}
-
-func (r *release) GetTagName() string {
-	if r.TagName != nil {
-		return *r.TagName
-	}
-	return ""
-}
-
-func (r *release) GetTarget() string {
-	if r.Target != nil {
-		return *r.Target
-	}
-	return ""
+	ID      int64  `json:"id,omitempty"`
+	TagName string `json:"tag_name,omitempty"`
+	Target  string `json:"target_commitish,omitempty"`
 }
 
 func processReleaseEvent(
 	ctx context.Context,
 	payload []byte,
 ) (*processingResult, error) {
-	var event *releaseEvent
+	var event releaseEvent
 	if err := json.Unmarshal(payload, &event); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal release event: %w", err)
 	}
 
-	if event.GetAction() == "" {
+	if event.Action == "" {
 		return nil, errors.New("release event action not found")
 	}
 
-	if event.GetRelease() == nil {
-		return nil, errors.New("release event release not found")
+	if event.Release.Target == "" {
+		return nil, errors.New("release event target not found")
 	}
 
-	if event.GetRepo() == nil {
+	if event.Repo.ID == 0 {
 		return nil, errors.New("release event repository not found")
 	}
 
-	if event.GetRelease().GetTagName() == "" {
+	if event.Release.TagName == "" {
 		return nil, errors.New("release event tag name not found")
-	}
-
-	if event.GetRelease().GetTarget() == "" {
-		return nil, errors.New("release event target not found")
 	}
 
 	return sendReleaseEvent(ctx, event), nil
@@ -99,19 +59,19 @@ func processReleaseEvent(
 
 func sendReleaseEvent(
 	_ context.Context,
-	event *releaseEvent,
+	event releaseEvent,
 ) *processingResult {
 	lookByProps := properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.GetRelease().GetID()),
-		ghprop.ReleasePropertyOwner:   event.GetRepo().GetOwner(),
-		ghprop.ReleasePropertyRepo:    event.GetRepo().GetName(),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.Release.ID),
+		ghprop.ReleasePropertyOwner:   event.Repo.GetOwner(),
+		ghprop.ReleasePropertyRepo:    event.Repo.Name,
 	})
 
 	originatorProps := properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.GetRepo().GetID()),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.Repo.ID),
 	})
 
-	switch event.GetAction() {
+	switch event.Action {
 	case "published":
 		return &processingResult{
 			topic: constants.TopicQueueOriginatingEntityAdd,

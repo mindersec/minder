@@ -38,15 +38,6 @@ const (
 	webhookActionEventTransferred = "transferred"
 )
 
-// orDefault is useful for unpacking possibly-nil fields
-func orDefault[E any](field *E) E {
-	var ret E
-	if field != nil {
-		ret = *field
-	}
-	return ret
-}
-
 // toMessage interface ensures that payloads returned by processor
 // routines can be turned into a message.Message
 type toMessage interface {

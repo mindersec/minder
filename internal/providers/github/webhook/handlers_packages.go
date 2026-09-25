@@ -29,34 +29,22 @@ type packageEvent struct {
 }
 
 type pkg struct {
-	ID             *int64         `json:"id,omitempty"`
-	Name           *string        `json:"name,omitempty"`
-	PackageType    *string        `json:"package_type,omitempty"`
+	ID             int64          `json:"id,omitempty"`
+	Name           string         `json:"name,omitempty"`
+	PackageType    string         `json:"package_type,omitempty"`
 	PackageVersion packageVersion `json:"package_version,omitempty"`
 	Owner          user           `json:"owner,omitempty"`
 }
 
 type user struct {
-	ID      *int64  `json:"id,omitempty"`
-	Login   *string `json:"login,omitempty"`
-	HTMLURL *string `json:"html_url,omitempty"`
-}
-
-func (u user) GetID() int64 {
-	return orDefault(u.ID)
-}
-
-func (u user) GetLogin() string {
-	return orDefault(u.Login)
-}
-
-func (u user) GetHTMLURL() string {
-	return orDefault(u.HTMLURL)
+	ID      int64  `json:"id,omitempty"`
+	Login   string `json:"login,omitempty"`
+	HTMLURL string `json:"html_url,omitempty"`
 }
 
 type packageVersion struct {
-	ID                *int64            `json:"id,omitempty"`
-	Version           *string           `json:"version,omitempty"`
+	ID                int64             `json:"id,omitempty"`
+	Version           string            `json:"version,omitempty"`
 	ContainerMetadata containerMetadata `json:"container_metadata,omitempty"`
 }
 
@@ -65,8 +53,8 @@ type containerMetadata struct {
 }
 
 type tag struct {
-	Digest *string `json:"digest,omitempty"`
-	Name   *string `json:"name,omitempty"`
+	Digest string `json:"digest,omitempty"`
+	Name   string `json:"name,omitempty"`
 }
 
 func processPackageEvent(
@@ -80,7 +68,7 @@ func processPackageEvent(
 		return nil, err
 	}
 
-	if orDefault(event.Package.ID) == 0 || event.Repo.GetFullName() == "" {
+	if event.Package.ID == 0 || event.Repo.FullName == "" {
 		l.Info().Msg("could not determine relevant entity for event. Skipping execution.")
 		return nil, errNotHandled
 	}
@@ -91,13 +79,13 @@ func processPackageEvent(
 		return nil, errNotHandled
 	}
 
-	if event.Package.Owner.GetLogin() == "" {
+	if event.Package.Owner.Login == "" {
 		return nil, errors.New("invalid package: owner is blank")
 	}
 
 	repoProps := properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.Repo.GetID()),
-		properties.PropertyName:       event.Repo.GetName(),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.Repo.ID),
+		properties.PropertyName:       event.Repo.Name,
 	})
 	pkgLookupProps, err := packageEventToProperties(event)
 	if err != nil {
@@ -118,21 +106,21 @@ func processPackageEvent(
 func packageEventToProperties(
 	event packageEvent,
 ) (*properties.Properties, error) {
-	if event.Repo.GetFullName() == "" {
-		return nil, errors.New("invalid package: full name is nil")
+	if event.Repo.FullName == "" {
+		return nil, errors.New("invalid package: full name is empty")
 	}
-	if event.Package.Name == nil {
-		return nil, errors.New("invalid package: name is nil")
+	if event.Package.Name == "" {
+		return nil, errors.New("invalid package: name is empty")
 	}
-	if event.Package.PackageType == nil {
-		return nil, errors.New("invalid package: package type is nil")
+	if event.Package.PackageType == "" {
+		return nil, errors.New("invalid package: package type is empty")
 	}
 
 	return properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(orDefault(event.Package.ID)),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.Package.ID),
 		// we need these to look up the package properties
-		ghprop.ArtifactPropertyOwner: event.Package.Owner.GetLogin(),
-		ghprop.ArtifactPropertyName:  orDefault(event.Package.Name),
-		ghprop.ArtifactPropertyType:  strings.ToLower(orDefault(event.Package.PackageType)),
+		ghprop.ArtifactPropertyOwner: event.Package.Owner.Login,
+		ghprop.ArtifactPropertyName:  event.Package.Name,
+		ghprop.ArtifactPropertyType:  strings.ToLower(event.Package.PackageType),
 	}), nil
 }
