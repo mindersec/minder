@@ -32,72 +32,24 @@ import (
 // installationEvent are events related the GitHub App. Minder uses
 // them for provider enrollement.
 type installationEvent struct {
-	Action       *string       `json:"action,omitempty"`
-	Installation *installation `json:"installation,omitempty"`
-}
-
-func (i *installationEvent) GetAction() string {
-	if i.Action != nil {
-		return *i.Action
-	}
-	return ""
-}
-
-func (i *installationEvent) GetInstallation() *installation {
-	return i.Installation
+	Action       string       `json:"action,omitempty"`
+	Installation installation `json:"installation,omitempty"`
 }
 
 // installationRepositoriesEvent are events occurring when there is
 // activity relating to which repositories a GitHub App installation
 // can access.
 type installationRepositoriesEvent struct {
-	Action              *string       `json:"action,omitempty"`
-	RepositoriesAdded   []*repo       `json:"repositories_added,omitempty"`
-	RepositoriesRemoved []*repo       `json:"repositories_removed,omitempty"`
-	RepositorySelection *string       `json:"repository_selection,omitempty"`
-	Sender              *user         `json:"sender,omitempty"`
-	Installation        *installation `json:"installation,omitempty"`
-}
-
-func (i *installationRepositoriesEvent) GetAction() string {
-	if i.Action != nil {
-		return *i.Action
-	}
-	return ""
-}
-
-func (i *installationRepositoriesEvent) GetRepositoriesAdded() []*repo {
-	return i.RepositoriesAdded
-}
-
-func (i *installationRepositoriesEvent) GetRepositoriesRemoved() []*repo {
-	return i.RepositoriesRemoved
-}
-
-func (i *installationRepositoriesEvent) GetRepositorySelection() string {
-	if i.RepositorySelection != nil {
-		return *i.RepositorySelection
-	}
-	return ""
-}
-
-func (i *installationRepositoriesEvent) GetSender() *user {
-	return i.Sender
-}
-
-func (i *installationRepositoriesEvent) GetInstallation() *installation {
-	return i.Installation
+	Action              string       `json:"action,omitempty"`
+	RepositoriesAdded   []repo       `json:"repositories_added,omitempty"`
+	RepositoriesRemoved []repo       `json:"repositories_removed,omitempty"`
+	RepositorySelection string       `json:"repository_selection,omitempty"`
+	Sender              user         `json:"sender,omitempty"`
+	Installation        installation `json:"installation,omitempty"`
 }
 
 type installation struct {
-	ID *int64 `json:"id,omitempty"`
-}
-
-func (i *installation) GetID() int64 {
-	if i.ID != nil {
-		return *i.ID
-	}
-	return 0
+	ID int64 `json:"id,omitempty"`
 }
 
 // HandleGitHubAppWebhook handles incoming GitHub App webhooks
@@ -178,6 +130,9 @@ func HandleGitHubAppWebhook(
 
 		for _, res := range results {
 			l.Info().Str("message-id", m.UUID).Msg("publishing event for execution")
+			if res == nil {
+				continue
+			}
 			if res.wrapper != nil {
 				if err := res.wrapper.ToMessage(m); err != nil {
 					wes.Error = true
@@ -214,30 +169,27 @@ func processInstallationAppEvent(
 	_ context.Context,
 	payload []byte,
 ) ([]*processingResult, error) {
-	var event *installationEvent
+	var event installationEvent
 	if err := json.Unmarshal(payload, &event); err != nil {
 		return nil, err
 	}
 
 	// Check fields mandatory for processing the event
-	if event.GetAction() == "" {
+	if event.Action == "" {
 		return nil, errors.New("invalid event: action is nil")
 	}
-	if event.GetAction() != webhookActionEventDeleted {
+	if event.Action != webhookActionEventDeleted {
 		return nil, newErrNotHandled(`event "installation" with action %s not handled`,
-			event.GetAction(),
+			event.Action,
 		)
 	}
-	if event.GetInstallation() == nil {
-		return nil, errors.New("invalid event: installation is nil")
-	}
-	if event.GetInstallation().GetID() == 0 {
+	if event.Installation.ID == 0 {
 		return nil, errors.New("invalid installation: id is 0")
 	}
 
 	payloadBytes, err := json.Marshal(
 		service.GitHubAppInstallationDeletedPayload{
-			InstallationID: event.GetInstallation().GetID(),
+			InstallationID: event.Installation.ID,
 		},
 	)
 	if err != nil {
@@ -265,23 +217,20 @@ func processInstallationRepositoriesAppEvent(
 	store db.Store,
 	payload []byte,
 ) ([]*processingResult, error) {
-	var event *installationRepositoriesEvent
+	var event installationRepositoriesEvent
 	if err := json.Unmarshal(payload, &event); err != nil {
 		return nil, err
 	}
 
 	// Check fields mandatory for processing the event
-	if event.GetAction() == "" {
+	if event.Action == "" {
 		return nil, errors.New("invalid event: action is nil")
 	}
-	if event.GetInstallation() == nil {
-		return nil, errors.New("invalid event: installation is nil")
-	}
-	if event.GetInstallation().GetID() == 0 {
+	if event.Installation.ID == 0 {
 		return nil, errors.New("invalid installation: id is 0")
 	}
 
-	installationID := event.GetInstallation().GetID()
+	installationID := event.Installation.ID
 	installation, err := store.GetInstallationIDByAppID(ctx, installationID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("no installation found for id %d", installationID)
@@ -306,11 +255,11 @@ func processInstallationRepositoriesAppEvent(
 		return nil, fmt.Errorf("could not parse provider config: %v", err)
 	}
 
-	addedRepos := make([]*repo, 0)
+	addedRepos := make([]repo, 0)
 	autoRegEntities := providerConfig.GetAutoRegistration().GetEntities()
 	repoAutoReg, ok := autoRegEntities[string(pb.RepositoryEntity)]
 	if ok && repoAutoReg.GetEnabled() {
-		addedRepos = event.GetRepositoriesAdded()
+		addedRepos = event.RepositoriesAdded
 	} else {
 		zerolog.Ctx(ctx).Info().Msg("auto-registration is disabled for repositories")
 	}
@@ -334,8 +283,8 @@ func processInstallationRepositoriesAppEvent(
 	// repositories there were previously registered, which would
 	// be deleted by means of "meta" and "repository" events as
 	// well.
-	for _, repo := range event.GetRepositoriesRemoved() {
-		if repo.GetID() == 0 {
+	for _, repo := range event.RepositoriesRemoved {
+		if repo.ID == 0 {
 			zerolog.Ctx(ctx).Warn().Msg("skipping removed repository with zero ID")
 			continue
 		}
@@ -346,22 +295,22 @@ func processInstallationRepositoriesAppEvent(
 	return results, nil
 }
 
-func repositoryRemoved(repo *repo) *processingResult {
+func repositoryRemoved(repo repo) *processingResult {
 	return sendEvaluateRepoMessage(repo, constants.TopicQueueGetEntityAndDelete)
 }
 
 func repositoryAdded(
 	_ context.Context,
-	repo *repo,
+	repo repo,
 	installation db.ProviderGithubAppInstallation,
 ) (*processingResult, error) {
-	if repo.GetName() == "" {
+	if repo.Name == "" {
 		return nil, errors.New("invalid repository name")
 	}
 
 	addRepoProps := properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(repo.GetID()),
-		properties.PropertyName:       repo.GetFullName(),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(repo.ID),
+		properties.PropertyName:       repo.FullName,
 	})
 
 	event := messages.NewMinderEvent().

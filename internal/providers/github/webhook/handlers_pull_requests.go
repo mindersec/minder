@@ -22,56 +22,16 @@ import (
 // pullRequestEvent are events related to pull requests issued around
 // a specific repository
 type pullRequestEvent struct {
-	Action      *string      `json:"action,omitempty"`
-	Repo        *repo        `json:"repository,omitempty"`
-	PullRequest *pullRequest `json:"pull_request,omitempty"`
-}
-
-func (p *pullRequestEvent) GetAction() string {
-	if p.Action != nil {
-		return *p.Action
-	}
-	return ""
-}
-
-func (p *pullRequestEvent) GetRepo() *repo {
-	return p.Repo
-}
-
-func (p *pullRequestEvent) GetPullRequest() *pullRequest {
-	return p.PullRequest
+	Action      string      `json:"action,omitempty"`
+	Repo        repo        `json:"repository,omitempty"`
+	PullRequest pullRequest `json:"pull_request,omitempty"`
 }
 
 type pullRequest struct {
-	ID     *int64  `json:"id,omitempty"`
-	URL    *string `json:"url,omitempty"`
-	Number *int64  `json:"number,omitempty"`
-	User   *user   `json:"user,omitempty"`
-}
-
-func (p *pullRequest) GetID() int64 {
-	if p.ID != nil {
-		return *p.ID
-	}
-	return 0
-}
-
-func (p *pullRequest) GetURL() string {
-	if p.URL != nil {
-		return *p.URL
-	}
-	return ""
-}
-
-func (p *pullRequest) GetNumber() int64 {
-	if p.Number != nil {
-		return *p.Number
-	}
-	return 0
-}
-
-func (p *pullRequest) GetUser() *user {
-	return p.User
+	ID     int64  `json:"id,omitempty"`
+	URL    string `json:"url,omitempty"`
+	Number int64  `json:"number,omitempty"`
+	User   user   `json:"user,omitempty"`
 }
 
 func processPullRequestEvent(
@@ -80,44 +40,38 @@ func processPullRequestEvent(
 ) (*processingResult, error) {
 	l := zerolog.Ctx(ctx)
 
-	var event *pullRequestEvent
+	var event pullRequestEvent
 	if err := json.Unmarshal(payload, &event); err != nil {
 		return nil, err
 	}
 
-	if event.GetAction() == "" {
+	if event.Action == "" {
 		return nil, errors.New("invalid event: action is nil")
 	}
-	if event.GetRepo() == nil {
+	if event.Repo.ID == 0 {
 		return nil, errors.New("invalid event: repo is nil")
 	}
-	if event.GetPullRequest() == nil {
-		return nil, errors.New("invalid event: pull request is nil")
-	}
-	if event.GetPullRequest().GetURL() == "" {
+	if event.PullRequest.URL == "" {
 		return nil, errors.New("invalid pull request: URL is nil")
 	}
-	if event.GetPullRequest().GetNumber() == 0 {
+	if event.PullRequest.Number == 0 {
 		return nil, errors.New("invalid pull request: number is 0")
 	}
-	if event.GetPullRequest().GetUser() == nil {
-		return nil, errors.New("invalid pull request: user is nil")
-	}
-	if event.GetPullRequest().GetUser().GetID() == 0 {
+	if event.PullRequest.User.ID == 0 {
 		return nil, errors.New("invalid user: id is 0")
 	}
 
-	ghRepo := event.GetRepo()
+	ghRepo := event.Repo
 	pullProps := properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.GetPullRequest().GetID()),
-		ghprop.PullPropertyRepoName:   ghRepo.GetName(),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.PullRequest.ID),
+		ghprop.PullPropertyRepoName:   ghRepo.Name,
 		ghprop.PullPropertyRepoOwner:  ghRepo.GetOwner(),
-		ghprop.PullPropertyNumber:     event.GetPullRequest().GetNumber(),
-		ghprop.PullPropertyAction:     event.GetAction(),
+		ghprop.PullPropertyNumber:     event.PullRequest.Number,
+		ghprop.PullPropertyAction:     event.Action,
 	})
 
 	repoProps := properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(ghRepo.GetID()),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(ghRepo.ID),
 	})
 
 	// it is bit of a code smell to use the fetcher here just to format the name
@@ -134,7 +88,7 @@ func processPullRequestEvent(
 	topic, err := getPREventHandlingTopic(pullProps)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).
-			Str("action", event.GetAction()).
+			Str("action", event.Action).
 			Msg("error getting PR event handling topic")
 		return nil, err
 	}
@@ -144,7 +98,7 @@ func processPullRequestEvent(
 		WithOriginator(pb.Entity_ENTITY_REPOSITORIES, repoProps).
 		WithProviderImplementsHint(string(db.ProviderTypeGithub))
 
-	l.Info().Msgf("evaluating PR %s: %s => %s\n", event.GetPullRequest().GetURL(), event.GetAction(), topic)
+	l.Info().Msgf("evaluating PR %s: %s => %s\n", event.PullRequest.URL, event.Action, topic)
 
 	return &processingResult{topic: topic, wrapper: prMsg}, nil
 }
