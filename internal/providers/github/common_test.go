@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-github/v63/github"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,8 +23,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/providers/github/ghcr"
 	mock_github "github.com/mindersec/minder/internal/providers/github/mock"
+	"github.com/mindersec/minder/internal/providers/oci"
 	mock_ratecache "github.com/mindersec/minder/internal/providers/ratecache/mock"
+	"github.com/mindersec/minder/internal/verifier/sigstore/container"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	config "github.com/mindersec/minder/pkg/config/server"
 	engerrors "github.com/mindersec/minder/pkg/engine/errors"
@@ -236,9 +240,15 @@ type mockCredential struct {
 	provifv1.GitHubCredential
 }
 
-func (m *mockCredential) GetCacheKey() string {
-	_ = m
+func (*mockCredential) GetCacheKey() string {
 	return "mock-cache-key"
+}
+
+func (*mockCredential) GetAsContainerAuthenticator(owner string) authn.Authenticator {
+	return &authn.Basic{
+		Username: owner,
+		Password: "mock-token",
+	}
 }
 
 func TestListPackagesByRepository(t *testing.T) {
@@ -1657,6 +1667,77 @@ func TestCreateSecurityAdvisory(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.expectedID, id)
 			}
+		})
+	}
+}
+
+func TestGetRegistry(t *testing.T) {
+	t.Parallel()
+
+	th := setupTest(t)
+	assert.Equal(t, container.GHCRRegistry, th.gh.GetRegistry())
+}
+
+func TestGetAuthenticator(t *testing.T) {
+	t.Parallel()
+
+	th := setupTest(t)
+	th.gh.ghcrwrap = ghcr.FromGitHubClient(th.client, "test-owner")
+	th.delegate.EXPECT().GetCredential().Return(&mockCredential{})
+
+	authenticator, err := th.gh.GetAuthenticator()
+	require.NoError(t, err)
+	assert.Equal(t, &authn.Basic{Username: "test-owner", Password: "mock-token"}, authenticator)
+}
+
+func TestOCIDelegation(t *testing.T) {
+	t.Parallel()
+
+	th := setupTest(t)
+	th.gh.ghcrOCI = oci.New(&mockCredential{}, container.GHCRRegistry, container.GHCRRegistry+"/test-owner")
+
+	const invalidImage = "Not A Valid Image Name!!"
+	const invalidDigest = "not-a-valid-digest"
+
+	tests := []struct {
+		name string
+		call func() error
+	}{
+		{
+			name: "GetDigest",
+			call: func() error {
+				_, err := th.gh.GetDigest(context.Background(), invalidImage, "latest")
+				return err
+			},
+		},
+		{
+			name: "GetReferrer",
+			call: func() error {
+				_, err := th.gh.GetReferrer(context.Background(), invalidImage, "latest", "application/vnd.test")
+				return err
+			},
+		},
+		{
+			name: "GetManifest",
+			call: func() error {
+				_, err := th.gh.GetManifest(context.Background(), invalidImage, "latest")
+				return err
+			},
+		},
+		{
+			name: "GetRawManifest",
+			call: func() error {
+				_, err := th.gh.GetRawManifest(context.Background(), invalidImage, invalidDigest)
+				return err
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Error(t, tt.call())
 		})
 	}
 }

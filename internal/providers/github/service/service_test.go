@@ -275,7 +275,7 @@ func TestProviderService_CreateGitHubAppProvider(t *testing.T) {
 	require.Equal(t, dbProv.AuthFlows, clients.AppAuthorizationFlows)
 	require.ElementsMatch(t, dbProv.Implements, []db.ProviderType{
 		db.ProviderTypeGithub, db.ProviderTypeGit, db.ProviderTypeRest,
-		db.ProviderTypeRepoLister, db.ProviderTypeImageLister,
+		db.ProviderTypeRepoLister, db.ProviderTypeImageLister, db.ProviderTypeOci,
 	})
 	require.Equal(t, dbProv.Class, db.ProviderClassGithubApp)
 	require.Contains(t, dbProv.Name, db.ProviderClassGithubApp)
