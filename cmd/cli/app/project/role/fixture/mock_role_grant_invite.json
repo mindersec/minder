@@ -1,0 +1,10 @@
+{
+  "invitation": {
+    "email": "test@example.com",
+    "role": "viewer",
+    "sponsorDisplay": "Admin User",
+    "expiresAt": "2026-05-01T12:00:00Z",
+    "code": "MOCK-INVITE-CODE",
+    "inviteUrl": "https://minder.example.com/invite/MOCK-INVITE-CODE"
+  }
+}
