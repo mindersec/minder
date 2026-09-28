@@ -23,59 +23,38 @@ import (
 // packageEvent represent any event related to a repository and one of
 // its packages.
 type packageEvent struct {
-	Action  *string `json:"action,omitempty"`
-	Repo    *repo   `json:"repository,omitempty"`
-	Package *pkg    `json:"package,omitempty"`
+	Action  string `json:"action,omitempty"`
+	Repo    repo   `json:"repository,omitempty"`
+	Package pkg    `json:"package,omitempty"`
 }
 
 type pkg struct {
-	ID             *int64          `json:"id,omitempty"`
-	Name           *string         `json:"name,omitempty"`
-	PackageType    *string         `json:"package_type,omitempty"`
-	PackageVersion *packageVersion `json:"package_version,omitempty"`
-	Owner          *user           `json:"owner,omitempty"`
+	ID             int64          `json:"id,omitempty"`
+	Name           string         `json:"name,omitempty"`
+	PackageType    string         `json:"package_type,omitempty"`
+	PackageVersion packageVersion `json:"package_version,omitempty"`
+	Owner          user           `json:"owner,omitempty"`
 }
 
 type user struct {
-	ID      *int64  `json:"id,omitempty"`
-	Login   *string `json:"login,omitempty"`
-	HTMLURL *string `json:"html_url,omitempty"`
-}
-
-func (u *user) GetID() int64 {
-	if u.ID != nil {
-		return *u.ID
-	}
-	return 0
-}
-
-func (u *user) GetLogin() string {
-	if u.Login != nil {
-		return *u.Login
-	}
-	return ""
-}
-
-func (u *user) GetHTMLURL() string {
-	if u.HTMLURL != nil {
-		return *u.HTMLURL
-	}
-	return ""
+	ID      int64  `json:"id,omitempty"`
+	Login   string `json:"login,omitempty"`
+	HTMLURL string `json:"html_url,omitempty"`
 }
 
 type packageVersion struct {
-	ID                *int64             `json:"id,omitempty"`
-	Version           *string            `json:"version,omitempty"`
-	ContainerMetadata *containerMetadata `json:"container_metadata,omitempty"`
+	ID                int64             `json:"id,omitempty"`
+	Version           string            `json:"version,omitempty"`
+	ContainerMetadata containerMetadata `json:"container_metadata,omitempty"`
 }
 
 type containerMetadata struct {
-	Tag *tag `json:"tag,omitempty"`
+	Tag tag `json:"tag,omitempty"`
 }
 
 type tag struct {
-	Digest *string `json:"digest,omitempty"`
-	Name   *string `json:"name,omitempty"`
+	Digest string `json:"digest,omitempty"`
+	Name   string `json:"name,omitempty"`
 }
 
 func processPackageEvent(
@@ -84,32 +63,29 @@ func processPackageEvent(
 ) (*processingResult, error) {
 	l := zerolog.Ctx(ctx)
 
-	var event *packageEvent
+	var event packageEvent
 	if err := json.Unmarshal(payload, &event); err != nil {
 		return nil, err
 	}
 
-	if event.Action == nil {
-		return nil, errors.New("invalid event: action is nil")
-	}
-	if event.Package == nil || event.Repo == nil {
+	if event.Package.ID == 0 || event.Repo.FullName == "" {
 		l.Info().Msg("could not determine relevant entity for event. Skipping execution.")
 		return nil, errNotHandled
 	}
 
 	// We only process events "package" with action "published",
 	// i.e. we do not react to action "updated".
-	if *event.Action != webhookActionEventPublished {
+	if event.Action != webhookActionEventPublished {
 		return nil, errNotHandled
 	}
 
-	if event.Package.Owner == nil {
-		return nil, errors.New("invalid package: owner is nil")
+	if event.Package.Owner.Login == "" {
+		return nil, errors.New("invalid package: owner is blank")
 	}
 
 	repoProps := properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.Repo.GetID()),
-		properties.PropertyName:       event.Repo.GetName(),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.Repo.ID),
+		properties.PropertyName:       event.Repo.Name,
 	})
 	pkgLookupProps, err := packageEventToProperties(event)
 	if err != nil {
@@ -128,28 +104,23 @@ func processPackageEvent(
 // the upper layer and accesses package and repo without checking for
 // nulls.
 func packageEventToProperties(
-	event *packageEvent,
+	event packageEvent,
 ) (*properties.Properties, error) {
-	if event.Repo.GetFullName() == "" {
-		return nil, errors.New("invalid package: full name is nil")
+	if event.Repo.FullName == "" {
+		return nil, errors.New("invalid package: full name is empty")
 	}
-	if event.Package.Name == nil {
-		return nil, errors.New("invalid package: name is nil")
+	if event.Package.Name == "" {
+		return nil, errors.New("invalid package: name is empty")
 	}
-	if event.Package.PackageType == nil {
-		return nil, errors.New("invalid package: package type is nil")
-	}
-
-	owner := ""
-	if event.Package.Owner != nil {
-		owner = event.Package.Owner.GetLogin()
+	if event.Package.PackageType == "" {
+		return nil, errors.New("invalid package: package type is empty")
 	}
 
 	return properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(*event.Package.ID),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.Package.ID),
 		// we need these to look up the package properties
-		ghprop.ArtifactPropertyOwner: owner,
-		ghprop.ArtifactPropertyName:  *event.Package.Name,
-		ghprop.ArtifactPropertyType:  strings.ToLower(*event.Package.PackageType),
+		ghprop.ArtifactPropertyOwner: event.Package.Owner.Login,
+		ghprop.ArtifactPropertyName:  event.Package.Name,
+		ghprop.ArtifactPropertyType:  strings.ToLower(event.Package.PackageType),
 	}), nil
 }
