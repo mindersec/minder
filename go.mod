@@ -6,7 +6,7 @@ require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260825204119-511051f7f437.2
 	buf.build/go/protovalidate v1.4.0
 	buf.build/go/protoyaml v0.7.0
-	github.com/ThreeDotsLabs/watermill v1.5.2
+	github.com/ThreeDotsLabs/watermill v1.5.3
 	github.com/ThreeDotsLabs/watermill-sql/v3 v3.1.0
 	github.com/alexdrl/zerowater v0.0.3
 	github.com/aws/aws-sdk-go-v2 v1.47.0
@@ -21,7 +21,7 @@ require (
 	github.com/cloudevents/sdk-go/observability/opentelemetry/v2 v2.16.2
 	github.com/cloudevents/sdk-go/protocol/nats_jetstream/v2 v2.16.2
 	github.com/cloudevents/sdk-go/v2 v2.16.2
-	github.com/dustin/go-humanize v1.0.1
+	github.com/dustin/go-humanize v1.1.0
 	github.com/erikgeiser/promptkit v0.12.0
 	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/fergusstrange/embedded-postgres v1.34.0
@@ -62,7 +62,7 @@ require (
 	github.com/openfga/openfga v1.18.3
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/prometheus/client_golang v1.24.1
-	github.com/protobom/protobom v0.5.8
+	github.com/protobom/protobom v0.6.2
 	github.com/puzpuzpuz/xsync/v3 v3.5.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/zerolog v1.35.1
@@ -71,7 +71,7 @@ require (
 	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
 	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.35.0
 	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.35.0
-	github.com/sigstore/protobuf-specs v0.5.1
+	github.com/sigstore/protobuf-specs v0.5.2
 	github.com/sigstore/sigstore-go v1.3.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
@@ -96,12 +96,12 @@ require (
 	go.opentelemetry.io/otel/trace v1.46.0
 	go.starlark.net v0.0.0-20260613233743-8ba36ccb83fb
 	go.uber.org/mock v0.6.0
-	golang.org/x/crypto v0.55.0
+	golang.org/x/crypto v0.57.0
 	golang.org/x/exp v0.0.0-20260820142414-ca536658362e
 	golang.org/x/oauth2 v0.37.0
-	golang.org/x/sync v0.22.0
-	golang.org/x/term v0.45.0
-	golang.org/x/tools v0.49.0
+	golang.org/x/sync v0.23.0
+	golang.org/x/term v0.46.0
+	golang.org/x/tools v0.50.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20260819154853-08b0e4226688
 	google.golang.org/grpc v1.83.2
 	google.golang.org/protobuf v1.36.12
@@ -127,7 +127,7 @@ require (
 	deps.dev/util/semver v0.0.0-20260811035547-133c155ce203 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/BurntSushi/toml v1.6.0 // indirect
-	github.com/CycloneDX/cyclonedx-go v0.11.0 // indirect
+	github.com/CycloneDX/cyclonedx-go v0.12.0 // indirect
 	github.com/GehirnInc/crypt v0.0.0-20230320061759-8cc1b52080c5 // indirect
 	github.com/IBM/pgxpoolprometheus v1.1.3 // indirect
 	github.com/Masterminds/squirrel v1.5.4 // indirect
@@ -340,7 +340,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	go.yaml.in/yaml/v4 v4.0.0-rc.6 // indirect
-	golang.org/x/telemetry v0.0.0-20260811182544-a038080d80e5 // indirect
+	golang.org/x/telemetry v0.0.0-20260908163034-4bcc4b2ee518 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/vuln v1.7.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
@@ -456,10 +456,10 @@ require (
 	go.opentelemetry.io/otel/metric v1.46.0
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.28.0 // indirect
-	golang.org/x/mod v0.40.0
-	golang.org/x/net v0.58.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/text v0.41.0 // indirect
+	golang.org/x/mod v0.41.0
+	golang.org/x/net v0.59.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260825221802-da73d73af1c5 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
