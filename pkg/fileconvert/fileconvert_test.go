@@ -254,3 +254,117 @@ func TestReadWriteRoundTrip(t *testing.T) {
 		t.Errorf("Read resources did not match expected (-want,+got):\n%s", diff)
 	}
 }
+
+func TestReadRuleTypeEnumNames(t *testing.T) {
+	t.Parallel()
+
+	const ruleTypeTmpl = `
+type: rule-type
+version: v1
+name: test-rule-type
+def:
+  in_entity: repository
+  rule_schema: {}
+  ingest:
+    type: git
+  eval:
+    type: other
+`
+	tests := []struct {
+		name         string
+		enums        string
+		wantPhase    minderv1.RuleTypeReleasePhase
+		wantSeverity minderv1.Severity_Value
+		wantErr      bool
+	}{
+		{
+			name: "short names",
+			enums: `
+release_phase: beta
+severity:
+  value: info
+`,
+			wantPhase:    minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_BETA,
+			wantSeverity: minderv1.Severity_VALUE_INFO,
+		},
+		{
+			name: "full proto names",
+			enums: `
+release_phase: RULE_TYPE_RELEASE_PHASE_BETA
+severity:
+  value: VALUE_INFO
+`,
+			wantPhase:    minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_BETA,
+			wantSeverity: minderv1.Severity_VALUE_INFO,
+		},
+		{
+			name: "json field name",
+			enums: `
+releasePhase: alpha
+severity:
+  value: high
+`,
+			wantPhase:    minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_ALPHA,
+			wantSeverity: minderv1.Severity_VALUE_HIGH,
+		},
+		{
+			name: "unknown release phase",
+			enums: `
+release_phase: gamma
+`,
+			wantErr: true,
+		},
+		{
+			name: "unknown severity",
+			enums: `
+severity:
+  value: catastrophic
+`,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			decoder := yaml.NewDecoder(bytes.NewBufferString(ruleTypeTmpl + tt.enums))
+			got, err := ReadResourceTyped[*minderv1.RuleType](decoder)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantPhase, got.GetReleasePhase())
+			assert.Equal(t, tt.wantSeverity, got.GetSeverity().GetValue())
+		})
+	}
+}
+
+func TestRuleTypeEnumRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	ruleType := &minderv1.RuleType{
+		Name: "test-rule-type",
+		Def: &minderv1.RuleType_Definition{
+			InEntity:   "repository",
+			RuleSchema: &structpb.Struct{},
+			Ingest:     &minderv1.RuleType_Definition_Ingest{Type: "git"},
+			Eval:       &minderv1.RuleType_Definition_Eval{Type: "other"},
+		},
+		Severity:     &minderv1.Severity{Value: minderv1.Severity_VALUE_CRITICAL},
+		ReleasePhase: minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_DEPRECATED,
+	}
+
+	var buf bytes.Buffer
+	require.NoError(t, WriteResource(yaml.NewEncoder(&buf), ruleType))
+
+	written := buf.String()
+	assert.Contains(t, written, "release_phase: deprecated")
+	assert.Contains(t, written, "value: critical")
+
+	got, err := ReadResourceTyped[*minderv1.RuleType](yaml.NewDecoder(&buf))
+	require.NoError(t, err)
+	if diff := gocmp.Diff(ruleType, got, protocmp.Transform()); diff != "" {
+		t.Errorf("round trip mismatch (-want,+got):\n%s", diff)
+	}
+}
