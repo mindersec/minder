@@ -15,6 +15,7 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/registry"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/random"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/stretchr/testify/assert"
@@ -75,6 +76,12 @@ func pushRandomImage(t *testing.T, host, repo, tag string) string {
 	img, err := random.Image(256, 1)
 	require.NoError(t, err)
 
+	return pushImage(t, img, host, repo, tag)
+}
+
+func pushImage(t *testing.T, img v1.Image, host, repo, tag string) string {
+	t.Helper()
+
 	ref, err := name.NewTag(fmt.Sprintf("%s/%s:%s", host, repo, tag))
 	require.NoError(t, err)
 	require.NoError(t, remote.Write(ref, img))
@@ -101,27 +108,27 @@ func TestFetchAllProperties(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		entType    minderv1.Entity
-		props      *properties.Properties
-		wantName   string
-		wantDigest string
-		wantErr    string
-		wantErrIs  error
+		name           string
+		entType        minderv1.Entity
+		props          *properties.Properties
+		wantName       string
+		wantUpstreamID string
+		wantErr        string
+		wantErrIs      error
 	}{
 		{
-			name:       "explicit tag",
-			entType:    minderv1.Entity_ENTITY_ARTIFACTS,
-			props:      properties.NewProperties(map[string]any{properties.PropertyName: "myimage:v1.2"}),
-			wantName:   "myimage:v1.2",
-			wantDigest: taggedDigest,
+			name:           "explicit tag",
+			entType:        minderv1.Entity_ENTITY_ARTIFACTS,
+			props:          properties.NewProperties(map[string]any{properties.PropertyName: "myimage:v1.2"}),
+			wantName:       "myimage:v1.2",
+			wantUpstreamID: "myimage@" + taggedDigest,
 		},
 		{
-			name:       "no tag defaults to latest",
-			entType:    minderv1.Entity_ENTITY_ARTIFACTS,
-			props:      properties.NewProperties(map[string]any{properties.PropertyName: "myimage"}),
-			wantName:   "myimage",
-			wantDigest: latestDigest,
+			name:           "no tag defaults to latest",
+			entType:        minderv1.Entity_ENTITY_ARTIFACTS,
+			props:          properties.NewProperties(map[string]any{properties.PropertyName: "myimage"}),
+			wantName:       "myimage",
+			wantUpstreamID: "myimage@" + latestDigest,
 		},
 		{
 			name:    "missing name property",
@@ -177,11 +184,43 @@ func TestFetchAllProperties(t *testing.T) {
 			require.NotNil(t, got)
 
 			assert.Equal(t, tt.wantName, got.GetProperty(properties.PropertyName).GetString())
-			assert.Equal(t, tt.wantDigest, got.GetProperty(properties.PropertyUpstreamID).GetString())
+			assert.Equal(t, tt.wantUpstreamID, got.GetProperty(properties.PropertyUpstreamID).GetString())
 			assert.Equal(t, string(verifyif.ArtifactTypeContainer),
 				got.GetProperty(properties.ArtifactPropertyType).GetString())
 		})
 	}
+}
+
+func TestFetchAllPropertiesMirroredDigest(t *testing.T) {
+	t.Parallel()
+
+	const namespace = "testns"
+
+	host := newTestRegistry(t)
+	img, err := random.Image(256, 1)
+	require.NoError(t, err)
+	origDigest := pushImage(t, img, host, namespace+"/orig", "v1")
+	mirrorDigest := pushImage(t, img, host, namespace+"/mirror", "v1")
+	require.Equal(t, origDigest, mirrorDigest)
+
+	q := &quayImageLister{
+		OCI: oci.New(nil, host, path.Join(host, namespace)),
+	}
+
+	orig, err := q.FetchAllProperties(context.Background(),
+		properties.NewProperties(map[string]any{properties.PropertyName: "orig:v1"}),
+		minderv1.Entity_ENTITY_ARTIFACTS, nil)
+	require.NoError(t, err)
+	mirror, err := q.FetchAllProperties(context.Background(),
+		properties.NewProperties(map[string]any{properties.PropertyName: "mirror:v1"}),
+		minderv1.Entity_ENTITY_ARTIFACTS, nil)
+	require.NoError(t, err)
+
+	origID := orig.GetProperty(properties.PropertyUpstreamID).GetString()
+	mirrorID := mirror.GetProperty(properties.PropertyUpstreamID).GetString()
+	assert.Equal(t, "orig@"+origDigest, origID)
+	assert.Equal(t, "mirror@"+mirrorDigest, mirrorID)
+	assert.NotEqual(t, origID, mirrorID)
 }
 
 func TestGetEntityName(t *testing.T) {

@@ -12,14 +12,12 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strings"
 
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/providers/oci"
-	"github.com/mindersec/minder/internal/verifier/verifyif"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
@@ -30,8 +28,6 @@ const DockerHub = "dockerhub"
 
 const (
 	dockerioBaseURL = "docker.io"
-
-	defaultTag = "latest"
 )
 
 // Implements is the list of provider types that the DockerHub provider implements
@@ -170,31 +166,6 @@ func (d *dockerHubImageLister) ListImages(ctx context.Context) ([]string, error)
 	return containers, nil
 }
 
-func parseImageRef(ref string) (string, string, error) {
-	repo, tag, hasTag := strings.Cut(ref, ":")
-	if repo == "" {
-		return "", "", fmt.Errorf("invalid image reference %q: missing repository", ref)
-	}
-	if hasTag && tag == "" {
-		return "", "", fmt.Errorf("invalid image reference %q: empty tag", ref)
-	}
-	if !hasTag {
-		tag = defaultTag
-	}
-	return repo, tag, nil
-}
-
-func artifactNameFromProperties(props *properties.Properties) (string, error) {
-	name, err := props.GetProperty(properties.PropertyName).AsString()
-	if err != nil {
-		return "", fmt.Errorf("failed to get artifact name: %w", err)
-	}
-	if name == "" {
-		return "", errors.New("artifact name is empty")
-	}
-	return name, nil
-}
-
 // FetchAllProperties implements the provider interface
 func (d *dockerHubImageLister) FetchAllProperties(
 	ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity, _ *properties.Properties,
@@ -203,12 +174,12 @@ func (d *dockerHubImageLister) FetchAllProperties(
 		return nil, provifv1.ErrUnsupportedEntity
 	}
 
-	name, err := artifactNameFromProperties(getByProps)
+	name, err := oci.ArtifactNameFromProperties(getByProps)
 	if err != nil {
 		return nil, err
 	}
 
-	repo, tag, err := parseImageRef(name)
+	repo, tag, err := oci.ParseImageRef(name)
 	if err != nil {
 		return nil, err
 	}
@@ -218,11 +189,7 @@ func (d *dockerHubImageLister) FetchAllProperties(
 		return nil, fmt.Errorf("failed to resolve digest for %q: %w", name, err)
 	}
 
-	return properties.NewProperties(map[string]any{
-		properties.PropertyName:         name,
-		properties.PropertyUpstreamID:   digest,
-		properties.ArtifactPropertyType: string(verifyif.ArtifactTypeContainer),
-	}), nil
+	return oci.NewArtifactProperties(name, repo+"@"+digest), nil
 }
 
 // FetchProperty implements the provider interface
@@ -240,7 +207,7 @@ func (d *dockerHubImageLister) GetEntityName(
 		return "", fmt.Errorf("entity type %s not supported", entType)
 	}
 
-	return artifactNameFromProperties(props)
+	return oci.ArtifactNameFromProperties(props)
 }
 
 // SupportsEntity implements the Provider interface
