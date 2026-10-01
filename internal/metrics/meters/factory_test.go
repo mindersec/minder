@@ -6,8 +6,8 @@ package meters
 import (
 	"testing"
 
-	"go.opentelemetry.io/otel/metric/noop"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/metric/noop"
 )
 
 func TestExportingMeterFactory(t *testing.T) {
@@ -17,6 +17,8 @@ func TestExportingMeterFactory(t *testing.T) {
 	meter := factory.Build("test-meter")
 
 	require.NotNil(t, meter, "Expected meter to not be nil")
+	_, isNoop := meter.(noop.Meter)
+	require.False(t, isNoop, "Expected exporting meter not to be a noop.Meter")
 }
 
 func TestNoopMeterFactory(t *testing.T) {
