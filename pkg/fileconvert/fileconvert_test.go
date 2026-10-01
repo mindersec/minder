@@ -340,6 +340,80 @@ severity:
 	}
 }
 
+// TestReadRuleTypeRego reads .rego rule types through ReadResource. The rego
+// decoder leaves METADATA keys that are not RuleType fields in the decoded
+// map ("title", which is copied into display_name, and the "custom" block,
+// whose entries are copied to the top level), so reading them depends on
+// unmarshalRuleType discarding unknown fields.
+func TestReadRuleTypeRego(t *testing.T) {
+	t.Parallel()
+
+	// A minimal rule derived from testdata/directory/ruletype.rego, using the
+	// top-level form so that "title" is the only leftover key.
+	const titleOnly = `# METADATA
+#
+# title: Title only
+# description: Only the title key is left over after decoding
+# def:
+#   in_entity: repository
+#   ingest:
+#     type: git
+package minder
+
+import rego.v1
+
+default allow := true
+`
+
+	tests := []struct {
+		name            string
+		decoder         func(t *testing.T) Decoder
+		wantName        string
+		wantDisplayName string
+		wantPhase       minderv1.RuleTypeReleasePhase
+		wantRegoType    string
+	}{
+		{
+			name: "fixture with title and custom block",
+			decoder: func(t *testing.T) Decoder {
+				t.Helper()
+				decoder, closer := DecoderForFile("testdata/directory/ruletype.rego")
+				require.NotNil(t, decoder, "Expected non-nil decoder for rego rule type")
+				t.Cleanup(func() { _ = closer.Close() })
+				return decoder
+			},
+			wantName:        "ruletype",
+			wantDisplayName: "Test ruletype in Rego format",
+			wantPhase:       minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_ALPHA,
+			wantRegoType:    "constraints",
+		},
+		{
+			name: "title only",
+			decoder: func(_ *testing.T) Decoder {
+				return &regoDecoder{filename: "title_only.rego", file: strings.NewReader(titleOnly)}
+			},
+			wantName:        "title_only",
+			wantDisplayName: "Title only",
+			wantPhase:       minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED,
+			wantRegoType:    "deny-by-default",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := ReadResourceTyped[*minderv1.RuleType](tt.decoder(t))
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantName, got.GetName())
+			assert.Equal(t, tt.wantDisplayName, got.GetDisplayName())
+			assert.Equal(t, tt.wantPhase, got.GetReleasePhase())
+			assert.Equal(t, "rego", got.GetDef().GetEval().GetType())
+			assert.Equal(t, tt.wantRegoType, got.GetDef().GetEval().GetRego().GetType())
+			assert.Contains(t, got.GetDef().GetEval().GetRego().GetDef(), "package minder")
+		})
+	}
+}
+
 func TestRuleTypeEnumRoundTrip(t *testing.T) {
 	t.Parallel()
 
