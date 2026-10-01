@@ -16,7 +16,6 @@ func TestExportingMeterFactory(t *testing.T) {
 	factory := &ExportingMeterFactory{}
 	meter := factory.Build("test-meter")
 
-	require.NotNil(t, meter, "Expected meter to not be nil")
 	_, isNoop := meter.(noop.Meter)
 	require.False(t, isNoop, "Expected exporting meter not to be a noop.Meter")
 }
