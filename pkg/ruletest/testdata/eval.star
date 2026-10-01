@@ -34,7 +34,8 @@ def test_eval_error_404():
         }
     )
     assert.eq(res["status"], "fail")
-    assert.true(res["message"] != "")
+    assert.eq(res["message"], "evaluation failure: denied")
+    assert.eq(res["details"], "denied for test/repo")
 
 # branch_protection_reviews declares provider_traits: [github]. When
 # provider_traits_present lists other traits but excludes it, the rule type
