@@ -254,3 +254,191 @@ func TestReadWriteRoundTrip(t *testing.T) {
 		t.Errorf("Read resources did not match expected (-want,+got):\n%s", diff)
 	}
 }
+
+func TestReadRuleTypeEnumNames(t *testing.T) {
+	t.Parallel()
+
+	const ruleTypeTmpl = `
+type: rule-type
+version: v1
+name: test-rule-type
+def:
+  in_entity: repository
+  rule_schema: {}
+  ingest:
+    type: git
+  eval:
+    type: other
+`
+	tests := []struct {
+		name         string
+		enums        string
+		wantPhase    minderv1.RuleTypeReleasePhase
+		wantSeverity minderv1.Severity_Value
+		wantErr      bool
+	}{
+		{
+			name: "short names",
+			enums: `
+release_phase: beta
+severity:
+  value: info
+`,
+			wantPhase:    minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_BETA,
+			wantSeverity: minderv1.Severity_VALUE_INFO,
+		},
+		{
+			name: "full proto names",
+			enums: `
+release_phase: RULE_TYPE_RELEASE_PHASE_BETA
+severity:
+  value: VALUE_INFO
+`,
+			wantPhase:    minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_BETA,
+			wantSeverity: minderv1.Severity_VALUE_INFO,
+		},
+		{
+			name: "json field name",
+			enums: `
+releasePhase: alpha
+severity:
+  value: high
+`,
+			wantPhase:    minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_ALPHA,
+			wantSeverity: minderv1.Severity_VALUE_HIGH,
+		},
+		{
+			name: "unknown release phase",
+			enums: `
+release_phase: gamma
+`,
+			wantErr: true,
+		},
+		{
+			name: "unknown severity",
+			enums: `
+severity:
+  value: catastrophic
+`,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			decoder := yaml.NewDecoder(bytes.NewBufferString(ruleTypeTmpl + tt.enums))
+			got, err := ReadResourceTyped[*minderv1.RuleType](decoder)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantPhase, got.GetReleasePhase())
+			assert.Equal(t, tt.wantSeverity, got.GetSeverity().GetValue())
+		})
+	}
+}
+
+// TestReadRuleTypeRego reads .rego rule types through ReadResource. The rego
+// decoder leaves METADATA keys that are not RuleType fields in the decoded
+// map ("title", which is copied into display_name, and the "custom" block,
+// whose entries are copied to the top level), so reading them depends on
+// unmarshalRuleType discarding unknown fields.
+func TestReadRuleTypeRego(t *testing.T) {
+	t.Parallel()
+
+	// A minimal rule derived from testdata/directory/ruletype.rego, using the
+	// top-level form so that "title" is the only leftover key.
+	const titleOnly = `# METADATA
+#
+# title: Title only
+# description: Only the title key is left over after decoding
+# def:
+#   in_entity: repository
+#   ingest:
+#     type: git
+package minder
+
+import rego.v1
+
+default allow := true
+`
+
+	tests := []struct {
+		name            string
+		decoder         func(t *testing.T) Decoder
+		wantName        string
+		wantDisplayName string
+		wantPhase       minderv1.RuleTypeReleasePhase
+		wantRegoType    string
+	}{
+		{
+			name: "fixture with title and custom block",
+			decoder: func(t *testing.T) Decoder {
+				t.Helper()
+				decoder, closer := DecoderForFile("testdata/directory/ruletype.rego")
+				require.NotNil(t, decoder, "Expected non-nil decoder for rego rule type")
+				t.Cleanup(func() { _ = closer.Close() })
+				return decoder
+			},
+			wantName:        "ruletype",
+			wantDisplayName: "Test ruletype in Rego format",
+			wantPhase:       minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_ALPHA,
+			wantRegoType:    "constraints",
+		},
+		{
+			name: "title only",
+			decoder: func(_ *testing.T) Decoder {
+				return &regoDecoder{filename: "title_only.rego", file: strings.NewReader(titleOnly)}
+			},
+			wantName:        "title_only",
+			wantDisplayName: "Title only",
+			wantPhase:       minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED,
+			wantRegoType:    "deny-by-default",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := ReadResourceTyped[*minderv1.RuleType](tt.decoder(t))
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantName, got.GetName())
+			assert.Equal(t, tt.wantDisplayName, got.GetDisplayName())
+			assert.Equal(t, tt.wantPhase, got.GetReleasePhase())
+			assert.Equal(t, "rego", got.GetDef().GetEval().GetType())
+			assert.Equal(t, tt.wantRegoType, got.GetDef().GetEval().GetRego().GetType())
+			assert.Contains(t, got.GetDef().GetEval().GetRego().GetDef(), "package minder")
+		})
+	}
+}
+
+func TestRuleTypeEnumRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	ruleType := &minderv1.RuleType{
+		Name: "test-rule-type",
+		Def: &minderv1.RuleType_Definition{
+			InEntity:   "repository",
+			RuleSchema: &structpb.Struct{},
+			Ingest:     &minderv1.RuleType_Definition_Ingest{Type: "git"},
+			Eval:       &minderv1.RuleType_Definition_Eval{Type: "other"},
+		},
+		Severity:     &minderv1.Severity{Value: minderv1.Severity_VALUE_CRITICAL},
+		ReleasePhase: minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_DEPRECATED,
+	}
+
+	var buf bytes.Buffer
+	require.NoError(t, WriteResource(yaml.NewEncoder(&buf), ruleType))
+
+	written := buf.String()
+	assert.Contains(t, written, "release_phase: deprecated")
+	assert.Contains(t, written, "value: critical")
+
+	got, err := ReadResourceTyped[*minderv1.RuleType](yaml.NewDecoder(&buf))
+	require.NoError(t, err)
+	if diff := gocmp.Diff(ruleType, got, protocmp.Transform()); diff != "" {
+		t.Errorf("round trip mismatch (-want,+got):\n%s", diff)
+	}
+}

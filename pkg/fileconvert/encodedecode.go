@@ -69,6 +69,7 @@ func DecoderForFile(path string) (Decoder, io.Closer) {
 func WriteResource(output Encoder, resource minderv1.ResourceMeta) error {
 	var jsonData []byte
 	var err error
+	marshaller := protojson.MarshalOptions{UseProtoNames: true}
 	switch r := resource.(type) {
 	case *minderv1.Profile:
 		r.Type = string(minderv1.ProfileResource)
@@ -76,17 +77,14 @@ func WriteResource(output Encoder, resource minderv1.ResourceMeta) error {
 	case *minderv1.RuleType:
 		r.Type = string(minderv1.RuleTypeResource)
 		r.Version = "v1"
-		// RuleTypes have customized enum fields (used only during file/IO).
-		// Preserve this behavior (at least for now).
-		jsonData, err = json.Marshal(r)
+		jsonData, err = marshalRuleType(marshaller, r)
 	case *minderv1.DataSource:
 		r.Type = string(minderv1.DataSourceResource)
 		r.Version = "v1"
 	default:
 		return fmt.Errorf("unknown resource type: %T", resource)
 	}
-	if jsonData == nil {
-		marshaller := protojson.MarshalOptions{UseProtoNames: true}
+	if jsonData == nil && err == nil {
 		jsonData, err = marshaller.Marshal(resource)
 	}
 	if err != nil {
@@ -142,9 +140,7 @@ func ReadResource(input Decoder) (minderv1.ResourceMeta, error) {
 		return &profile, nil
 	case string(minderv1.RuleTypeResource):
 		var ruleType minderv1.RuleType
-		// RuleTypes have customized enum fields (used only for storage).
-		// Preserve this behavior (at least for now).
-		if err := json.Unmarshal(jsonData, &ruleType); err != nil {
+		if err := unmarshalRuleType(jsonData, &ruleType); err != nil {
 			return nil, fmt.Errorf("error unmarshaling rule type: %w", err)
 		}
 		if err := ruleType.Validate(); err != nil {
@@ -182,4 +178,69 @@ func ReadResourceTyped[T proto.Message](input Decoder) (T, error) {
 		return zero, fmt.Errorf("unexpected resource type: %T", r)
 	}
 	return typed, nil
+}
+
+func marshalRuleType(marshaller protojson.MarshalOptions, r *minderv1.RuleType) ([]byte, error) {
+	protoJSON, err := marshaller.Marshal(r)
+	if err != nil {
+		return nil, err
+	}
+	var obj map[string]any
+	if err := json.Unmarshal(protoJSON, &obj); err != nil {
+		return nil, err
+	}
+
+	if r.GetSeverity() != nil {
+		if severity, ok := obj["severity"].(map[string]any); ok {
+			if _, ok := severity["value"]; ok {
+				severity["value"] = r.GetSeverity().GetValue().Enum().AsString()
+			}
+		}
+	}
+	if _, ok := obj["release_phase"]; ok {
+		releasePhase, err := r.GetReleasePhase().Enum().AsString()
+		if err != nil {
+			return nil, fmt.Errorf("error converting release phase: %w", err)
+		}
+		obj["release_phase"] = releasePhase
+	}
+
+	return json.Marshal(obj)
+}
+
+func unmarshalRuleType(jsonData []byte, ruleType *minderv1.RuleType) error {
+	var obj map[string]any
+	if err := json.Unmarshal(jsonData, &obj); err != nil {
+		return err
+	}
+
+	for _, key := range []string{"release_phase", "releasePhase"} {
+		if phase, ok := obj[key].(string); ok {
+			if _, isProtoName := minderv1.RuleTypeReleasePhase_value[phase]; !isProtoName {
+				var rp minderv1.RuleTypeReleasePhase
+				if err := rp.FromString(phase); err != nil {
+					return err
+				}
+				obj[key] = rp.String()
+			}
+		}
+	}
+	if severity, ok := obj["severity"].(map[string]any); ok {
+		if value, ok := severity["value"].(string); ok {
+			if _, isProtoName := minderv1.Severity_Value_value[value]; !isProtoName {
+				var sv minderv1.Severity_Value
+				if err := sv.FromString(value); err != nil {
+					return err
+				}
+				severity["value"] = sv.String()
+			}
+		}
+	}
+
+	protoJSON, err := json.Marshal(obj)
+	if err != nil {
+		return err
+	}
+
+	return protojson.UnmarshalOptions{DiscardUnknown: true}.Unmarshal(protoJSON, ruleType)
 }
