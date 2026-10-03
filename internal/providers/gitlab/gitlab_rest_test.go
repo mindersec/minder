@@ -195,7 +195,7 @@ func Test_gitlabClient_NewRequest(t *testing.T) {
 	}
 }
 
-func Test_glRESTGet(t *testing.T) {
+func Test_restGet(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -203,16 +203,19 @@ func Test_glRESTGet(t *testing.T) {
 		mockServerFunc func(w http.ResponseWriter, r *http.Request)
 		wantErr        bool
 		wantResult     map[string]string
+		wantNextPage   string
 	}{
 		{
 			name: "successful GET request",
 			mockServerFunc: func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set(nextPageHeader, "2")
 				w.WriteHeader(http.StatusOK)
 				err := json.NewEncoder(w).Encode(map[string]string{"key": "value"})
-				require.NoError(t, err)
+				assert.NoError(t, err)
 			},
-			wantErr:    false,
-			wantResult: map[string]string{"key": "value"},
+			wantErr:      false,
+			wantResult:   map[string]string{"key": "value"},
+			wantNextPage: "2",
 		},
 		{
 			name: "404 Not Found",
@@ -227,7 +230,7 @@ func Test_glRESTGet(t *testing.T) {
 			mockServerFunc: func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				_, err := w.Write([]byte("invalid json"))
-				require.NoError(t, err)
+				assert.NoError(t, err)
 			},
 			wantErr:    true,
 			wantResult: nil,
@@ -250,13 +253,13 @@ func Test_glRESTGet(t *testing.T) {
 				},
 			}
 
-			var result map[string]string
-			err := glRESTGet(context.Background(), client, "/test", &result)
+			result, header, err := restGet[map[string]string](context.Background(), client, "/test")
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.wantResult, result)
+				assert.Equal(t, tt.wantNextPage, header.Get(nextPageHeader))
 			}
 		})
 	}

@@ -196,8 +196,8 @@ func (c *gitlabClient) cleanUpStaleWebhooks(ctx context.Context, upstreamID stri
 		return fmt.Errorf("failed to join URL path for hooks: %w", err)
 	}
 
-	hooks := []*gitlab.ProjectHook{}
-	if err := glRESTGet(ctx, c, getHooksPath, &hooks); err != nil {
+	hooks, err := restGetPaginated[*gitlab.ProjectHook](ctx, c, getHooksPath)
+	if err != nil {
 		return fmt.Errorf("failed to get webhooks: %w", err)
 	}
 
