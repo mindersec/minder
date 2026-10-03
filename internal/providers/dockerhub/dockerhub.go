@@ -167,11 +167,29 @@ func (d *dockerHubImageLister) ListImages(ctx context.Context) ([]string, error)
 }
 
 // FetchAllProperties implements the provider interface
-// TODO: Implement this
-func (*dockerHubImageLister) FetchAllProperties(
-	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ *properties.Properties,
+func (d *dockerHubImageLister) FetchAllProperties(
+	ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity, _ *properties.Properties,
 ) (*properties.Properties, error) {
-	return nil, nil
+	if !d.SupportsEntity(entType) {
+		return nil, provifv1.ErrUnsupportedEntity
+	}
+
+	name, err := oci.ArtifactNameFromProperties(getByProps)
+	if err != nil {
+		return nil, err
+	}
+
+	repo, tag, err := oci.ParseImageRef(name)
+	if err != nil {
+		return nil, err
+	}
+
+	digest, err := d.GetDigest(ctx, repo, tag)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve digest for %q: %w", name, err)
+	}
+
+	return oci.NewArtifactProperties(name, repo+"@"+digest), nil
 }
 
 // FetchProperty implements the provider interface
@@ -182,21 +200,31 @@ func (*dockerHubImageLister) FetchProperty(
 }
 
 // GetEntityName implements the provider interface
-// TODO: Implement this
-func (*dockerHubImageLister) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
-	return "", nil
+func (d *dockerHubImageLister) GetEntityName(
+	entType minderv1.Entity, props *properties.Properties,
+) (string, error) {
+	if !d.SupportsEntity(entType) {
+		return "", fmt.Errorf("entity type %s not supported", entType)
+	}
+
+	return oci.ArtifactNameFromProperties(props)
 }
 
 // SupportsEntity implements the Provider interface
-func (*dockerHubImageLister) SupportsEntity(_ minderv1.Entity) bool {
-	// TODO: implement
-	return false
+func (*dockerHubImageLister) SupportsEntity(entType minderv1.Entity) bool {
+	return entType == minderv1.Entity_ENTITY_ARTIFACTS
 }
 
 // CreationOptions implements the Provider interface
-func (*dockerHubImageLister) CreationOptions(_ minderv1.Entity) *provifv1.EntityCreationOptions {
-	// DockerHub doesn't support any entities yet
-	return nil
+func (d *dockerHubImageLister) CreationOptions(entType minderv1.Entity) *provifv1.EntityCreationOptions {
+	if !d.SupportsEntity(entType) {
+		return nil
+	}
+
+	return &provifv1.EntityCreationOptions{
+		RegisterWithProvider:       false,
+		PublishReconciliationEvent: false,
+	}
 }
 
 // RegisterEntity implements the Provider interface
@@ -207,6 +235,9 @@ func (d *dockerHubImageLister) RegisterEntity(
 		return nil, provifv1.ErrUnsupportedEntity
 	}
 	// we don't need to do any explicit registration
+	// TODO: register a repository webhook so push events create artifact entities
+	// automatically. DockerHub only documents manual setup:
+	// https://docs.docker.com/docker-hub/repos/manage/webhooks/
 	return props, nil
 }
 
@@ -219,8 +250,16 @@ func (*dockerHubImageLister) DeregisterEntity(
 }
 
 // PropertiesToProtoMessage implements the Provider interface
-func (*dockerHubImageLister) PropertiesToProtoMessage(
-	_ minderv1.Entity, _ *properties.Properties) (protoreflect.ProtoMessage, error) {
-	// TODO: Implement
-	return nil, nil
+func (d *dockerHubImageLister) PropertiesToProtoMessage(
+	entType minderv1.Entity, props *properties.Properties) (protoreflect.ProtoMessage, error) {
+	if !d.SupportsEntity(entType) {
+		return nil, provifv1.ErrUnsupportedEntity
+	}
+
+	// Avoid returning a typed nil as a non-nil interface.
+	art, err := oci.ArtifactV1FromProperties(props, d.namespace)
+	if err != nil {
+		return nil, err
+	}
+	return art, nil
 }
