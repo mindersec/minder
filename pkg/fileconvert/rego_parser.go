@@ -57,6 +57,7 @@ func (r *regoDecoder) Decode(v any) error {
 		for k, v := range customMap {
 			ruleType[k] = v
 		}
+		delete(ruleType, "custom")
 	}
 
 	ruleType["type"] = string(minderv1.RuleTypeResource)
@@ -67,6 +68,7 @@ func (r *regoDecoder) Decode(v any) error {
 		ruleType["name"] = name
 	}
 	ruleType["display_name"] = cmp.Or(ruleType["display_name"], ruleType["title"])
+	delete(ruleType, "title")
 	// the "description" key already matches
 
 	defMap, err := ensureEntry(ruleType, "def", map[string]any{})

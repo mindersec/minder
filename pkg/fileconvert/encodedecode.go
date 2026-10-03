@@ -242,5 +242,5 @@ func unmarshalRuleType(jsonData []byte, ruleType *minderv1.RuleType) error {
 		return err
 	}
 
-	return protojson.UnmarshalOptions{DiscardUnknown: true}.Unmarshal(protoJSON, ruleType)
+	return protojson.Unmarshal(protoJSON, ruleType)
 }
