@@ -235,6 +235,9 @@ func (d *dockerHubImageLister) RegisterEntity(
 		return nil, provifv1.ErrUnsupportedEntity
 	}
 	// we don't need to do any explicit registration
+	// TODO: register a repository webhook so push events create artifact entities
+	// automatically. DockerHub only documents manual setup:
+	// https://docs.docker.com/docker-hub/repos/manage/webhooks/
 	return props, nil
 }
 

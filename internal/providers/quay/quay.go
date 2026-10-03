@@ -237,6 +237,9 @@ func (q *quayImageLister) RegisterEntity(
 		return nil, provifv1.ErrUnsupportedEntity
 	}
 	// we don't need to do any explicit registration
+	// TODO: create a repository notification so push events create artifact entities
+	// automatically:
+	// https://docs.quay.io/api/swagger/#!/repositorynotification/createRepoNotification
 	return props, nil
 }
 
