@@ -20,7 +20,7 @@ const (
 
 func newArtifactIngestType(s string) artifactType {
 	switch strings.ToLower(s) {
-	case "container":
+	case string(artifactTypeContainer):
 		return artifactTypeContainer
 	default:
 		return artifactTypeUnknown

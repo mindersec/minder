@@ -51,7 +51,7 @@ Examples:
 
 - GitHub and GitLab: Track repositories, pull requests, and CI/CD pipelines.
 
-- Docker Hub: Monitor container images and their metadata.
+- Docker Hub and Quay.io: Monitor container images and their metadata.
 
 Providers communicate with Minder through APIs, webhook events, and scheduled
 updates. This ensures continuous monitoring and up-to-date information about the

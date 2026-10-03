@@ -138,6 +138,9 @@ func (tr *testCaseRunner) builtinEval(
 
 	res, err := rte.Eval(ctx, entityProto, profileMap, paramsMap, &stubResultSink{})
 
+	// Record that this rule was evaluated, for coverage tracking.
+	tr.usedRules[ruleName] = struct{}{}
+
 	return formatEvalResult(res, err), nil
 }
 

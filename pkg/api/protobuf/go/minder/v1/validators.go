@@ -113,6 +113,18 @@ func (d *DockerHubProviderConfig) Validate() error {
 	return nil
 }
 
+// Ensure QuayProviderConfig implements the Validator interface
+var _ Validator = (*QuayProviderConfig)(nil)
+
+// Validate is a utility function which allows for the validation of a struct.
+func (d *QuayProviderConfig) Validate() error {
+	if d.GetNamespace() == "" {
+		return fmt.Errorf("namespace is required")
+	}
+
+	return nil
+}
+
 // Ensure Entity implements the Validator interface
 var _ Validator = (*Entity)(nil)
 

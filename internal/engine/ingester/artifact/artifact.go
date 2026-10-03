@@ -61,6 +61,24 @@ type verifiedAttestation struct {
 	Predicate     any    `json:"predicate,omitempty"`
 }
 
+// imageRef locates an artifact version in its registry, independent of
+// verification status.
+type imageRef struct {
+	Registry   string   `json:"registry,omitempty"`
+	Repository string   `json:"repository"`
+	Tags       []string `json:"tags,omitempty"`
+	Digest     string   `json:"digest"`
+}
+
+// imageInfo is the typed result per artifact version. Fields are
+// capitalized (not JSON-tagged) so Rego sees "Identity", "Verification",
+// "Manifest" as keys.
+type imageInfo struct {
+	Verification verification
+	Identity     imageRef
+	Manifest     *provifv1.RawManifest
+}
+
 // NewArtifactDataIngest creates a new artifact rule data ingest engine
 func NewArtifactDataIngest(prov interfaces.Provider) (*Ingest, error) {
 	return &Ingest{
@@ -119,7 +137,7 @@ func (i *Ingest) getApplicableArtifactVersions(
 	ctx context.Context,
 	artifact *pb.Artifact,
 	cfg *ingesterConfig,
-) ([]map[string]any, error) {
+) ([]imageInfo, error) {
 	if err := validateConfiguration(artifact, cfg); err != nil {
 		return nil, err
 	}
@@ -129,24 +147,16 @@ func (i *Ingest) getApplicableArtifactVersions(
 		return nil, err
 	}
 
-	// Get all artifact checksums filtering out those that don't apply to this rule
-	checksums, err := getAndFilterArtifactVersions(ctx, cfg, vers, artifact)
+	// Get all artifact versions filtering out those that don't apply to this rule
+	versions, err := getAndFilterArtifactVersions(ctx, cfg, vers, artifact)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get the provenance info for all artifact versions that apply to this rule
-	verificationResults, err := i.getVerificationResult(ctx, cfg, artifact, checksums)
+	// Get the identity and provenance info for all artifact versions that apply to this rule
+	result, err := i.getVerificationResult(ctx, cfg, artifact, versions)
 	if err != nil {
 		return nil, err
-	}
-
-	// Build the result to be returned to the rule engine as a slice of map["Verification"]any
-	result := make([]map[string]any, 0, len(verificationResults))
-	for _, item := range verificationResults {
-		result = append(result, map[string]any{
-			"Verification": item,
-		})
 	}
 
 	zerolog.Ctx(ctx).Debug().Any("result", result).Msg("ingestion result")
@@ -180,31 +190,57 @@ func (i *Ingest) getVerificationResult(
 	ctx context.Context,
 	cfg *ingesterConfig,
 	artifact *pb.Artifact,
-	checksums []string,
-) ([]verification, error) {
-	var versionResults []verification
+	versions []*pb.ArtifactVersion,
+) ([]imageInfo, error) {
+	var results []imageInfo
 	// Get the verifier for sigstore
 	artifactVerifier, err := getVerifier(i, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("error getting verifier: %w", err)
 	}
 
+	registry := getRegistryForProvider(i.prov)
+	repository := buildRepository(artifact)
+	// Raw-manifest needs the OCI interface (DockerHub, Quay); GHCR doesn't
+	// implement it yet (#6778).
+	ocicli, _ := interfaces.As[provifv1.OCI](i.prov)
+
 	// Loop through all artifact versions that apply to this rule and get the provenance info for each
-	for _, artifactChecksum := range checksums {
+	for _, version := range versions {
+		if version == nil {
+			continue
+		}
+		identity := imageRef{
+			Registry:   registry,
+			Repository: repository,
+			Tags:       version.Tags,
+			Digest:     version.Sha,
+		}
+
+		var manifest *provifv1.RawManifest
+		if ocicli != nil {
+			manifest, err = ocicli.GetRawManifest(ctx, artifact.GetName(), version.GetSha())
+			if err != nil {
+				zerolog.Ctx(ctx).Info().Err(err).Str("name", artifact.GetName()).
+					Msg("failed to fetch raw manifest, continuing without it")
+				manifest = nil
+			}
+		}
+
 		// Try getting provenance info for the artifact version
-		results, err := artifactVerifier.Verify(ctx, verifyif.ArtifactTypeContainer,
-			artifact.Owner, artifact.Name, artifactChecksum)
+		verResults, err := artifactVerifier.Verify(ctx, verifyif.ArtifactTypeContainer,
+			artifact.Owner, artifact.Name, version.Sha)
 		if err != nil {
 			// We consider err != nil as a fatal error, so we'll fail the rule evaluation here
-			artifactName := container.BuildImageRef("", artifact.Owner, artifact.Name, artifactChecksum)
+			artifactName := container.BuildImageRef("", artifact.Owner, artifact.Name, version.Sha)
 			zerolog.Ctx(ctx).Debug().Err(err).Str("name", artifactName).Msg("failed getting signature information")
 			return nil, fmt.Errorf("failed getting signature information: %w", err)
 		}
 		// Loop through all results and build the verification result for each
-		for _, res := range results {
+		for _, res := range verResults {
 			// Log a debug message in case we failed to find or verify any signature information for the artifact version
 			if !res.IsSigned || !res.IsVerified {
-				artifactName := container.BuildImageRef("", artifact.Owner, artifact.Name, artifactChecksum)
+				artifactName := container.BuildImageRef("", artifact.Owner, artifact.Name, version.Sha)
 				zerolog.Ctx(ctx).Debug().Str("name", artifactName).Msg("failed to find or verify signature information")
 			}
 
@@ -234,11 +270,40 @@ func (i *Ingest) getVerificationResult(
 					Predicate:     res.Statement.Predicate,
 				}
 			}
-			// Append the verification result to the list
-			versionResults = append(versionResults, *verResult)
+			results = append(results, imageInfo{
+				Identity:     identity,
+				Verification: *verResult,
+				Manifest:     manifest,
+			})
 		}
 	}
-	return versionResults, nil
+	return results, nil
+}
+
+// getRegistryForProvider returns the registry hostname. OCI providers
+// report their own; GitHub falls back to container.GHCRRegistry. Anything
+// else returns empty.
+func getRegistryForProvider(prov interfaces.Provider) string {
+	if ocicli, err := interfaces.As[provifv1.OCI](prov); err == nil {
+		return ocicli.GetRegistry()
+	}
+	if _, err := interfaces.As[provifv1.GitHub](prov); err == nil {
+		return container.GHCRRegistry
+	}
+	return ""
+}
+
+// buildRepository returns the artifact's registry path.
+// GHCR tracks owner separately (artifact.Owner); DockerHub/Quay keep it in
+// the provider config instead, so artifact.Owner is empty there and the
+// repository is just the name.
+// Assumes only GitHub populates Owner today (verified). Revisit if that
+// changes.
+func buildRepository(artifact *pb.Artifact) string {
+	if artifact.Owner == "" {
+		return artifact.Name
+	}
+	return artifact.Owner + "/" + artifact.Name
 }
 
 func getVerifier(i *Ingest, cfg *ingesterConfig) (verifyif.ArtifactVerifier, error) {
@@ -271,39 +336,31 @@ func getVerifier(i *Ingest, cfg *ingesterConfig) (verifyif.ArtifactVerifier, err
 }
 
 // getAndFilterArtifactVersions fetches the available versions and filters the
-// ones that apply to the rule. Note that this returns the checksums of the
-// applicable artifact versions.
+// ones that apply to the rule.
 func getAndFilterArtifactVersions(
 	ctx context.Context,
 	cfg *ingesterConfig,
 	vers provifv1.ArtifactProvider,
 	artifact *pb.Artifact,
-) ([]string, error) {
-	var res []string
-
+) ([]*pb.ArtifactVersion, error) {
 	// Build a tag filter based on the configuration
 	filter, err := artif.BuildFilter(cfg.Tags, cfg.TagRegex)
 	if err != nil {
 		return nil, fmt.Errorf("error building filter from artifact ingester config: %w", err)
 	}
 
-	// Fetch all available versions of the artifact
+	// Fetch all available versions of the artifact, already filtered by the provider
 	upstreamVersions, err := vers.GetArtifactVersions(ctx, artifact, filter)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving artifact versions: %w", err)
 	}
 
-	for _, version := range upstreamVersions {
-		res = append(res, version.Sha)
-	}
-
 	// If no applicable artifact versions were found for this rule, we can go ahead and fail the rule evaluation here
-	if len(res) == 0 {
+	if len(upstreamVersions) == 0 {
 		return nil, evalerrors.NewErrEvaluationFailed("no applicable artifact versions found")
 	}
 
-	// Return the list of applicable artifact versions, i.e. []string{"digest1", "digest2", ...}
-	return res, nil
+	return upstreamVersions, nil
 }
 
 var (

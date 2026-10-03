@@ -297,6 +297,17 @@ type GitHub interface {
 	UpdateCheckRun(context.Context, string, string, int64, *github.UpdateCheckRunOptions) (*github.CheckRun, error)
 }
 
+// GitLab is the interface for interacting with the GitLab REST API
+// Add methods here for interacting with the GitLab REST API
+type GitLab interface {
+	Provider
+	RepoLister
+	REST
+	Git
+
+	GetCredential() GitLabCredential
+}
+
 // ImageLister is the interface for listing images
 type ImageLister interface {
 	Provider
@@ -306,6 +317,14 @@ type ImageLister interface {
 
 	// GetNamespaceURL returns the repository URL
 	GetNamespaceURL() string
+}
+
+// RawManifest captures an OCI manifest or image index exactly as returned by
+// the registry, without resolving a multi-platform index down to a single
+// platform's manifest.
+type RawManifest struct {
+	v1.Descriptor
+	Content []byte `json:"content"`
 }
 
 // OCI is the interface for interacting with OCI registries
@@ -332,6 +351,11 @@ type OCI interface {
 
 	// GetAuthenticator returns the authenticator for the OCI provider
 	GetAuthenticator() (authn.Authenticator, error)
+
+	// GetRawManifest returns the manifest or image index exactly as
+	// returned by the registry, keyed by digest. Unlike GetManifest, it
+	// does not resolve a multi-platform index down to a single platform.
+	GetRawManifest(ctx context.Context, name, digest string) (*RawManifest, error)
 }
 
 // ParseAndValidate parses the given provider configuration and validates it.
@@ -352,6 +376,7 @@ func ParseAndValidate(rawConfig json.RawMessage, to any) error {
 // must implement to support it.
 var providerTypeMap = map[minderv1.ProviderType]reflect.Type{
 	minderv1.ProviderType_PROVIDER_TYPE_GITHUB:       reflect.TypeOf((*GitHub)(nil)).Elem(),
+	minderv1.ProviderType_PROVIDER_TYPE_GITLAB:       reflect.TypeOf((*GitLab)(nil)).Elem(),
 	minderv1.ProviderType_PROVIDER_TYPE_REST:         reflect.TypeOf((*REST)(nil)).Elem(),
 	minderv1.ProviderType_PROVIDER_TYPE_GIT:          reflect.TypeOf((*Git)(nil)).Elem(),
 	minderv1.ProviderType_PROVIDER_TYPE_OCI:          reflect.TypeOf((*OCI)(nil)).Elem(),

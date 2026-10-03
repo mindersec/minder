@@ -44,6 +44,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/github/service"
 	gitlabmanager "github.com/mindersec/minder/internal/providers/gitlab/manager"
 	"github.com/mindersec/minder/internal/providers/manager"
+	"github.com/mindersec/minder/internal/providers/quay"
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	"github.com/mindersec/minder/internal/providers/session"
 	provtelemetry "github.com/mindersec/minder/internal/providers/telemetry"
@@ -161,6 +162,14 @@ func AllInOneServerService(
 			store,
 		)
 		provmans = append(provmans, dockerhubProviderManager)
+	}
+
+	if flags.Bool(ctx, featureFlagClient, flags.QuayProvider) {
+		quayProviderManager := quay.NewQuayProviderClassManager(
+			cryptoEngine,
+			store,
+		)
+		provmans = append(provmans, quayProviderManager)
 	}
 
 	if flags.Bool(ctx, featureFlagClient, flags.GitLabProvider) {

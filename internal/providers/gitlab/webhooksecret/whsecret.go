@@ -6,6 +6,7 @@ package webhooksecret
 
 import (
 	sum "crypto/sha512"
+	"crypto/subtle"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -41,5 +42,5 @@ func Verify(base string, uniq string, secret string) bool {
 		return false
 	}
 
-	return s == secret
+	return subtle.ConstantTimeCompare([]byte(s), []byte(secret)) == 1
 }

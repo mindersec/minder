@@ -149,7 +149,7 @@ func (h *restHandler) GetArgsSchema() *structpb.Struct {
 
 func (h *restHandler) ValidateArgs(args any) error {
 	if h.inputSchema == nil {
-		return errors.New("input schema cannot be nil")
+		return nil
 	}
 
 	mapobj, ok := args.(map[string]any)

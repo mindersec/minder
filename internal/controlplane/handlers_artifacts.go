@@ -18,6 +18,7 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/logger"
+	ghprops "github.com/mindersec/minder/internal/providers/github/properties"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -62,6 +63,11 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 
 	logger.BusinessRecord(ctx).Provider = providerName
 
+	repoOwner := nameParts[0]
+	repoName := nameParts[1]
+	// PropertyName for artifacts is stored as "owner/artifactName"
+	fullArtifactName := repoOwner + "/" + strings.Join(nameParts[2:], "/")
+
 	// Get provider ID from name
 	provider, err := s.providerStore.GetByName(ctx, projectID, providerName)
 	if err != nil {
@@ -71,15 +77,12 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 		return nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
 	}
 
-	// the artifact name is the rest of the parts
-	artifactName := strings.Join(nameParts[2:], "/")
-
-	// Search for artifact by name property using V1 helper
+	// Search for artifact by its full owner/artifactName
 	entities, err := s.store.GetTypedEntitiesByPropertyV1(
 		ctx,
 		db.EntitiesArtifact,
 		properties.PropertyName,
-		artifactName,
+		fullArtifactName,
 		db.GetTypedEntitiesOptions{
 			ProjectID:  projectID,
 			ProviderID: provider.ID,
@@ -100,6 +103,12 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 			return nil, status.Errorf(codes.NotFound, "artifact not found")
 		}
 		return nil, status.Errorf(codes.Unknown, "failed to get artifact: %s", err)
+	}
+
+	// Validate the artifact belongs to the requested repository
+	storedRepo := ewp.Properties.GetProperty(ghprops.ArtifactPropertyRepo).GetString()
+	if storedRepo != "" && storedRepo != repoOwner+"/"+repoName {
+		return nil, status.Errorf(codes.NotFound, "artifact not found")
 	}
 
 	// Retrieve all properties from provider
@@ -201,7 +210,7 @@ const (
 type artifactListFilter struct {
 	store db.Store
 
-	repoSlubList []string
+	repoSlugList []string
 	source       artifactSource
 	filter       string
 }
@@ -222,11 +231,11 @@ func parseArtifactListFrom(store db.Store, from string) (*artifactListFilter, er
 	source := parts[0]
 	filter := parts[1]
 
-	var repoSlubList []string
+	var repoSlugList []string
 
 	switch source {
 	case string(artifactSourceRepo):
-		repoSlubList = strings.Split(filter, ",")
+		repoSlugList = strings.Split(filter, ",")
 	default:
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid filter source, only repository is supported")
 	}
@@ -235,7 +244,7 @@ func parseArtifactListFrom(store db.Store, from string) (*artifactListFilter, er
 		store:        store,
 		source:       artifactSource(source),
 		filter:       filter,
-		repoSlubList: repoSlubList,
+		repoSlugList: repoSlugList,
 	}, nil
 }
 
@@ -267,18 +276,38 @@ func (filter *artifactListFilter) listArtifacts(
 		return nil, fmt.Errorf("failed to get artifact entities: %w", err)
 	}
 
+	// Resolve repo slugs to entity IDs once, before the loop.
+	// repoSlugList contains GitHub repository slugs (owner/repo format).
+	// Artifacts are included only if their OriginatedFrom repo matches one of
+	// these slugs. This is a GitHub-specific concept; DockerHub and Quay.io
+	// providers do not populate OriginatedFrom in the same way.
+	allowedRepoIDs := make(map[uuid.UUID]struct{}, len(filter.repoSlugList))
+	for _, slug := range filter.repoSlugList {
+		repoEnt, err := filter.store.GetEntityByName(ctx, db.GetEntityByNameParams{
+			ProjectID:  projectID,
+			EntityType: db.EntitiesRepository,
+			Name:       slug,
+			ProviderID: provider.ID,
+		})
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				continue
+			}
+			return nil, fmt.Errorf("failed to look up repository %q: %w", slug, err)
+		}
+		allowedRepoIDs[repoEnt.ID] = struct{}{}
+	}
+
 	// Filter by repository if needed and convert to protobuf
 	results := []*pb.Artifact{}
 	for _, ent := range artifactEnts {
-		// Apply repository filter if specified
-		if len(filter.repoSlubList) > 0 {
-			// Check if artifact originates from one of the filtered repos
+		if len(filter.repoSlugList) > 0 {
 			if !ent.OriginatedFrom.Valid {
 				continue
 			}
-			// We need to check if the originated_from repository matches the filter
-			// For now, skip filtering - this requires loading the parent repo
-			// TODO: Implement efficient repo filtering
+			if _, ok := allowedRepoIDs[ent.OriginatedFrom.UUID]; !ok {
+				continue
+			}
 		}
 
 		// The entity name is the artifact name directly
