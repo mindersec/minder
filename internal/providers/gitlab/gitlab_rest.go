@@ -78,117 +78,89 @@ type genericRESTClient interface {
 // request here because of the way they form authentication for requests.
 // It would be ideal to use it, so we should consider contributing and making
 // that part more pluggable.
-func glRESTGet[T any](ctx context.Context, cli genericRESTClient, path string, out T) error {
+func restGet[T any](ctx context.Context, cli genericRESTClient, path string) (T, http.Header, error) {
+	var out T
+
 	// NewRequest already has the base URL configured, the path
 	// will get appended to it.
 	req, err := cli.NewRequest(http.MethodGet, path, nil)
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		return out, nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	resp, err := cli.Do(ctx, req)
 	if err != nil {
-		return fmt.Errorf("failed to get resource '%s': %w", path, err)
+		return out, nil, fmt.Errorf("failed to get resource '%s': %w", path, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		if resp.StatusCode == http.StatusNotFound {
-			return provifv1.ErrEntityNotFound
+			return out, nil, provifv1.ErrEntityNotFound
 		}
-		return fmt.Errorf("failed to get resource '%s': %s", path, resp.Status)
+		return out, nil, fmt.Errorf("failed to get resource '%s': %s", path, resp.Status)
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(out); err != nil {
-		return fmt.Errorf("failed to decode response: %w", err)
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		return out, nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return nil
+	return out, resp.Header, nil
 }
 
 const (
-	// glPerPage is the page size requested from collection endpoints.
+	// perPage is the page size requested from collection endpoints.
 	// 100 is the maximum GitLab allows.
-	glPerPage = 100
+	perPage = 100
 
-	// glNextPageHeader is the response header GitLab uses to point at the
-	// next page of an offset-paginated collection. It is empty on the
-	// last page.
-	glNextPageHeader = "X-Next-Page"
+	// maxPages bounds a paginated fetch, so a very large or misbehaving
+	// listing fails with an error instead of looping indefinitely.
+	maxPages = 1000
+
+	// nextPageHeader is the response header GitLab uses to point at the
+	// next page of an offset-paginated collection.
+	nextPageHeader = "X-Next-Page"
 )
 
-// glRESTGetPaginated retrieves every page of a GitLab collection endpoint
-// and appends the items to out. GitLab caps responses at per_page items
-// (20 by default), so collection endpoints have to follow the X-Next-Page
-// response header to retrieve the full result set.
-func glRESTGetPaginated[T any](ctx context.Context, cli genericRESTClient, path string, out *[]T) error {
-	for page := "1"; page != ""; {
-		items, nextPage, err := glRESTGetPage[T](ctx, cli, path, page)
-		if err != nil {
-			return err
-		}
-		*out = append(*out, items...)
-
-		// An empty page means there is nothing left to fetch regardless
-		// of what the header says, which also guards against a server
-		// that keeps reporting a next page.
-		if len(items) == 0 {
-			break
-		}
-		page = nextPage
-	}
-
-	return nil
-}
-
-// glRESTGetPage retrieves a single page of a GitLab collection endpoint and
-// returns the items along with the next page reported by the server.
-func glRESTGetPage[T any](ctx context.Context, cli genericRESTClient, path, page string) ([]T, string, error) {
-	pagedPath, err := pathWithPagination(path, page)
-	if err != nil {
-		return nil, "", err
-	}
-
-	req, err := cli.NewRequest(http.MethodGet, pagedPath, nil)
-	if err != nil {
-		return nil, "", fmt.Errorf("failed to create request: %w", err)
-	}
-
-	resp, err := cli.Do(ctx, req)
-	if err != nil {
-		return nil, "", fmt.Errorf("failed to get resource '%s': %w", pagedPath, err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode == http.StatusNotFound {
-			return nil, "", provifv1.ErrEntityNotFound
-		}
-		return nil, "", fmt.Errorf("failed to get resource '%s': %s", pagedPath, resp.Status)
-	}
-
-	var items []T
-	if err := json.NewDecoder(resp.Body).Decode(&items); err != nil {
-		return nil, "", fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	return items, resp.Header.Get(glNextPageHeader), nil
-}
-
-// pathWithPagination sets the page and per_page query parameters on path,
-// preserving any query parameters it already carries.
-func pathWithPagination(path, page string) (string, error) {
+// restGetPaginated retrieves every page of a GitLab collection endpoint.
+// GitLab caps responses at per_page items (20 by default), so collection
+// endpoints have to follow the X-Next-Page response header to retrieve the
+// full result set. The page and per_page query parameters are always set
+// here, overwriting any values already in path; other query parameters are
+// kept.
+//
+// If a page fails, the items fetched before it are returned along with the
+// error, and the caller decides whether a partial result is usable.
+func restGetPaginated[T any](ctx context.Context, cli genericRESTClient, path string) ([]T, error) {
 	u, err := url.Parse(path)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse path '%s': %w", path, err)
+		return nil, fmt.Errorf("failed to parse path '%s': %w", path, err)
+	}
+	query := u.Query()
+	query.Set("per_page", strconv.Itoa(perPage))
+
+	var all []T
+	page := 1
+	for range maxPages {
+		query.Set("page", strconv.Itoa(page))
+		u.RawQuery = query.Encode()
+
+		items, header, err := restGet[[]T](ctx, cli, u.String())
+		if err != nil {
+			return all, err
+		}
+		all = append(all, items...)
+
+		// A missing, malformed, or non-advancing next page ends the listing,
+		// so the server cannot keep us on the same page.
+		next, err := strconv.Atoi(header.Get(nextPageHeader))
+		if len(items) == 0 || err != nil || next <= page {
+			return all, nil
+		}
+		page = next
 	}
 
-	q := u.Query()
-	q.Set("page", page)
-	q.Set("per_page", strconv.Itoa(glPerPage))
-	u.RawQuery = q.Encode()
-
-	return u.String(), nil
+	return all, fmt.Errorf("too many pages listing '%s' (limit %d)", path, maxPages)
 }
 
 func getParsedURL(endpoint, path string) (*url.URL, error) {

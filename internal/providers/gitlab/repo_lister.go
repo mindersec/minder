@@ -22,10 +22,8 @@ import (
 var minAccessLevelControl = 25 // "Security Manager"
 
 func (c *gitlabClient) ListAllRepositories(ctx context.Context) ([]*minderv1.Repository, error) {
-	managedProjects := []*gitlab.Project{}
-	if err := glRESTGetPaginated(ctx, c, fmt.Sprintf("projects?min_access_level=%d", minAccessLevelControl), &managedProjects); err != nil {
-		return nil, fmt.Errorf("failed to get projects: %w", err)
-	}
+	path := fmt.Sprintf("projects?min_access_level=%d", minAccessLevelControl)
+	managedProjects, listErr := restGetPaginated[*gitlab.Project](ctx, c, path)
 
 	repos := make([]*minderv1.Repository, 0, len(managedProjects))
 	for _, p := range managedProjects {
@@ -40,6 +38,12 @@ func (c *gitlabClient) ListAllRepositories(ctx context.Context) ([]*minderv1.Rep
 		}
 
 		repos = append(repos, outRep)
+	}
+
+	if listErr != nil {
+		// Return the repositories fetched before the failure alongside the
+		// error; the caller decides whether a partial listing is usable.
+		return repos, fmt.Errorf("failed to get projects: %w", listErr)
 	}
 
 	zerolog.Ctx(ctx).Debug().Int("num_repos", len(repos)).Msg("found repositories in gitlab provider")

@@ -6,7 +6,6 @@ package gitlab
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -19,7 +18,6 @@ import (
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/util/ptr"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 type mockGitlabClient struct {
@@ -197,7 +195,7 @@ func Test_gitlabClient_NewRequest(t *testing.T) {
 	}
 }
 
-func Test_glRESTGet(t *testing.T) {
+func Test_restGet(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -205,16 +203,19 @@ func Test_glRESTGet(t *testing.T) {
 		mockServerFunc func(w http.ResponseWriter, r *http.Request)
 		wantErr        bool
 		wantResult     map[string]string
+		wantNextPage   string
 	}{
 		{
 			name: "successful GET request",
 			mockServerFunc: func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set(nextPageHeader, "2")
 				w.WriteHeader(http.StatusOK)
 				err := json.NewEncoder(w).Encode(map[string]string{"key": "value"})
-				require.NoError(t, err)
+				assert.NoError(t, err)
 			},
-			wantErr:    false,
-			wantResult: map[string]string{"key": "value"},
+			wantErr:      false,
+			wantResult:   map[string]string{"key": "value"},
+			wantNextPage: "2",
 		},
 		{
 			name: "404 Not Found",
@@ -229,7 +230,7 @@ func Test_glRESTGet(t *testing.T) {
 			mockServerFunc: func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				_, err := w.Write([]byte("invalid json"))
-				require.NoError(t, err)
+				assert.NoError(t, err)
 			},
 			wantErr:    true,
 			wantResult: nil,
@@ -252,13 +253,13 @@ func Test_glRESTGet(t *testing.T) {
 				},
 			}
 
-			var result map[string]string
-			err := glRESTGet(context.Background(), client, "/test", &result)
+			result, header, err := restGet[map[string]string](context.Background(), client, "/test")
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.wantResult, result)
+				assert.Equal(t, tt.wantNextPage, header.Get(nextPageHeader))
 			}
 		})
 	}
@@ -356,123 +357,4 @@ func Test_getParsedURL(t *testing.T) {
 			assert.Equal(t, tt.want.Fragment, got.Fragment, "Expected fragment to be equal")
 		})
 	}
-}
-
-func Test_glRESTGetPaginated(t *testing.T) {
-	t.Parallel()
-
-	newPagingClient := func(ts *httptest.Server) *mockGitlabClient {
-		return &mockGitlabClient{
-			doFunc: func(_ context.Context, req *http.Request) (*http.Response, error) {
-				return ts.Client().Do(req)
-			},
-			newRequestFunc: func(method, requestUrl string, _ any) (*http.Request, error) {
-				return http.NewRequest(method, ts.URL+"/"+requestUrl, nil)
-			},
-		}
-	}
-
-	t.Run("follows X-Next-Page across pages", func(t *testing.T) {
-		t.Parallel()
-
-		var pages []string
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			q := r.URL.Query()
-			assert.Equal(t, "keep", q.Get("existing"), "existing query params must be preserved")
-			assert.Equal(t, "100", q.Get("per_page"))
-
-			page := q.Get("page")
-			pages = append(pages, page)
-			if page == "1" {
-				w.Header().Set("X-Next-Page", "2")
-				fmt.Fprint(w, `["a", "b"]`)
-				return
-			}
-			fmt.Fprint(w, `["c"]`)
-		}))
-		defer ts.Close()
-
-		var out []string
-		err := glRESTGetPaginated(context.Background(), newPagingClient(ts), "test?existing=keep", &out)
-		require.NoError(t, err)
-		assert.Equal(t, []string{"a", "b", "c"}, out)
-		assert.Equal(t, []string{"1", "2"}, pages)
-	})
-
-	t.Run("single page without header", func(t *testing.T) {
-		t.Parallel()
-
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			fmt.Fprint(w, `["only"]`)
-		}))
-		defer ts.Close()
-
-		var out []string
-		err := glRESTGetPaginated(context.Background(), newPagingClient(ts), "test", &out)
-		require.NoError(t, err)
-		assert.Equal(t, []string{"only"}, out)
-	})
-
-	t.Run("empty collection", func(t *testing.T) {
-		t.Parallel()
-
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			fmt.Fprint(w, `[]`)
-		}))
-		defer ts.Close()
-
-		var out []string
-		err := glRESTGetPaginated(context.Background(), newPagingClient(ts), "test", &out)
-		require.NoError(t, err)
-		assert.Empty(t, out)
-	})
-
-	t.Run("stops when the server keeps reporting a next page with no items", func(t *testing.T) {
-		t.Parallel()
-
-		var requests int
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			requests++
-			w.Header().Set("X-Next-Page", "2")
-			fmt.Fprint(w, `[]`)
-		}))
-		defer ts.Close()
-
-		var out []string
-		err := glRESTGetPaginated(context.Background(), newPagingClient(ts), "test", &out)
-		require.NoError(t, err)
-		assert.Empty(t, out)
-		assert.Equal(t, 1, requests)
-	})
-
-	t.Run("404 maps to ErrEntityNotFound", func(t *testing.T) {
-		t.Parallel()
-
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusNotFound)
-		}))
-		defer ts.Close()
-
-		var out []string
-		err := glRESTGetPaginated(context.Background(), newPagingClient(ts), "test", &out)
-		require.ErrorIs(t, err, provifv1.ErrEntityNotFound)
-	})
-
-	t.Run("error on a later page fails the whole listing", func(t *testing.T) {
-		t.Parallel()
-
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Query().Get("page") == "1" {
-				w.Header().Set("X-Next-Page", "2")
-				fmt.Fprint(w, `["a"]`)
-				return
-			}
-			w.WriteHeader(http.StatusInternalServerError)
-		}))
-		defer ts.Close()
-
-		var out []string
-		err := glRESTGetPaginated(context.Background(), newPagingClient(ts), "test", &out)
-		require.Error(t, err)
-	})
 }
