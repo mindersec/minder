@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/registry"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -20,8 +21,11 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
+	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/providers/oci"
+	"github.com/mindersec/minder/internal/verifier/sigstore/container"
 	"github.com/mindersec/minder/internal/verifier/verifyif"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
@@ -271,4 +275,99 @@ func TestGetEntityName(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func TestPropertiesToProtoMessage(t *testing.T) {
+	t.Parallel()
+
+	dh := &dockerHubImageLister{namespace: "testns"}
+
+	tests := []struct {
+		name      string
+		entType   minderv1.Entity
+		props     *properties.Properties
+		wantName  string
+		wantErrIs error
+	}{
+		{
+			name:     "tagged name",
+			entType:  minderv1.Entity_ENTITY_ARTIFACTS,
+			props:    oci.NewArtifactProperties("myimage:v1.2", "myimage@sha256:abc"),
+			wantName: "myimage",
+		},
+		{
+			name:     "untagged name",
+			entType:  minderv1.Entity_ENTITY_ARTIFACTS,
+			props:    oci.NewArtifactProperties("myimage", "myimage@sha256:abc"),
+			wantName: "myimage",
+		},
+		{
+			name:      "unsupported entity type",
+			entType:   minderv1.Entity_ENTITY_REPOSITORIES,
+			props:     oci.NewArtifactProperties("myimage", "myimage@sha256:abc"),
+			wantErrIs: provifv1.ErrUnsupportedEntity,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := dh.PropertiesToProtoMessage(tt.entType, tt.props)
+			if tt.wantErrIs != nil {
+				require.ErrorIs(t, err, tt.wantErrIs)
+				assert.Nil(t, got)
+				return
+			}
+
+			require.NoError(t, err)
+			art, ok := got.(*minderv1.Artifact)
+			require.True(t, ok, "expected *minderv1.Artifact, got %T", got)
+			assert.Equal(t, "myimage@sha256:abc", art.GetArtifactPk())
+			assert.Equal(t, "testns", art.GetOwner())
+			assert.Equal(t, tt.wantName, art.GetName())
+			assert.Equal(t, "container", art.GetType())
+		})
+	}
+}
+
+// TestConvertedArtifactImageRef registers an artifact against a local registry,
+// converts it the way the ingester receives it, and checks the image ref the
+// sigstore verifier builds from it.
+func TestConvertedArtifactImageRef(t *testing.T) {
+	t.Parallel()
+
+	const namespace = "testns"
+
+	host := newTestRegistry(t)
+	digest := pushRandomImage(t, host, namespace+"/myimage", "v1.2")
+
+	local := &dockerHubImageLister{
+		OCI:       oci.New(nil, host, path.Join(host, namespace)),
+		namespace: namespace,
+	}
+	props, err := local.FetchAllProperties(context.Background(),
+		properties.NewProperties(map[string]any{properties.PropertyName: "myimage:v1.2"}),
+		minderv1.Entity_ENTITY_ARTIFACTS, nil)
+	require.NoError(t, err)
+
+	prod, err := New(credentials.NewOAuth2TokenCredential("token"),
+		&minderv1.DockerHubProviderConfig{Namespace: proto.String(namespace)})
+	require.NoError(t, err)
+
+	msg, err := prod.PropertiesToProtoMessage(minderv1.Entity_ENTITY_ARTIFACTS, props)
+	require.NoError(t, err)
+	art, ok := msg.(*minderv1.Artifact)
+	require.True(t, ok, "expected *minderv1.Artifact, got %T", msg)
+
+	assert.Equal(t, "docker.io/testns/myimage@"+digest,
+		container.BuildImageRef(prod.GetRegistry(), art.GetOwner(), art.GetName(), digest))
+
+	// Against the local registry the same ref resolves, so an unsigned image
+	// is reported as unsigned rather than failing the lookup.
+	res, err := container.Verify(context.Background(), nil, art.GetOwner(), art.GetName(), digest,
+		container.WithRegistry(local.GetRegistry()), container.WithAuthenticator(authn.Anonymous))
+	require.NoError(t, err)
+	require.Len(t, res, 1)
+	assert.False(t, res[0].IsSigned)
 }

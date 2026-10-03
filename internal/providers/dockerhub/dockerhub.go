@@ -250,8 +250,16 @@ func (*dockerHubImageLister) DeregisterEntity(
 }
 
 // PropertiesToProtoMessage implements the Provider interface
-func (*dockerHubImageLister) PropertiesToProtoMessage(
-	_ minderv1.Entity, _ *properties.Properties) (protoreflect.ProtoMessage, error) {
-	// TODO: Implement
-	return nil, nil
+func (d *dockerHubImageLister) PropertiesToProtoMessage(
+	entType minderv1.Entity, props *properties.Properties) (protoreflect.ProtoMessage, error) {
+	if !d.SupportsEntity(entType) {
+		return nil, provifv1.ErrUnsupportedEntity
+	}
+
+	// Avoid returning a typed nil as a non-nil interface.
+	art, err := oci.ArtifactV1FromProperties(props, d.namespace)
+	if err != nil {
+		return nil, err
+	}
+	return art, nil
 }

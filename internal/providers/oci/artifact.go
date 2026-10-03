@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/mindersec/minder/internal/verifier/verifyif"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
@@ -49,4 +50,36 @@ func NewArtifactProperties(name, upstreamID string) *properties.Properties {
 		properties.PropertyUpstreamID:   upstreamID,
 		properties.ArtifactPropertyType: string(verifyif.ArtifactTypeContainer),
 	})
+}
+
+// ArtifactV1FromProperties converts container artifact properties to a minder v1 Artifact.
+// Owner is the provider namespace and Name is the repository without its tag, so the
+// artifact resolves to <registry>/<namespace>/<repo>.
+func ArtifactV1FromProperties(props *properties.Properties, namespace string) (*minderv1.Artifact, error) {
+	name, err := ArtifactNameFromProperties(props)
+	if err != nil {
+		return nil, err
+	}
+
+	repo, _, err := ParseImageRef(name)
+	if err != nil {
+		return nil, err
+	}
+
+	upstreamID, err := props.GetProperty(properties.PropertyUpstreamID).AsString()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get artifact upstream ID: %w", err)
+	}
+
+	// An empty namespace would build "<registry>//<repo>" refs.
+	if namespace == "" {
+		return nil, errors.New("artifact namespace is empty")
+	}
+
+	return &minderv1.Artifact{
+		ArtifactPk: upstreamID,
+		Owner:      namespace,
+		Name:       repo,
+		Type:       string(verifyif.ArtifactTypeContainer),
+	}, nil
 }

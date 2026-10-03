@@ -136,3 +136,66 @@ func TestNewArtifactProperties(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "container", typ)
 }
+
+func TestArtifactV1FromProperties(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		props     *properties.Properties
+		namespace string
+		wantName  string
+		wantErr   string
+	}{
+		{
+			name:      "tagged name drops the tag",
+			props:     NewArtifactProperties("myimage:v1.2", "myimage@sha256:abc"),
+			namespace: "testns",
+			wantName:  "myimage",
+		},
+		{
+			name:      "untagged name is unchanged",
+			props:     NewArtifactProperties("myimage", "myimage@sha256:abc"),
+			namespace: "testns",
+			wantName:  "myimage",
+		},
+		{
+			name:      "missing name",
+			props:     properties.NewProperties(map[string]any{}),
+			namespace: "testns",
+			wantErr:   "failed to get artifact name",
+		},
+		{
+			name: "missing upstream ID",
+			props: properties.NewProperties(map[string]any{
+				properties.PropertyName: "myimage",
+			}),
+			namespace: "testns",
+			wantErr:   "failed to get artifact upstream ID",
+		},
+		{
+			name:    "empty namespace",
+			props:   NewArtifactProperties("myimage", "myimage@sha256:abc"),
+			wantErr: "artifact namespace is empty",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := ArtifactV1FromProperties(tt.props, tt.namespace)
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+				assert.Nil(t, got)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, "myimage@sha256:abc", got.GetArtifactPk())
+			assert.Equal(t, tt.namespace, got.GetOwner())
+			assert.Equal(t, tt.wantName, got.GetName())
+			assert.Equal(t, "container", got.GetType())
+		})
+	}
+}
