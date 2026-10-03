@@ -45,6 +45,19 @@ func (*OCI) CanImplement(trait minderv1.ProviderType) bool {
 	return trait == minderv1.ProviderType_PROVIDER_TYPE_OCI
 }
 
+// authOptions returns the remote options to use for all registry calls,
+// including context, user-agent, and credentials when available.
+func (o *OCI) authOptions(ctx context.Context) []remote.Option {
+	opts := []remote.Option{
+		remote.WithContext(ctx),
+		remote.WithUserAgent(constants.ServerUserAgent),
+	}
+	if auth, err := o.GetAuthenticator(); err == nil {
+		opts = append(opts, remote.WithAuth(auth))
+	}
+	return opts
+}
+
 // ListTags lists the tags for a given container
 func (o *OCI) ListTags(ctx context.Context, contname string) ([]string, error) {
 	// join base name with contname
@@ -55,7 +68,7 @@ func (o *OCI) ListTags(ctx context.Context, contname string) ([]string, error) {
 		return nil, fmt.Errorf("parsing repo %q: %w", src, err)
 	}
 
-	puller, err := remote.NewPuller()
+	puller, err := remote.NewPuller(o.authOptions(ctx)...)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +108,7 @@ func (o *OCI) GetDigest(ctx context.Context, contname, tag string) (string, erro
 		return "", fmt.Errorf("failed to get reference: %w", err)
 	}
 
-	return getDigestFromRef(ctx, ref)
+	return o.getDigestFromRef(ctx, ref)
 }
 
 // GetReferrer returns the referrer for the given tag of the given container in the given namespace
@@ -106,7 +119,7 @@ func (o *OCI) GetReferrer(ctx context.Context, contname, tag, artifactType strin
 		return "", fmt.Errorf("failed to get reference: %w", err)
 	}
 
-	dig, err := getDigestFromRef(ctx, ref)
+	dig, err := o.getDigestFromRef(ctx, ref)
 	if err != nil {
 		return "", fmt.Errorf("failed to get digest: %w", err)
 	}
@@ -116,9 +129,8 @@ func (o *OCI) GetReferrer(ctx context.Context, contname, tag, artifactType strin
 		return "", fmt.Errorf("failed to get digest name: %w", err)
 	}
 
-	refer, err := remote.Referrers(digname,
-		remote.WithContext(ctx), remote.WithUserAgent(constants.ServerUserAgent),
-		remote.WithFilter("artifactType", artifactType))
+	opts := append(o.authOptions(ctx), remote.WithFilter("artifactType", artifactType))
+	refer, err := remote.Referrers(digname, opts...)
 	if err != nil {
 		return "", fmt.Errorf("failed to get referrer: %w", err)
 	}
@@ -133,7 +145,7 @@ func (o *OCI) getImage(ctx context.Context, contname, tag string) (v1.Image, err
 		return nil, fmt.Errorf("failed to get reference: %w", err)
 	}
 
-	img, err := remote.Image(ref, remote.WithContext(ctx), remote.WithUserAgent(constants.ServerUserAgent))
+	img, err := remote.Image(ref, o.authOptions(ctx)...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get image: %w", err)
 	}
@@ -295,11 +307,8 @@ func (o *OCI) getReference(contname, tag string) (name.Reference, error) {
 }
 
 // getDigestFromRef returns the digest of a container image reference
-// TODO: Move this to a more appropriate location
-// TODO: Implement authentication
-// TODO: Implement authentication
-func getDigestFromRef(ctx context.Context, ref name.Reference) (string, error) {
-	img, err := remote.Image(ref, remote.WithContext(ctx), remote.WithUserAgent(constants.ServerUserAgent))
+func (o *OCI) getDigestFromRef(ctx context.Context, ref name.Reference) (string, error) {
+	img, err := remote.Image(ref, o.authOptions(ctx)...)
 	if err != nil {
 		return "", fmt.Errorf("failed to get image: %w", err)
 	}
