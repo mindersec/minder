@@ -565,7 +565,6 @@ type EvaluationStatus struct {
 type Exception struct {
 	ID         uuid.UUID `json:"id"`
 	ProjectID  uuid.UUID `json:"project_id"`
-	EntityName string    `json:"entity_name"`
 	EntityID   uuid.UUID `json:"entity_id"`
 	RuleTypeID uuid.UUID `json:"rule_type_id"`
 	ExpiresAt  time.Time `json:"expires_at"`

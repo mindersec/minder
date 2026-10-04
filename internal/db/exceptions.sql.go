@@ -15,7 +15,6 @@ import (
 const createException = `-- name: CreateException :one
 INSERT INTO exceptions (
     project_id,
-    entity_name,
     entity_id,
     rule_type_id,
     expires_at
@@ -23,18 +22,16 @@ INSERT INTO exceptions (
     $1,
     $2,
     $3,
-    $4,
-    $5
+    $4
 )
 ON CONFLICT (entity_id, rule_type_id)
 DO UPDATE SET
     expires_at = EXCLUDED.expires_at
-RETURNING id, project_id, entity_name, entity_id, rule_type_id, expires_at, created_at
+RETURNING id, project_id, entity_id, rule_type_id, expires_at, created_at
 `
 
 type CreateExceptionParams struct {
 	ProjectID  uuid.UUID `json:"project_id"`
-	EntityName string    `json:"entity_name"`
 	EntityID   uuid.UUID `json:"entity_id"`
 	RuleTypeID uuid.UUID `json:"rule_type_id"`
 	ExpiresAt  time.Time `json:"expires_at"`
@@ -44,7 +41,6 @@ type CreateExceptionParams struct {
 func (q *Queries) CreateException(ctx context.Context, arg CreateExceptionParams) (Exception, error) {
 	row := q.db.QueryRowContext(ctx, createException,
 		arg.ProjectID,
-		arg.EntityName,
 		arg.EntityID,
 		arg.RuleTypeID,
 		arg.ExpiresAt,
@@ -53,7 +49,6 @@ func (q *Queries) CreateException(ctx context.Context, arg CreateExceptionParams
 	err := row.Scan(
 		&i.ID,
 		&i.ProjectID,
-		&i.EntityName,
 		&i.EntityID,
 		&i.RuleTypeID,
 		&i.ExpiresAt,
@@ -80,7 +75,7 @@ func (q *Queries) DeleteException(ctx context.Context, arg DeleteExceptionParams
 }
 
 const listExceptions = `-- name: ListExceptions :many
-SELECT id, project_id, entity_name, entity_id, rule_type_id, expires_at, created_at
+SELECT id, project_id, entity_id, rule_type_id, expires_at, created_at
 FROM exceptions
 WHERE project_id = $1
   AND expires_at > NOW()
@@ -100,7 +95,6 @@ func (q *Queries) ListExceptions(ctx context.Context, projectID uuid.UUID) ([]Ex
 		if err := rows.Scan(
 			&i.ID,
 			&i.ProjectID,
-			&i.EntityName,
 			&i.EntityID,
 			&i.RuleTypeID,
 			&i.ExpiresAt,

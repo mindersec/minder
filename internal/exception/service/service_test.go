@@ -28,10 +28,9 @@ func TestCreate(t *testing.T) {
 	ruleTypeID := uuid.New()
 	expiresAt := time.Now().Add(24 * time.Hour)
 
-	req := CreateRequest{
+	input := Exception{
 		ProjectID:  projectID,
 		EntityID:   entityID,
-		EntityName: "owner/repo",
 		RuleTypeID: ruleTypeID,
 		ExpiresAt:  expiresAt,
 	}
@@ -40,7 +39,6 @@ func TestCreate(t *testing.T) {
 		ID:         uuid.New(),
 		ProjectID:  projectID,
 		EntityID:   entityID,
-		EntityName: "owner/repo",
 		RuleTypeID: ruleTypeID,
 		ExpiresAt:  expiresAt,
 	}
@@ -49,19 +47,17 @@ func TestCreate(t *testing.T) {
 		CreateException(gomock.Any(), db.CreateExceptionParams{
 			ProjectID:  projectID,
 			EntityID:   entityID,
-			EntityName: "owner/repo",
 			RuleTypeID: ruleTypeID,
 			ExpiresAt:  expiresAt,
 		}).
 		Return(expected, nil)
 
-	got, err := svc.Create(context.Background(), req)
+	got, err := svc.Create(context.Background(), input)
 
 	require.NoError(t, err)
 	require.Equal(t, expected.ID, got.ID)
 	require.Equal(t, expected.ProjectID, got.ProjectID)
 	require.Equal(t, expected.EntityID, got.EntityID)
-	require.Equal(t, expected.EntityName, got.EntityName)
 	require.Equal(t, expected.RuleTypeID, got.RuleTypeID)
 	require.Equal(t, expected.ExpiresAt, got.ExpiresAt)
 	require.Equal(t, expected.CreatedAt, got.CreatedAt)
@@ -75,10 +71,9 @@ func TestCreateError(t *testing.T) {
 
 	dbErr := errors.New("database error")
 
-	req := CreateRequest{
+	input := Exception{
 		ProjectID:  uuid.New(),
 		EntityID:   uuid.New(),
-		EntityName: "owner/repo",
 		RuleTypeID: uuid.New(),
 		ExpiresAt:  time.Now().Add(24 * time.Hour),
 	}
@@ -87,7 +82,7 @@ func TestCreateError(t *testing.T) {
 		CreateException(gomock.Any(), gomock.Any()).
 		Return(db.Exception{}, dbErr)
 
-	got, err := svc.Create(context.Background(), req)
+	got, err := svc.Create(context.Background(), input)
 
 	require.ErrorIs(t, err, dbErr)
 	require.Nil(t, got)
@@ -105,7 +100,6 @@ func TestList(t *testing.T) {
 			ID:         uuid.New(),
 			ProjectID:  projectID,
 			EntityID:   uuid.New(),
-			EntityName: "owner/repo",
 			RuleTypeID: uuid.New(),
 			ExpiresAt:  time.Now().Add(24 * time.Hour),
 		},
@@ -122,7 +116,6 @@ func TestList(t *testing.T) {
 	require.Equal(t, expected[0].ID, got[0].ID)
 	require.Equal(t, expected[0].ProjectID, got[0].ProjectID)
 	require.Equal(t, expected[0].EntityID, got[0].EntityID)
-	require.Equal(t, expected[0].EntityName, got[0].EntityName)
 	require.Equal(t, expected[0].RuleTypeID, got[0].RuleTypeID)
 	require.Equal(t, expected[0].ExpiresAt, got[0].ExpiresAt)
 	require.Equal(t, expected[0].CreatedAt, got[0].CreatedAt)

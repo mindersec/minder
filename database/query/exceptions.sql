@@ -2,13 +2,11 @@
 -- name: CreateException :one
 INSERT INTO exceptions (
     project_id,
-    entity_name,
     entity_id,
     rule_type_id,
     expires_at
 ) VALUES (
     sqlc.arg(project_id),
-    sqlc.arg(entity_name),
     sqlc.arg(entity_id),
     sqlc.arg(rule_type_id),
     sqlc.arg(expires_at)
