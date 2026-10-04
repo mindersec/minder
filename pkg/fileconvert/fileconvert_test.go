@@ -366,6 +366,24 @@ import rego.v1
 default allow := true
 `
 
+	const opaAnnotations = `# METADATA
+# scope: package
+# title: OPA annotations
+# authors:
+# - Jane Doe <jane@example.com>
+# related_resources:
+# - https://example.com/policy
+# def:
+#   in_entity: repository
+#   ingest:
+#     type: git
+package minder
+
+import rego.v1
+
+default allow := true
+`
+
 	tests := []struct {
 		name            string
 		decoder         func(t *testing.T) Decoder
@@ -395,6 +413,16 @@ default allow := true
 			},
 			wantName:        "title_only",
 			wantDisplayName: "Title only",
+			wantPhase:       minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED,
+			wantRegoType:    "deny-by-default",
+		},
+		{
+			name: "standard OPA annotations",
+			decoder: func(_ *testing.T) Decoder {
+				return &regoDecoder{filename: "opa_annotations.rego", file: strings.NewReader(opaAnnotations)}
+			},
+			wantName:        "opa_annotations",
+			wantDisplayName: "OPA annotations",
 			wantPhase:       minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED,
 			wantRegoType:    "deny-by-default",
 		},

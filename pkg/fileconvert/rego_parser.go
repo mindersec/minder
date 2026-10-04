@@ -49,6 +49,9 @@ func (r *regoDecoder) Decode(v any) error {
 	if err != nil {
 		return err
 	}
+	for _, k := range opaAnnotationKeys {
+		delete(ruleType, k)
+	}
 
 	// The OPA metadata spec says that custom fields should be under the "custom" key
 	// We also accept them under the top-level object for convenience, despite possible
@@ -97,6 +100,12 @@ func (r *regoDecoder) Decode(v any) error {
 	*ruleTypePtr = ruleType
 
 	return nil
+}
+
+// Standard OPA annotations that have no RuleType equivalent, dropped so strict
+// unmarshalling does not reject them.
+var opaAnnotationKeys = []string{
+	"scope", "authors", "organizations", "related_resources", "schemas", "entrypoint",
 }
 
 // metadataExtractor extracts the YAML document
