@@ -49,7 +49,6 @@ func TestErrorAsEvalStatus(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			require.Equal(t, tc.expected, ErrorAsEvalStatus(tc.err))
@@ -71,7 +70,6 @@ func TestErrorAsEvalDetails(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			require.Equal(t, tc.expected, ErrorAsEvalDetails(tc.err))
@@ -96,7 +94,6 @@ func TestErrorAsRemediationStatus(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			require.Equal(t, tc.expected, ErrorAsRemediationStatus(tc.err))
@@ -122,7 +119,6 @@ func TestRemediationStatusAsError(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			row := &db.ListRuleEvaluationsByProfileIdRow{RemStatus: tc.status}
@@ -131,6 +127,36 @@ func TestRemediationStatusAsError(t *testing.T) {
 			} else {
 				require.ErrorIs(t, RemediationStatusAsError(row), tc.expected)
 			}
+		})
+	}
+}
+
+// ErrorAsRemediationStatus / RemediationStatusAsError provide a bidirectional
+// mapping between engine states (go errors) and database enums. This mapping
+// should be 1:1 and exhaustive.
+func TestRemediationDbStatusMapping(t *testing.T) {
+	t.Parallel()
+
+	// explicit test for nil row means skipped.
+	require.Equal(t, db.RemediationStatusTypesSkipped, ErrorAsRemediationStatus(RemediationStatusAsError(nil)))
+
+	tests := []struct {
+		name   string
+		status db.RemediationStatusTypes
+	}{
+		{"success", db.RemediationStatusTypesSuccess},
+		{"failure", db.RemediationStatusTypesFailure},
+		{"skipped", db.RemediationStatusTypesSkipped},
+		{"not available", db.RemediationStatusTypesNotAvailable},
+		{"pending", db.RemediationStatusTypesPending},
+		{"error", db.RemediationStatusTypesError},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			evalRow := &db.ListRuleEvaluationsByProfileIdRow{RemStatus: tc.status}
+			require.Equal(t, tc.status, ErrorAsRemediationStatus(RemediationStatusAsError(evalRow)))
 		})
 	}
 }
@@ -152,7 +178,6 @@ func TestErrorAsAlertStatus(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			require.Equal(t, tc.expected, ErrorAsAlertStatus(tc.err))
@@ -178,7 +203,6 @@ func TestAlertStatusAsError(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			row := &db.ListRuleEvaluationsByProfileIdRow{AlertStatus: tc.status}
@@ -187,6 +211,35 @@ func TestAlertStatusAsError(t *testing.T) {
 			} else {
 				require.ErrorIs(t, AlertStatusAsError(row), tc.expected)
 			}
+		})
+	}
+}
+
+// ErrorAsAlertStatus / AlertStatusAsError provide a bidirectional
+// mapping between engine states (go errors) and database enums. This mapping
+// should be 1:1 and exhaustive.
+func TestAlertDbStatusMapping(t *testing.T) {
+	t.Parallel()
+
+	// explicit test for nil row means missing row, which returns error and thus gets mapped to AlertStatusTypesError
+	require.Equal(t, db.AlertStatusTypesError, ErrorAsAlertStatus(AlertStatusAsError(nil)))
+
+	tests := []struct {
+		name   string
+		status db.AlertStatusTypes
+	}{
+		{"on", db.AlertStatusTypesOn},
+		{"off", db.AlertStatusTypesOff},
+		{"error", db.AlertStatusTypesError},
+		{"skipped", db.AlertStatusTypesSkipped},
+		{"not available", db.AlertStatusTypesNotAvailable},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			evalRow := &db.ListRuleEvaluationsByProfileIdRow{AlertStatus: tc.status}
+			require.Equal(t, tc.status, ErrorAsAlertStatus(AlertStatusAsError(evalRow)))
 		})
 	}
 }
