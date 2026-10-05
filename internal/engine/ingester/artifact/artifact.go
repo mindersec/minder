@@ -293,12 +293,9 @@ func getRegistryForProvider(prov interfaces.Provider) string {
 	return ""
 }
 
-// buildRepository returns the artifact's registry path.
-// GHCR tracks owner separately (artifact.Owner); DockerHub/Quay keep it in
-// the provider config instead, so artifact.Owner is empty there and the
-// repository is just the name.
-// Assumes only GitHub populates Owner today (verified). Revisit if that
-// changes.
+// buildRepository returns the artifact's registry path as owner/name.
+// Owner is the GHCR package owner or the DockerHub/Quay namespace; if it is
+// empty, the repository is just the name.
 func buildRepository(artifact *pb.Artifact) string {
 	if artifact.Owner == "" {
 		return artifact.Name

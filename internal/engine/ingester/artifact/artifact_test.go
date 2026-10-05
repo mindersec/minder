@@ -5,18 +5,22 @@ package artifact
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mindersec/minder/internal/providers/credentials"
+	"github.com/mindersec/minder/internal/providers/dockerhub"
 	"github.com/mindersec/minder/internal/providers/github/clients"
 	mockghclient "github.com/mindersec/minder/internal/providers/github/mock"
 	"github.com/mindersec/minder/internal/providers/github/properties"
+	"github.com/mindersec/minder/internal/providers/oci"
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	"github.com/mindersec/minder/internal/verifier/sigstore/container"
@@ -317,6 +321,69 @@ func TestArtifactIngestMatching(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestArtifactIngestDockerHub runs an artifact converted by the DockerHub
+// provider through Ingest and checks the image ref the verifier would resolve.
+func TestArtifactIngestDockerHub(t *testing.T) {
+	t.Parallel()
+
+	const (
+		namespace = "testns"
+		digest    = "sha256:1234"
+	)
+
+	dh, err := dockerhub.New(credentials.NewOAuth2TokenCredential("token"),
+		&pb.DockerHubProviderConfig{Namespace: proto.String(namespace)})
+	require.NoError(t, err)
+
+	msg, err := dh.PropertiesToProtoMessage(pb.Entity_ENTITY_ARTIFACTS,
+		oci.NewArtifactProperties("myimage:v1.2", "myimage@"+digest))
+	require.NoError(t, err)
+	art, ok := msg.(*pb.Artifact)
+	require.True(t, ok, "expected *pb.Artifact, got %T", msg)
+
+	ctrl := gomock.NewController(t)
+	mockOCI := mock_v1.NewMockOCI(ctrl)
+	mockVerifier := mockverify.NewMockArtifactVerifier(ctrl)
+
+	mockOCI.EXPECT().GetRegistry().Return(dh.GetRegistry()).AnyTimes()
+	mockOCI.EXPECT().
+		GetArtifactVersions(gomock.Any(), art, gomock.Any()).
+		Return([]*pb.ArtifactVersion{
+			{Sha: digest, Tags: []string{"v1.2"}, CreatedAt: timestamppb.New(time.Now())},
+		}, nil)
+	mockOCI.EXPECT().
+		GetRawManifest(gomock.Any(), "myimage", digest).
+		Return(nil, errors.New("not needed"))
+
+	// The real verifier builds its ref from the provider registry plus these args.
+	var gotRef string
+	mockVerifier.EXPECT().
+		Verify(gomock.Any(), verifyif.ArtifactTypeContainer, gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, _ verifyif.ArtifactType, owner, name, checksum string) ([]verifyif.Result, error) {
+			gotRef = container.BuildImageRef(dh.GetRegistry(), owner, name, checksum)
+			return []verifyif.Result{{}}, nil
+		})
+
+	ing, err := NewArtifactDataIngest(mockOCI)
+	require.NoError(t, err)
+	ing.artifactVerifier = mockVerifier
+
+	got, err := ing.Ingest(context.Background(), art, map[string]any{"name": "myimage"})
+	require.NoError(t, err)
+
+	require.Equal(t, "docker.io/testns/myimage@"+digest, gotRef)
+
+	results, ok := got.Object.([]imageInfo)
+	require.True(t, ok, "expected result object to be []imageInfo")
+	require.Len(t, results, 1)
+	require.Equal(t, imageRef{
+		Registry:   "docker.io",
+		Repository: "testns/myimage",
+		Tags:       []string{"v1.2"},
+		Digest:     digest,
+	}, results[0].Identity)
 }
 
 func TestGetRegistryForProvider(t *testing.T) {
