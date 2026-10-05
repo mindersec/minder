@@ -77,6 +77,7 @@ func TestErrorAsEvalDetails(t *testing.T) {
 	}
 }
 
+// TestErrorAsRemediationStatus verifies the mapping from engine errors to database remediation status types.
 func TestErrorAsRemediationStatus(t *testing.T) {
 	t.Parallel()
 
@@ -161,6 +162,7 @@ func TestRemediationDbStatusMapping(t *testing.T) {
 	}
 }
 
+// TestErrorAsAlertStatus verifies the mapping from engine errors to database alert status types.
 func TestErrorAsAlertStatus(t *testing.T) {
 	t.Parallel()
 
