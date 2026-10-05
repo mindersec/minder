@@ -9,11 +9,15 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
+	"strings"
+	"sync"
 	"testing"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	"golang.org/x/oauth2"
 
@@ -352,4 +356,52 @@ func (*mockCredentials) AddToCloneOptions(_ *git.CloneOptions) {
 
 func (*mockCredentials) GetAsOAuth2TokenSource() oauth2.TokenSource {
 	return nil
+}
+
+func TestCleanUpStaleWebhooksPaginates(t *testing.T) {
+	t.Parallel()
+
+	const webhookURL = "https://minder.example.com/api/v1/webhook/gitlab"
+	hooksPath := "/projects/" + upstreamID + "/hooks"
+
+	var mu sync.Mutex
+	var deleted []string
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == hooksPath:
+			assert.Equal(t, strconv.Itoa(perPage), r.URL.Query().Get("per_page"))
+			// The stale Minder hook is only on the second page. Like GitLab,
+			// treat a request without a page parameter as the first page.
+			switch r.URL.Query().Get("page") {
+			case "", "1":
+				w.Header().Set(nextPageHeader, "2")
+				_, err := fmt.Fprint(w, `[{"id": 1, "url": "https://ci.example.com/hook"}]`)
+				assert.NoError(t, err)
+			case "2":
+				_, err := fmt.Fprintf(w, `[{"id": 2, "url": %q}]`, webhookURL+"/stale")
+				assert.NoError(t, err)
+			default:
+				t.Errorf("unexpected hooks page %q", r.URL.Query().Get("page"))
+				w.WriteHeader(http.StatusBadRequest)
+			}
+		case r.Method == http.MethodDelete && strings.HasPrefix(r.URL.Path, hooksPath+"/"):
+			mu.Lock()
+			deleted = append(deleted, strings.TrimPrefix(r.URL.Path, hooksPath+"/"))
+			mu.Unlock()
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Errorf("unexpected request: %s %s", r.Method, r.URL)
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer ts.Close()
+
+	cli := newTestGitlabProvider(ts.URL)
+	cli.webhookURL = webhookURL
+
+	require.NoError(t, cli.cleanUpStaleWebhooks(context.Background(), upstreamID))
+
+	mu.Lock()
+	defer mu.Unlock()
+	assert.Equal(t, []string{"2"}, deleted, "only the Minder hook on the second page should be deleted")
 }
