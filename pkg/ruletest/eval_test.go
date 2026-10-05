@@ -11,6 +11,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"go.starlark.net/starlark"
 
+	"github.com/mindersec/minder/internal/engine/eval/templates"
+	engerrs "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
@@ -18,12 +20,13 @@ func TestFormatEvalResult(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name    string
-		res     *interfaces.EvaluationResult
-		err     error
-		wantSt  string
-		wantMsg string
-		wantOut any
+		name        string
+		res         *interfaces.EvaluationResult
+		err         error
+		wantSt      string
+		wantMsg     string
+		wantDetails string
+		wantOut     any
 	}{
 		{
 			name:    "pass on nil error with output",
@@ -45,6 +48,19 @@ func TestFormatEvalResult(t *testing.T) {
 			err:     interfaces.ErrEvaluationFailed,
 			wantSt:  "fail",
 			wantMsg: interfaces.ErrEvaluationFailed.Error(),
+		},
+		{
+			name: "fail on ErrEvaluationFailed with details",
+			err: engerrs.NewDetailedErrEvaluationFailed(
+				templates.RegoDenyByDefaultTemplate,
+				map[string]any{
+					"message":    "generated message",
+					"entityName": "my-group/my-entity",
+				},
+				"denied"),
+			wantSt:      "fail",
+			wantMsg:     "evaluation failure: denied",
+			wantDetails: "generated message for my-group/my-entity",
 		},
 		{
 			name:    "skip on ErrEvaluationSkipped",
@@ -70,14 +86,14 @@ func TestFormatEvalResult(t *testing.T) {
 				t.Fatalf("dictToGoMap failed: %v", err)
 			}
 
-			want := map[string]any{"status": tt.wantSt, "message": tt.wantMsg}
+			want := map[string]any{"status": tt.wantSt, "message": tt.wantMsg, "details": tt.wantDetails}
 			if tt.wantOut != nil {
 				want["output"] = tt.wantOut
 			}
 
-			diff := cmp.Diff(result, want)
+			diff := cmp.Diff(want, result)
 			if diff != "" {
-				t.Errorf("unexpected result: %s", diff)
+				t.Errorf("unexpected result (-want, +got): %s", diff)
 			}
 		})
 	}

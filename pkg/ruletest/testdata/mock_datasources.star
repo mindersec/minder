@@ -27,4 +27,5 @@ def test_mock_datasource_failing():
     )
     assert.eq(res["status"], "fail")
     assert.eq(res["message"], "evaluation failure: denied")
+    # The constraints template adds the entity name to the detail message
     assert.eq(res["details"], 'Value was: "wrong_value", expected "hello" for /test')
