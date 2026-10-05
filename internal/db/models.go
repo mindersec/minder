@@ -564,6 +564,15 @@ type EvaluationStatus struct {
 	Checkpoint     json.RawMessage `json:"checkpoint"`
 }
 
+type Exception struct {
+	ID         uuid.UUID `json:"id"`
+	ProjectID  uuid.UUID `json:"project_id"`
+	EntityID   uuid.UUID `json:"entity_id"`
+	RuleTypeID uuid.UUID `json:"rule_type_id"`
+	ExpiresAt  time.Time `json:"expires_at"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
 type Feature struct {
 	Name      string          `json:"name"`
 	Settings  json.RawMessage `json:"settings"`
