@@ -160,6 +160,32 @@ func TestRemediationDbStatusMapping(t *testing.T) {
 			require.Equal(t, tc.status, ErrorAsRemediationStatus(RemediationStatusAsError(evalRow)))
 		})
 	}
+
+	errTests := []struct {
+		name     string
+		err      error
+		expected error
+	}{
+		{"success", nil, nil},
+		{"failure", engineerrors.ErrActionFailed, engineerrors.ErrActionFailed},
+		{"skipped", engineerrors.ErrActionSkipped, engineerrors.ErrActionSkipped},
+		{"not available", engineerrors.ErrActionNotAvailable, engineerrors.ErrActionNotAvailable},
+		{"pending", engineerrors.ErrActionPending, engineerrors.ErrActionPending},
+	}
+
+	for _, tc := range errTests {
+		t.Run(tc.name+"_reverse", func(t *testing.T) {
+			t.Parallel()
+			status := ErrorAsRemediationStatus(tc.err)
+			row := &db.ListRuleEvaluationsByProfileIdRow{RemStatus: status}
+			rehydratedErr := RemediationStatusAsError(row)
+			if tc.expected == nil {
+				require.NoError(t, rehydratedErr)
+			} else {
+				require.ErrorIs(t, rehydratedErr, tc.expected)
+			}
+		})
+	}
 }
 
 // TestErrorAsAlertStatus verifies the mapping from engine errors to database alert status types.
@@ -242,6 +268,32 @@ func TestAlertDbStatusMapping(t *testing.T) {
 			t.Parallel()
 			evalRow := &db.ListRuleEvaluationsByProfileIdRow{AlertStatus: tc.status}
 			require.Equal(t, tc.status, ErrorAsAlertStatus(AlertStatusAsError(evalRow)))
+		})
+	}
+
+	errTests := []struct {
+		name     string
+		err      error
+		expected error
+	}{
+		{"on", nil, nil},
+		{"off", engineerrors.ErrActionTurnedOff, engineerrors.ErrActionTurnedOff},
+		{"error", engineerrors.ErrActionFailed, engineerrors.ErrActionFailed},
+		{"skipped", engineerrors.ErrActionSkipped, engineerrors.ErrActionSkipped},
+		{"not available", engineerrors.ErrActionNotAvailable, engineerrors.ErrActionNotAvailable},
+	}
+
+	for _, tc := range errTests {
+		t.Run(tc.name+"_reverse", func(t *testing.T) {
+			t.Parallel()
+			status := ErrorAsAlertStatus(tc.err)
+			row := &db.ListRuleEvaluationsByProfileIdRow{AlertStatus: status}
+			rehydratedErr := AlertStatusAsError(row)
+			if tc.expected == nil {
+				require.NoError(t, rehydratedErr)
+			} else {
+				require.ErrorIs(t, rehydratedErr, tc.expected)
+			}
 		})
 	}
 }

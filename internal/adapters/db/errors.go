@@ -79,6 +79,8 @@ func RemediationStatusAsError(prevStatus *db.ListRuleEvaluationsByProfileIdRow) 
 		return engineerrors.ErrActionNotAvailable
 	case db.RemediationStatusTypesPending:
 		return engineerrors.ErrActionPending
+	case db.RemediationStatusTypesError:
+		fallthrough
 	default:
 		return fmt.Errorf("generic remediation error status: %s", s)
 	}
