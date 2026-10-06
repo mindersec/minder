@@ -15,10 +15,12 @@ import (
 
 type mockQuerier struct {
 	db.ExtendQuerier
+	id string
 }
 
 type mockProvider struct {
 	provinfv1.Provider
+	id string
 }
 
 func TestOptionsBuilder(t *testing.T) {
@@ -35,32 +37,44 @@ func TestOptionsBuilder(t *testing.T) {
 	t.Run("with transaction", func(t *testing.T) {
 		t.Parallel()
 		opts := OptionsBuilder()
-		mockTx := &mockQuerier{}
-		
+		mockTx := &mockQuerier{id: "tx1"}
+
 		ret := opts.WithTransaction(mockTx)
-		require.Equal(t, opts, ret)
-		require.Equal(t, mockTx, opts.getTransaction())
+		require.Same(t, opts, ret)
+		require.Same(t, mockTx, opts.getTransaction())
 	})
 
 	t.Run("with provider", func(t *testing.T) {
 		t.Parallel()
 		opts := OptionsBuilder()
-		mockProv := &mockProvider{}
-		
+		mockProv := &mockProvider{id: "prov1"}
+
 		ret := opts.WithProvider(mockProv)
-		require.Equal(t, opts, ret)
-		require.Equal(t, mockProv, opts.getProvider())
+		require.Same(t, opts, ret)
+		require.Same(t, mockProv, opts.getProvider())
+	})
+
+	t.Run("chains with transaction and provider", func(t *testing.T) {
+		t.Parallel()
+		opts := OptionsBuilder()
+		mockTx := &mockQuerier{id: "tx2"}
+		mockProv := &mockProvider{id: "prov2"}
+
+		ret := opts.WithTransaction(mockTx).WithProvider(mockProv)
+		require.Same(t, opts, ret)
+		require.Same(t, mockTx, opts.getTransaction())
+		require.Same(t, mockProv, opts.getProvider())
 	})
 
 	t.Run("nil receiver safety", func(t *testing.T) {
 		t.Parallel()
 		var opts *Options
-		
-		retTx := opts.WithTransaction(&mockQuerier{})
+
+		retTx := opts.WithTransaction(&mockQuerier{id: "tx3"})
 		require.NotNil(t, retTx)
 		require.NotNil(t, retTx.getTransaction())
 
-		retProv := opts.WithProvider(&mockProvider{})
+		retProv := opts.WithProvider(&mockProvider{id: "prov3"})
 		require.NotNil(t, retProv)
 		require.NotNil(t, retProv.getProvider())
 
@@ -85,29 +99,41 @@ func TestReadBuilder(t *testing.T) {
 	t.Run("with transaction", func(t *testing.T) {
 		t.Parallel()
 		opts := ReadBuilder()
-		mockTx := &mockQuerier{}
-		
+		mockTx := &mockQuerier{id: "tx1"}
+
 		ret := opts.WithTransaction(mockTx)
-		require.Equal(t, opts, ret)
-		require.Equal(t, mockTx, opts.getTransaction())
+		require.Same(t, opts, ret)
+		require.Same(t, mockTx, opts.getTransaction())
 	})
 
 	t.Run("with provider", func(t *testing.T) {
 		t.Parallel()
 		opts := ReadBuilder()
-		mockProv := &mockProvider{}
-		
+		mockProv := &mockProvider{id: "prov1"}
+
 		ret := opts.WithProvider(mockProv)
-		require.Equal(t, opts, ret)
-		require.Equal(t, mockProv, opts.getProvider())
+		require.Same(t, opts, ret)
+		require.Same(t, mockProv, opts.getProvider())
+	})
+
+	t.Run("chains with transaction and provider", func(t *testing.T) {
+		t.Parallel()
+		opts := ReadBuilder()
+		mockTx := &mockQuerier{id: "tx2"}
+		mockProv := &mockProvider{id: "prov2"}
+
+		ret := opts.WithTransaction(mockTx).WithProvider(mockProv)
+		require.Same(t, opts, ret)
+		require.Same(t, mockTx, opts.getTransaction())
+		require.Same(t, mockProv, opts.getProvider())
 	})
 
 	t.Run("hierarchical", func(t *testing.T) {
 		t.Parallel()
 		opts := ReadBuilder()
-		
+
 		ret := opts.Hierarchical()
-		require.Equal(t, opts, ret)
+		require.Same(t, opts, ret)
 		require.True(t, opts.canSearchHierarchical())
 	})
 
@@ -115,21 +141,21 @@ func TestReadBuilder(t *testing.T) {
 		t.Parallel()
 		opts := ReadBuilder()
 		hierarchy := []uuid.UUID{uuid.New(), uuid.New()}
-		
+
 		ret := opts.withHierarchy(hierarchy)
-		require.Equal(t, opts, ret)
+		require.Same(t, opts, ret)
 		require.Equal(t, hierarchy, opts.hierarchy)
 	})
 
 	t.Run("nil receiver safety", func(t *testing.T) {
 		t.Parallel()
 		var opts *ReadOptions
-		
-		retTx := opts.WithTransaction(&mockQuerier{})
+
+		retTx := opts.WithTransaction(&mockQuerier{id: "tx3"})
 		require.NotNil(t, retTx)
 		require.NotNil(t, retTx.getTransaction())
 
-		retProv := opts.WithProvider(&mockProvider{})
+		retProv := opts.WithProvider(&mockProvider{id: "prov3"})
 		require.NotNil(t, retProv)
 		require.NotNil(t, retProv.getProvider())
 
