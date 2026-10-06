@@ -34,18 +34,18 @@ func (m *mockGitlabClient) NewRequest(method, requestUrl string, body any) (*htt
 }
 
 func Test_New_AcceptsContext(t *testing.T) {
-    t.Parallel()
+	t.Parallel()
 
-    ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
 	// cancel immediately
-    cancel()
+	cancel()
 
-    cred := credentials.NewGitLabTokenCredential("fake-token")
-    cfg := &minderv1.GitLabProviderConfig{}
+	cred := credentials.NewGitLabTokenCredential("fake-token")
+	cfg := &minderv1.GitLabProviderConfig{}
 
-    client, err := New(ctx, cred, cfg, "https://example.com/webhook", "secret")
-    assert.NoError(t, err)
-    assert.NotNil(t, client)
+	client, err := New(ctx, cred, cfg, "https://example.com/webhook", "secret")
+	assert.NoError(t, err)
+	assert.NotNil(t, client)
 }
 
 func Test_gitlabClient_Do(t *testing.T) {
