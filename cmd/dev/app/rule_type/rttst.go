@@ -179,8 +179,10 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("no rules found with type %s", ruletype.Name)
 	}
 
+	ctx := cmd.Context()
+
 	// TODO: Whenever we add more Provider classes, we will need to rethink this
-	prov, err := getProvider(providerclass.Value.String(), token, providerconfig.Value.String())
+	prov, err := getProvider(ctx, providerclass.Value.String(), token, providerconfig.Value.String())
 	if err != nil {
 		return err
 	}
@@ -195,8 +197,6 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error getting data sources: %w", err)
 	}
 
-	// TODO: use cobra context here
-	ctx := context.Background()
 	// TODO: accomodate flags here or enable them all
 	eng, err := rtengine.NewRuleTypeEngine(ctx, ruletype, prov, options.WithDataSources(dsRegistry))
 	if err != nil {
@@ -277,7 +277,7 @@ func runEvaluationForRules(
 		}
 
 		// Enable logging for the engine
-		ctx := context.Background()
+		ctx := cmd.Context()
 		logConfig := serverconfig.LoggingConfig{Level: cmd.Flag("log-level").Value.String()}
 		ctx = serverconfig.LoggerFromConfigFlags(logConfig).WithContext(ctx)
 
@@ -409,7 +409,7 @@ func entityWithPropertiesToEntityInfoWrapper(
 	}, nil
 }
 
-func getProvider(pstr string, token string, providerConfigFile string) (provifv1.Provider, error) {
+func getProvider(ctx context.Context, pstr string, token string, providerConfigFile string) (provifv1.Provider, error) {
 	cfgbytes, err := readProviderConfig(providerConfigFile)
 	if err != nil {
 		return nil, fmt.Errorf("error reading provider config: %w", err)
@@ -456,7 +456,7 @@ func getProvider(pstr string, token string, providerConfigFile string) (provifv1
 		}
 
 		// We may pass a "fake" webhook URL here as it is not used in the test
-		client, err := gitlab.New(credentials.NewGitLabTokenCredential(token), cfg, "fake", "fake")
+		client, err := gitlab.New(ctx, credentials.NewGitLabTokenCredential(token), cfg, "fake", "fake")
 		if err != nil {
 			return nil, fmt.Errorf("error instantiating gitlab provider: %w", err)
 		}
