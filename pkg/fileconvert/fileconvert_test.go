@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"cmp"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -193,6 +194,62 @@ func TestReadResourceTyped(t *testing.T) {
 	require.NoError(t, err, "Expected no error reading profile")
 }
 
+func TestReadResourceSentinelErrors(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		input   string
+		wantErr error
+		wantMsg string
+	}{
+		{
+			name:    "missing type",
+			input:   "version: v1\n",
+			wantErr: ErrResourceTypeNotFound,
+			wantMsg: "resource type not found",
+		},
+		{
+			name:    "unknown type",
+			input:   "type: unknown\nversion: v1\n",
+			wantErr: ErrUnknownResourceType,
+			wantMsg: "unknown resource type: unknown",
+		},
+		{
+			name:    "non-Minder type without version",
+			input:   "type: unknown\nname: something\n",
+			wantErr: ErrUnknownResourceType,
+			wantMsg: "unknown resource type: unknown",
+		},
+		{
+			name: "unexpected type",
+			input: `
+type: data-source
+version: v1
+name: test-data-source
+rest:
+  def:
+    function:
+      endpoint: http://example.com/
+      input_schema: {}
+`,
+			wantErr: ErrUnexpectedResourceType,
+			wantMsg: "unexpected resource type: *v1.DataSource",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			decoder := yaml.NewDecoder(bytes.NewBufferString(tt.input))
+			_, err := ReadResourceTyped[*minderv1.RuleType](decoder)
+			require.Error(t, err)
+			assert.ErrorIs(t, err, tt.wantErr)
+			assert.EqualError(t, err, tt.wantMsg)
+		})
+	}
+}
+
 func TestReadAll(t *testing.T) {
 	t.Parallel()
 
@@ -340,11 +397,11 @@ severity:
 	}
 }
 
-// TestReadRuleTypeRego reads .rego rule types through ReadResource. The rego
-// decoder leaves METADATA keys that are not RuleType fields in the decoded
-// map ("title", which is copied into display_name, and the "custom" block,
-// whose entries are copied to the top level), so reading them depends on
-// unmarshalRuleType discarding unknown fields.
+// TestReadRuleTypeRego reads .rego rule types through ReadResource. Some
+// METADATA keys are not RuleType fields ("title", which is copied into
+// display_name, and the "custom" block, whose entries are copied to the top
+// level). These keys are deleted by the decoder, which lets unmarshalRuleType
+// reject unknown fields.
 func TestReadRuleTypeRego(t *testing.T) {
 	t.Parallel()
 
@@ -354,6 +411,24 @@ func TestReadRuleTypeRego(t *testing.T) {
 #
 # title: Title only
 # description: Only the title key is left over after decoding
+# def:
+#   in_entity: repository
+#   ingest:
+#     type: git
+package minder
+
+import rego.v1
+
+default allow := true
+`
+
+	const opaAnnotations = `# METADATA
+# scope: package
+# title: OPA annotations
+# authors:
+# - Jane Doe <jane@example.com>
+# related_resources:
+# - https://example.com/policy
 # def:
 #   in_entity: repository
 #   ingest:
@@ -397,6 +472,16 @@ default allow := true
 			wantPhase:       minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED,
 			wantRegoType:    "deny-by-default",
 		},
+		{
+			name: "standard OPA annotations",
+			decoder: func(_ *testing.T) Decoder {
+				return &regoDecoder{filename: "opa_annotations.rego", file: strings.NewReader(opaAnnotations)}
+			},
+			wantName:        "opa_annotations",
+			wantDisplayName: "OPA annotations",
+			wantPhase:       minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED,
+			wantRegoType:    "deny-by-default",
+		},
 	}
 
 	for _, tt := range tests {
@@ -410,6 +495,84 @@ default allow := true
 			assert.Equal(t, "rego", got.GetDef().GetEval().GetType())
 			assert.Equal(t, tt.wantRegoType, got.GetDef().GetEval().GetRego().GetType())
 			assert.Contains(t, got.GetDef().GetEval().GetRego().GetDef(), "package minder")
+		})
+	}
+}
+
+func TestReadRuleTypeUnknownFields(t *testing.T) {
+	t.Parallel()
+
+	const yamlTmpl = `
+type: rule-type
+version: v1
+name: test-rule-type
+%s
+def:
+  in_entity: repository
+  rule_schema: {}
+  %s: [git]
+  ingest:
+    type: git
+  eval:
+    type: other
+`
+	const regoTmpl = `# METADATA
+#
+# title: Unknown fields
+# custom:
+#   %s: alpha
+#   def:
+#     in_entity: repository
+#     ingest:
+#       type: git
+package minder
+
+import rego.v1
+
+default allow := true
+`
+
+	tests := []struct {
+		name    string
+		decoder Decoder
+		wantErr string
+	}{
+		{
+			name:    "yaml correct spelling",
+			decoder: yaml.NewDecoder(strings.NewReader(fmt.Sprintf(yamlTmpl, "", "provider_traits"))),
+		},
+		{
+			name:    "yaml misspelled def field",
+			decoder: yaml.NewDecoder(strings.NewReader(fmt.Sprintf(yamlTmpl, "", "provider_traitss"))),
+			wantErr: "provider_traitss",
+		},
+		{
+			name: "yaml misspelled top-level field",
+			decoder: yaml.NewDecoder(strings.NewReader(
+				fmt.Sprintf(yamlTmpl, "short_failure_mesage: oops", "provider_traits"))),
+			wantErr: "short_failure_mesage",
+		},
+		{
+			name:    "rego correct custom key",
+			decoder: &regoDecoder{filename: "ok.rego", file: strings.NewReader(fmt.Sprintf(regoTmpl, "release_phase"))},
+		},
+		{
+			name:    "rego misspelled custom key",
+			decoder: &regoDecoder{filename: "bad.rego", file: strings.NewReader(fmt.Sprintf(regoTmpl, "release_phse"))},
+			wantErr: "release_phse",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			_, err := ReadResourceTyped[*minderv1.RuleType](tt.decoder)
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tt.wantErr)
 		})
 	}
 }

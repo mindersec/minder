@@ -228,14 +228,20 @@ func loadRulesFromDir(dir string) (map[string]*minderv1.RuleType, error) {
 		return nil, fmt.Errorf("globbing rego files: %w", err)
 	}
 	ruleFiles = append(ruleFiles, regoFiles...)
+	var errs []error
 	for _, path := range ruleFiles {
 		rt, err := loadSingleRule(path)
 		if err != nil {
 			// Rego files are highly likely to be intentional ruletypes, do not silently swallow errors.
 			if filepath.Ext(path) == ".rego" {
-				return nil, fmt.Errorf("error loading rego file %s: %w", path, err)
+				errs = append(errs, fmt.Errorf("error loading rego file %s: %w", path, err))
+				continue
 			}
-			continue // skip YAML (and other) files that aren't valid rule types, as they might be other content.
+			// Skip YAML files that aren't Minder rule types, as they might be other content; report the rest.
+			if !isNotRuleTypeError(err) {
+				errs = append(errs, fmt.Errorf("error loading rule file %s: %w", path, err))
+			}
+			continue
 		}
 		if rt != nil && rt.Name != "" {
 			if _, exists := ruleTypes[rt.Name]; exists {
@@ -244,7 +250,16 @@ func loadRulesFromDir(dir string) (map[string]*minderv1.RuleType, error) {
 			ruleTypes[rt.Name] = rt
 		}
 	}
-	return ruleTypes, nil
+	return ruleTypes, errors.Join(errs...)
+}
+
+// isNotRuleTypeError reports whether a YAML load error means the file is not a
+// Minder rule type (another resource, non-Minder YAML, or an empty file).
+func isNotRuleTypeError(err error) bool {
+	return errors.Is(err, fileconvert.ErrResourceTypeNotFound) ||
+		errors.Is(err, fileconvert.ErrUnknownResourceType) ||
+		errors.Is(err, fileconvert.ErrUnexpectedResourceType) ||
+		errors.Is(err, io.EOF)
 }
 
 // loadSingleRule reads a single YAML file and returns the parsed RuleType, if any.
