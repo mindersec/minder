@@ -45,6 +45,7 @@ func TestTypeFromString(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			got, err := TypeFromString(tt.input)
@@ -90,6 +91,7 @@ func TestNewFromType(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			got, err := NewFromType(tt.algoType)
@@ -100,9 +102,6 @@ func TestNewFromType(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, got)
-				// Basic sanity check to ensure the algorithm implements EncryptionAlgorithm
-				_, isAlgo := got.(EncryptionAlgorithm)
-				require.True(t, isAlgo)
 			}
 		})
 	}
