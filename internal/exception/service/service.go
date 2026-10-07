@@ -19,7 +19,6 @@ import (
 // Exception represents an exception.
 type Exception struct {
 	ID         uuid.UUID
-	ProjectID  uuid.UUID
 	EntityID   uuid.UUID
 	RuleTypeID uuid.UUID
 	ExpiresAt  time.Time
@@ -28,7 +27,7 @@ type Exception struct {
 
 // Service encapsulates logic related to exceptions.
 type Service interface {
-	Create(ctx context.Context, exception Exception) (*Exception, error)
+	Create(ctx context.Context, projectID uuid.UUID, exception Exception) (*Exception, error)
 	List(ctx context.Context, projectID uuid.UUID) ([]Exception, error)
 	Delete(ctx context.Context, id uuid.UUID, projectID uuid.UUID) error
 }
@@ -50,10 +49,25 @@ func NewService(store db.Store) Service {
 // Create creates an exception.
 func (s *exceptionService) Create(
 	ctx context.Context,
+	projectID uuid.UUID,
 	exception Exception,
 ) (*Exception, error) {
+	entity, err := s.store.GetEntityByID(ctx, exception.EntityID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get entity: %w", err)
+	}
+	if entity.ProjectID != projectID {
+		return nil, fmt.Errorf("entity does not belong to project")
+	}
+	_, err = s.store.GetRuleTypeByID(ctx, db.GetRuleTypeByIDParams{
+		Projects: []uuid.UUID{projectID},
+		ID:       exception.RuleTypeID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rule type: %w", err)
+	}
 	created, err := s.store.CreateException(ctx, db.CreateExceptionParams{
-		ProjectID:  exception.ProjectID,
+		ProjectID:  projectID,
 		EntityID:   exception.EntityID,
 		RuleTypeID: exception.RuleTypeID,
 		ExpiresAt:  exception.ExpiresAt,
@@ -64,7 +78,6 @@ func (s *exceptionService) Create(
 
 	return &Exception{
 		ID:         created.ID,
-		ProjectID:  created.ProjectID,
 		EntityID:   created.EntityID,
 		RuleTypeID: created.RuleTypeID,
 		ExpiresAt:  created.ExpiresAt,
@@ -86,7 +99,6 @@ func (s *exceptionService) List(
 	for _, exception := range exceptions {
 		result = append(result, Exception{
 			ID:         exception.ID,
-			ProjectID:  exception.ProjectID,
 			EntityID:   exception.EntityID,
 			RuleTypeID: exception.RuleTypeID,
 			ExpiresAt:  exception.ExpiresAt,

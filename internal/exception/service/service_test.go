@@ -29,7 +29,6 @@ func TestCreate(t *testing.T) {
 	expiresAt := time.Now().Add(24 * time.Hour)
 
 	input := Exception{
-		ProjectID:  projectID,
 		EntityID:   entityID,
 		RuleTypeID: ruleTypeID,
 		ExpiresAt:  expiresAt,
@@ -44,6 +43,23 @@ func TestCreate(t *testing.T) {
 	}
 
 	store.EXPECT().
+		GetEntityByID(gomock.Any(), entityID).
+		Return(db.EntityInstance{
+			ID:        entityID,
+			ProjectID: projectID,
+		}, nil)
+
+	store.EXPECT().
+		GetRuleTypeByID(gomock.Any(), db.GetRuleTypeByIDParams{
+			Projects: []uuid.UUID{projectID},
+			ID:       ruleTypeID,
+		}).
+		Return(db.RuleType{
+			ID:        ruleTypeID,
+			ProjectID: projectID,
+		}, nil)
+
+	store.EXPECT().
 		CreateException(gomock.Any(), db.CreateExceptionParams{
 			ProjectID:  projectID,
 			EntityID:   entityID,
@@ -52,15 +68,79 @@ func TestCreate(t *testing.T) {
 		}).
 		Return(expected, nil)
 
-	got, err := svc.Create(context.Background(), input)
+	got, err := svc.Create(context.Background(), projectID, input)
 
 	require.NoError(t, err)
 	require.Equal(t, expected.ID, got.ID)
-	require.Equal(t, expected.ProjectID, got.ProjectID)
 	require.Equal(t, expected.EntityID, got.EntityID)
 	require.Equal(t, expected.RuleTypeID, got.RuleTypeID)
 	require.Equal(t, expected.ExpiresAt, got.ExpiresAt)
 	require.Equal(t, expected.CreatedAt, got.CreatedAt)
+}
+
+func TestCreateEntityWrongProject(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	store := mockdb.NewMockStore(ctrl)
+	svc := NewService(store)
+
+	projectID := uuid.New()
+	entityID := uuid.New()
+	ruleTypeID := uuid.New()
+
+	input := Exception{
+		EntityID:   entityID,
+		RuleTypeID: ruleTypeID,
+		ExpiresAt:  time.Now().Add(24 * time.Hour),
+	}
+
+	store.EXPECT().
+		GetEntityByID(gomock.Any(), entityID).
+		Return(db.EntityInstance{
+			ID:        entityID,
+			ProjectID: uuid.New(),
+		}, nil)
+
+	got, err := svc.Create(context.Background(), projectID, input)
+
+	require.Error(t, err)
+	require.Nil(t, got)
+}
+
+func TestCreateRuleTypeWrongProject(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	store := mockdb.NewMockStore(ctrl)
+	svc := NewService(store)
+
+	projectID := uuid.New()
+	entityID := uuid.New()
+	ruleTypeID := uuid.New()
+
+	input := Exception{
+		EntityID:   entityID,
+		RuleTypeID: ruleTypeID,
+		ExpiresAt:  time.Now().Add(24 * time.Hour),
+	}
+
+	store.EXPECT().
+		GetEntityByID(gomock.Any(), entityID).
+		Return(db.EntityInstance{
+			ID:        entityID,
+			ProjectID: projectID,
+		}, nil)
+
+	store.EXPECT().
+		GetRuleTypeByID(gomock.Any(), db.GetRuleTypeByIDParams{
+			Projects: []uuid.UUID{projectID},
+			ID:       ruleTypeID,
+		}).
+		Return(db.RuleType{}, errors.New("rule type not found"))
+
+	got, err := svc.Create(context.Background(), projectID, input)
+
+	require.Error(t, err)
+	require.Nil(t, got)
 }
 
 func TestCreateError(t *testing.T) {
@@ -69,20 +149,40 @@ func TestCreateError(t *testing.T) {
 	store := mockdb.NewMockStore(ctrl)
 	svc := NewService(store)
 
+	projectID := uuid.New()
+	entityID := uuid.New()
+	ruleTypeID := uuid.New()
+	expiresAt := time.Now().Add(24 * time.Hour)
 	dbErr := errors.New("database error")
 
 	input := Exception{
-		ProjectID:  uuid.New(),
-		EntityID:   uuid.New(),
-		RuleTypeID: uuid.New(),
-		ExpiresAt:  time.Now().Add(24 * time.Hour),
+		EntityID:   entityID,
+		RuleTypeID: ruleTypeID,
+		ExpiresAt:  expiresAt,
 	}
+
+	store.EXPECT().
+		GetEntityByID(gomock.Any(), entityID).
+		Return(db.EntityInstance{
+			ID:        entityID,
+			ProjectID: projectID,
+		}, nil)
+
+	store.EXPECT().
+		GetRuleTypeByID(gomock.Any(), db.GetRuleTypeByIDParams{
+			Projects: []uuid.UUID{projectID},
+			ID:       ruleTypeID,
+		}).
+		Return(db.RuleType{
+			ID:        ruleTypeID,
+			ProjectID: projectID,
+		}, nil)
 
 	store.EXPECT().
 		CreateException(gomock.Any(), gomock.Any()).
 		Return(db.Exception{}, dbErr)
 
-	got, err := svc.Create(context.Background(), input)
+	got, err := svc.Create(context.Background(), projectID, input)
 
 	require.ErrorIs(t, err, dbErr)
 	require.Nil(t, got)
@@ -114,7 +214,6 @@ func TestList(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, got, 1)
 	require.Equal(t, expected[0].ID, got[0].ID)
-	require.Equal(t, expected[0].ProjectID, got[0].ProjectID)
 	require.Equal(t, expected[0].EntityID, got[0].EntityID)
 	require.Equal(t, expected[0].RuleTypeID, got[0].RuleTypeID)
 	require.Equal(t, expected[0].ExpiresAt, got[0].ExpiresAt)

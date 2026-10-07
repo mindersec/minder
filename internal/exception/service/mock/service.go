@@ -43,18 +43,18 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockService) Create(ctx context.Context, exception service.Exception) (*service.Exception, error) {
+func (m *MockService) Create(ctx context.Context, projectID uuid.UUID, exception service.Exception) (*service.Exception, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", ctx, exception)
+	ret := m.ctrl.Call(m, "Create", ctx, projectID, exception)
 	ret0, _ := ret[0].(*service.Exception)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockServiceMockRecorder) Create(ctx, exception any) *gomock.Call {
+func (mr *MockServiceMockRecorder) Create(ctx, projectID, exception any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockService)(nil).Create), ctx, exception)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockService)(nil).Create), ctx, projectID, exception)
 }
 
 // Delete mocks base method.
