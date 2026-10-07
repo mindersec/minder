@@ -69,8 +69,13 @@ func TestDeleteCommand(t *testing.T) {
 					}, nil)
 
 				client.EXPECT().
-					DeleteProfile(gomock.Any(), gomock.Any()).
-					Return(&minderv1.DeleteProfileResponse{}, nil)
+					DeleteProfile(gomock.Any(), gomock.AssignableToTypeOf(&minderv1.DeleteProfileRequest{})).
+					DoAndReturn(func(_ context.Context, req *minderv1.DeleteProfileRequest, _ ...interface{}) (*minderv1.DeleteProfileResponse, error) {
+						if req.GetId() != testID {
+							t.Errorf("expected ID %q, got %q", testID, req.GetId())
+						}
+						return &minderv1.DeleteProfileResponse{}, nil
+					})
 
 				return cli.WithRPCClient[minderv1.ProfileServiceClient](context.Background(), client)
 			},
