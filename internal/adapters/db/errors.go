@@ -16,14 +16,16 @@ import (
 
 // ErrorAsEvalStatus returns the evaluation status for a given error
 func ErrorAsEvalStatus(err error) db.EvalStatusTypes {
-	if errors.Is(err, interfaces.ErrEvaluationFailed) {
+	switch {
+	case errors.Is(err, interfaces.ErrEvaluationFailed):
 		return db.EvalStatusTypesFailure
-	} else if errors.Is(err, interfaces.ErrEvaluationSkipped) {
+	case errors.Is(err, interfaces.ErrEvaluationSkipped):
 		return db.EvalStatusTypesSkipped
-	} else if err != nil {
+	case err != nil:
 		return db.EvalStatusTypesError
+	default:
+		return db.EvalStatusTypesSuccess
 	}
-	return db.EvalStatusTypesSuccess
 }
 
 // ErrorAsEvalDetails returns the evaluation details for a given error
@@ -43,11 +45,9 @@ func ErrorAsEvalDetails(err error) string {
 
 // ErrorAsRemediationStatus returns the remediation status for a given error
 func ErrorAsRemediationStatus(err error) db.RemediationStatusTypes {
-	if err == nil {
-		return db.RemediationStatusTypesSuccess
-	}
-
 	switch {
+	case err == nil:
+		return db.RemediationStatusTypesSuccess
 	case errors.Is(err, engineerrors.ErrActionFailed):
 		return db.RemediationStatusTypesFailure
 	case errors.Is(err, engineerrors.ErrActionSkipped):
@@ -56,8 +56,9 @@ func ErrorAsRemediationStatus(err error) db.RemediationStatusTypes {
 		return db.RemediationStatusTypesNotAvailable
 	case errors.Is(err, engineerrors.ErrActionPending):
 		return db.RemediationStatusTypesPending
+	default:
+		return db.RemediationStatusTypesError
 	}
-	return db.RemediationStatusTypesError
 }
 
 // RemediationStatusAsError returns the remediation status for a given error
@@ -79,18 +80,17 @@ func RemediationStatusAsError(prevStatus *db.ListRuleEvaluationsByProfileIdRow) 
 	case db.RemediationStatusTypesPending:
 		return engineerrors.ErrActionPending
 	case db.RemediationStatusTypesError:
+		fallthrough
+	default:
 		return fmt.Errorf("generic remediation error status: %s", s)
 	}
-	return fmt.Errorf("generic remediation error status: %s", s)
 }
 
 // ErrorAsAlertStatus returns the alert status for a given error
 func ErrorAsAlertStatus(err error) db.AlertStatusTypes {
-	if err == nil {
-		return db.AlertStatusTypesOn
-	}
-
 	switch {
+	case err == nil:
+		return db.AlertStatusTypesOn
 	case errors.Is(err, engineerrors.ErrActionTurnedOff):
 		return db.AlertStatusTypesOff
 	case errors.Is(err, engineerrors.ErrActionFailed):
@@ -99,8 +99,9 @@ func ErrorAsAlertStatus(err error) db.AlertStatusTypes {
 		return db.AlertStatusTypesSkipped
 	case errors.Is(err, engineerrors.ErrActionNotAvailable):
 		return db.AlertStatusTypesNotAvailable
+	default:
+		return db.AlertStatusTypesError
 	}
-	return db.AlertStatusTypesError
 }
 
 // AlertStatusAsError returns the error for a given alert status
@@ -110,7 +111,6 @@ func AlertStatusAsError(prevStatus *db.ListRuleEvaluationsByProfileIdRow) error 
 	}
 
 	s := prevStatus.AlertStatus
-
 	switch s {
 	case db.AlertStatusTypesOn:
 		return nil
@@ -122,8 +122,9 @@ func AlertStatusAsError(prevStatus *db.ListRuleEvaluationsByProfileIdRow) error 
 		return engineerrors.ErrActionSkipped
 	case db.AlertStatusTypesNotAvailable:
 		return engineerrors.ErrActionNotAvailable
+	default:
+		return fmt.Errorf("unknown alert status: %s", s)
 	}
-	return fmt.Errorf("unknown alert status: %s", s)
 }
 
 // EvalErrorAsString returns the evaluation error as a string
