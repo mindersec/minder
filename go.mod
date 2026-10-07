@@ -32,7 +32,7 @@ require (
 	github.com/goccy/go-json v0.10.6
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/golang-migrate/migrate/v4 v4.20.1
-	github.com/google/cel-go v0.30.0
+	github.com/google/cel-go v0.31.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-containerregistry v0.22.1
 	github.com/google/go-github/v63 v63.0.0
@@ -59,7 +59,7 @@ require (
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.3
 	github.com/open-policy-agent/opa v1.20.2
 	github.com/openfga/go-sdk v0.8.3
-	github.com/openfga/openfga v1.18.3
+	github.com/openfga/openfga v1.21.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/prometheus/client_golang v1.24.1
 	github.com/protobom/protobom v0.6.2
@@ -279,7 +279,7 @@ require (
 	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481 // indirect
 	github.com/oklog/ulid/v2 v2.1.2 // indirect
 	github.com/openfga/api/proto v0.0.0-20260319214821-f153694bfc20 // indirect
-	github.com/openfga/language/pkg/go v0.3.2-0.20260730144454-83fedf8a4e70 // indirect
+	github.com/openfga/language/pkg/go v0.3.2-0.20260818192608-0d2ad7fb7c40 // indirect
 	github.com/ossf/osv-schema/bindings/go v0.0.0-20260806060209-f3f826310aec // indirect
 	github.com/package-url/packageurl-go v0.1.5 // indirect
 	github.com/pierrec/lz4/v4 v4.1.27 // indirect
