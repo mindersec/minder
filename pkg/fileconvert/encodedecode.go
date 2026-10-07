@@ -7,10 +7,12 @@ package fileconvert
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -33,6 +35,22 @@ var (
 	_ Decoder = (*yaml.Decoder)(nil)
 	_ Decoder = (*json.Decoder)(nil)
 )
+
+var (
+	// ErrResourceTypeNotFound is returned when the input has no `type` field.
+	ErrResourceTypeNotFound = errors.New("resource type not found")
+	// ErrUnknownResourceType is returned when the input's `type` is not a Minder resource type.
+	ErrUnknownResourceType = errors.New("unknown resource type")
+	// ErrUnexpectedResourceType is returned by ReadResourceTyped when the resource is not of the requested type.
+	ErrUnexpectedResourceType = errors.New("unexpected resource type")
+)
+
+// Keep in sync with the switch in ReadResource.
+var knownResourceTypes = []string{
+	string(minderv1.ProfileResource),
+	string(minderv1.RuleTypeResource),
+	string(minderv1.DataSourceResource),
+}
 
 // DecoderForFile returns a Decoder for the file at the specified path,
 // or nil if the file is not of the appropriate type.
@@ -116,13 +134,9 @@ func ReadResource(input Decoder) (minderv1.ResourceMeta, error) {
 	if err := input.Decode(&genericObject); err != nil {
 		return nil, fmt.Errorf("error decoding: %w", err)
 	}
-	objectType, ok := genericObject["type"].(string)
-	if !ok {
-		return nil, fmt.Errorf("resource type not found")
-	}
-	objectVersion, ok := genericObject["version"].(string)
-	if !ok || objectVersion != "v1" {
-		return nil, fmt.Errorf("unsupported resource version: %s", objectVersion)
+	objectType, err := resourceType(genericObject)
+	if err != nil {
+		return nil, err
 	}
 	jsonData, err := json.Marshal(genericObject)
 	if err != nil {
@@ -157,8 +171,26 @@ func ReadResource(input Decoder) (minderv1.ResourceMeta, error) {
 		}
 		return &dataSource, nil
 	default:
-		return nil, fmt.Errorf("unknown resource type: %s", objectType)
+		return nil, fmt.Errorf("%w: %s", ErrUnknownResourceType, objectType)
 	}
+}
+
+// resourceType returns the type of a decoded resource, checking that it is a
+// known type before checking the version, so non-Minder YAML with a `type`
+// key is reported as an unknown type.
+func resourceType(genericObject map[string]any) (string, error) {
+	objectType, ok := genericObject["type"].(string)
+	if !ok {
+		return "", ErrResourceTypeNotFound
+	}
+	if !slices.Contains(knownResourceTypes, objectType) {
+		return "", fmt.Errorf("%w: %s", ErrUnknownResourceType, objectType)
+	}
+	objectVersion, ok := genericObject["version"].(string)
+	if !ok || objectVersion != "v1" {
+		return "", fmt.Errorf("unsupported resource version: %s", objectVersion)
+	}
+	return objectType, nil
 }
 
 // ReadResourceTyped reads a single resource from the specified Decoder and
@@ -175,7 +207,7 @@ func ReadResourceTyped[T proto.Message](input Decoder) (T, error) {
 	}
 	typed, ok := r.(T)
 	if !ok {
-		return zero, fmt.Errorf("unexpected resource type: %T", r)
+		return zero, fmt.Errorf("%w: %T", ErrUnexpectedResourceType, r)
 	}
 	return typed, nil
 }

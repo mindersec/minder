@@ -194,6 +194,62 @@ func TestReadResourceTyped(t *testing.T) {
 	require.NoError(t, err, "Expected no error reading profile")
 }
 
+func TestReadResourceSentinelErrors(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		input   string
+		wantErr error
+		wantMsg string
+	}{
+		{
+			name:    "missing type",
+			input:   "version: v1\n",
+			wantErr: ErrResourceTypeNotFound,
+			wantMsg: "resource type not found",
+		},
+		{
+			name:    "unknown type",
+			input:   "type: unknown\nversion: v1\n",
+			wantErr: ErrUnknownResourceType,
+			wantMsg: "unknown resource type: unknown",
+		},
+		{
+			name:    "non-Minder type without version",
+			input:   "type: unknown\nname: something\n",
+			wantErr: ErrUnknownResourceType,
+			wantMsg: "unknown resource type: unknown",
+		},
+		{
+			name: "unexpected type",
+			input: `
+type: data-source
+version: v1
+name: test-data-source
+rest:
+  def:
+    function:
+      endpoint: http://example.com/
+      input_schema: {}
+`,
+			wantErr: ErrUnexpectedResourceType,
+			wantMsg: "unexpected resource type: *v1.DataSource",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			decoder := yaml.NewDecoder(bytes.NewBufferString(tt.input))
+			_, err := ReadResourceTyped[*minderv1.RuleType](decoder)
+			require.Error(t, err)
+			assert.ErrorIs(t, err, tt.wantErr)
+			assert.EqualError(t, err, tt.wantMsg)
+		})
+	}
+}
+
 func TestReadAll(t *testing.T) {
 	t.Parallel()
 
