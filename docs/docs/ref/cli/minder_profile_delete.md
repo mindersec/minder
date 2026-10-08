@@ -16,8 +16,9 @@ minder profile delete [flags]
 ### Options
 
 ```
-  -h, --help        help for delete
-  -i, --id string   ID of profile to delete
+  -h, --help          help for delete
+  -i, --id string     ID of profile to delete
+  -n, --name string   Name of profile to delete
 ```
 
 ### Options inherited from parent commands
