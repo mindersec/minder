@@ -35,18 +35,7 @@ var (
 	ErrExceedsMaxSize = errors.New("plaintext is too large, limited to 32MiB")
 )
 
-// TypeFromString attempts to map a string to a `Type` value.
-func TypeFromString(name string) (Type, error) {
-	// TODO: use switch when we support more than once type.
-	switch name {
-	case string(Aes256Cfb):
-		return Aes256Cfb, nil
-	case string(Aes256Gcm):
-		return Aes256Gcm, nil
-	default:
-		return "", fmt.Errorf("%w: %s", ErrUnknownAlgorithm, name)
-	}
-}
+
 
 // NewFromType instantiates an encryption algorithm by name
 func NewFromType(algoType Type) (EncryptionAlgorithm, error) {
