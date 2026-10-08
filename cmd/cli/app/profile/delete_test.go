@@ -18,9 +18,9 @@ import (
 
 //nolint:paralleltest // Cannot run in parallel because it swaps global Viper/Stdout state
 func TestDeleteCommand(t *testing.T) {
-	const testID = "00000000-0000-0000-0000-000000000001"
 	const testName = "test-profile"
-	testIDPtr := func() *string { s := testID; return &s }()
+	testID := "00000000-0000-0000-0000-000000000001"
+	testIDPtr := &testID
 
 	tests := []cli.CmdTestCase{
 		{
