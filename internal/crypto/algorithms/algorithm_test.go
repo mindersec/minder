@@ -9,8 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-
-
 func TestNewFromType(t *testing.T) {
 	t.Parallel()
 

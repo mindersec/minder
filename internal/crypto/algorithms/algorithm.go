@@ -35,8 +35,6 @@ var (
 	ErrExceedsMaxSize = errors.New("plaintext is too large, limited to 32MiB")
 )
 
-
-
 // NewFromType instantiates an encryption algorithm by name
 func NewFromType(algoType Type) (EncryptionAlgorithm, error) {
 	switch algoType {
