@@ -44,9 +44,9 @@ func TestCreateProviderFromSessionState(t *testing.T) {
 	require.NoError(t, err)
 
 	stateData := db.GetProjectIDBySessionStateRow{
-		ProjectID:   projectID,
-		Provider:    providerName,
-		OwnerFilter: sql.NullString{String: "test-owner", Valid: true},
+		ProjectID:      projectID,
+		Provider:       providerName,
+		OwnerFilter:    sql.NullString{String: "test-owner", Valid: true},
 		ProviderConfig: []byte(`{}`),
 	}
 
@@ -77,7 +77,7 @@ func TestCreateProviderFromSessionState(t *testing.T) {
 		mockManager := mock_manager.NewMockProviderManager(ctrl)
 
 		mockStore.EXPECT().GetProjectIDBySessionState(gomock.Any(), stateStr).Return(stateData, nil)
-		
+
 		// Provider does not exist initially
 		mockGetter.EXPECT().GetByName(gomock.Any(), projectID, providerName).Return(nil, providers.ErrProviderNotFoundBy{})
 
@@ -111,7 +111,7 @@ func TestCreateProviderFromSessionState(t *testing.T) {
 		mockGetter.EXPECT().GetByName(gomock.Any(), projectID, providerName).Return(dummyProvider, nil)
 
 		// It should NOT create it
-		
+
 		// It should insert access token
 		mockStore.EXPECT().UpsertAccessToken(gomock.Any(), accessTokenParams).Return(db.ProviderAccessToken{}, nil)
 
