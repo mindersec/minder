@@ -68,7 +68,7 @@ func parseVersion(id string) (*mindpak.Metadata, error) {
 		return nil, fmt.Errorf("invalid bundle id: %s", id)
 	}
 
-	// TODO: validate that names and versions meet requirements
+	// Validation of names and versions is handled by InitOptions.Validate()
 	return &mindpak.Metadata{
 		Namespace: firstSplit[0],
 		Name:      secondSplit[0],
