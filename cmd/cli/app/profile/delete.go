@@ -5,7 +5,6 @@ package profile
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -31,6 +30,7 @@ var deleteCmd = &cobra.Command{
 func deleteCommand(cmd *cobra.Command, _ []string) error {
 	project := viper.GetString("project")
 	id := viper.GetString("id")
+	name := viper.GetString("name")
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
@@ -41,6 +41,21 @@ func deleteCommand(cmd *cobra.Command, _ []string) error {
 		return cli.MessageAndError("Error connecting to server", err)
 	}
 	defer closeConn()
+
+	// If name is provided, look up the profile ID first
+	if name != "" {
+		resp, err := client.GetProfileByName(cmd.Context(), &minderv1.GetProfileByNameRequest{
+			Context: &minderv1.Context{Project: &project},
+			Name:    name,
+		})
+		if err != nil {
+			return cli.MessageAndError("Error looking up profile by name", err)
+		}
+		if resp.Profile == nil {
+			return cli.MessageAndError("Error looking up profile by name", fmt.Errorf("profile not found"))
+		}
+		id = resp.Profile.GetId()
+	}
 
 	// Delete profile
 	_, err = client.DeleteProfile(cmd.Context(), &minderv1.DeleteProfileRequest{
@@ -60,10 +75,9 @@ func init() {
 	ProfileCmd.AddCommand(deleteCmd)
 	// Flags
 	deleteCmd.Flags().StringP("id", "i", "", "ID of profile to delete")
-	// TODO: add a flag for the profile name
-	// Required
-	if err := deleteCmd.MarkFlagRequired("id"); err != nil {
-		deleteCmd.Printf("Error marking flag required: %s", err)
-		os.Exit(1)
-	}
+	deleteCmd.Flags().StringP("name", "n", "", "Name of profile to delete")
+	// Require at least one of --id or --name
+	deleteCmd.MarkFlagsOneRequired("id", "name")
+	// Prevent providing both at the same time
+	deleteCmd.MarkFlagsMutuallyExclusive("id", "name")
 }
