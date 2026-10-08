@@ -150,7 +150,7 @@ func TestValidateInitOpts(t *testing.T) {
 				Metadata: &mindpak.Metadata{
 					Name:      "my-bundle",
 					Namespace: "ns",
-					Version:   "1.0.0",
+					Version:   "v1.0.0",
 					Date:      &now,
 				},
 				Path: tmp,
@@ -163,7 +163,7 @@ func TestValidateInitOpts(t *testing.T) {
 				Metadata: &mindpak.Metadata{
 					Name:      "",
 					Namespace: "ns",
-					Version:   "1.0.0",
+					Version:   "v1.0.0",
 					Date:      &now,
 				},
 				Path: tmp,
@@ -176,7 +176,7 @@ func TestValidateInitOpts(t *testing.T) {
 				Metadata: &mindpak.Metadata{
 					Name:      "it an invalid name!",
 					Namespace: "ns",
-					Version:   "1.0.0",
+					Version:   "v1.0.0",
 					Date:      &now,
 				},
 				Path: tmp,
@@ -189,6 +189,19 @@ func TestValidateInitOpts(t *testing.T) {
 				Metadata: &mindpak.Metadata{
 					Name:      "name",
 					Namespace: "it an invalid namespace!",
+					Version:   "v1.0.0",
+					Date:      &now,
+				},
+				Path: tmp,
+			},
+			shouldErr: true,
+		},
+		{
+			name: "invalid semver missing v prefix",
+			opts: &InitOptions{
+				Metadata: &mindpak.Metadata{
+					Name:      "name",
+					Namespace: "ns",
 					Version:   "1.0.0",
 					Date:      &now,
 				},
@@ -197,12 +210,38 @@ func TestValidateInitOpts(t *testing.T) {
 			shouldErr: true,
 		},
 		{
+			name: "invalid semver random string",
+			opts: &InitOptions{
+				Metadata: &mindpak.Metadata{
+					Name:      "name",
+					Namespace: "ns",
+					Version:   "not-a-version",
+					Date:      &now,
+				},
+				Path: tmp,
+			},
+			shouldErr: true,
+		},
+		{
+			name: "valid semver",
+			opts: &InitOptions{
+				Metadata: &mindpak.Metadata{
+					Name:      "name",
+					Namespace: "ns",
+					Version:   "v1.2.3",
+					Date:      &now,
+				},
+				Path: tmp,
+			},
+			shouldErr: false,
+		},
+		{
 			name: "dir-notexists",
 			opts: &InitOptions{
 				Metadata: &mindpak.Metadata{
 					Name:      "name",
 					Namespace: "ns",
-					Version:   "1.0.0",
+					Version:   "v1.0.0",
 					Date:      &now,
 				},
 				Path: "jklsdkjlsdljk sdkjl sd jkldsjkl",

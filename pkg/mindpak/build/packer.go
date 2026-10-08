@@ -16,6 +16,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"golang.org/x/mod/semver"
+
 	"github.com/mindersec/minder/pkg/mindpak"
 )
 
@@ -43,10 +45,12 @@ func (opts *InitOptions) Validate() error {
 	}
 
 	if opts.Namespace != "" && !mindpak.ValidNameRegex.MatchString(opts.Namespace) {
-		errs = append(errs, fmt.Errorf("%q is not valida namespace", opts.Namespace))
+		errs = append(errs, fmt.Errorf("%q is not a valid namespace", opts.Namespace))
 	}
 
-	// FIXME(puerco): Check semver
+	if opts.Version != "" && !semver.IsValid(opts.Version) {
+		errs = append(errs, fmt.Errorf("%q is not a valid semver version (e.g. v1.2.3)", opts.Version))
+	}
 
 	// Check path
 	sdata, err := os.Stat(opts.Path)
@@ -72,8 +76,8 @@ func (*Packer) InitBundle(opts *InitOptions) (*mindpak.Bundle, error) {
 		opts.Metadata = &mindpak.Metadata{}
 	}
 
-	if opts.Name == "" {
-		return nil, fmt.Errorf("unable to initialize new bundle, no name defined")
+	if err := opts.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid bundle options: %w", err)
 	}
 
 	bundle, err := mindpak.NewBundleFromDirectory(opts.Path)
