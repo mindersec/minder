@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/engcontext"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -27,7 +28,7 @@ type Exception struct {
 
 // Service encapsulates logic related to exceptions.
 type Service interface {
-	Create(ctx context.Context, projectID uuid.UUID, exception Exception) (*Exception, error)
+	Create(ctx context.Context, exception Exception) (*Exception, error)
 	List(ctx context.Context, projectID uuid.UUID) ([]Exception, error)
 	Delete(ctx context.Context, id uuid.UUID, projectID uuid.UUID) error
 }
@@ -49,9 +50,10 @@ func NewService(store db.Store) Service {
 // Create creates an exception.
 func (s *exceptionService) Create(
 	ctx context.Context,
-	projectID uuid.UUID,
 	exception Exception,
 ) (*Exception, error) {
+	entityCtx := engcontext.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
 	entity, err := s.store.GetEntityByID(ctx, exception.EntityID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get entity: %w", err)

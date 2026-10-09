@@ -15,6 +15,7 @@ import (
 
 	mockdb "github.com/mindersec/minder/database/mock"
 	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/engcontext"
 )
 
 func TestCreate(t *testing.T) {
@@ -68,7 +69,13 @@ func TestCreate(t *testing.T) {
 		}).
 		Return(expected, nil)
 
-	got, err := svc.Create(context.Background(), projectID, input)
+	ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+		Project: engcontext.Project{
+			ID: projectID,
+		},
+	})
+
+	got, err := svc.Create(ctx, input)
 
 	require.NoError(t, err)
 	require.Equal(t, expected.ID, got.ID)
@@ -101,7 +108,13 @@ func TestCreateEntityWrongProject(t *testing.T) {
 			ProjectID: uuid.New(),
 		}, nil)
 
-	got, err := svc.Create(context.Background(), projectID, input)
+	ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+		Project: engcontext.Project{
+			ID: projectID,
+		},
+	})
+
+	got, err := svc.Create(ctx, input)
 
 	require.Error(t, err)
 	require.Nil(t, got)
@@ -137,7 +150,13 @@ func TestCreateRuleTypeWrongProject(t *testing.T) {
 		}).
 		Return(db.RuleType{}, errors.New("rule type not found"))
 
-	got, err := svc.Create(context.Background(), projectID, input)
+	ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+		Project: engcontext.Project{
+			ID: projectID,
+		},
+	})
+
+	got, err := svc.Create(ctx, input)
 
 	require.Error(t, err)
 	require.Nil(t, got)
@@ -182,7 +201,13 @@ func TestCreateError(t *testing.T) {
 		CreateException(gomock.Any(), gomock.Any()).
 		Return(db.Exception{}, dbErr)
 
-	got, err := svc.Create(context.Background(), projectID, input)
+	ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+		Project: engcontext.Project{
+			ID: projectID,
+		},
+	})
+
+	got, err := svc.Create(ctx, input)
 
 	require.ErrorIs(t, err, dbErr)
 	require.Nil(t, got)
