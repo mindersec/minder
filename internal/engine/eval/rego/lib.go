@@ -796,7 +796,7 @@ func DependencyExtract(res *interfaces.Ingested) func(*rego.Rego) {
 			and returns the extracted dependencies in the form of a protobom SBOM
 			with "nodes", but not "edges".  In particular, the SBOM Nodes will be
 			stored as an array of objects in ".node_list.nodes" within the returned object.`,
-			Decl: types.NewFunction(types.Args(types.S), dependencyExtractReturnType()),
+			Decl: types.NewFunction(types.Args(types.S), dependencyExtractType),
 		},
 		fsExtractDeps(res.Fs),
 	)
@@ -813,7 +813,7 @@ func BaseDependencyExtract(res *interfaces.Ingested) func(*rego.Rego) {
 			and returns the extracted dependencies in the form of a protobom SBOM
 			with "nodes", but not "edges".  In particular, the SBOM Nodes will be
 			stored as an array of objects in ".node_list.nodes" within the returned object.`,
-			Decl: types.NewFunction(types.Args(types.S), dependencyExtractReturnType()),
+			Decl: types.NewFunction(types.Args(types.S), dependencyExtractType),
 		},
 		fsExtractDeps(res.BaseFs),
 	)
@@ -887,9 +887,9 @@ func fsExtractDeps(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*
 	}
 }
 
-// dependencyExtractReturnType returns the precise OPA type for the SBOM
-// object returned by file.deps and base_file.deps.
-func dependencyExtractReturnType() types.Type {
+// dependencyExtractType is the precise OPA type for the SBOM object
+// returned by file.deps and base_file.deps.
+var dependencyExtractType = func() types.Type {
 	nodeType := types.NewObject(
 		[]*types.StaticProperty{
 			types.NewStaticProperty("id", types.S),
@@ -913,4 +913,4 @@ func dependencyExtractReturnType() types.Type {
 		},
 		types.NewDynamicProperty(types.S, types.A),
 	)
-}
+}()
