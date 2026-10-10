@@ -20,6 +20,14 @@ import (
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+// validParseFormat returns an error if the parse format is not supported.
+func validParseFormat(parseFormat string) error {
+	if parseFormat != "" && parseFormat != "json" {
+		return fmt.Errorf("unsupported parse format %q, supported values: json, empty string", parseFormat)
+	}
+	return nil
+}
+
 // CmdGenerate returns a cobra command for the 'datasource generate' subcommand.
 func CmdGenerate() *cobra.Command {
 	var generateCmd = &cobra.Command{
@@ -32,6 +40,8 @@ specification`,
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
 	}
+
+	generateCmd.Flags().String("parse", "json", "response parse format (supported: json, empty string for raw string)")
 
 	return generateCmd
 }
@@ -68,7 +78,7 @@ func swaggerTitleToDataSourceName(title string) string {
 }
 
 // swaggerToDataSource generates datasource code from an OpenAPI specification.
-func swaggerToDataSource(cmd *cobra.Command, swagger *spec.Swagger) error {
+func swaggerToDataSource(cmd *cobra.Command, swagger *spec.Swagger, parseFormat string) error {
 	if swagger.Info == nil {
 		return fmt.Errorf("info section is required in OpenAPI spec")
 	}
@@ -96,8 +106,7 @@ func swaggerToDataSource(cmd *cobra.Command, swagger *spec.Swagger) error {
 			def := &minderv1.RestDataSource_Def{
 				Method:   method,
 				Endpoint: p,
-				// TODO: Make this configurable
-				Parse: "json",
+				Parse:    parseFormat,
 			}
 
 			is := paramsToInputSchema(op.Parameters)
@@ -223,11 +232,20 @@ func generateCmdRun(cmd *cobra.Command, args []string) error {
 	// We've already validated that there is exactly one argument via the cobra.ExactArgs(1) call
 	filePath := args[0]
 
+	parseFormat, err := cmd.Flags().GetString("parse")
+	if err != nil {
+		return fmt.Errorf("error getting parse flag: %w", err)
+	}
+
+	if err := validParseFormat(parseFormat); err != nil {
+		return err
+	}
+
 	// Parse the OpenAPI specification
 	swagger, err := parseOpenAPI(filePath)
 	if err != nil {
 		return fmt.Errorf("error parsing OpenAPI spec: %w", err)
 	}
 
-	return swaggerToDataSource(cmd, swagger)
+	return swaggerToDataSource(cmd, swagger, parseFormat)
 }
