@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/metric/noop"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -32,7 +33,6 @@ import (
 	mockprops "github.com/mindersec/minder/internal/entities/properties/service/mock"
 	mockhistory "github.com/mindersec/minder/internal/history/mock"
 	"github.com/mindersec/minder/internal/logger"
-	"github.com/mindersec/minder/internal/metrics/meters"
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/providers/github/clients"
 	ghmanager "github.com/mindersec/minder/internal/providers/github/manager"
@@ -292,7 +292,7 @@ default allow = true`,
 
 	defer closer()
 
-	execMetrics, err := engine.NewExecutorMetrics(&meters.NoopMeterFactory{})
+	execMetrics, err := engine.NewExecutorMetrics(noop.NewMeterProvider())
 	require.NoError(t, err)
 
 	// stubbing related to evaluation history
