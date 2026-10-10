@@ -274,6 +274,9 @@ Finally, create your profile in Minder:
 minder profile create -f profile.yaml
 ```
 
+The table output preserves line breaks in rule parameters and definitions,
+wrapping long lines to fit the terminal.
+
 Check the status of your profile and see which repositories satisfy the rules by
 running:
 
