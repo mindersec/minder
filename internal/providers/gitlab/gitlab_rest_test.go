@@ -18,6 +18,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/util/ptr"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	config "github.com/mindersec/minder/pkg/config/server"
 )
 
 type mockGitlabClient struct {
@@ -43,7 +44,7 @@ func Test_New_AcceptsContext(t *testing.T) {
 	cred := credentials.NewGitLabTokenCredential("fake-token")
 	cfg := &minderv1.GitLabProviderConfig{}
 
-	client, err := New(ctx, cred, cfg, "https://example.com/webhook", "secret")
+	client, err := New(ctx, cred, cfg, "https://example.com/webhook", "secret", config.GitConfig{})
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
 }
@@ -372,4 +373,20 @@ func Test_getParsedURL(t *testing.T) {
 			assert.Equal(t, tt.want.Fragment, got.Fragment, "Expected fragment to be equal")
 		})
 	}
+}
+
+func Test_New_GitConfigStoredOnClient(t *testing.T) {
+	t.Parallel()
+
+	cred := credentials.NewGitLabTokenCredential("fake-token")
+	cfg := &minderv1.GitLabProviderConfig{}
+	gitCfg := config.GitConfig{
+		MaxFiles: 100,
+		MaxBytes: 1024,
+	}
+
+	client, err := New(context.Background(), cred, cfg, "https://example.com/webhook", "secret", gitCfg)
+	require.NoError(t, err)
+	require.NotNil(t, client)
+	assert.Equal(t, gitCfg, client.gitConfig)
 }

@@ -60,6 +60,7 @@ func New(
 	cfg *minderv1.GitLabProviderConfig,
 	webhookURL string,
 	currentWebhookSecret string,
+	gitConfig config.GitConfig,
 ) (*gitlabClient, error) {
 	cli := oauth2.NewClient(ctx, cred.GetAsOAuth2TokenSource())
 
@@ -77,7 +78,7 @@ func New(
 		glcfg:                cfg,
 		webhookURL:           webhookURL,
 		currentWebhookSecret: currentWebhookSecret,
-		// TODO: Add git config
+		gitConfig:            gitConfig,
 	}, nil
 }
 

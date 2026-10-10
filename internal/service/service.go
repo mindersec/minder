@@ -180,6 +180,7 @@ func AllInOneServerService(
 			evt,
 			cfg.Provider.GitLab,
 			cfg.WebhookConfig,
+			cfg.Provider.Git,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to create gitlab provider manager: %w", err)

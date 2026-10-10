@@ -456,7 +456,7 @@ func getProvider(ctx context.Context, pstr string, token string, providerConfigF
 		}
 
 		// We may pass a "fake" webhook URL here as it is not used in the test
-		client, err := gitlab.New(ctx, credentials.NewGitLabTokenCredential(token), cfg, "fake", "fake")
+		client, err := gitlab.New(ctx, credentials.NewGitLabTokenCredential(token), cfg, "fake", "fake", serverconfig.GitConfig{})
 		if err != nil {
 			return nil, fmt.Errorf("error instantiating gitlab provider: %w", err)
 		}

@@ -38,6 +38,7 @@ type providerClassManager struct {
 	crypteng crypto.Engine
 	// gitlab provider config
 	glpcfg        *server.GitLabConfig
+	gitConfig     server.GitConfig
 	webhookURL    string
 	parentContext context.Context
 	pub           interfaces.Publisher
@@ -53,6 +54,7 @@ type providerClassManager struct {
 func NewGitLabProviderClassManager(
 	ctx context.Context, crypteng crypto.Engine, store db.Store, pub interfaces.Publisher,
 	cfg *server.GitLabConfig, wgCfg server.WebhookConfig,
+	gitConfig server.GitConfig,
 ) (*providerClassManager, error) {
 	webhookURLBase := wgCfg.ExternalWebhookURL
 	if webhookURLBase == "" {
@@ -83,6 +85,7 @@ func NewGitLabProviderClassManager(
 		crypteng:               crypteng,
 		pub:                    pub,
 		glpcfg:                 cfg,
+		gitConfig:              gitConfig,
 		webhookURL:             webhookURL,
 		parentContext:          ctx,
 		currentWebhookSecret:   whSecret,
@@ -125,7 +128,7 @@ func (g *providerClassManager) Build(ctx context.Context, config *db.Provider) (
 		return nil, fmt.Errorf("error parsing gitlab config: %w", err)
 	}
 
-	cli, err := gitlab.New(ctx, creds, cfg, g.webhookURL, g.currentWebhookSecret)
+	cli, err := gitlab.New(ctx, creds, cfg, g.webhookURL, g.currentWebhookSecret, g.gitConfig)
 	if err != nil {
 		return nil, fmt.Errorf("error creating gitlab client: %w", err)
 	}
