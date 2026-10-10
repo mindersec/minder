@@ -374,3 +374,19 @@ func Test_getParsedURL(t *testing.T) {
 		})
 	}
 }
+
+func Test_New_GitConfigStoredOnClient(t *testing.T) {
+	t.Parallel()
+
+	cred := credentials.NewGitLabTokenCredential("fake-token")
+	cfg := &minderv1.GitLabProviderConfig{}
+	gitCfg := config.GitConfig{
+		MaxFiles: 100,
+		MaxBytes: 1024,
+	}
+
+	client, err := New(context.Background(), cred, cfg, "https://example.com/webhook", "secret", gitCfg)
+	require.NoError(t, err)
+	require.NotNil(t, client)
+	assert.Equal(t, gitCfg, client.gitConfig)
+}
