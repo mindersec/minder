@@ -17,6 +17,8 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/registry"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/empty"
+	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/random"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/stretchr/testify/assert"
@@ -96,6 +98,30 @@ func pushImage(t *testing.T, img v1.Image, host, repo, tag string) string {
 	return dig.String()
 }
 
+func pushMultiArchIndex(t *testing.T, host, repo, tag string) string {
+	t.Helper()
+
+	var adds []mutate.IndexAddendum
+	for _, arch := range []string{"amd64", "arm64"} {
+		img, err := random.Image(256, 1)
+		require.NoError(t, err)
+		adds = append(adds, mutate.IndexAddendum{
+			Add:        img,
+			Descriptor: v1.Descriptor{Platform: &v1.Platform{OS: "linux", Architecture: arch}},
+		})
+	}
+	idx := mutate.AppendManifests(empty.Index, adds...)
+
+	ref, err := name.NewTag(fmt.Sprintf("%s/%s:%s", host, repo, tag))
+	require.NoError(t, err)
+	require.NoError(t, remote.WriteIndex(ref, idx))
+
+	dig, err := idx.Digest()
+	require.NoError(t, err)
+
+	return dig.String()
+}
+
 func TestFetchAllProperties(t *testing.T) {
 	t.Parallel()
 
@@ -104,6 +130,7 @@ func TestFetchAllProperties(t *testing.T) {
 	host := newTestRegistry(t)
 	taggedDigest := pushRandomImage(t, host, namespace+"/myimage", "v1.2")
 	latestDigest := pushRandomImage(t, host, namespace+"/myimage", "latest")
+	multiArchDigest := pushMultiArchIndex(t, host, namespace+"/myimage", "multi")
 	// Tag resolution is only observable if the two tags point at different images.
 	require.NotEqual(t, taggedDigest, latestDigest)
 
@@ -133,6 +160,13 @@ func TestFetchAllProperties(t *testing.T) {
 			props:          properties.NewProperties(map[string]any{properties.PropertyName: "myimage"}),
 			wantName:       "myimage",
 			wantUpstreamID: "myimage@" + latestDigest,
+		},
+		{
+			name:           "multi-arch tag uses index digest",
+			entType:        minderv1.Entity_ENTITY_ARTIFACTS,
+			props:          properties.NewProperties(map[string]any{properties.PropertyName: "myimage:multi"}),
+			wantName:       "myimage:multi",
+			wantUpstreamID: "myimage@" + multiArchDigest,
 		},
 		{
 			name:    "missing name property",
