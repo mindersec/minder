@@ -167,8 +167,9 @@ type stubResultSink struct{}
 func (*stubResultSink) SetIngestResult(*interfaces.Ingested) {}
 
 func formatEvalResult(res *interfaces.EvaluationResult, evalErr error) *starlark.Dict {
-	result := starlark.NewDict(2)
-	status, msg := "", ""
+	result := starlark.NewDict(3)
+	// Detail is only present for some failures, but set the field in the result regardless.
+	status, msg, details := "", "", ""
 
 	switch {
 	case evalErr == nil:
@@ -176,9 +177,9 @@ func formatEvalResult(res *interfaces.EvaluationResult, evalErr error) *starlark
 	case errors.Is(evalErr, interfaces.ErrEvaluationFailed):
 		status = "fail"
 		msg = evalErr.Error()
-		var details interfaces.EvalError
-		if errors.As(evalErr, &details) {
-			msg = fmt.Sprintf("%s: %s", msg, details.Details())
+		// Don't combine error and d, as they are shown in different places
+		if d, ok := errors.AsType[interfaces.EvalError](evalErr); ok {
+			details = d.Details()
 		}
 	case errors.Is(evalErr, interfaces.ErrEvaluationSkipped):
 		status = "skip"
@@ -190,6 +191,7 @@ func formatEvalResult(res *interfaces.EvaluationResult, evalErr error) *starlark
 
 	_ = result.SetKey(starlark.String("status"), starlark.String(status))
 	_ = result.SetKey(starlark.String("message"), starlark.String(msg))
+	_ = result.SetKey(starlark.String("details"), starlark.String(details))
 
 	if res != nil && res.Output != nil {
 		if slVal, err := goToStarlarkValue(res.Output); err == nil {
