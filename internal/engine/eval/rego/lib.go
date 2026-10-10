@@ -889,28 +889,22 @@ func fsExtractDeps(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*
 
 // dependencyExtractType is the precise OPA type for the SBOM object
 // returned by file.deps and base_file.deps.
-var dependencyExtractType = func() types.Type {
-	nodeType := types.NewObject(
-		[]*types.StaticProperty{
-			types.NewStaticProperty("id", types.S),
-			types.NewStaticProperty("name", types.S),
-			types.NewStaticProperty("version", types.S),
-			types.NewStaticProperty("licenses", types.NewArray(nil, types.S)),
-		},
-		types.NewDynamicProperty(types.S, types.A),
-	)
-
-	nodeListType := types.NewObject(
-		[]*types.StaticProperty{
-			types.NewStaticProperty("nodes", types.NewArray(nil, nodeType)),
-		},
-		types.NewDynamicProperty(types.S, types.A),
-	)
-
-	return types.NewObject(
-		[]*types.StaticProperty{
-			types.NewStaticProperty("node_list", nodeListType),
-		},
-		types.NewDynamicProperty(types.S, types.A),
-	)
-}()
+var dependencyExtractType = types.NewObject(
+	[]*types.StaticProperty{
+		types.NewStaticProperty("node_list", types.NewObject(
+			[]*types.StaticProperty{
+				types.NewStaticProperty("nodes", types.NewArray(nil, types.NewObject(
+					[]*types.StaticProperty{
+						types.NewStaticProperty("id", types.S),
+						types.NewStaticProperty("name", types.S),
+						types.NewStaticProperty("version", types.S),
+						types.NewStaticProperty("licenses", types.NewArray(nil, types.S)),
+					},
+					types.NewDynamicProperty(types.S, types.A),
+				))),
+			},
+			types.NewDynamicProperty(types.S, types.A),
+		)),
+	},
+	types.NewDynamicProperty(types.S, types.A),
+)
