@@ -250,6 +250,25 @@ rest:
 	}
 }
 
+// TestKnownResourceTypesInSync guards that knownResourceTypes matches the switch in ReadResource.
+func TestKnownResourceTypesInSync(t *testing.T) {
+	t.Parallel()
+
+	for _, knownType := range knownResourceTypes {
+		t.Run(knownType, func(t *testing.T) {
+			t.Parallel()
+
+			gotType, err := resourceType(map[string]any{"type": knownType, "version": "v1"})
+			require.NoError(t, err)
+			assert.Equal(t, knownType, gotType)
+
+			decoder := yaml.NewDecoder(bytes.NewBufferString(fmt.Sprintf("type: %s\nversion: v1\n", knownType)))
+			_, err = ReadResource(decoder)
+			assert.NotErrorIs(t, err, ErrUnknownResourceType)
+		})
+	}
+}
+
 func TestReadAll(t *testing.T) {
 	t.Parallel()
 
