@@ -78,7 +78,6 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/sqlc-dev/pqtype v0.3.0
 	github.com/stacklok/frizbee v0.1.11
-	github.com/stacklok/trusty-sdk-go v0.2.3-0.20241121160719-089f44e88687
 	github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.12
 	github.com/stretchr/testify v1.12.1
 	github.com/styrainc/regal v0.35.1
@@ -149,7 +148,6 @@ require (
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/apparentlymart/go-textseg/v17 v17.0.1 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
-	github.com/avast/retry-go/v4 v4.7.0 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.6 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.20.1 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.4 // indirect
@@ -276,7 +274,6 @@ require (
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/nikunjy/rules v1.5.0 // indirect
-	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481 // indirect
 	github.com/oklog/ulid/v2 v2.1.2 // indirect
 	github.com/openfga/api/proto v0.0.0-20260319214821-f153694bfc20 // indirect
 	github.com/openfga/language/pkg/go v0.3.2-0.20260818192608-0d2ad7fb7c40 // indirect

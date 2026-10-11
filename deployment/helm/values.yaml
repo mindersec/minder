@@ -22,9 +22,6 @@ db:
   host: "postgres.postgres"
 
 # trusty settings
-trusty:
-  # -- (string) Stacklok Insight host to use
-  endpoint: "https://api.trustypkg.dev"
 
 # AWS-specific configuration
 # NOTE: we are migrating from AWS-specific annotations to a "pre-create the service account" model.

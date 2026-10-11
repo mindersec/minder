@@ -10,6 +10,4 @@ const (
 	IdentitySeverURL = "https://auth.custcodian.dev"
 	// MinderGRPCHost is the hostname of the cloud-hosted of the Minder gRPC service
 	MinderGRPCHost = "api.custcodian.dev"
-	// TrustyHttpURL is the URL of the trusty server
-	TrustyHttpURL = "https://trustypkg.dev/"
 )
