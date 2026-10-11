@@ -12,7 +12,6 @@ import (
 	"go.opentelemetry.io/otel/metric"
 
 	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/metrics/meters"
 )
 
 // ExecutorMetrics encapsulates metrics operations for the executor
@@ -25,8 +24,8 @@ type ExecutorMetrics struct {
 }
 
 // NewExecutorMetrics instantiates the ExecutorMetrics struct.
-func NewExecutorMetrics(meterFactory meters.MeterFactory) (*ExecutorMetrics, error) {
-	meter := meterFactory.Build("executor")
+func NewExecutorMetrics(meterProvider metric.MeterProvider) (*ExecutorMetrics, error) {
+	meter := meterProvider.Meter("executor")
 	evalCounter, err := meter.Int64Counter("eval.status",
 		metric.WithDescription("Number of rule evaluation statuses"),
 		metric.WithUnit("evaluations"))
