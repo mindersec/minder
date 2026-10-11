@@ -13,7 +13,6 @@ import (
 	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/application"
 	"github.com/mindersec/minder/internal/engine/eval/jq"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
-	"github.com/mindersec/minder/internal/engine/eval/trusty"
 	"github.com/mindersec/minder/internal/engine/eval/vulncheck"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
@@ -51,12 +50,6 @@ func NewRuleEvaluator(
 			return nil, errors.New("provider does not implement github trait")
 		}
 		return vulncheck.NewVulncheckEvaluator(client, opts...)
-	case trusty.TrustyEvalType:
-		client, err := interfaces.As[interfaces.GitHubIssuePRClient](provider)
-		if err != nil {
-			return nil, errors.New("provider does not implement github trait")
-		}
-		return trusty.NewTrustyEvaluator(ctx, client, opts...)
 	case application.HomoglyphsEvalType:
 		client, err := interfaces.As[interfaces.GitHubIssuePRClient](provider)
 		if err != nil {
