@@ -10,6 +10,7 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/open-feature/go-sdk/openfeature"
+	"go.opentelemetry.io/otel/metric"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/mindersec/minder/internal/auth"
@@ -33,7 +34,6 @@ import (
 	"github.com/mindersec/minder/internal/history"
 	"github.com/mindersec/minder/internal/invites"
 	"github.com/mindersec/minder/internal/marketplaces"
-	"github.com/mindersec/minder/internal/metrics/meters"
 	"github.com/mindersec/minder/internal/projects"
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/providers/dockerhub"
@@ -79,7 +79,7 @@ func AllInOneServerService(
 	serverMetrics metrics.Metrics,
 	providerMetrics provtelemetry.ProviderMetrics,
 	executorMiddleware []message.HandlerMiddleware,
-	meterFactory meters.MeterFactory,
+	meterProvider metric.MeterProvider,
 ) error {
 	errg, ctx := errgroup.WithContext(ctx)
 	flags.OpenFeatureProviderFromFlags(ctx, cfg.Flags)
@@ -268,7 +268,7 @@ func AllInOneServerService(
 
 	// prepend the aggregator to the executor options
 	executorMiddleware = append([]message.HandlerMiddleware{aggr.AggregateMiddleware}, executorMiddleware...)
-	executorMetrics, err := engine.NewExecutorMetrics(meterFactory)
+	executorMetrics, err := engine.NewExecutorMetrics(meterProvider)
 	if err != nil {
 		return fmt.Errorf("unable to create metrics for executor: %w", err)
 	}
