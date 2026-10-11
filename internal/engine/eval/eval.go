@@ -13,9 +13,11 @@ import (
 	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/application"
 	"github.com/mindersec/minder/internal/engine/eval/jq"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
+	"github.com/mindersec/minder/internal/engine/eval/trusty"
 	"github.com/mindersec/minder/internal/engine/eval/vulncheck"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/flags"
 )
 
 // NewRuleEvaluator creates a new rule data evaluator
@@ -50,6 +52,17 @@ func NewRuleEvaluator(
 			return nil, errors.New("provider does not implement github trait")
 		}
 		return vulncheck.NewVulncheckEvaluator(client, opts...)
+	case trusty.TrustyEvalType:
+		if !flags.Bool(ctx, nil, flags.TrustyEvaluator) {
+			// The Trusty API has been shut down. This evaluator is disabled by default.
+			// Enable the trusty_evaluator feature flag to re-enable it.
+			return nil, fmt.Errorf("unsupported rule type engine: trusty evaluator is disabled")
+		}
+		client, err := interfaces.As[interfaces.GitHubIssuePRClient](provider)
+		if err != nil {
+			return nil, errors.New("provider does not implement github trait")
+		}
+		return trusty.NewTrustyEvaluator(ctx, client, opts...)
 	case application.HomoglyphsEvalType:
 		client, err := interfaces.As[interfaces.GitHubIssuePRClient](provider)
 		if err != nil {

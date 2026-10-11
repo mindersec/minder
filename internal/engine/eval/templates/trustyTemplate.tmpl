@@ -1,0 +1,17 @@
+{{- if .maliciousPackages -}}
+Malicious packages:
+{{- range .maliciousPackages }}
+* {{ . }}
+{{- end }}
+{{- end }}
+
+{{- /* Add a newline only if both maliciousPackages and lowScoringPackages exist */ -}}
+{{- if and .maliciousPackages .lowScoringPackages}}
+{{ end -}}
+
+{{if .lowScoringPackages -}}
+Packages with a low Trusty score:
+{{- range .lowScoringPackages }}
+* {{ . }}
+{{- end }}
+{{- end }}
