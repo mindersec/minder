@@ -218,7 +218,7 @@ func (g *goPrettyTable) Render() {
 			Number:           i + 1,
 			WidthMax:         assignedWidths[i],
 			WidthMin:         assignedWidths[i], // Forcing Min to match Max ensures full stretch
-			WidthMaxEnforcer: text.WrapSoft,
+			WidthMaxEnforcer: wrapLines,
 			AutoMerge:        g.autoMerge,
 			VAlign:           text.VAlignTop,
 		}
@@ -229,6 +229,18 @@ func (g *goPrettyTable) Render() {
 	g.t.Style().Size.WidthMax = w
 
 	g.t.Render()
+}
+
+func wrapLines(value string, width int) string {
+	// Preserve explicit line breaks in YAML and evaluation details.
+	lines := strings.Split(value, "\n")
+	var escape text.EscSeqParser
+	for i, line := range lines {
+		lines[i] = text.WrapSoft(escape.Sequence()+line, width)
+		// Track the input colors, since wrapping may insert its own resets.
+		escape.ParseString(line)
+	}
+	return strings.Join(lines, "\n")
 }
 
 func getTerminalWidth() int {
