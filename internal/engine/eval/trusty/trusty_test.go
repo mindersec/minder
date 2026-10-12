@@ -19,6 +19,7 @@ import (
 	mock_github "github.com/mindersec/minder/internal/providers/github/mock"
 	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/flags"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -516,4 +517,28 @@ func (m *mockTrustyClient) Alternatives(ctx context.Context, d *trustytypes.Depe
 }
 func (m *mockTrustyClient) Provenance(ctx context.Context, d *trustytypes.Dependency) (*trustytypes.Provenance, error) {
 	return m.provenanceFn(ctx, d)
+}
+
+func TestEvalFeatureFlag(t *testing.T) {
+	t.Parallel()
+
+	ingested := &interfaces.Ingested{Object: &pbinternal.PrDependencies{}}
+
+	t.Run("disabled by default", func(t *testing.T) {
+		t.Parallel()
+		e := &Evaluator{}
+		_, err := e.Eval(context.Background(), nil, nil, ingested)
+		require.ErrorContains(t, err, "trusty evaluator is disabled")
+	})
+
+	t.Run("enabled via flag", func(t *testing.T) {
+		t.Parallel()
+		e := &Evaluator{}
+		require.NoError(t, e.SetFlagsClient(&flags.FakeClient{
+			Data: map[string]any{string(flags.TrustyEvaluator): true},
+		}))
+		res, err := e.Eval(context.Background(), nil, nil, ingested)
+		require.NoError(t, err)
+		require.NotNil(t, res)
+	})
 }
