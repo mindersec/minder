@@ -39,6 +39,8 @@ func TestCobraMain(t *testing.T) {
 			tw := &util.TestWriter{}
 			app.RootCmd.SetOut(tw) // stub to capture eventual output
 			app.RootCmd.SetArgs(test.args)
+			origUse := AuthCmd.Use
+			t.Cleanup(func() { AuthCmd.Use = origUse })
 			AuthCmd.Use = test.expectedOutput
 
 			assert.NoError(t, app.RootCmd.Execute(), "Error on execute")
