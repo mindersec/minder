@@ -29,7 +29,10 @@ import rego.v1
 
 default allow := false
 
+data_val := minder.datasource.mock_ds.get_val({})
+
 allow if {
-  data_val := minder.datasource.mock_ds.get_val({})
   data_val.body == input.profile.required_value
 }
+
+message := sprintf("Value was: %q, expected %q", [data_val.body, input.profile.required_value])
