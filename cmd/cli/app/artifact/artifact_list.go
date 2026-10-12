@@ -4,14 +4,12 @@
 package artifact
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util"
@@ -25,33 +23,44 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List artifacts from a provider",
 	Long:  `The artifact list subcommand will list artifacts from a provider.`,
-	RunE:  cli.GRPCClientWrapRunE(listCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+
+		format := viper.GetString("output")
+
+		// Ensure the output format is supported
+		if !app.IsOutputFormatSupported(format) {
+			return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
+		}
+
+		return nil
+	},
+	RunE: listCommand,
 }
 
 // listCommand is the artifact list subcommand
-func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewArtifactServiceClient(conn)
+func listCommand(cmd *cobra.Command, _ []string) error {
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
+
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewArtifactServiceClient)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
 
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	format := viper.GetString("output")
 	fromFilter := viper.GetString("from")
 
-	// Ensure the output format is supported
-	if !app.IsOutputFormatSupported(format) {
-		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
-	}
-
-	// No longer print usage on returned error, since we've parsed our inputs
-	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
-	cmd.SilenceUsage = true
-
-	artifactList, err := client.ListArtifacts(ctx, &minderv1.ListArtifactsRequest{
+	artifactList, err := client.ListArtifacts(cmd.Context(), &minderv1.ListArtifactsRequest{
 		Context: &minderv1.Context{Provider: &provider, Project: &project},
 		From:    fromFilter,
-	},
-	)
-
+	})
 	if err != nil {
 		return cli.MessageAndError("Couldn't list artifacts", err)
 	}
@@ -70,7 +79,6 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 				artifact.Visibility,
 				artifact.CreatedAt.AsTime().Format(time.RFC3339),
 			)
-
 		}
 		t.Render()
 	case app.JSON:
