@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 func TestGetAllRules(t *testing.T) {
@@ -50,4 +51,23 @@ func TestGetAllRules(t *testing.T) {
 			assert.Len(t, rules, tt.expected)
 		})
 	}
+}
+
+func TestGetAllRulesCoversAllRuleFields(t *testing.T) {
+	t.Parallel()
+
+	p := &Profile{}
+	fields := p.ProtoReflect().Descriptor().Fields()
+	want := 0
+	for i := 0; i < fields.Len(); i++ {
+		fd := fields.Get(i)
+		if fd.IsList() && fd.Message() != nil &&
+			fd.Message().FullName() == (&Profile_Rule{}).ProtoReflect().Descriptor().FullName() {
+			list := p.ProtoReflect().Mutable(fd).List()
+			list.Append(protoreflect.ValueOfMessage((&Profile_Rule{Type: string(fd.Name())}).ProtoReflect()))
+			want++
+		}
+	}
+
+	assert.Len(t, p.GetAllRules(), want)
 }
