@@ -100,18 +100,7 @@ func exportRuleTypes(
 	prof *minderv1.Profile,
 ) ([]string, error) {
 
-	// TODO: it would be nice if this were just a list of rules...
-
-	rules := slices.Concat(
-		prof.GetRepository(),
-		prof.GetBuildEnvironment(),
-		prof.GetArtifact(),
-		prof.GetPullRequest(),
-		prof.GetRelease(),
-		prof.GetPipelineRun(),
-		prof.GetTaskRun(),
-		prof.GetBuild(),
-	)
+	rules := prof.GetAllRules()
 
 	ruletypes := make([]string, 0, len(rules))
 	for _, res := range rules {
