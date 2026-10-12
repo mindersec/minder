@@ -512,6 +512,65 @@ func (s *UnitTestSuite) TestConfigAttribute() {
 	}
 }
 
+func (s *UnitTestSuite) TestParsers() {
+	t := s.T()
+	t.Parallel()
+
+	t.Run("parseBool", func(t *testing.T) {
+		t.Parallel()
+		val, err := parseBool("true")
+		require.NoError(t, err)
+		require.Equal(t, true, val.Bool())
+
+		val, err = parseBool("false")
+		require.NoError(t, err)
+		require.Equal(t, false, val.Bool())
+
+		_, err = parseBool("not-a-bool")
+		require.Error(t, err)
+	})
+
+	t.Run("parseInt", func(t *testing.T) {
+		t.Parallel()
+		p := parseInt(32)
+		val, err := p("42")
+		require.NoError(t, err)
+		require.Equal(t, int64(42), val.Int())
+
+		_, err = p("invalid")
+		require.Error(t, err)
+	})
+
+	t.Run("parseUint", func(t *testing.T) {
+		t.Parallel()
+		p := parseUint(32)
+		val, err := p("100")
+		require.NoError(t, err)
+		require.Equal(t, uint64(100), val.Uint())
+
+		_, err = p("-1")
+		require.Error(t, err)
+	})
+
+	t.Run("parseFloat", func(t *testing.T) {
+		t.Parallel()
+		p := parseFloat(64)
+		val, err := p("3.14")
+		require.NoError(t, err)
+		require.Equal(t, 3.14, val.Float())
+
+		_, err = p("invalid")
+		require.Error(t, err)
+	})
+
+	t.Run("identity", func(t *testing.T) {
+		t.Parallel()
+		val, err := identity("sample-string")
+		require.NoError(t, err)
+		require.Equal(t, "sample-string", val.String())
+	})
+}
+
 func TestConfigReflection(t *testing.T) {
 	t.Parallel()
 

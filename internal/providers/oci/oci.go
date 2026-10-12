@@ -299,15 +299,11 @@ func (o *OCI) getReference(contname, tag string) (name.Reference, error) {
 // TODO: Implement authentication
 // TODO: Implement authentication
 func getDigestFromRef(ctx context.Context, ref name.Reference) (string, error) {
-	img, err := remote.Image(ref, remote.WithContext(ctx), remote.WithUserAgent(constants.ServerUserAgent))
+	// Use the tag's top-level digest (the index for multi-arch tags), not a platform image's.
+	desc, err := remote.Get(ref, remote.WithContext(ctx), remote.WithUserAgent(constants.ServerUserAgent))
 	if err != nil {
-		return "", fmt.Errorf("failed to get image: %w", err)
+		return "", fmt.Errorf("failed to get descriptor: %w", err)
 	}
 
-	digest, err := img.Digest()
-	if err != nil {
-		return "", fmt.Errorf("failed to get digest: %w", err)
-	}
-
-	return digest.String(), nil
+	return desc.Digest.String(), nil
 }
