@@ -14,6 +14,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/otel"
 
 	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/auth/githubactions"
@@ -25,7 +26,6 @@ import (
 	cpmetrics "github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/logger"
-	"github.com/mindersec/minder/internal/metrics/meters"
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	provtelemetry "github.com/mindersec/minder/internal/providers/telemetry"
 	"github.com/mindersec/minder/internal/service"
@@ -161,7 +161,7 @@ var serveCmd = &cobra.Command{
 			cpmetrics.NewMetrics(),
 			providerMetrics,
 			[]message.HandlerMiddleware{telemetryMiddleware.TelemetryStoreMiddleware},
-			&meters.ExportingMeterFactory{},
+			otel.GetMeterProvider(),
 		)
 	},
 }
