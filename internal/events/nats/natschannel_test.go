@@ -13,7 +13,11 @@ import (
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
-	natsserver "github.com/nats-io/nats-server/v2/test"
+	natsserver "github.com/nats-io/nats-server/v2/server"
+	natstest "github.com/nats-io/nats-server/v2/test"
+	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
+	"github.com/stretchr/testify/require"
 
 	"github.com/mindersec/minder/internal/events/common"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
@@ -21,8 +25,10 @@ import (
 
 func TestNatsChannel(t *testing.T) {
 	t.Parallel()
-	server := natsserver.RunRandClientPortServer()
-	if err := server.EnableJetStream(nil); err != nil {
+	server := natstest.RunRandClientPortServer()
+	// Without a StoreDir, JetStream persists to $TMPDIR/nats, so streams and
+	// unacked messages would leak between test runs.
+	if err := server.EnableJetStream(&natsserver.JetStreamConfig{StoreDir: t.TempDir()}); err != nil {
 		t.Fatalf("failed to enable JetStream: %v", err)
 	}
 	defer server.Shutdown()
@@ -62,10 +68,11 @@ func TestNatsChannel(t *testing.T) {
 	if err := pub2.Publish("test", m2); err != nil {
 		t.Fatalf("failed to publish message: %v", err)
 	}
-	// There is some asynchronous machinery in Publish which can cause
-	// the last message published be dropped if the following Close call
-	// is within a few milliseconds of the Publish call.
-	time.Sleep(5 * time.Millisecond)
+	// Publish waits for the JetStream ack, but delivery to subscribers is
+	// asynchronous. Closing sub1 doesn't wait for its subscription to drain,
+	// so a message pushed to sub1 but not yet acked would only be redelivered
+	// after the ack wait (30s). Wait until every message has been acked.
+	waitForAllAcked(ctx, t, server.ClientURL())
 	// Don't let sub1 see the last two messages, even though it's published by pub1.
 	if err := sub1.Close(); err != nil {
 		t.Fatalf("failed to close sub1: %v", err)
@@ -78,9 +85,9 @@ func TestNatsChannel(t *testing.T) {
 		t.Fatalf("failed to publish message: %v", err)
 	}
 
-	// By reading the above 3 messages off of two subscribers, we aim to verify:
-	// 1. Messages are delivered once -- if both subscribers get the message, we should end up
-	//    with duplicate messages in the array, which will fail the test.
+	// By reading the above 4 messages off of two subscribers, we aim to verify:
+	// 1. Every message is delivered. Duplicates (redeliveries) are tolerated and
+	//    removed below, so this does not verify exactly-once delivery.
 	// 2. Messages are delivered across publisher/subscriber pairs.
 	// 3. Message payloads match what they were sent with.
 	//
@@ -120,6 +127,79 @@ loop:
 	expectMessageEqual(t, m4, results[3])
 }
 
+// Closing one subscriber must not delete the durable consumer that the other
+// subscribers in the queue group are bound to.
+func TestNatsChannelSubscriberCloseKeepsConsumer(t *testing.T) {
+	t.Parallel()
+	server := natstest.RunRandClientPortServer()
+	require.NoError(t, server.EnableJetStream(&natsserver.JetStreamConfig{StoreDir: t.TempDir()}))
+	defer server.Shutdown()
+	cfg := serverconfig.EventConfig{
+		Nats: serverconfig.NatsConfig{
+			URL:    server.ClientURL(),
+			Prefix: "test",
+			Queue:  "minder",
+		},
+	}
+	ctx := context.Background()
+
+	conn, err := nats.Connect(server.ClientURL())
+	require.NoError(t, err)
+	defer conn.Close()
+	js, err := jetstream.New(conn)
+	require.NoError(t, err)
+	consumerExists := func() bool {
+		_, err := js.PushConsumer(ctx, "test", "test-test")
+		return err == nil
+	}
+
+	// Cancelling the subscription context drains the subscription while the
+	// connection stays open, as happens when the server shuts down.
+	ctx1, cancel1 := context.WithCancel(ctx)
+	defer cancel1()
+	_, sub1, closer1, _, err := buildDriverPair(ctx1, cfg)
+	require.NoError(t, err)
+	defer closer1()
+	require.Eventually(t, consumerExists, 5*time.Second, 5*time.Millisecond, "consumer was not created")
+
+	pub2, _, closer2, out2, err := buildDriverPair(ctx, cfg)
+	require.NoError(t, err)
+	defer closer2()
+	// Subscribe returns before the subscription is made, so wait until both
+	// subscribers have joined the queue group on the consumer's deliver subject.
+	info, err := js.PushConsumer(ctx, "test", "test-test")
+	require.NoError(t, err)
+	deliver := info.CachedInfo().Config.DeliverSubject
+	require.Eventually(t, func() bool {
+		connz, err := server.Connz(&natsserver.ConnzOptions{Subscriptions: true})
+		if err != nil {
+			return false
+		}
+		members := 0
+		for _, c := range connz.Conns {
+			if slices.Contains(c.Subs, deliver) {
+				members++
+			}
+		}
+		return members == 2
+	}, 5*time.Second, 5*time.Millisecond, "subscribers did not join the queue group")
+
+	cancel1()
+	require.Never(t, func() bool { return !consumerExists() }, 500*time.Millisecond, 10*time.Millisecond,
+		"draining the first subscription deleted the consumer")
+	require.NoError(t, sub1.Close())
+	require.True(t, consumerExists(), "closing the first subscriber deleted the consumer")
+
+	want := message.NewMessage("123", []byte(`{"msg":"hello"}`))
+	require.NoError(t, pub2.Publish("test", want))
+	select {
+	case got := <-out2:
+		expectMessageEqual(t, want, got)
+	case <-time.After(5 * time.Second):
+		t.Fatal("second subscriber did not receive a message after the first one closed")
+	}
+}
+
 func buildDriverPair(ctx context.Context, cfg serverconfig.EventConfig) (message.Publisher, message.Subscriber, common.DriverCloser, <-chan *message.Message, error) {
 	pub, sub, closer, err := BuildNatsChannelDriver(&cfg)
 	if err != nil {
@@ -129,7 +209,42 @@ func buildDriverPair(ctx context.Context, cfg serverconfig.EventConfig) (message
 	if err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("failed to subscribe: %v", err)
 	}
-	return pub, sub, closer, out, nil
+	// The driver's own closer is a no-op, so also close the adapter. Otherwise its
+	// NATS connections keep reconnecting after the server shuts down, and can join
+	// a later test run's server if it reuses the same port.
+	closeAll := func() {
+		closer()
+		_ = pub.Close()
+	}
+	return pub, sub, closeAll, out, nil
+}
+
+// waitForAllAcked waits until the consumer has acked every message in the
+// stream. The consumer's NumPending isn't enough, because the server counts a
+// new message asynchronously, after Publish has returned.
+func waitForAllAcked(ctx context.Context, t *testing.T, url string) {
+	t.Helper()
+	conn, err := nats.Connect(url)
+	require.NoError(t, err)
+	defer conn.Close()
+	js, err := jetstream.New(conn)
+	require.NoError(t, err)
+	stream, err := js.Stream(ctx, "test")
+	require.NoError(t, err)
+	consumer, err := js.PushConsumer(ctx, "test", "test-test")
+	require.NoError(t, err)
+
+	require.Eventually(t, func() bool {
+		streamInfo, err := stream.Info(ctx)
+		if err != nil {
+			return false
+		}
+		consumerInfo, err := consumer.Info(ctx)
+		if err != nil {
+			return false
+		}
+		return consumerInfo.AckFloor.Stream >= streamInfo.State.LastSeq
+	}, 10*time.Second, 5*time.Millisecond, "not every message was acked")
 }
 
 func expectMessageEqual(t *testing.T, want *message.Message, got *message.Message) {

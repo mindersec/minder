@@ -7,6 +7,7 @@ package nats
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -67,8 +68,11 @@ func (c *cloudEventsNatsAdapter) Close() error {
 	return gotErr
 }
 
-// Ensure that we have a consumer for this topic
-func (c *cloudEventsNatsAdapter) ensureTopic(ctx context.Context, topic string, queue string) (*topicState, error) {
+// Ensure that we have a consumer for this topic. When subscribe is true, the
+// JetStream consumer is created up front and the subscription binds to it.
+func (c *cloudEventsNatsAdapter) ensureTopic(
+	ctx context.Context, topic string, queue string, subscribe bool,
+) (*topicState, error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -91,6 +95,12 @@ func (c *cloudEventsNatsAdapter) ensureTopic(ctx context.Context, topic string, 
 	// We can remove this after https://github.com/cloudevents/sdk-go/pull/1084 is merged and released
 	if err := c.ensureStream(ctx); err != nil {
 		return nil, err
+	}
+	if subscribe {
+		if err := c.ensureConsumer(ctx, topic, queue); err != nil {
+			return nil, fmt.Errorf("error creating consumer %q: %w", queue, err)
+		}
+		subOpts = append(subOpts, nats.Bind(c.cfg.Prefix, queue))
 	}
 
 	consumer, err := cejsm.NewProtocol(
@@ -132,6 +142,42 @@ func (c *cloudEventsNatsAdapter) ensureStream(ctx context.Context) error {
 	return err
 }
 
+// ensureConsumer creates the durable push consumer that a queue subscription
+// binds to, if it doesn't exist yet. If nats.go creates the consumer while
+// subscribing, it also deletes it when that subscription is drained, which
+// stops delivery to every other subscriber in the queue group. Creating it
+// here means no subscriber owns it.
+func (c *cloudEventsNatsAdapter) ensureConsumer(ctx context.Context, subject string, name string) error {
+	conn, err := nats.Connect(c.cfg.URL)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	js, err := jetstream.New(conn)
+	if err != nil {
+		return err
+	}
+	// Consumers created by nats.go have a random deliver subject. Keep using
+	// an existing consumer rather than trying to update it.
+	_, err = js.PushConsumer(ctx, c.cfg.Prefix, name)
+	if err == nil || !errors.Is(err, jetstream.ErrConsumerNotFound) {
+		return err
+	}
+	// The config matches what nats.go creates for a queue subscription, except
+	// for the deliver subject, which is fixed so that concurrent creation
+	// requests from several processes are identical and all succeed.
+	_, err = js.CreatePushConsumer(ctx, c.cfg.Prefix, jetstream.ConsumerConfig{
+		Durable:        name,
+		DeliverSubject: "_minder.deliver." + name,
+		DeliverGroup:   name,
+		FilterSubject:  subject,
+		DeliverPolicy:  jetstream.DeliverAllPolicy,
+		AckPolicy:      jetstream.AckExplicitPolicy,
+		ReplayPolicy:   jetstream.ReplayInstantPolicy,
+	})
+	return err
+}
+
 // Subscribe implements message.Subscriber.
 func (c *cloudEventsNatsAdapter) Subscribe(ctx context.Context, topic string) (<-chan *message.Message, error) {
 	subject := fmt.Sprintf("%s.%s", c.cfg.Prefix, topic)
@@ -139,7 +185,7 @@ func (c *cloudEventsNatsAdapter) Subscribe(ctx context.Context, topic string) (<
 	queueConsumer := strings.ReplaceAll(subject, ".", "-")
 
 	// TODO: should we have separate maps for producer & consumer?  I've lazily combined them here.
-	state, err := c.ensureTopic(ctx, subject, queueConsumer)
+	state, err := c.ensureTopic(ctx, subject, queueConsumer, true)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +232,7 @@ func (c *cloudEventsNatsAdapter) Publish(topic string, messages ...*message.Mess
 	ctx := context.Background()
 	subject := fmt.Sprintf("%s.%s", c.cfg.Prefix, topic)
 
-	state, err := c.ensureTopic(ctx, subject, "sender")
+	state, err := c.ensureTopic(ctx, subject, "sender", false)
 	if err != nil {
 		return fmt.Errorf("error creating topic %q: %w", subject, err)
 	}
