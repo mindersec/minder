@@ -6,6 +6,7 @@ package auth
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -262,6 +263,8 @@ func TestRenderUserInfoWhoami(t *testing.T) {
 		var buf bytes.Buffer
 		renderUserInfoWhoami("minder-host", &buf, app.YAML, user)
 
+		assert.False(t, json.Valid(buf.Bytes()), "expected YAML output, got JSON")
+
 		var decoded map[string]any
 		err := yaml.Unmarshal(buf.Bytes(), &decoded)
 		require.NoError(t, err)
@@ -280,5 +283,8 @@ func TestRenderUserInfoWhoami(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, "main-project", projectMap["name"])
 		assert.Equal(t, "main-id", projectMap["projectId"])
+		roleMap, ok := firstRole["role"].(map[string]any)
+		require.True(t, ok)
+		assert.Equal(t, "admin", roleMap["name"])
 	})
 }
