@@ -15,7 +15,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"gopkg.in/yaml.v3"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -243,19 +245,40 @@ func TestRenderUserInfoWhoami(t *testing.T) {
 		t.Parallel()
 		var buf bytes.Buffer
 		renderUserInfoWhoami("minder-host", &buf, app.JSON, user)
-		out := buf.String()
 
-		assert.Contains(t, out, "whoami-user")
-		assert.Contains(t, out, "main-project")
+		var decoded minderv1.GetUserResponse
+		err := protojson.Unmarshal(buf.Bytes(), &decoded)
+		require.NoError(t, err)
+
+		assert.Equal(t, "whoami-user", decoded.GetUser().GetIdentitySubject())
+		require.Len(t, decoded.GetProjectRoles(), 1)
+		assert.Equal(t, "main-project", decoded.GetProjectRoles()[0].GetProject().GetName())
+		assert.Equal(t, "main-id", decoded.GetProjectRoles()[0].GetProject().GetProjectId())
+		assert.Equal(t, "admin", decoded.GetProjectRoles()[0].GetRole().GetName())
 	})
 
 	t.Run("renders yaml format", func(t *testing.T) {
 		t.Parallel()
 		var buf bytes.Buffer
 		renderUserInfoWhoami("minder-host", &buf, app.YAML, user)
-		out := buf.String()
 
-		assert.Contains(t, out, "whoami-user")
-		assert.Contains(t, out, "main-project")
+		var decoded map[string]any
+		err := yaml.Unmarshal(buf.Bytes(), &decoded)
+		require.NoError(t, err)
+
+		userMap, ok := decoded["user"].(map[string]any)
+		require.True(t, ok, "expected user map in decoded yaml")
+		assert.Equal(t, "whoami-user", userMap["identitySubject"])
+
+		projectRoles, ok := decoded["projectRoles"].([]any)
+		require.True(t, ok, "expected projectRoles array in decoded yaml")
+		require.Len(t, projectRoles, 1)
+
+		firstRole, ok := projectRoles[0].(map[string]any)
+		require.True(t, ok)
+		projectMap, ok := firstRole["project"].(map[string]any)
+		require.True(t, ok)
+		assert.Equal(t, "main-project", projectMap["name"])
+		assert.Equal(t, "main-id", projectMap["projectId"])
 	})
 }
