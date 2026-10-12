@@ -11,9 +11,10 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/mindersec/minder/cmd/cli/app"
-	"github.com/mindersec/minder/internal/constants"
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/config"
+	clientconfig "github.com/mindersec/minder/pkg/config/client"
 )
 
 // whoamiCmd represents the whoami command
@@ -58,20 +59,13 @@ func whoamiCommand(cmd *cobra.Command, _ []string) error {
 		return cli.MessageAndError("Error getting information for user", err)
 	}
 
-	renderUserInfoWhoami(getServerTarget(), cmd.OutOrStdout(), viper.GetString("output"), userInfo)
-	return nil
-}
+	cfg, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
+	if err != nil || cfg == nil {
+		return cli.MessageAndError("Error reading config", err)
+	}
 
-func getServerTarget() string {
-	host := viper.GetString("grpc_server.host")
-	if host == "" {
-		host = constants.MinderGRPCHost
-	}
-	port := viper.GetInt("grpc_server.port")
-	if port == 0 {
-		port = 443
-	}
-	return fmt.Sprintf("%s:%d", host, port)
+	renderUserInfoWhoami(cfg.GRPCClientConfig.GetGRPCAddress(), cmd.OutOrStdout(), viper.GetString("output"), userInfo)
+	return nil
 }
 
 func init() {
