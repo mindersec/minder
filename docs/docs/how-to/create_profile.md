@@ -49,6 +49,9 @@ Create a new file called `secret_scanning.yaml`.
 Add some basic information about the rule to the new file, such as the version,
 type, name, context, description and guidance.
 
+CLI tables render descriptions as Markdown at the available column width.
+Line breaks within a paragraph are reflowed; paragraphs and lists stay separate.
+
 ```yaml
 ---
 version: v1
@@ -273,6 +276,9 @@ Finally, create your profile in Minder:
 ```bash
 minder profile create -f profile.yaml
 ```
+
+The table output preserves line breaks in rule parameters and definitions,
+wrapping long lines to fit the terminal.
 
 Check the status of your profile and see which repositories satisfy the rules by
 running:

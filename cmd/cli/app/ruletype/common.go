@@ -13,6 +13,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/charmbracelet/glamour"
 	"github.com/spf13/cobra"
 
 	"github.com/mindersec/minder/internal/util"
@@ -62,7 +63,7 @@ func execOnOneRuleType(
 		// add the rule type to the table rows
 		name := appendRuleTypePropertiesToName(rt)
 
-		t.AddRow(
+		t.AddRowWithFormatter(2, renderDescription,
 			name,
 			rt.Def.InEntity,
 			rt.Description,
@@ -128,12 +129,18 @@ func oneRuleTypeToRows(t table.Table, rt *minderv1.RuleType) {
 	if releasePhaseString != "" {
 		t.AddRow("Release phase", releasePhaseString)
 	}
-	t.AddRow("Description", rt.Description)
+	t.AddRowWithFormatter(1, renderDescription, "Description", rt.Description)
 	t.AddRow("Ingest type", rt.Def.Ingest.Type)
 	t.AddRow("Eval type", rt.Def.Eval.Type)
 	t.AddRow("Guidance", cli.RenderMarkdown(rt.Guidance, cli.WidthFraction(50.0)))
 	t.AddRow("Remediation", cmp.Or(rt.Def.GetRemediate().GetType(), "unsupported"))
 	t.AddRow("Alert", cmp.Or(rt.Def.GetAlert().GetType(), "unsupported"))
+}
+
+// Render descriptions at the final column width so the table does not preserve
+// artificial line breaks from a separate Markdown wrapping pass.
+func renderDescription(value string, width int) string {
+	return strings.TrimSuffix(cli.RenderMarkdown(value, glamour.WithWordWrap(width)), "\n")
 }
 
 func ruleTypeReleasePhaseToString(phase minderv1.RuleTypeReleasePhase) string {

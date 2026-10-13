@@ -6,4 +6,4 @@ Warning: Rego V0 is deprecated
                         │             │ for private repositories unless you have GitHub Advanced    
                         │             │ Security enabled. If you still want to use this rule        
                         │             │ because you have a mixture of private and public            
-                        │             │ repositories, enable the `skip_private_repos` flag.         
+                        │             │ repositories, enable the skip_private_repos flag.           
