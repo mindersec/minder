@@ -4,13 +4,11 @@
 package role
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util"
@@ -23,12 +21,22 @@ var updateCmd = &cobra.Command{
 	Short: "update a role to a subject on a project",
 	Long: `The minder project role update command allows one to update a role
 to a user (subject) on a particular project.`,
-	RunE: cli.GRPCClientWrapRunE(UpdateCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return cli.MessageAndError("Error binding flags", err)
+		}
+		return nil
+	},
+	RunE: UpdateCommand,
 }
 
 // UpdateCommand is the command for granting roles
-func UpdateCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewPermissionsServiceClient(conn)
+func UpdateCommand(cmd *cobra.Command, _ []string) error {
+	client, cleanup, err := GetPermissionsClient(cmd)
+	if err != nil {
+		return cli.MessageAndError("Error getting client", err)
+	}
+	defer cleanup()
 
 	role := viper.GetString("role")
 	project := viper.GetString("project")
@@ -60,7 +68,7 @@ func UpdateCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 		successMsg = "Invite updated successfully."
 	}
 
-	resp, err := client.UpdateRole(ctx, req)
+	resp, err := client.UpdateRole(cmd.Context(), req)
 	if err != nil {
 		return cli.MessageAndError(failMsg, err)
 	}

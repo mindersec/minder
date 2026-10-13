@@ -4,13 +4,11 @@
 package project
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util"
@@ -24,13 +22,23 @@ import (
 var projectCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a sub-project within a minder control plane",
-	Long:  `The list command lists the projects available to you within a minder control plane.`,
-	RunE:  cli.GRPCClientWrapRunE(createCommand),
+	Long:  `The create command creates a sub-project within a minder control plane.`,
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return cli.MessageAndError("Error binding flags", err)
+		}
+		return nil
+	},
+	RunE: createCommand,
 }
 
-// listCommand is the command for listing projects
-func createCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewProjectsServiceClient(conn)
+// createCommand is the command for listing projects
+func createCommand(cmd *cobra.Command, _ []string) error {
+	client, cleanup, err := GetProjectsClient(cmd)
+	if err != nil {
+		return cli.MessageAndError("Error getting client", err)
+	}
+	defer cleanup()
 
 	format := viper.GetString("output")
 	project := viper.GetString("project")
@@ -40,7 +48,7 @@ func createCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	resp, err := client.CreateProject(ctx, &minderv1.CreateProjectRequest{
+	resp, err := client.CreateProject(cmd.Context(), &minderv1.CreateProjectRequest{
 		Context: &minderv1.Context{
 			Project: &project,
 		},

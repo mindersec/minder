@@ -1,0 +1,18 @@
+{
+  "roleAssignments": [
+    {
+      "displayName": "Mock Admin",
+      "subject": "admin-subject-123",
+      "role": "admin",
+      "project": "00000000-0000-0000-0000-000000000001"
+    }
+  ],
+  "invitations": [
+    {
+      "email": "pending@example.com",
+      "role": "viewer",
+      "sponsorDisplay": "Mock Admin",
+      "expiresAt": "2026-05-01T12:00:00Z"
+    }
+  ]
+}

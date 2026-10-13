@@ -1,0 +1,28 @@
+{
+  "projects": [
+    {
+      "projectId": "00000000-0000-0000-0000-000000000001",
+      "name": "mock-project-alpha",
+      "description": "First mock project for testing.",
+      "createdAt": "2024-01-01T12:00:00.000000Z",
+      "updatedAt": "2024-01-01T12:00:00.000000Z",
+      "displayName": "mock-project-alpha"
+    },
+    {
+      "projectId": "00000000-0000-0000-0000-000000000002",
+      "name": "mock-project-beta",
+      "description": "Second mock project for testing.",
+      "createdAt": "2024-01-02T12:00:00.000000Z",
+      "updatedAt": "2024-01-02T12:00:00.000000Z",
+      "displayName": "mock-project-beta"
+    },
+    {
+      "projectId": "00000000-0000-0000-0000-000000000003",
+      "name": "mock-project-gamma",
+      "description": "Third mock project for testing.",
+      "createdAt": "2024-01-03T12:00:00.000000Z",
+      "updatedAt": "2024-01-03T12:00:00.000000Z",
+      "displayName": "mock-project-gamma"
+    }
+  ]
+}

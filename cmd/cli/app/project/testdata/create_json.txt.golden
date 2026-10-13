@@ -1,0 +1,10 @@
+{
+  "project":  {
+    "projectId":  "12345678-1234-1234-1234-123456789012",
+    "name":  "mock-project",
+    "description":  "A newly created mock project",
+    "createdAt":  "2026-04-24T14:38:18.810108Z",
+    "updatedAt":  "2026-04-24T14:38:18.810108Z",
+    "displayName":  "mock-project"
+  }
+}
