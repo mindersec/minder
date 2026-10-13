@@ -4,13 +4,11 @@
 package project
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util"
@@ -25,20 +23,38 @@ var projectListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List the projects available to you within a minder control plane",
 	Long:  `The list command lists the projects available to you within a minder control plane.`,
-	RunE:  cli.GRPCClientWrapRunE(listCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+
+		format := viper.GetString("output")
+
+		// Ensure the output format is supported
+		if !app.IsOutputFormatSupported(format) {
+			return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
+		}
+
+		return nil
+	},
+	RunE: listCommand,
 }
 
 // listCommand is the command for listing projects
-func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewProjectsServiceClient(conn)
-
-	format := viper.GetString("output")
-
+func listCommand(cmd *cobra.Command, _ []string) error {
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	resp, err := client.ListProjects(ctx, &minderv1.ListProjectsRequest{})
+	client, cleanup, err := GetProjectsClient(cmd)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	format := viper.GetString("output")
+
+	resp, err := client.ListProjects(cmd.Context(), &minderv1.ListProjectsRequest{})
 	if err != nil {
 		return cli.MessageAndError("Error listing projects", err)
 	}
@@ -63,8 +79,6 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 			t.AddRow(v.ProjectId, v.Name)
 		}
 		t.Render()
-	default:
-		return fmt.Errorf("unsupported output format: %s", format)
 	}
 
 	return nil

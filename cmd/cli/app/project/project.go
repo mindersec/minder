@@ -6,7 +6,6 @@ package project
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util/cli"
@@ -29,23 +28,5 @@ func init() {
 
 // GetProjectsClient is a helper to get the ProjectsServiceClient, supporting mocks via the command context
 func GetProjectsClient(cmd *cobra.Command) (minderv1.ProjectsServiceClient, func(), error) {
-	ctx, cancel := cli.GetAppContext(cmd.Context(), viper.GetViper())
-	cmd.SetContext(ctx)
-
-	if mockClient, ok := cli.GetRPCClient[minderv1.ProjectsServiceClient](ctx); ok {
-		return mockClient, func() { cancel() }, nil
-	}
-
-	conn, err := cli.GrpcForCommand(cmd, viper.GetViper())
-	if err != nil {
-		cancel()
-		return nil, nil, err
-	}
-
-	client := minderv1.NewProjectsServiceClient(conn)
-
-	return client, func() {
-		cancel()
-		_ = conn.Close()
-	}, nil
+	return cli.GetCLIClient(cmd, minderv1.NewProjectsServiceClient)
 }
