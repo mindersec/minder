@@ -3,6 +3,8 @@
 
 package v1
 
+import "slices"
+
 const (
 	// ProfileType is the type of the profile resource.
 	ProfileType = "profile"
@@ -24,4 +26,18 @@ func (r *UpdateProfileRequest) GetContext() *Context {
 		return r.Profile.Context
 	}
 	return nil
+}
+
+// GetAllRules returns all rules across all entity types in the profile.
+func (p *Profile) GetAllRules() []*Profile_Rule {
+	return slices.Concat(
+		p.GetRepository(),
+		p.GetBuildEnvironment(),
+		p.GetArtifact(),
+		p.GetPullRequest(),
+		p.GetRelease(),
+		p.GetPipelineRun(),
+		p.GetTaskRun(),
+		p.GetBuild(),
+	)
 }

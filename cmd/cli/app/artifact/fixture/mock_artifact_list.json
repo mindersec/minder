@@ -1,0 +1,22 @@
+{
+  "results": [
+    {
+      "artifactPk": "111",
+      "name": "artifact-1",
+      "type": "container",
+      "owner": "owner-1",
+      "repository": "org/repo",
+      "visibility": "public",
+      "createdAt": "2024-01-02T15:04:05Z"
+    },
+    {
+      "artifactPk": "222",
+      "name": "artifact-2",
+      "type": "container",
+      "owner": "owner-1",
+      "repository": "org/repo",
+      "visibility": "private",
+      "createdAt": "2024-01-03T16:00:00Z"
+    }
+  ]
+}

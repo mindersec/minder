@@ -1,0 +1,27 @@
+{
+  "user": {
+    "identitySubject": "test-user-subject",
+    "createdAt": "2024-01-01T00:00:00Z",
+    "updatedAt": "2024-01-02T00:00:00Z"
+  },
+  "projectRoles": [
+    {
+      "project": {
+        "projectId": "00000000-0000-0000-0000-000000000001",
+        "name": "test-project-1"
+      },
+      "role": {
+        "name": "admin"
+      }
+    },
+    {
+      "project": {
+        "projectId": "00000000-0000-0000-0000-000000000002",
+        "name": "test-project-2"
+      },
+      "role": {
+        "name": "viewer"
+      }
+    }
+  ]
+}
