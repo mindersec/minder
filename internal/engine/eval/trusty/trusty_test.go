@@ -528,7 +528,7 @@ func TestEvalFeatureFlag(t *testing.T) {
 		t.Parallel()
 		e := &Evaluator{}
 		_, err := e.Eval(context.Background(), nil, nil, ingested)
-		require.ErrorContains(t, err, "trusty evaluator is disabled")
+		require.ErrorContains(t, err, "unsupported rule type engine: trusty evaluator is disabled")
 	})
 
 	t.Run("enabled via flag", func(t *testing.T) {

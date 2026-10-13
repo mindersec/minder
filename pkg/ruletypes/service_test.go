@@ -45,6 +45,19 @@ func TestRuleTypeService(t *testing.T) {
 		},
 		// TODO: these tests should live with the validator, not this service
 		{
+			Name:          "CreateRuleType rejects trusty eval type when flag is off",
+			RuleType:      newRuleType(withBasicStructure, withEvalType("trusty")),
+			ExpectedError: ruletypes.ErrRuleTypeInvalid.Error(),
+			TestMethod:    create,
+		},
+		{
+			Name:         "CreateRuleType accepts trusty eval type when flag is on",
+			RuleType:     newRuleType(withBasicStructure, withEvalType("trusty")),
+			DBSetup:      dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreate, withSuccessfulDeleteRuleTypeDataSource),
+			TestMethod:   create,
+			FeatureFlags: map[string]any{string(flags.TrustyEvaluator): true},
+		},
+		{
 			Name:          "CreateRuleType rejects rule with empty name",
 			RuleType:      newRuleType(withBasicStructure, withRuleName("")),
 			ExpectedError: ruletypes.ErrRuleTypeInvalid.Error(),
@@ -527,6 +540,12 @@ func withDataSources(ruleType *pb.RuleType) {
 		},
 	}
 	ruleType.Def.Eval.DataSources = datasources
+}
+
+func withEvalType(evalType string) func(ruleType *pb.RuleType) {
+	return func(ruleType *pb.RuleType) {
+		ruleType.Def.Eval.Type = evalType
+	}
 }
 
 func withEvaluationFailureMessage(message string) func(ruleType *pb.RuleType) {
