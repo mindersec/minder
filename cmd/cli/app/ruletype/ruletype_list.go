@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/mindersec/minder/cmd/cli/app"
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -67,21 +66,9 @@ func listCommand(cmd *cobra.Command, _ []string) error {
 	// handle output formatting
 	switch format {
 	case app.JSON:
-		out, err := util.GetJsonFromProto(resp)
-		if err != nil {
-			return cli.MessageAndError("Error getting json from proto", err)
-		}
-		cmd.Println(out)
+		return cli.PrintProto(cmd, format, resp)
 	case app.YAML:
-		for _, rt := range resp.GetRuleTypes() {
-			out, err := util.GetYamlFromProto(rt)
-			if err != nil {
-				return cli.MessageAndError("Error getting yaml from proto", err)
-			}
-			// Print YAML separator between each rule type
-			cmd.Println("---")
-			cmd.Println(out)
-		}
+		return cli.PrintMultiProtoYAML(cmd, resp.GetRuleTypes())
 	case app.Table:
 		// Sort by Entity Type first to ensure AutoMerge works correctly,
 		// then by Name within those groups.

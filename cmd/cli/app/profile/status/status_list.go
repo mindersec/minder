@@ -12,7 +12,6 @@ import (
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/cmd/cli/app/profile"
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -66,25 +65,15 @@ func listCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	switch format {
-	case app.JSON:
-		out, err := util.GetJsonFromProto(resp)
-		if err != nil {
-			return cli.MessageAndError("Error getting json from proto", err)
-		}
-		cmd.Println(out)
-	case app.YAML:
-		out, err := util.GetYamlFromProto(resp)
-		if err != nil {
-			return cli.MessageAndError("Error getting yaml from proto", err)
-		}
-		cmd.Println(out)
+	case app.JSON, app.YAML:
+		return cli.PrintProto(cmd, format, resp)
 	case app.Table:
 		table := profile.NewProfileStatusTable(cmd.OutOrStdout())
 		profile.RenderProfileStatusTable(resp.ProfileStatus, table, viper.GetBool("emoji"))
 		table.Render()
 
 		if detailed {
-			cmd.Println()
+			fmt.Fprintln(cmd.OutOrStdout())
 			table = profile.NewRuleEvaluationsTable(cmd.OutOrStdout())
 			table.SeparateRows()
 			profile.RenderRuleEvaluationStatusTable(resp.RuleEvaluationStatus, table, viper.GetBool("emoji"))

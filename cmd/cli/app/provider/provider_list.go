@@ -13,7 +13,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/internal/util/cli/table"
 	"github.com/mindersec/minder/internal/util/cli/table/layouts"
@@ -69,18 +68,8 @@ func ListProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, co
 	}
 
 	switch format {
-	case app.JSON:
-		out, err := util.GetJsonFromProto(out)
-		if err != nil {
-			return err
-		}
-		cmd.Println(out)
-	case app.YAML:
-		out, err := util.GetYamlFromProto(out)
-		if err != nil {
-			return err
-		}
-		cmd.Println(out)
+	case app.JSON, app.YAML:
+		return cli.PrintProto(cmd, format, out)
 	case app.Table:
 		t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(),
 			[]string{"Name", "Version", "Implements"}).
@@ -95,6 +84,4 @@ func ListProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, co
 	default:
 		return fmt.Errorf("output format %s not supported", format)
 	}
-
-	return nil
 }
