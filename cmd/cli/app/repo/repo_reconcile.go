@@ -9,7 +9,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/mindersec/minder/cmd/cli/app/project"
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -49,7 +48,7 @@ func reconcileCommand(cmd *cobra.Command, _ []string) error {
 		entity.Name = name
 	}
 
-	projectsClient, cleanup, err := project.GetProjectsClient(cmd)
+	projectsClient, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewProjectsServiceClient)
 	if err != nil {
 		return cli.MessageAndError("Error connecting to server", err)
 	}
