@@ -8,8 +8,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/mindersec/minder/cmd/cli/app"
-	"github.com/mindersec/minder/internal/util/cli"
-	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // ProjectCmd is the root command for the project subcommands
@@ -24,9 +22,4 @@ var ProjectCmd = &cobra.Command{
 
 func init() {
 	app.RootCmd.AddCommand(ProjectCmd)
-}
-
-// GetProjectsClient is a helper to get the ProjectsServiceClient, supporting mocks via the command context
-func GetProjectsClient(cmd *cobra.Command) (minderv1.ProjectsServiceClient, func(), error) {
-	return cli.GetCLIClient(cmd, minderv1.NewProjectsServiceClient)
 }

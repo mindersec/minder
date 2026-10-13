@@ -46,7 +46,7 @@ func listCommand(cmd *cobra.Command, _ []string) error {
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	client, cleanup, err := GetProjectsClient(cmd)
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewProjectsServiceClient)
 	if err != nil {
 		return err
 	}
@@ -73,10 +73,10 @@ func listCommand(cmd *cobra.Command, _ []string) error {
 		}
 		cmd.Println(out)
 	case app.Table:
-		t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(), []string{"ID", "Name"}).SetAutoMerge(true)
+		t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(), []string{"Name", "ID"}).SetAutoMerge(true)
 
 		for _, v := range resp.Projects {
-			t.AddRow(v.ProjectId, v.Name)
+			t.AddRow(v.Name, v.ProjectId)
 		}
 		t.Render()
 	}

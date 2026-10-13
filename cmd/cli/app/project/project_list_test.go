@@ -3,10 +3,6 @@
 
 package project
 
-// JSON output is not tested because protojson formatting is not stable across environments.
-// This can cause flaky tests due to spacing differences.
-// See maintainer discussion in PR #6417.
-
 import (
 	"context"
 	"testing"
@@ -50,6 +46,12 @@ func TestProjectListCommand(t *testing.T) {
 			Args:           []string{"project", "list"},
 			MockSetup:      setupSuccess,
 			GoldenFileName: "project_list.table",
+		},
+		{
+			Name:           "list projects - json output",
+			Args:           []string{"project", "list", "-o", "json"},
+			MockSetup:      setupSuccess,
+			GoldenFileName: "project_list.json",
 		},
 		{
 			Name:           "list projects - yaml output",
