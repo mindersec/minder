@@ -17,15 +17,14 @@ import (
 	"github.com/mindersec/minder/internal/engine/entities"
 	minderlogger "github.com/mindersec/minder/internal/logger"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 const (
-	// DefaultExecutionTimeout is the timeout for execution of a set
-	// of profiles on an entity.
-	DefaultExecutionTimeout = serverconfig.DefaultExecutionTimeout
+	// defaultExecutionTimeout is the timeout for execution of a set of
+	// profiles on an entity when no positive timeout is supplied.
+	defaultExecutionTimeout = 5 * time.Minute
 	// ArtifactSignatureWaitPeriod is the waiting period for potential artifact signature to be available
 	// before proceeding with evaluation.
 	ArtifactSignatureWaitPeriod = 10 * time.Second
@@ -56,7 +55,7 @@ func NewExecutorEventHandler(
 	executionTimeout time.Duration,
 ) *ExecutorEventHandler {
 	if executionTimeout <= 0 {
-		executionTimeout = DefaultExecutionTimeout
+		executionTimeout = defaultExecutionTimeout
 	}
 	eh := &ExecutorEventHandler{
 		evt:                    evt,

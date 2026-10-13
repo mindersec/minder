@@ -84,7 +84,7 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 		evt,
 		[]message.HandlerMiddleware{},
 		executor,
-		engine.DefaultExecutionTimeout,
+		5*time.Minute,
 	)
 
 	t.Log("waiting for eventer to start")
@@ -136,7 +136,7 @@ func TestExecutorEventHandler_ShutdownCancelsNewEvents(t *testing.T) {
 		nil,
 		[]message.HandlerMiddleware{},
 		executor,
-		engine.DefaultExecutionTimeout,
+		5*time.Minute,
 	)
 
 	// Trigger shutdown
@@ -181,12 +181,12 @@ func TestExecutorEventHandler_ExecutionTimeout(t *testing.T) {
 		{
 			name:        "zero timeout uses the default",
 			timeout:     0,
-			wantTimeout: engine.DefaultExecutionTimeout,
+			wantTimeout: 5 * time.Minute,
 		},
 		{
 			name:        "negative timeout uses the default",
 			timeout:     -1 * time.Second,
-			wantTimeout: engine.DefaultExecutionTimeout,
+			wantTimeout: 5 * time.Minute,
 		},
 	}
 

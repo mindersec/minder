@@ -293,7 +293,7 @@ func AllInOneServerService(
 		evt,
 		executorMiddleware,
 		exec,
-		cfg.Events.GetExecutionTimeout(),
+		cfg.Events.ExecutionTimeout,
 	)
 
 	evt.ConsumeEvents(handler)

@@ -179,31 +179,7 @@ func TestReadDefaultConfig(t *testing.T) {
 	maxResponseBytes, err := cfg.DataSources.REST.GetMaxResponseBytes()
 	require.NoError(t, err)
 	require.Zero(t, maxResponseBytes)
-	require.Equal(t, serverconfig.DefaultExecutionTimeout, cfg.Events.ExecutionTimeout)
-	require.Equal(t, serverconfig.DefaultExecutionTimeout, cfg.Events.GetExecutionTimeout())
-}
-
-func TestEventConfigGetExecutionTimeout(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name  string
-		value time.Duration
-		want  time.Duration
-	}{
-		{name: "positive is used as configured", value: 30 * time.Second, want: 30 * time.Second},
-		{name: "zero uses the default", value: 0, want: serverconfig.DefaultExecutionTimeout},
-		{name: "negative uses the default", value: -1 * time.Second, want: serverconfig.DefaultExecutionTimeout},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			cfg := serverconfig.EventConfig{ExecutionTimeout: tt.value}
-			require.Equal(t, tt.want, cfg.GetExecutionTimeout())
-		})
-	}
+	require.Equal(t, 5*time.Minute, cfg.Events.ExecutionTimeout)
 }
 
 func TestRESTDataSourceConfigGetMaxResponseBytes(t *testing.T) {
