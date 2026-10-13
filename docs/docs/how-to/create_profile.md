@@ -49,6 +49,9 @@ Create a new file called `secret_scanning.yaml`.
 Add some basic information about the rule to the new file, such as the version,
 type, name, context, description and guidance.
 
+CLI tables render descriptions as Markdown at the available column width.
+Line breaks within a paragraph are reflowed; paragraphs and lists stay separate.
+
 ```yaml
 ---
 version: v1

@@ -4,6 +4,7 @@
 package table
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"strconv"
@@ -27,6 +28,8 @@ const (
 // Table is the interface for rendering CLI tables using the go-pretty engine.
 type Table interface {
 	AddRow(row ...string)
+	// AddRowWithFormatter formats one zero-based column after its width is assigned.
+	AddRowWithFormatter(column int, formatter func(string, int) string, row ...string)
 	AddRowWithColor(row ...layouts.ColoredColumn)
 	Render()
 	// SeparateRows ensures each row is clearly separated (probably because it is multi-line)
@@ -117,6 +120,31 @@ func (g *goPrettyTable) AddRow(row ...string) {
 	r := make(table.Row, len(row))
 	for i, val := range row {
 		r[i] = val
+	}
+	g.updateWidths(row)
+	g.t.AppendRow(r)
+}
+
+type formattedCell struct {
+	value     string
+	formatter func(string, int) string
+}
+
+func formatCell(value interface{}, width int) string {
+	if cell, ok := value.(formattedCell); ok {
+		return cell.formatter(cell.value, width)
+	}
+	return fmt.Sprint(value)
+}
+
+func (g *goPrettyTable) AddRowWithFormatter(column int, formatter func(string, int) string, row ...string) {
+	r := make(table.Row, len(row))
+	for i, val := range row {
+		if i == column {
+			r[i] = formattedCell{value: val, formatter: formatter}
+		} else {
+			r[i] = val
+		}
 	}
 	g.updateWidths(row)
 	g.t.AppendRow(r)
@@ -214,6 +242,7 @@ func (g *goPrettyTable) Render() {
 
 	configs := make([]table.ColumnConfig, len(g.headers))
 	for i := range g.headers {
+		width := assignedWidths[i]
 		configs[i] = table.ColumnConfig{
 			Number:           i + 1,
 			WidthMax:         assignedWidths[i],
@@ -221,6 +250,9 @@ func (g *goPrettyTable) Render() {
 			WidthMaxEnforcer: wrapLines,
 			AutoMerge:        g.autoMerge,
 			VAlign:           text.VAlignTop,
+			Transformer: func(value interface{}) string {
+				return formatCell(value, width)
+			},
 		}
 	}
 

@@ -95,7 +95,7 @@ func listCommand(cmd *cobra.Command, _ []string) error {
 		table := initializeTableForList(cmd.OutOrStdout())
 
 		for _, rt := range resp.RuleTypes {
-			table.AddRow(
+			table.AddRowWithFormatter(2, renderDescription,
 				appendRuleTypePropertiesToName(rt),
 				rt.GetDef().GetInEntity(),
 				rt.Description,

@@ -77,3 +77,23 @@ func TestWrapLinesPreservesColors(t *testing.T) {
 		require.True(t, strings.HasSuffix(wrapLines(input, 18), "\nplain"))
 	}
 }
+
+//nolint:paralleltest // Sets the terminal width through the environment.
+func TestFormattedCellUsesFinalWidth(t *testing.T) {
+	t.Setenv("COLUMNS", "40")
+	var out bytes.Buffer
+	tbl := New(Simple, layouts.Default, &out, []string{"Details"})
+	calls := 0
+	tbl.AddRowWithFormatter(0, func(value string, width int) string {
+		calls++
+		require.Equal(t, "markdown", value)
+		require.Equal(t, 38, width)
+		return "formatted\nparagraph"
+	}, "markdown")
+	tbl.AddRow("key:\n  value")
+	tbl.Render()
+	require.Equal(t, 1, calls)
+	require.Contains(t, out.String(), "formatted")
+	require.Contains(t, out.String(), "paragraph")
+	require.Regexp(t, `key:[^\n]*\n   value`, out.String())
+}
