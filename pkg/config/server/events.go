@@ -9,6 +9,11 @@ import (
 	"github.com/mindersec/minder/pkg/config"
 )
 
+// DefaultExecutionTimeout is the timeout for execution of a set of profiles
+// on an entity when events.execution_timeout is not set to a positive value.
+// It must match the default tag on EventConfig.ExecutionTimeout.
+const DefaultExecutionTimeout = 5 * time.Minute
+
 // EventConfig is the configuration for minder's eventing system.
 type EventConfig struct {
 	// Driver is the driver used to store events
@@ -26,6 +31,18 @@ type EventConfig struct {
 	Aggregator AggregatorConfig `mapstructure:"aggregator"`
 	// Nats is the configuration when using NATS as the event driver
 	Nats NatsConfig `mapstructure:"nats"`
+	// ExecutionTimeout bounds the evaluation of a set of profiles on one entity.
+	// Values of zero or below use the built-in default.
+	ExecutionTimeout time.Duration `mapstructure:"execution_timeout" default:"5m"`
+}
+
+// GetExecutionTimeout returns the configured execution timeout, or
+// DefaultExecutionTimeout if the configured value is not positive.
+func (c *EventConfig) GetExecutionTimeout() time.Duration {
+	if c.ExecutionTimeout > 0 {
+		return c.ExecutionTimeout
+	}
+	return DefaultExecutionTimeout
 }
 
 // GoChannelEventConfig is the configuration for the go channel event driver

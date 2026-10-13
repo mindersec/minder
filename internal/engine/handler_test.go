@@ -21,6 +21,7 @@ import (
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/eventer"
 	"github.com/mindersec/minder/pkg/eventer/constants"
+	mockevents "github.com/mindersec/minder/pkg/eventer/interfaces/mock"
 )
 
 func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
@@ -83,6 +84,7 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 		evt,
 		[]message.HandlerMiddleware{},
 		executor,
+		engine.DefaultExecutionTimeout,
 	)
 
 	t.Log("waiting for eventer to start")
@@ -134,6 +136,7 @@ func TestExecutorEventHandler_ShutdownCancelsNewEvents(t *testing.T) {
 		nil,
 		[]message.HandlerMiddleware{},
 		executor,
+		engine.DefaultExecutionTimeout,
 	)
 
 	// Trigger shutdown
@@ -150,4 +153,113 @@ func TestExecutorEventHandler_ShutdownCancelsNewEvents(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	handler.Wait()
+}
+
+func TestExecutorEventHandler_ExecutionTimeout(t *testing.T) {
+	t.Parallel()
+
+	// deadlineTolerance allows for scheduling delays between the test reading
+	// the clock and the handler creating the execution context.
+	deadlineTolerance := 5 * time.Second
+
+	tests := []struct {
+		name    string
+		timeout time.Duration
+		// blockUntilDone makes the executor run until its context is done,
+		// like an evaluation which takes longer than the timeout.
+		blockUntilDone bool
+		wantTimeout    time.Duration
+		wantErr        error
+	}{
+		{
+			name:           "custom timeout cancels a long evaluation",
+			timeout:        1 * time.Second,
+			blockUntilDone: true,
+			wantTimeout:    1 * time.Second,
+			wantErr:        context.DeadlineExceeded,
+		},
+		{
+			name:        "zero timeout uses the default",
+			timeout:     0,
+			wantTimeout: engine.DefaultExecutionTimeout,
+		},
+		{
+			name:        "negative timeout uses the default",
+			timeout:     -1 * time.Second,
+			wantTimeout: engine.DefaultExecutionTimeout,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			eiw := entities.NewEntityInfoWrapper().
+				WithProviderID(uuid.New()).
+				WithProjectID(uuid.New()).
+				WithRepository(&minderv1.Repository{
+					Name:     "test",
+					RepoId:   123,
+					CloneUrl: "github.com/foo/bar.git",
+				}).WithID(uuid.New()).
+				WithExecutionID(uuid.New())
+
+			// These are written by the executor before it closes evalDone.
+			var deadline time.Time
+			var hasDeadline bool
+			var evalErr error
+			evalDone := make(chan struct{})
+
+			executor := mockengine.NewMockExecutor(ctrl)
+			executor.EXPECT().
+				EvalEntityEvent(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(ctx context.Context, _ *entities.EntityInfoWrapper) error {
+					defer close(evalDone)
+					deadline, hasDeadline = ctx.Deadline()
+					if tt.blockUntilDone {
+						<-ctx.Done()
+						evalErr = ctx.Err()
+					}
+					return evalErr
+				})
+
+			publisher := mockevents.NewMockPublisher(ctrl)
+			publisher.EXPECT().
+				Publish(constants.TopicQueueEntityFlush, gomock.Any()).
+				Return(nil)
+
+			handler := engine.NewExecutorEventHandler(
+				ctx,
+				publisher,
+				[]message.HandlerMiddleware{},
+				executor,
+				tt.timeout,
+			)
+
+			msg, err := eiw.BuildMessage()
+			require.NoError(t, err, "expected no error")
+
+			start := time.Now()
+			require.NoError(t, handler.HandleEntityEvent(msg), "expected no error")
+
+			select {
+			case <-evalDone:
+			case <-time.After(5 * time.Second):
+				t.Fatal("timed out waiting for the executor to return")
+			}
+
+			require.True(t, hasDeadline, "expected the execution context to have a deadline")
+			require.WithinDuration(t, start.Add(tt.wantTimeout), deadline, deadlineTolerance)
+			require.ErrorIs(t, evalErr, tt.wantErr)
+
+			t.Log("waiting for executor to finish")
+			handler.Wait()
+		})
+	}
 }

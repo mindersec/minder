@@ -79,6 +79,7 @@ provider:
 events:
   driver: go-channel
   router_close_timeout: 10
+  execution_timeout: 5m
   go-channel: {}
 
 authz:
