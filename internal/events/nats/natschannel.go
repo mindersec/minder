@@ -37,8 +37,15 @@ func BuildNatsChannelDriver(cfg *serverconfig.EventConfig) (message.Publisher, m
 type cloudEventsNatsAdapter struct {
 	cfg  *serverconfig.NatsConfig
 	lock sync.Mutex
-	// Keep a cache of the topics we subscribe/publish to
-	topics map[string]topicState
+	// Keep a cache of the topics we subscribe/publish to. Publishing and
+	// subscribing use separate protocols, because only the subscribe side
+	// binds to the explicitly created consumer.
+	topics map[topicKey]topicState
+}
+
+type topicKey struct {
+	subject   string
+	subscribe bool
 }
 
 type topicState struct {
@@ -57,12 +64,12 @@ func (c *cloudEventsNatsAdapter) Close() error {
 	defer c.lock.Unlock()
 	// We want to try to close all the consumers, but some may fail
 	var gotErr error
-	for topic, state := range c.topics {
+	for key, state := range c.topics {
 		err := state.ceProtocol.Close(context.Background())
 		if err != nil {
 			gotErr = err
 		} else {
-			delete(c.topics, topic)
+			delete(c.topics, key)
 		}
 	}
 	return gotErr
@@ -77,10 +84,11 @@ func (c *cloudEventsNatsAdapter) ensureTopic(
 	defer c.lock.Unlock()
 
 	if c.topics == nil {
-		c.topics = make(map[string]topicState)
+		c.topics = make(map[topicKey]topicState)
 	}
 
-	state, ok := c.topics[topic]
+	key := topicKey{subject: topic, subscribe: subscribe}
+	state, ok := c.topics[key]
 	if ok {
 		return &state, nil
 	}
@@ -121,7 +129,7 @@ func (c *cloudEventsNatsAdapter) ensureTopic(
 		ceProtocol: *consumer,
 		ceClient:   ceSub,
 	}
-	c.topics[topic] = state
+	c.topics[key] = state
 	return &state, nil
 }
 
@@ -184,7 +192,6 @@ func (c *cloudEventsNatsAdapter) Subscribe(ctx context.Context, topic string) (<
 	// consumer names cannot contain "."
 	queueConsumer := strings.ReplaceAll(subject, ".", "-")
 
-	// TODO: should we have separate maps for producer & consumer?  I've lazily combined them here.
 	state, err := c.ensureTopic(ctx, subject, queueConsumer, true)
 	if err != nil {
 		return nil, err

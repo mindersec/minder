@@ -200,6 +200,93 @@ func TestNatsChannelSubscriberCloseKeepsConsumer(t *testing.T) {
 	}
 }
 
+// Publishing to a topic before subscribing to it from the same adapter must not
+// leave the subscriber on the publish-side protocol, which doesn't bind to the
+// explicitly created consumer.
+func TestNatsChannelPublishBeforeSubscribe(t *testing.T) {
+	t.Parallel()
+	server := natstest.RunRandClientPortServer()
+	require.NoError(t, server.EnableJetStream(&natsserver.JetStreamConfig{StoreDir: t.TempDir()}))
+	defer server.Shutdown()
+	cfg := serverconfig.EventConfig{
+		Nats: serverconfig.NatsConfig{
+			URL:    server.ClientURL(),
+			Prefix: "test",
+			Queue:  "minder",
+		},
+	}
+	ctx := context.Background()
+
+	conn, err := nats.Connect(server.ClientURL())
+	require.NoError(t, err)
+	defer conn.Close()
+	js, err := jetstream.New(conn)
+	require.NoError(t, err)
+
+	pub, sub, closer, err := BuildNatsChannelDriver(&cfg)
+	require.NoError(t, err)
+	defer closer()
+	defer func() { _ = pub.Close() }()
+
+	first := message.NewMessage("123", []byte(`{"msg":"hello"}`))
+	require.NoError(t, pub.Publish("test", first))
+	subCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	out, err := sub.Subscribe(subCtx, "test")
+	require.NoError(t, err)
+
+	// Subscribe returns before the subscription is made, so wait until the
+	// subscriber has joined the queue group on the consumer's deliver subject.
+	consumer, err := js.PushConsumer(ctx, "test", "test-test")
+	require.NoError(t, err, "Subscribe did not create the consumer")
+	deliver := consumer.CachedInfo().Config.DeliverSubject
+	require.Eventually(t, func() bool {
+		connz, err := server.Connz(&natsserver.ConnzOptions{Subscriptions: true})
+		if err != nil {
+			return false
+		}
+		for _, c := range connz.Conns {
+			if slices.Contains(c.Subs, deliver) {
+				return true
+			}
+		}
+		return false
+	}, 5*time.Second, 5*time.Millisecond, "subscriber did not bind to the consumer")
+
+	second := message.NewMessage("456", []byte(`{"msg":"hola"}`))
+	require.NoError(t, pub.Publish("test", second))
+	got := make([]*message.Message, 0, 2)
+	for len(got) < 2 {
+		select {
+		case m := <-out:
+			if !slices.ContainsFunc(got, func(g *message.Message) bool { return bytes.Equal(g.Payload, m.Payload) }) {
+				got = append(got, m)
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatalf("expected 2 messages, got %d", len(got))
+		}
+	}
+	slices.SortFunc(got, func(a, b *message.Message) int { return bytes.Compare(a.Payload, b.Payload) })
+	expectMessageEqual(t, first, got[0])
+	expectMessageEqual(t, second, got[1])
+
+	// The only consumer is the explicitly created one.
+	stream, err := js.Stream(ctx, "test")
+	require.NoError(t, err)
+	names := stream.ConsumerNames(ctx)
+	var consumers []string
+	for name := range names.Name() {
+		consumers = append(consumers, name)
+	}
+	require.NoError(t, names.Err())
+	require.Equal(t, []string{"test-test"}, consumers)
+
+	cancel()
+	require.NoError(t, sub.Close())
+	_, err = js.PushConsumer(ctx, "test", "test-test")
+	require.NoError(t, err, "closing the subscriber deleted the consumer")
+}
+
 func buildDriverPair(ctx context.Context, cfg serverconfig.EventConfig) (message.Publisher, message.Subscriber, common.DriverCloser, <-chan *message.Message, error) {
 	pub, sub, closer, err := BuildNatsChannelDriver(&cfg)
 	if err != nil {
