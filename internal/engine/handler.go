@@ -22,9 +22,9 @@ import (
 )
 
 const (
-	// DefaultExecutionTimeout is the timeout for execution of a set
-	// of profiles on an entity.
-	DefaultExecutionTimeout = 5 * time.Minute
+	// defaultExecutionTimeout is the timeout for execution of a set of
+	// profiles on an entity when no positive timeout is supplied.
+	defaultExecutionTimeout = 5 * time.Minute
 	// ArtifactSignatureWaitPeriod is the waiting period for potential artifact signature to be available
 	// before proceeding with evaluation.
 	ArtifactSignatureWaitPeriod = 10 * time.Second
@@ -37,6 +37,7 @@ type ExecutorEventHandler struct {
 	handlerMiddleware      []message.HandlerMiddleware
 	wgEntityEventExecution *sync.WaitGroup
 	executor               Executor
+	executionTimeout       time.Duration
 	// cancels are a set of cancel functions for current entity events in flight.
 	// This allows us to cancel rule evaluation directly when terminationContext
 	// is cancelled.
@@ -51,12 +52,17 @@ func NewExecutorEventHandler(
 	evt interfaces.Publisher,
 	handlerMiddleware []message.HandlerMiddleware,
 	executor Executor,
+	executionTimeout time.Duration,
 ) *ExecutorEventHandler {
+	if executionTimeout <= 0 {
+		executionTimeout = defaultExecutionTimeout
+	}
 	eh := &ExecutorEventHandler{
 		evt:                    evt,
 		wgEntityEventExecution: &sync.WaitGroup{},
 		handlerMiddleware:      handlerMiddleware,
 		executor:               executor,
+		executionTimeout:       executionTimeout,
 	}
 	go func() {
 		<-ctx.Done()
@@ -94,7 +100,6 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 	// should aim to remove this goroutine altogether and have the messaging system
 	// provide the parallelism.
 	// We _do_ still want to cancel on shutdown, however.
-	// TODO: Make this timeout configurable
 	msgCtx := context.WithoutCancel(msg.Context())
 	//nolint:gosec // this is called when we iterate over e.cancels
 	msgCtx, shutdownCancel := context.WithCancel(msgCtx)
@@ -128,7 +133,7 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 			}
 		}
 
-		ctx, cancel := context.WithTimeout(msgCtx, DefaultExecutionTimeout)
+		ctx, cancel := context.WithTimeout(msgCtx, e.executionTimeout)
 		defer cancel()
 		defer func() {
 			e.lock.Lock()

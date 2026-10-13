@@ -179,6 +179,7 @@ func TestReadDefaultConfig(t *testing.T) {
 	maxResponseBytes, err := cfg.DataSources.REST.GetMaxResponseBytes()
 	require.NoError(t, err)
 	require.Zero(t, maxResponseBytes)
+	require.Equal(t, 5*time.Minute, cfg.Events.ExecutionTimeout)
 }
 
 func TestRESTDataSourceConfigGetMaxResponseBytes(t *testing.T) {
