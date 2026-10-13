@@ -1,0 +1,16 @@
+results:
+  - artifactPk: "111"
+    createdAt: "2024-01-02T15:04:05Z"
+    name: artifact-1
+    owner: owner-1
+    repository: org/repo
+    type: container
+    visibility: public
+  - artifactPk: "222"
+    createdAt: "2024-01-03T16:00:00Z"
+    name: artifact-2
+    owner: owner-1
+    repository: org/repo
+    type: container
+    visibility: private
+

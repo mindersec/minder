@@ -1,0 +1,16 @@
+projectRoles:
+  - project:
+      name: test-project-1
+      projectId: 00000000-0000-0000-0000-000000000001
+    role:
+      name: admin
+  - project:
+      name: test-project-2
+      projectId: 00000000-0000-0000-0000-000000000002
+    role:
+      name: viewer
+user:
+  createdAt: "2024-01-01T00:00:00Z"
+  identitySubject: test-user-subject
+  updatedAt: "2024-01-02T00:00:00Z"
+

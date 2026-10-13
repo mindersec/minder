@@ -4,14 +4,18 @@
  PROFILE                    │ RULE                         │ RESULT  │ DETAILS                      
 ────────────────────────────┼──────────────────────────────┼─────────┼──────────────────────────────
  artifact-security-baseline │ Require artifact attestation │ failure │ Alert: artifact attestation  
-                            │                              │         │ alert is active URL:         
+                            │                              │         │ alert is active              
+                            │                              │         │ URL:                         
                             │                              │         │ https://example.com/alerts/a 
-                            │                              │         │ rtifact-111 Remediation:     
-                            │                              │         │ rebuild the artifact with    
-                            │                              │         │ attestations enabled URL:    
+                            │                              │         │ rtifact-111                  
+                            │                              │         │ Remediation: rebuild the     
+                            │                              │         │ artifact with attestations   
+                            │                              │         │ enabled                      
+                            │                              │         │ URL:                         
                             │                              │         │ https://example.com/remediat 
-                            │                              │         │ e/artifact-111 Details:      
-                            │                              │         │ artifact attestation is      
-                            │                              │         │ disabled for this image      
+                            │                              │         │ e/artifact-111               
+                            │                              │         │ Details: artifact            
+                            │                              │         │ attestation is disabled for  
+                            │                              │         │ this image                   
                             │                              │         │ Guidance: enable artifact    
                             │                              │         │ attestations before release  

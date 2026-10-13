@@ -8,11 +8,14 @@ Successfully created new profile named: mock-attestation-profile
             ├───────────────────────────┼──────────────────────────┼────────────────────────────────
             │ branch_protection_enabled │ branch: ""               │                                
 ────────────┼───────────────────────────┼──────────────────────────┼────────────────────────────────
- artifact   │ artifact_attestation_slsa │ name: fake-artifact-name │ event: - workflow_dispatch     
-            │                           │ tags: - mock-tag         │ runner_environment:            
-            │                           │                          │ mock-hosted signer_identity:   
+ artifact   │ artifact_attestation_slsa │ name: fake-artifact-name │ event:                         
+            │                           │ tags:                    │   - workflow_dispatch          
+            │                           │   - mock-tag             │ runner_environment:            
+            │                           │                          │ mock-hosted                    
+            │                           │                          │ signer_identity:               
             │                           │                          │ .github/workflows/mock-workflo 
-            │                           │                          │ w.yml workflow_ref:            
+            │                           │                          │ w.yml                          
+            │                           │                          │ workflow_ref:                  
             │                           │                          │ refs/heads/mock-branch         
             │                           │                          │ workflow_repository:           
             │                           │                          │ https://github.com/acme-corp/f 
