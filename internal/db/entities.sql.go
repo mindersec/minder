@@ -675,6 +675,52 @@ func (q *Queries) ListEntitiesAfterID(ctx context.Context, arg ListEntitiesAfter
 	return items, nil
 }
 
+const listEntitiesOriginatedFrom = `-- name: ListEntitiesOriginatedFrom :many
+
+SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
+WHERE originated_from = $1::uuid
+  AND ($2::entities IS NULL OR entity_type = $2)
+ORDER BY name
+`
+
+type ListEntitiesOriginatedFromParams struct {
+	ParentID   uuid.UUID    `json:"parent_id"`
+	EntityType NullEntities `json:"entity_type"`
+}
+
+// ListEntitiesOriginatedFrom retrieves all child entities that originated from a given parent entity.
+// Optionally filters by entity type when entity_type is not NULL.
+func (q *Queries) ListEntitiesOriginatedFrom(ctx context.Context, arg ListEntitiesOriginatedFromParams) ([]EntityInstance, error) {
+	rows, err := q.db.QueryContext(ctx, listEntitiesOriginatedFrom, arg.ParentID, arg.EntityType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []EntityInstance{}
+	for rows.Next() {
+		var i EntityInstance
+		if err := rows.Scan(
+			&i.ID,
+			&i.EntityType,
+			&i.Name,
+			&i.ProjectID,
+			&i.ProviderID,
+			&i.CreatedAt,
+			&i.OriginatedFrom,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const upsertProperty = `-- name: UpsertProperty :one
 INSERT INTO properties (
     entity_id,

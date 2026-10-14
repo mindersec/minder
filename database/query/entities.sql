@@ -124,6 +124,15 @@ WHERE entity_instances.provider_id = $1;
 SELECT * FROM entity_instances
 WHERE entity_instances.project_id = ANY(sqlc.arg(projects)::uuid[]);
 
+-- ListEntitiesOriginatedFrom retrieves all child entities that originated from a given parent entity.
+-- Optionally filters by entity type when entity_type is not NULL.
+
+-- name: ListEntitiesOriginatedFrom :many
+SELECT * FROM entity_instances
+WHERE originated_from = sqlc.arg(parent_id)::uuid
+  AND (sqlc.narg(entity_type)::entities IS NULL OR entity_type = sqlc.narg(entity_type))
+ORDER BY name;
+
 -- CountEntitiesByType counts all entities of a given type (across all projects/providers).
 
 -- name: CountEntitiesByType :one
