@@ -35,6 +35,7 @@ type testCaseRunner struct {
 	baseDir     string
 	predeclared starlark.StringDict
 	failures    []string
+	output      []string // lines emitted by print() during this test
 	ruleTypes   map[string]*minderv1.RuleType
 	usedRules   map[string]struct{}
 }
@@ -53,8 +54,10 @@ func (r *Runner) newTestCaseRunner(
 		usedRules:   make(map[string]struct{}),
 	}
 	tr.thread = &starlark.Thread{
-		Name:  name,
-		Print: func(_ *starlark.Thread, msg string) { fmt.Println(msg) },
+		Name: name,
+		// tr is a pointer; this closure always appends to tr.output,
+		// which is reset before each test in runOneTest.
+		Print: func(_ *starlark.Thread, msg string) { tr.output = append(tr.output, msg) },
 	}
 	starlarktest.SetReporter(tr.thread, tr)
 
@@ -87,8 +90,8 @@ type TestResult struct {
 	Name     string
 	Failures []string
 	Errors   []string
-
-	// TODO: collect print output from Rego print() and Starlark (print?)
+	// Output holds lines emitted by print() in Starlark or Rego during this test, in order.
+	Output []string
 
 	// EvaluatedRules is a set of rule names that were evaluated during the test.
 	EvaluatedRules map[string]struct{}
@@ -181,7 +184,7 @@ func (r *Runner) RunFile(filename string, src any, ruleTypes map[string]*minderv
 	base := filepath.Base(filename)
 	var results []TestResult
 	for name, fn := range testFns {
-		result := r.runOneTest(name, fn, fileSystem, baseDir, ruleTypes)
+		result := r.runOneTest(name, fn, tr)
 		result.Filename = base
 		results = append(results, result)
 	}
@@ -189,17 +192,20 @@ func (r *Runner) RunFile(filename string, src any, ruleTypes map[string]*minderv
 	return results, nil
 }
 
-func (r *Runner) runOneTest(
+func (*Runner) runOneTest(
 	name string,
 	fn *starlark.Function,
-	fileSystem fs.FS,
-	baseDir string,
-	ruleTypes map[string]*minderv1.RuleType,
+	tr *testCaseRunner,
 ) TestResult {
-	tr := r.newTestCaseRunner(name, fileSystem, baseDir, ruleTypes)
+	// tr is reused across all tests in this file; reset per-test state here.
+	// The Starlark thread is shared but safe: only top-level starlark.Call is made,
+	// so no per-test thread state leaks between runs.
+	tr.output = nil
+	tr.failures = nil
+	tr.usedRules = make(map[string]struct{})
+
 	result := TestResult{Name: name}
 
-	// TODO: capture output from print statements in Starlark and Rego
 	_, err := starlark.Call(tr.thread, fn, nil, nil)
 	if err != nil {
 		if evalErr, ok := errors.AsType[*starlark.EvalError](err); ok {
@@ -210,6 +216,7 @@ func (r *Runner) runOneTest(
 	}
 
 	result.Failures = append(result.Failures, tr.failures...)
+	result.Output = slices.Clone(tr.output)
 	result.EvaluatedRules = maps.Clone(tr.usedRules)
 
 	return result
