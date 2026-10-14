@@ -186,18 +186,8 @@ func printArtifact(
 			art.CreatedAt.AsTime().Format(time.RFC3339),
 		)
 		ta.Render()
-	case app.JSON:
-		out, err := util.GetJsonFromProto(pbArt)
-		if err != nil {
-			return cli.MessageAndError("Error getting json from proto", err)
-		}
-		cmd.Println(out)
-	case app.YAML:
-		out, err := util.GetYamlFromProto(pbArt)
-		if err != nil {
-			return cli.MessageAndError("Error getting yaml from proto", err)
-		}
-		cmd.Println(out)
+	case app.JSON, app.YAML:
+		return cli.PrintProto(cmd, format, pbArt)
 	}
 
 	return nil
@@ -243,14 +233,14 @@ func printEvalStatus(
 			if err != nil {
 				return cli.MessageAndError("Error indenting json", err)
 			}
-			cmd.Println(prettyBuffer.String())
+			fmt.Fprintln(cmd.OutOrStdout(), prettyBuffer.String())
 		} else {
 			raw := json.RawMessage(jsonArray)
 			yamlResult, err := jsonyaml.ConvertJsonToYaml(raw)
 			if err != nil {
 				return cli.MessageAndError("Error converting json to yaml", err)
 			}
-			cmd.Println(yamlResult)
+			fmt.Fprintln(cmd.OutOrStdout(), yamlResult)
 		}
 	}
 

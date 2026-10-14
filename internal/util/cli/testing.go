@@ -10,6 +10,7 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -122,12 +123,15 @@ func checkGoldenFile(t *testing.T, filename string, actual string) {
 	expected, err := os.ReadFile(goldenPath)
 	require.NoError(t, err, "could not read golden file. Run 'go test ./... -update' to generate it")
 
-	if json.Valid(expected) && json.Valid([]byte(actual)) {
+	expectedStr := strings.ReplaceAll(string(expected), "\r\n", "\n")
+	actualStr := strings.ReplaceAll(actual, "\r\n", "\n")
+
+	if json.Valid([]byte(expectedStr)) && json.Valid([]byte(actualStr)) {
 		// if it's valid json compare the objects (ignores spaces/newlines)
-		require.JSONEq(t, string(expected), actual, "JSON Output does not match golden file")
+		require.JSONEq(t, expectedStr, actualStr, "JSON Output does not match golden file")
 	} else {
 		// if it's a table, txt, or yaml fallback to exact string matching
-		require.Equal(t, string(expected), actual, "Output does not match golden file")
+		require.Equal(t, expectedStr, actualStr, "Output does not match golden file")
 	}
 }
 

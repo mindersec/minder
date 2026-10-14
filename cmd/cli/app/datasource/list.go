@@ -16,7 +16,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/internal/util/cli/table"
 	"github.com/mindersec/minder/internal/util/cli/table/layouts"
@@ -51,18 +50,8 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	}
 
 	switch format {
-	case app.JSON:
-		out, err := util.GetJsonFromProto(resp)
-		if err != nil {
-			return cli.MessageAndError("Error getting json from proto", err)
-		}
-		cmd.Println(out)
-	case app.YAML:
-		out, err := util.GetYamlFromProto(resp)
-		if err != nil {
-			return cli.MessageAndError("Error getting yaml from proto", err)
-		}
-		cmd.Println(out)
+	case app.JSON, app.YAML:
+		return cli.PrintProto(cmd, format, resp)
 	case app.Table:
 		t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(), []string{"Name", "Type", "Functions"}).SetAutoMerge(true)
 		for _, ds := range resp.GetDataSources() {

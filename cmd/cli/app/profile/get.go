@@ -12,7 +12,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/cmd/cli/app"
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -81,22 +80,14 @@ func getCommand(cmd *cobra.Command, _ []string) error {
 
 	switch format {
 	case app.YAML:
-		out, err := util.GetYamlFromProto(prof)
-		if err != nil {
-			return cli.MessageAndError("Error getting yaml from proto", err)
-		}
-		cmd.Println(out)
+		return cli.PrintProto(cmd, format, prof)
 	case app.JSON:
-		out, err := util.GetJsonFromProto(resp)
-		if err != nil {
-			return cli.MessageAndError("Error getting json from proto", err)
-		}
-		cmd.Println(out)
+		return cli.PrintProto(cmd, format, resp)
 	case app.Table:
 		settable := NewProfileSettingsTable(cmd.OutOrStdout())
 		RenderProfileSettingsTable(prof, settable)
 		settable.Render()
-		cmd.Println()
+		fmt.Fprintln(cmd.OutOrStdout())
 		table := NewProfileRulesTable(cmd.OutOrStdout())
 		table.SeparateRows()
 		RenderProfileRulesTable(prof, table)

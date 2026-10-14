@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/mindersec/minder/cmd/cli/app"
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -61,20 +60,9 @@ func listCommand(cmd *cobra.Command, _ []string) error {
 
 	switch format {
 	case app.JSON:
-		out, err := util.GetJsonFromProto(resp)
-		if err != nil {
-			return fmt.Errorf("error getting json from proto: %w", err)
-		}
-		cmd.Println(out)
+		return cli.PrintProto(cmd, format, resp)
 	case app.YAML:
-		for _, prof := range resp.GetProfiles() {
-			out, err := util.GetYamlFromProto(prof)
-			if err != nil {
-				return fmt.Errorf("error getting yaml from proto: %w", err)
-			}
-			cmd.Println("---")
-			cmd.Println(out)
-		}
+		return cli.PrintMultiProtoYAML(cmd, resp.GetProfiles())
 	case app.Table:
 		settable := NewProfileSettingsTable(cmd.OutOrStdout())
 		for _, v := range resp.Profiles {

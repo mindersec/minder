@@ -12,7 +12,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/cmd/cli/app"
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -85,17 +84,9 @@ func getCommand(cmd *cobra.Command, _ []string) error {
 	// handle output formatting
 	switch format {
 	case app.YAML:
-		out, err := util.GetYamlFromProto(rtype.GetRuleType())
-		if err != nil {
-			return cli.MessageAndError("Error getting yaml from proto", err)
-		}
-		cmd.Println(out)
+		return cli.PrintProto(cmd, format, rtype.GetRuleType())
 	case app.JSON:
-		out, err := util.GetJsonFromProto(rtype)
-		if err != nil {
-			return cli.MessageAndError("Error getting json from proto", err)
-		}
-		cmd.Println(out)
+		return cli.PrintProto(cmd, format, rtype)
 	case app.Table:
 		// initialize and render the table
 		table := initializeTableForOne(cmd.OutOrStdout())

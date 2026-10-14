@@ -14,7 +14,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/internal/util/cli/table"
 	"github.com/mindersec/minder/internal/util/cli/table/layouts"
@@ -62,18 +61,8 @@ func GetProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, con
 	}
 
 	switch format {
-	case app.JSON:
-		out, err := util.GetJsonFromProto(out.GetProvider())
-		if err != nil {
-			return err
-		}
-		cmd.Println(out)
-	case app.YAML:
-		out, err := util.GetYamlFromProto(out.GetProvider())
-		if err != nil {
-			return err
-		}
-		cmd.Println(out)
+	case app.JSON, app.YAML:
+		return cli.PrintProto(cmd, format, out.GetProvider())
 	case app.Table:
 		t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(), []string{"Key", "Value"})
 		p := out.GetProvider()
@@ -98,8 +87,6 @@ func GetProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, con
 	default:
 		return fmt.Errorf("output format %s not supported", format)
 	}
-
-	return nil
 }
 
 // mapToKvPairs converts a map to a list of key-value pairs

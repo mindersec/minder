@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -74,28 +73,22 @@ func GrantCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grp
 	}
 
 	switch format {
-	case app.JSON:
-		out, err := util.GetJsonFromProto(resp)
-		if err != nil {
-			return cli.MessageAndError("Error getting json from proto", err)
-		}
-		cmd.Println(out)
-	case app.YAML:
-		out, err := util.GetYamlFromProto(resp)
-		if err != nil {
-			return cli.MessageAndError("Error getting yaml from proto", err)
-		}
-		cmd.Println(out)
+	case app.JSON, app.YAML:
+		return cli.PrintProto(cmd, format, resp)
 	case app.Table:
-		cmd.Println(successMsg)
+		fmt.Fprintln(cmd.OutOrStdout(), successMsg)
 		if resp.Invitation != nil && resp.Invitation.Code != "" {
 			t := initializeTableForGrantListInvitations(cmd.OutOrStdout())
 			i := resp.Invitation
 			t.AddRow(i.Email, i.Role, i.SponsorDisplay, i.ExpiresAt.AsTime().Format(time.RFC3339))
 			t.Render()
-			cmd.Printf("\nThe invitee can accept it by running: \n\nminder auth invite accept %s\n", resp.Invitation.Code)
+			fmt.Fprintf(
+				cmd.OutOrStdout(),
+				"\nThe invitee can accept it by running: \n\nminder auth invite accept %s\n",
+				resp.Invitation.Code,
+			)
 			if resp.Invitation.InviteUrl != "" {
-				cmd.Printf("\nOr by visiting: %s\n", resp.Invitation.InviteUrl)
+				fmt.Fprintf(cmd.OutOrStdout(), "\nOr by visiting: %s\n", resp.Invitation.InviteUrl)
 			}
 		}
 	}
