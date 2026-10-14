@@ -72,8 +72,12 @@ func UpdateCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 		// If it was an invitation, print the invite details
 		if len(resp.Invitations) != 0 {
 			for _, r := range resp.Invitations {
-				fmt.Fprintf(cmd.OutOrStdout(), "Updated an invite for %s to %s on %s\n\nThe invitee can accept it by running: \n\nminder auth invite accept %s\n",
-					r.Email, r.Role, r.Project, r.Code)
+				fmt.Fprintf(
+					cmd.OutOrStdout(),
+					"Updated an invite for %s to %s on %s\n\n"+
+						"The invitee can accept it by running: \n\nminder auth invite accept %s\n",
+					r.Email, r.Role, r.Project, r.Code,
+				)
 				if r.InviteUrl != "" {
 					fmt.Fprintf(cmd.OutOrStdout(), "\nOr by visiting: %s\n", r.InviteUrl)
 				}

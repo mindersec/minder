@@ -81,7 +81,6 @@ func Execute() {
 }
 
 func init() {
-	RootCmd.SetOut(os.Stdout)
 	cobra.OnInitialize(initConfig)
 
 	// Register minder cli flags - gRPC client config and identity config

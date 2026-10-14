@@ -82,7 +82,11 @@ func GrantCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grp
 			i := resp.Invitation
 			t.AddRow(i.Email, i.Role, i.SponsorDisplay, i.ExpiresAt.AsTime().Format(time.RFC3339))
 			t.Render()
-			fmt.Fprintf(cmd.OutOrStdout(), "\nThe invitee can accept it by running: \n\nminder auth invite accept %s\n", resp.Invitation.Code)
+			fmt.Fprintf(
+				cmd.OutOrStdout(),
+				"\nThe invitee can accept it by running: \n\nminder auth invite accept %s\n",
+				resp.Invitation.Code,
+			)
 			if resp.Invitation.InviteUrl != "" {
 				fmt.Fprintf(cmd.OutOrStdout(), "\nOr by visiting: %s\n", resp.Invitation.InviteUrl)
 			}

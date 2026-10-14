@@ -14,6 +14,8 @@ import (
 )
 
 // PrintProto formats a protobuf message as JSON or YAML and writes it to cmd.OutOrStdout().
+// Note: It matches literal "json" and "yaml" strings rather than referencing app.JSON/app.YAML
+// constants to prevent an import cycle between internal/util/cli and cmd/cli/app.
 func PrintProto(cmd *cobra.Command, format string, msg proto.Message) error {
 	switch strings.ToLower(format) {
 	case "json":
