@@ -105,17 +105,9 @@ func (s *ruleTypeService) CreateRuleType(
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Project = projectID
 
-	if err := ruleType.Validate(); err != nil {
-		return nil, errors.Join(ErrRuleTypeInvalid, err)
-	}
-
-	regoVersion, err := s.validateAndDetectRegoVersion(ctx, ruleType)
+	regoVersion, err := s.validateRuleTypeCommon(ctx, ruleType)
 	if err != nil {
-		return nil, errors.Join(ErrRuleTypeInvalid, err)
-	}
-
-	if err := validateProviderTraits(ruleType); err != nil {
-		return nil, errors.Join(ErrRuleTypeInvalid, err)
+		return nil, err
 	}
 
 	if uuidLike.MatchString(ruleType.Name) {
@@ -206,17 +198,9 @@ func (s *ruleTypeService) UpdateRuleType(
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Project = projectID
 
-	if err := ruleType.Validate(); err != nil {
-		return nil, errors.Join(ErrRuleTypeInvalid, err)
-	}
-
-	regoVersion, err := s.validateAndDetectRegoVersion(ctx, ruleType)
+	regoVersion, err := s.validateRuleTypeCommon(ctx, ruleType)
 	if err != nil {
-		return nil, errors.Join(ErrRuleTypeInvalid, err)
-	}
-
-	if err := validateProviderTraits(ruleType); err != nil {
-		return nil, errors.Join(ErrRuleTypeInvalid, err)
+		return nil, err
 	}
 
 	ruleTypeName := ruleType.GetName()
@@ -393,6 +377,17 @@ func getRuleTypeSeverity(severity *pb.Severity) (*db.Severity, error) {
 	return &seval, nil
 }
 
+// validateTrustyEvalType blocks creation or update of rule types that use the
+// trusty evaluator when the trusty_evaluator feature flag is off.
+func (s *ruleTypeService) validateTrustyEvalType(ctx context.Context, ruleType *pb.RuleType) error {
+	if ruleType.GetDef().GetEval().GetType() == "trusty" {
+		if !flags.Bool(ctx, s.featureFlags, flags.TrustyEvaluator) {
+			return errors.New("trusty evaluator is disabled; enable the trusty_evaluator feature flag to use it")
+		}
+	}
+	return nil
+}
+
 func validateRuleUpdate(existingRecord *db.RuleType, newRuleType *pb.RuleType) error {
 	oldRuleType, err := RuleTypePBFromDB(existingRecord)
 	if err != nil {
@@ -482,4 +477,27 @@ func getAvailableDataSources(
 	}
 
 	return datasources, nil
+}
+
+// validateRuleTypeCommon runs the validation checks shared by both
+// CreateRuleType and UpdateRuleType, returning the detected rego version.
+func (s *ruleTypeService) validateRuleTypeCommon(ctx context.Context, ruleType *pb.RuleType) (string, error) {
+	if err := ruleType.Validate(); err != nil {
+		return "", errors.Join(ErrRuleTypeInvalid, err)
+	}
+
+	regoVersion, err := s.validateAndDetectRegoVersion(ctx, ruleType)
+	if err != nil {
+		return "", errors.Join(ErrRuleTypeInvalid, err)
+	}
+
+	if err := validateProviderTraits(ruleType); err != nil {
+		return "", errors.Join(ErrRuleTypeInvalid, err)
+	}
+
+	if err := s.validateTrustyEvalType(ctx, ruleType); err != nil {
+		return "", errors.Join(ErrRuleTypeInvalid, err)
+	}
+
+	return regoVersion, nil
 }
