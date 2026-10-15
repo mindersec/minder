@@ -44,6 +44,7 @@ func TestNatsChannel(t *testing.T) {
 	// N.B. This list is in alphabetical order
 	m1 := message.NewMessage("123", []byte(`{"msg":"hello"}`))
 	m1.Metadata.Set("foo", "bar")
+	m1.Metadata.Set("entity_id", "entity-123")
 	m2 := message.NewMessage("456", []byte(`{"msg":"hola"}`))
 	m3 := message.NewMessage("789", []byte(`{"msg":"konnichiwa"}`))
 	m4 := message.NewMessage("456", []byte(`{"msg":"ni hao"}`))
@@ -342,6 +343,9 @@ func expectMessageEqual(t *testing.T, want *message.Message, got *message.Messag
 	// got will have a bunch of additional CloudEvents metadata
 	if want.Metadata["foo"] != got.Metadata["foo"] {
 		t.Errorf("expected %v, got %v", want.Metadata, got.Metadata)
+	}
+	if want.Metadata.Get("entity_id") != got.Metadata.Get("ce-subject") {
+		t.Errorf("expected subject %q, got %q", want.Metadata.Get("entity_id"), got.Metadata.Get("ce-subject"))
 	}
 	if got.Metadata["ce-time"] == "" {
 		t.Errorf("expected ce-time to be set, got %v", got.Metadata)
