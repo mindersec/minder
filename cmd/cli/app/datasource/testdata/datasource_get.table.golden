@@ -1,0 +1,3 @@
+ NAME                               │ TYPE     │ FUNCTIONS                                          
+────────────────────────────────────┼──────────┼────────────────────────────────────────────────────
+ mock-github-rest                   │ rest     │ get_repo, list_releases                            
