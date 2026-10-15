@@ -265,6 +265,68 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 			err: "entity type ENTITY_UNSPECIFIED is not supported",
 		},
 		{
+			name: "artifact reconciliation task created",
+			input: &pb.CreateEntityReconciliationTaskRequest{
+				Entity: &pb.EntityTypedId{
+					Type: pb.Entity_ENTITY_ARTIFACTS,
+					Id:   repoUuid.String(),
+				},
+			},
+			entityContext: &engcontext.EntityContext{
+				Project: engcontext.Project{
+					ID: uuid.New(),
+				},
+				Provider: engcontext.Provider{
+					Name: ghProvider,
+				},
+			},
+			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
+				projId := entityContext.Project.ID
+				prov := entityContext.Provider.Name
+				setupTestingEntityContextValidation(store, projId, prov, uuid.New())
+				store.EXPECT().
+					GetEntityByID(gomock.Any(), repoUuid).
+					Return(db.EntityInstance{
+						ID:         repoUuid,
+						EntityType: db.EntitiesArtifact,
+						ProviderID: uuid.New(),
+						ProjectID:  projId,
+					}, nil)
+			},
+			err: "",
+		},
+		{
+			name: "pull request reconciliation task created",
+			input: &pb.CreateEntityReconciliationTaskRequest{
+				Entity: &pb.EntityTypedId{
+					Type: pb.Entity_ENTITY_PULL_REQUESTS,
+					Id:   repoUuid.String(),
+				},
+			},
+			entityContext: &engcontext.EntityContext{
+				Project: engcontext.Project{
+					ID: uuid.New(),
+				},
+				Provider: engcontext.Provider{
+					Name: ghProvider,
+				},
+			},
+			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
+				projId := entityContext.Project.ID
+				prov := entityContext.Provider.Name
+				setupTestingEntityContextValidation(store, projId, prov, uuid.New())
+				store.EXPECT().
+					GetEntityByID(gomock.Any(), repoUuid).
+					Return(db.EntityInstance{
+						ID:         repoUuid,
+						EntityType: db.EntitiesPullRequest,
+						ProviderID: uuid.New(),
+						ProjectID:  projId,
+					}, nil)
+			},
+			err: "",
+		},
+		{
 			name: "nil entity",
 			input: &pb.CreateEntityReconciliationTaskRequest{
 				Entity: nil,

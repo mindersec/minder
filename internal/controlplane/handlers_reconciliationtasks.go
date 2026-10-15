@@ -41,11 +41,29 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 		return nil, status.Error(codes.InvalidArgument, "entity is required")
 	}
 
-	// TODO: Support other entity types, replace with switch and update remainder.
-	if entity.GetType() != pb.Entity_ENTITY_REPOSITORIES {
+	var entityType db.Entities
+	var topic string
+
+	switch entity.GetType() {
+	case pb.Entity_ENTITY_REPOSITORIES:
+		entityType = db.EntitiesRepository
+		topic = constants.TopicQueueReconcileRepoInit
+	case pb.Entity_ENTITY_ARTIFACTS:
+		entityType = db.EntitiesArtifact
+		topic = constants.TopicQueueReconcileEntityAdd
+	case pb.Entity_ENTITY_PULL_REQUESTS:
+		entityType = db.EntitiesPullRequest
+		topic = constants.TopicQueueReconcileEntityAdd
+	case pb.Entity_ENTITY_UNSPECIFIED,
+		pb.Entity_ENTITY_BUILD_ENVIRONMENTS,
+		pb.Entity_ENTITY_RELEASE,
+		pb.Entity_ENTITY_PIPELINE_RUN,
+		pb.Entity_ENTITY_TASK_RUN,
+		pb.Entity_ENTITY_BUILD:
+		return nil, status.Errorf(codes.InvalidArgument, "entity type %s is not supported", entity.GetType())
+	default:
 		return nil, status.Errorf(codes.InvalidArgument, "entity type %s is not supported", entity.GetType())
 	}
-	entityType := db.EntitiesRepository
 
 	if entity.GetId() == "" {
 		// Look up ID given name
@@ -66,14 +84,10 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 		entity.Id = dbEntity.ID.String()
 	}
 
-	var msg *message.Message
-	var topic string
-
-	msg, err = getRepositoryReconciliationMessage(ctx, s.store, entity.GetId(), entityCtx)
+	msg, err := getRepositoryReconciliationMessage(ctx, s.store, entity.GetId(), entityCtx)
 	if err != nil {
 		return nil, err
 	}
-	topic = constants.TopicQueueReconcileRepoInit
 
 	// This is a non-fatal error, so we'll just log it and continue with the next ones
 	if err := s.evt.Publish(topic, msg); err != nil {
