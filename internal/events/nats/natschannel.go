@@ -206,7 +206,7 @@ func sendEvent(
 	event.SetID(msg.UUID)
 	event.SetType(eventType)
 	event.SetSource("minder") // The system which generated the event.  The Minder URL would be nice here.
-	event.SetSubject("TODO")  // This *should* represent the entity, but we don't have a standard field for it yet.
+	event.SetSubject(msg.Metadata.Get("entity_id"))
 
 	// All our current payloads are encoded JSON; we need to unmarshal
 	payload := map[string]any{}
