@@ -13,7 +13,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -66,27 +65,21 @@ func UpdateCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	}
 
 	switch format {
-	case app.JSON:
-		out, err := util.GetJsonFromProto(resp)
-		if err != nil {
-			return cli.MessageAndError("Error getting json from proto", err)
-		}
-		cmd.Println(out)
-	case app.YAML:
-		out, err := util.GetYamlFromProto(resp)
-		if err != nil {
-			return cli.MessageAndError("Error getting yaml from proto", err)
-		}
-		cmd.Println(out)
+	case app.JSON, app.YAML:
+		return cli.PrintProto(cmd, format, resp)
 	case app.Table:
-		cmd.Println(successMsg)
+		fmt.Fprintln(cmd.OutOrStdout(), successMsg)
 		// If it was an invitation, print the invite details
 		if len(resp.Invitations) != 0 {
 			for _, r := range resp.Invitations {
-				cmd.Printf("Updated an invite for %s to %s on %s\n\nThe invitee can accept it by running: \n\nminder auth invite accept %s\n",
-					r.Email, r.Role, r.Project, r.Code)
+				fmt.Fprintf(
+					cmd.OutOrStdout(),
+					"Updated an invite for %s to %s on %s\n\n"+
+						"The invitee can accept it by running: \n\nminder auth invite accept %s\n",
+					r.Email, r.Role, r.Project, r.Code,
+				)
 				if r.InviteUrl != "" {
-					cmd.Printf("\nOr by visiting: %s\n", r.InviteUrl)
+					fmt.Fprintf(cmd.OutOrStdout(), "\nOr by visiting: %s\n", r.InviteUrl)
 				}
 			}
 			return nil

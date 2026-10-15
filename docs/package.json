@@ -27,7 +27,7 @@
     "@mdx-js/react": "3.1.1",
     "clsx": "^2.1.1",
     "docusaurus-protobuffet": "^0.3.3",
-    "mobx": "^7.0.5",
+    "mobx": "^7.0.6",
     "prism-react-renderer": "^2.4.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
@@ -41,7 +41,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-mdx": "^3.6.2",
     "eslint-plugin-react": "^7.37.5",
-    "globals": "^17.12.0",
+    "globals": "^17.13.0",
     "markdownlint-cli2": "0.23.3",
     "prettier": "3.9.9",
     "typescript-eslint": "^8.54.0"

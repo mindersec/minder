@@ -68,14 +68,14 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 func outputDeleteResult(cmd *cobra.Command, format, id, name string) error {
 	switch format {
 	case app.JSON:
-		cmd.Println(`{"status": "success"}`)
+		fmt.Fprintln(cmd.OutOrStdout(), `{"status": "success"}`)
 	case app.YAML:
-		cmd.Println("status: success")
+		fmt.Fprintln(cmd.OutOrStdout(), "status: success")
 	default:
 		if id != "" {
-			cmd.Printf("Successfully deleted data source with ID: %s\n", id)
+			fmt.Fprintf(cmd.OutOrStdout(), "Successfully deleted data source with ID: %s\n", id)
 		} else {
-			cmd.Printf("Successfully deleted data source with Name: %s\n", name)
+			fmt.Fprintf(cmd.OutOrStdout(), "Successfully deleted data source with Name: %s\n", name)
 		}
 	}
 	return nil

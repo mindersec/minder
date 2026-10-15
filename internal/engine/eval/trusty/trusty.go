@@ -20,9 +20,11 @@ import (
 	"github.com/mindersec/minder/internal/constants"
 	"github.com/mindersec/minder/internal/engine/eval/pr_actions"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
+	eoptions "github.com/mindersec/minder/internal/engine/options"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/flags"
 )
 
 const (
@@ -34,9 +36,18 @@ const (
 
 // Evaluator is the trusty evaluator
 type Evaluator struct {
-	cli      interfaces.GitHubIssuePRClient
-	endpoint string
-	client   trusty.Trusty
+	cli          interfaces.GitHubIssuePRClient
+	endpoint     string
+	client       trusty.Trusty
+	featureFlags flags.Interface
+}
+
+var _ eoptions.SupportsFlags = (*Evaluator)(nil)
+
+// SetFlagsClient sets the openfeature client in the Evaluator struct.
+func (e *Evaluator) SetFlagsClient(client flags.Interface) error {
+	e.featureFlags = client
+	return nil
 }
 
 // NewTrustyEvaluator creates a new trusty evaluator
@@ -86,6 +97,12 @@ func (e *Evaluator) Eval(
 	_ protoreflect.ProtoMessage,
 	res *interfaces.Ingested,
 ) (*interfaces.EvaluationResult, error) {
+	if !flags.Bool(ctx, e.featureFlags, flags.TrustyEvaluator) {
+		// The Trusty API has been shut down. This evaluator is disabled by default.
+		// Enable the trusty_evaluator feature flag to re-enable it.
+		return nil, fmt.Errorf("unsupported rule type engine: trusty evaluator is disabled")
+	}
+
 	// Extract the dependency list from the PR
 	prDependencies, err := readPullRequestDependencies(res)
 	if err != nil {

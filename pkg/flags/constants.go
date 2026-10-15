@@ -19,4 +19,7 @@ const (
 	// RegoV1RefuseV0 rejects V0-only Rego when creating or updating rule
 	// types.
 	RegoV1RefuseV0 Experiment = "rego_v1_refuse_v0"
+	// TrustyEvaluator enables the trusty evaluator. Defaults to off as the
+	// Trusty API has been shut down.
+	TrustyEvaluator Experiment = "trusty_evaluator"
 )
