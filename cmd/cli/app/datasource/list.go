@@ -4,7 +4,6 @@
 package datasource
 
 import (
-	"context"
 	"fmt"
 	"iter"
 	"maps"
@@ -13,7 +12,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util/cli"
@@ -26,12 +24,30 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List data sources",
 	Long:  `The datasource list subcommand lets you list all data sources within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(listCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+
+		format := viper.GetString("output")
+
+		// Ensure the output format is supported
+		if !app.IsOutputFormatSupported(format) {
+			return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
+		}
+
+		return nil
+	},
+	RunE: listCommand,
 }
 
 // listCommand is the datasource list subcommand
-func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewDataSourceServiceClient(conn)
+func listCommand(cmd *cobra.Command, _ []string) error {
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewDataSourceServiceClient)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
 
 	project := viper.GetString("project")
 	format := viper.GetString("output")
@@ -40,7 +56,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	resp, err := client.ListDataSources(ctx, &minderv1.ListDataSourcesRequest{
+	resp, err := client.ListDataSources(cmd.Context(), &minderv1.ListDataSourcesRequest{
 		Context: &minderv1.ContextV2{
 			ProjectId: project,
 		},
@@ -53,7 +69,10 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	case app.JSON, app.YAML:
 		return cli.PrintProto(cmd, format, resp)
 	case app.Table:
-		t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(), []string{"Name", "Type", "Functions"}).SetAutoMerge(true)
+		t := table.New(
+			table.Simple, layouts.Default, cmd.OutOrStdout(),
+			[]string{"Name", "Type", "Functions"},
+		).SetAutoMerge(true)
 		for _, ds := range resp.GetDataSources() {
 			var functions iter.Seq[string]
 			switch driver := ds.Driver.(type) {
@@ -66,8 +85,6 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 			t.AddRow(ds.Name, ds.GetDriverType(), strings.Join(slices.Sorted(functions), "\n"))
 		}
 		t.Render()
-	default:
-		return fmt.Errorf("unsupported output format: %s", format)
 	}
 
 	return nil
