@@ -20,3 +20,10 @@ world
 
 def test_fail_txtar_invalid_arg():
     txtar(123)
+
+def test_print_output_captured():
+    print("hello from starlark")
+    print("second line")
+
+def test_print_other():
+    print("only in this test")

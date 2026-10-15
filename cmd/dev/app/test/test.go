@@ -99,10 +99,22 @@ func formatFailuresHuman(cmd *cobra.Command, results []ruletest.TestRun) {
 				for _, f := range res.Failures {
 					cmd.Printf("  - %s\n", f)
 				}
+				if len(res.Output) > 0 {
+					cmd.Printf("  output:\n")
+					for _, line := range res.Output {
+						cmd.Printf("    %s\n", line)
+					}
+				}
 			} else if len(res.Errors) > 0 {
 				cmd.Printf("ERROR: %s/%s\n", res.Filename, res.Name)
 				for _, e := range res.Errors {
 					cmd.Printf("  - %s\n", e)
+				}
+				if len(res.Output) > 0 {
+					cmd.Printf("  output:\n")
+					for _, line := range res.Output {
+						cmd.Printf("    %s\n", line)
+					}
 				}
 			} else {
 				cmd.Printf("PASS: %s/%s\n", res.Filename, res.Name)

@@ -100,3 +100,85 @@ func TestLoadRulesFromDirEmptyRego(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "empty.rego")
 }
+
+func TestPrintOutputCaptured(t *testing.T) {
+	t.Parallel()
+	r := NewRunner()
+	results, err := r.RunFile("testdata/builtins_test.star", nil, nil)
+	require.NoError(t, err)
+
+	var printTest *TestResult
+	for i := range results {
+		if results[i].Name == "test_print_output_captured" {
+			printTest = &results[i]
+			break
+		}
+	}
+	require.NotNil(t, printTest, "test_print_output_captured not found")
+	assert.True(t, printTest.Passed())
+	assert.Equal(t, []string{"hello from starlark", "second line"}, printTest.Output)
+}
+
+func TestPrintOutputIsolatedBetweenTests(t *testing.T) {
+	t.Parallel()
+	r := NewRunner()
+	results, err := r.RunFile("testdata/builtins_test.star", nil, nil)
+	require.NoError(t, err)
+
+	outputs := make(map[string][]string)
+	for _, res := range results {
+		outputs[res.Name] = res.Output
+	}
+
+	assert.Equal(t, []string{"hello from starlark", "second line"}, outputs["test_print_output_captured"])
+	assert.Equal(t, []string{"only in this test"}, outputs["test_print_other"])
+}
+
+func TestRegoPrintOutputCaptured(t *testing.T) {
+	t.Parallel()
+	r := NewRunner()
+
+	ruleTypes, err := loadRulesFromDir("testdata")
+	require.NoError(t, err)
+
+	results, err := r.RunFile("testdata/print_test.star", nil, ruleTypes)
+	require.NoError(t, err)
+
+	var regoTest *TestResult
+	for i := range results {
+		if results[i].Name == "test_rego_print_captured" {
+			regoTest = &results[i]
+			break
+		}
+	}
+	require.NotNil(t, regoTest, "test_rego_print_captured not found")
+	assert.Contains(t, regoTest.Output, "hello from rego")
+}
+
+func TestEvaluatedRulesTrackedCorrectly(t *testing.T) {
+	t.Parallel()
+	r := NewRunner()
+
+	ruleTypes, err := loadRulesFromDir("testdata")
+	require.NoError(t, err)
+
+	results, err := r.RunFile("testdata/print_test.star", nil, ruleTypes)
+	require.NoError(t, err)
+
+	var regoTest *TestResult
+	for i := range results {
+		if results[i].Name == "test_rego_print_captured" {
+			regoTest = &results[i]
+			break
+		}
+	}
+	require.NotNil(t, regoTest, "test_rego_print_captured not found")
+	assert.Contains(t, regoTest.EvaluatedRules, "print_rule",
+		"EvaluatedRules should contain print_rule after eval() call")
+
+	run := TestRun{
+		LoadedRules: []string{"print_rule"},
+		Results:     results,
+	}
+	assert.Empty(t, run.UncoveredRules(), "print_rule should not appear as uncovered")
+}
