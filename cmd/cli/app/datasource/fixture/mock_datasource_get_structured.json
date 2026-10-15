@@ -1,0 +1,19 @@
+{
+  "data_source": {
+    "name": "mock-security-docs",
+    "version": "v1",
+    "type": "data-source",
+    "context": {
+      "project_id": "00000000-0000-0000-0000-000000000001"
+    },
+    "structured": {
+      "def": {
+        "security_policy": {
+          "path": {
+            "file_name": "SECURITY.md"
+          }
+        }
+      }
+    }
+  }
+}
