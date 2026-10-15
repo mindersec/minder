@@ -9,9 +9,11 @@ import (
 	"io/fs"
 	"strings"
 
+	"gopkg.in/yaml.v3"
+
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/fileconvert"
 	"github.com/mindersec/minder/pkg/mindpak"
-	"github.com/mindersec/minder/pkg/profiles"
 )
 
 // BundleReader provides a high-level interface for accessing the contents of
@@ -82,7 +84,7 @@ func (b *bundleReader) GetProfile(name string) (*v1.Profile, error) {
 	defer file.Close()
 
 	// parse profile from YAML
-	profile, err := profiles.ParseYAML(file)
+	profile, err := fileconvert.ReadResourceTyped[*v1.Profile](yaml.NewDecoder(file))
 	if err != nil {
 		return nil, fmt.Errorf("error parsing profile yaml: %w", err)
 	}

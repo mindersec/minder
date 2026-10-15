@@ -9,8 +9,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
+	"gopkg.in/yaml.v3"
 
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/fileconvert"
 	"github.com/mindersec/minder/pkg/profiles"
 )
 
@@ -92,7 +94,7 @@ func compareStructs(t *testing.T, a *structpb.Struct, b *structpb.Struct) {
 	}
 }
 
-func TestParseYAML(t *testing.T) {
+func TestReadResourceTyped(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -310,15 +312,15 @@ repository:
 
 			r := strings.NewReader(tt.profile)
 
-			got, err := profiles.ParseYAML(r)
+			got, err := fileconvert.ReadResourceTyped[*minderv1.Profile](yaml.NewDecoder(r))
 			if tt.wantErr {
-				require.Error(t, err, "ParseYAML should have errored")
+				require.Error(t, err, "ReadResourceTyped should have errored")
 				if tt.errIs != nil {
-					require.ErrorIs(t, err, tt.errIs, "ParseYAML should have errored with the expected error")
+					require.ErrorIs(t, err, tt.errIs, "ReadResourceTyped should have errored with the expected error")
 				}
 				return
 			}
-			require.NoError(t, err, "ParseYAML should not have errored")
+			require.NoError(t, err, "ReadResourceTyped should not have errored")
 
 			compareProfiles(t, tt.want, got)
 		})
