@@ -15,6 +15,130 @@ import (
 	"github.com/mindersec/minder/internal/util/rand"
 )
 
+func Test_ListEntitiesOriginatedFrom(t *testing.T) {
+	t.Parallel()
+
+	seed := time.Now().UnixNano()
+	org := createRandomOrganization(t)
+	proj := createRandomProject(t, org.ID)
+	prov := createRandomProvider(t, proj.ID)
+
+	parent, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+		EntityType:     EntitiesRepository,
+		Name:           rand.RandomName(seed),
+		ProjectID:      proj.ID,
+		ProviderID:     prov.ID,
+		OriginatedFrom: uuid.NullUUID{},
+	})
+	require.NoError(t, err)
+
+	otherParent, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+		EntityType:     EntitiesRepository,
+		Name:           rand.RandomName(seed + 1),
+		ProjectID:      proj.ID,
+		ProviderID:     prov.ID,
+		OriginatedFrom: uuid.NullUUID{},
+	})
+	require.NoError(t, err)
+
+	child1, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+		EntityType: EntitiesArtifact,
+		Name:       rand.RandomName(seed + 2),
+		ProjectID:  proj.ID,
+		ProviderID: prov.ID,
+		OriginatedFrom: uuid.NullUUID{
+			UUID:  parent.ID,
+			Valid: true,
+		},
+	})
+	require.NoError(t, err)
+
+	child2, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+		EntityType: EntitiesPullRequest,
+		Name:       rand.RandomName(seed + 3),
+		ProjectID:  proj.ID,
+		ProviderID: prov.ID,
+		OriginatedFrom: uuid.NullUUID{
+			UUID:  parent.ID,
+			Valid: true,
+		},
+	})
+	require.NoError(t, err)
+
+	// child of a different parent — must not appear in results for parent
+	_, err = testQueries.CreateEntity(context.Background(), CreateEntityParams{
+		EntityType: EntitiesArtifact,
+		Name:       rand.RandomName(seed + 4),
+		ProjectID:  proj.ID,
+		ProviderID: prov.ID,
+		OriginatedFrom: uuid.NullUUID{
+			UUID:  otherParent.ID,
+			Valid: true,
+		},
+	})
+	require.NoError(t, err)
+
+	t.Run("returns all children when no type filter", func(t *testing.T) {
+		t.Parallel()
+
+		children, err := testQueries.ListEntitiesOriginatedFrom(context.Background(), ListEntitiesOriginatedFromParams{
+			ParentID:   parent.ID,
+			EntityType: NullEntities{},
+		})
+		require.NoError(t, err)
+		require.Len(t, children, 2)
+
+		ids := []uuid.UUID{children[0].ID, children[1].ID}
+		require.Contains(t, ids, child1.ID)
+		require.Contains(t, ids, child2.ID)
+	})
+
+	t.Run("filters by entity type", func(t *testing.T) {
+		t.Parallel()
+
+		children, err := testQueries.ListEntitiesOriginatedFrom(context.Background(), ListEntitiesOriginatedFromParams{
+			ParentID:   parent.ID,
+			EntityType: NullEntities{Entities: EntitiesArtifact, Valid: true},
+		})
+		require.NoError(t, err)
+		require.Len(t, children, 1)
+		require.Equal(t, child1.ID, children[0].ID)
+	})
+
+	t.Run("excludes children of a different parent", func(t *testing.T) {
+		t.Parallel()
+
+		children, err := testQueries.ListEntitiesOriginatedFrom(context.Background(), ListEntitiesOriginatedFromParams{
+			ParentID:   parent.ID,
+			EntityType: NullEntities{},
+		})
+		require.NoError(t, err)
+		for _, c := range children {
+			require.Equal(t, uuid.NullUUID{UUID: parent.ID, Valid: true}, c.OriginatedFrom)
+		}
+	})
+
+	t.Run("returns empty for entity with no children", func(t *testing.T) {
+		t.Parallel()
+
+		childless, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+			EntityType:     EntitiesRepository,
+			Name:           rand.RandomName(seed + 5),
+			ProjectID:      proj.ID,
+			ProviderID:     prov.ID,
+			OriginatedFrom: uuid.NullUUID{},
+		})
+		require.NoError(t, err)
+
+		children, err := testQueries.ListEntitiesOriginatedFrom(context.Background(), ListEntitiesOriginatedFromParams{
+			ParentID:   childless.ID,
+			EntityType: NullEntities{},
+		})
+		require.NoError(t, err)
+		require.Empty(t, children)
+	})
+}
+
 func Test_EntityCrud(t *testing.T) {
 	t.Parallel()
 

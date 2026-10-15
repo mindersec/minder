@@ -213,6 +213,9 @@ type Querier interface {
 	// ListEntitiesAfterID retrieves entities of a given type after a cursor ID, for pagination.
 	// This is used for cursor-based iteration over all entities (e.g., in the reminder service).
 	ListEntitiesAfterID(ctx context.Context, arg ListEntitiesAfterIDParams) ([]EntityInstance, error)
+	// ListEntitiesOriginatedFrom retrieves all child entities that originated from a given parent entity.
+	// Optionally filters by entity type when entity_type is not NULL.
+	ListEntitiesOriginatedFrom(ctx context.Context, arg ListEntitiesOriginatedFromParams) ([]EntityInstance, error)
 	ListEvaluationHistory(ctx context.Context, arg ListEvaluationHistoryParams) ([]ListEvaluationHistoryRow, error)
 	ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error)
 	// ListExceptions lists active exceptions for a project

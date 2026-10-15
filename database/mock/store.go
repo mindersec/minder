@@ -1957,6 +1957,21 @@ func (mr *MockStoreMockRecorder) ListEntitiesAfterID(ctx, arg any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEntitiesAfterID", reflect.TypeOf((*MockStore)(nil).ListEntitiesAfterID), ctx, arg)
 }
 
+// ListEntitiesOriginatedFrom mocks base method.
+func (m *MockStore) ListEntitiesOriginatedFrom(ctx context.Context, arg db.ListEntitiesOriginatedFromParams) ([]db.EntityInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListEntitiesOriginatedFrom", ctx, arg)
+	ret0, _ := ret[0].([]db.EntityInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListEntitiesOriginatedFrom indicates an expected call of ListEntitiesOriginatedFrom.
+func (mr *MockStoreMockRecorder) ListEntitiesOriginatedFrom(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEntitiesOriginatedFrom", reflect.TypeOf((*MockStore)(nil).ListEntitiesOriginatedFrom), ctx, arg)
+}
+
 // ListEvaluationHistory mocks base method.
 func (m *MockStore) ListEvaluationHistory(ctx context.Context, arg db.ListEvaluationHistoryParams) ([]db.ListEvaluationHistoryRow, error) {
 	m.ctrl.T.Helper()
