@@ -5,10 +5,7 @@
 package invite
 
 import (
-	"context"
-
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -16,23 +13,27 @@ import (
 
 // inviteAcceptCmd represents the accept command
 var inviteAcceptCmd = &cobra.Command{
-	Use:     "accept",
-	Short:   "Accept a pending invitation",
-	Long:    `Accept a pending invitation for the current minder user`,
-	PreRunE: cli.EnsureCredentials,
-	RunE:    cli.GRPCClientWrapRunE(inviteAcceptCommand),
-	Args:    cobra.ExactArgs(1),
+	Use:   "accept",
+	Short: "Accept a pending invitation",
+	Long:  `Accept a pending invitation for the current minder user`,
+	RunE:  inviteAcceptCommand,
+	Args:  cobra.ExactArgs(1),
 }
 
 // inviteAcceptCommand is the "invite accept" subcommand
-func inviteAcceptCommand(ctx context.Context, cmd *cobra.Command, args []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewUserServiceClient(conn)
+func inviteAcceptCommand(cmd *cobra.Command, args []string) error {
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewUserServiceClient)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer cleanup()
+
 	code := args[0]
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	res, err := client.ResolveInvitation(ctx, &minderv1.ResolveInvitationRequest{
+	res, err := client.ResolveInvitation(cmd.Context(), &minderv1.ResolveInvitationRequest{
 		Accept: true,
 		Code:   code,
 	})
