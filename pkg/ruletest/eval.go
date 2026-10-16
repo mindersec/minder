@@ -17,6 +17,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/mindersec/minder/internal/datasources"
+	"github.com/mindersec/minder/internal/engine/eval/rego"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
@@ -112,7 +113,12 @@ func (tr *testCaseRunner) builtinEval(
 		return nil, fmt.Errorf("invalid data_sources argument: %w", err)
 	}
 
-	rte, err := rtengine.NewRuleTypeEngine(ctx, rt, tk, eoptions.WithDataSources(dsRegistry))
+	rte, err := rtengine.NewRuleTypeEngine(ctx, rt, tk,
+		eoptions.WithDataSources(dsRegistry),
+		rego.WithPrintHook(func(msg string) {
+			tr.output = append(tr.output, msg)
+		}),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize rule type engine: %w", err)
 	}

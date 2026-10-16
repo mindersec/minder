@@ -1,0 +1,35 @@
+# SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
+version: v1
+type: rule-type
+name: print_rule
+context:
+  project: 00000000-0000-0000-0000-000000000000
+description: Rule that uses print() for testing output capture.
+def:
+  in_entity: repository
+  rule_schema:
+    properties:
+      required_value:
+        type: string
+  ingest:
+    type: rest
+    rest:
+      endpoint: '/repos/{{.Entity.Owner}}/{{.Entity.Name}}/settings'
+      parse: 'json'
+  eval:
+    type: rego
+    rego:
+      type: deny-by-default
+      def: |
+        package minder
+
+        import rego.v1
+
+        default allow := false
+
+        allow if {
+          print("hello from rego")
+          input.ingested.value == input.profile.required_value
+        }

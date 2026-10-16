@@ -6,14 +6,12 @@ package profiles
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"regexp"
 	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/sqlc-dev/pqtype"
 	"google.golang.org/protobuf/proto"
-	"gopkg.in/yaml.v3"
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/entities"
@@ -43,11 +41,6 @@ func (e *RuleValidationError) String() string {
 // Error implements error.Error
 func (e *RuleValidationError) Error() string {
 	return e.String()
-}
-
-// ParseYAML parses a YAML pipeline profile and validates it
-func ParseYAML(r io.Reader) (*pb.Profile, error) {
-	return fileconvert.ReadResourceTyped[*pb.Profile](yaml.NewDecoder(r))
 }
 
 // ReadProfileFromFile reads a pipeline profile from a file and returns it as a protobuf

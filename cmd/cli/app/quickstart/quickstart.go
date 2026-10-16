@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gopkg.in/yaml.v3"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/cmd/cli/app/auth"
@@ -26,7 +27,7 @@ import (
 	ghclient "github.com/mindersec/minder/internal/providers/github/clients"
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	"github.com/mindersec/minder/pkg/profiles"
+	"github.com/mindersec/minder/pkg/fileconvert"
 )
 
 const (
@@ -338,7 +339,7 @@ func loadCatalog(
 	}
 
 	// Load the profile from the embedded file system
-	p, err := profiles.ParseYAML(reader)
+	p, err := fileconvert.ReadResourceTyped[*minderv1.Profile](yaml.NewDecoder(reader))
 	if err != nil {
 		return cli.MessageAndError("error parsing profile", err)
 	}

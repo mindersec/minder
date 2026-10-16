@@ -1,0 +1,39 @@
+{
+  "dataSources":  [
+    {
+      "version":  "v1",
+      "type":  "data-source",
+      "context":  {
+        "projectId":  "00000000-0000-0000-0000-000000000001"
+      },
+      "name":  "mock-github-rest",
+      "rest":  {
+        "def":  {
+          "get_repo":  {
+            "endpoint":  "https://api.github.com/repos/{owner}/{repo}"
+          },
+          "list_releases":  {
+            "endpoint":  "https://api.github.com/repos/{owner}/{repo}/releases"
+          }
+        }
+      }
+    },
+    {
+      "version":  "v1",
+      "type":  "data-source",
+      "context":  {
+        "projectId":  "00000000-0000-0000-0000-000000000001"
+      },
+      "name":  "mock-security-docs",
+      "structured":  {
+        "def":  {
+          "security_policy":  {
+            "path":  {
+              "fileName":  "SECURITY.md"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

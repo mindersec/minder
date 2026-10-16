@@ -66,7 +66,7 @@ type Property struct {
 	Value string `xml:"value,attr"`
 }
 
-// Output represents the text output from a test case (currently not captured).
+// Output represents the text output from a test case.
 type Output struct {
 	Body string `xml:",cdata"`
 }
@@ -113,6 +113,9 @@ func AsJUnit(results []TestRun) JUnitTestSuites {
 					Message: "Test error",
 					Body:    strings.Join(res.Errors, "\n"),
 				}
+			}
+			if len(res.Output) > 0 {
+				tc.SystemOut = &Output{Body: strings.Join(res.Output, "\n")}
 			}
 
 			suite.TestCases = append(suite.TestCases, tc)

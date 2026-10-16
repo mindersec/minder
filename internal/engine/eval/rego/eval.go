@@ -62,14 +62,30 @@ type Input struct {
 }
 
 type hook struct {
+	fn func(string)
 }
 
-func (*hook) Print(_ print.Context, msg string) error {
-	fmt.Println(msg)
+func (h *hook) Print(_ print.Context, msg string) error {
+	h.fn(msg)
 	return nil
 }
 
 var _ print.Hook = (*hook)(nil)
+
+// WithPrintHook returns an Option that routes Rego print() output to fn
+// instead of stdout. It automatically enables print statements.
+func WithPrintHook(fn func(string)) interfaces.Option {
+	return func(eval interfaces.Evaluator) error {
+		e, ok := eval.(*Evaluator)
+		if ok {
+			e.regoOpts = append(e.regoOpts,
+				rego.EnablePrintStatements(true),
+				rego.PrintHook(&hook{fn: fn}),
+			)
+		}
+		return nil
+	}
+}
 
 // NewRegoEvaluator creates a new rego evaluator
 func NewRegoEvaluator(
@@ -100,8 +116,10 @@ func NewRegoEvaluator(
 		}
 	}
 
+	// Note: this block appends after WithPrintHook options are applied, so
+	// REGO_ENABLE_PRINT=true replaces any capture hook with stdout printing.
 	if os.Getenv(EnablePrintEnvVar) == "true" {
-		h := &hook{}
+		h := &hook{fn: func(msg string) { fmt.Println(msg) }}
 		eval.regoOpts = append(eval.regoOpts,
 			rego.EnablePrintStatements(true),
 			rego.PrintHook(h),

@@ -1,0 +1,20 @@
+{
+  "data_source": {
+    "name": "mock-github-rest",
+    "version": "v1",
+    "type": "data-source",
+    "context": {
+      "project_id": "00000000-0000-0000-0000-000000000001"
+    },
+    "rest": {
+      "def": {
+        "get_repo": {
+          "endpoint": "https://api.github.com/repos/{owner}/{repo}"
+        },
+        "list_releases": {
+          "endpoint": "https://api.github.com/repos/{owner}/{repo}/releases"
+        }
+      }
+    }
+  }
+}
