@@ -191,7 +191,7 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 					GetEntityByID(gomock.Any(), repoUuid).
 					Return(db.EntityInstance{}, sql.ErrNoRows)
 			},
-			err: "repository not found",
+			err: "entity not found",
 		},
 		{
 			name: "sql conn done",
@@ -240,7 +240,7 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 				prov := entityContext.Provider.Name
 				setupTestingEntityContextValidation(store, projId, prov, uuid.New())
 			},
-			err: "error parsing repository id",
+			err: "error parsing entity id",
 		},
 		{
 			name: "invalid entity type",

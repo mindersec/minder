@@ -84,7 +84,7 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 		entity.Id = dbEntity.ID.String()
 	}
 
-	msg, err := getRepositoryReconciliationMessage(ctx, s.store, entity.GetId(), entityCtx)
+	msg, err := getEntityReconciliationMessage(ctx, s.store, entity.GetId(), entityCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -97,35 +97,48 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 	return &pb.CreateEntityReconciliationTaskResponse{}, nil
 }
 
-func getRepositoryReconciliationMessage(ctx context.Context, store db.Store,
+func getEntityReconciliationMessage(ctx context.Context, store db.Store,
 	repoIdString string, entityCtx engcontext.EntityContext) (*message.Message, error) {
 	repoUUID, err := uuid.Parse(repoIdString)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error parsing repository id: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error parsing entity id: %v", err)
 	}
 
 	// Fetch entity by ID
 	ent, err := store.GetEntityByID(ctx, repoUUID)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, status.Errorf(codes.NotFound, "repository not found")
+		return nil, status.Errorf(codes.NotFound, "entity not found")
 	} else if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
+		return nil, status.Errorf(codes.Internal, "cannot read entity: %v", err)
 	}
 
 	// Verify project matches
 	if ent.ProjectID != entityCtx.Project.ID {
-		return nil, status.Errorf(codes.NotFound, "repository not found")
+		return nil, status.Errorf(codes.NotFound, "entity not found")
 	}
 
 	// Telemetry logging
 	logger.BusinessRecord(ctx).ProviderID = ent.ProviderID
 	logger.BusinessRecord(ctx).Project = ent.ProjectID
-	logger.BusinessRecord(ctx).Repository = ent.ID
 
-	msg, err := reconcilers.NewRepoReconcilerMessage(ent.ProviderID, ent.ID, ent.ProjectID)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error getting reconciler message: %v", err)
+	if ent.EntityType == db.EntitiesRepository {
+		logger.BusinessRecord(ctx).Repository = ent.ID
+		msg, err := reconcilers.NewRepoReconcilerMessage(ent.ProviderID, ent.ID, ent.ProjectID)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error getting reconciler message: %v", err)
+		}
+		return msg, nil
 	}
 
+	// For non-repository entities, use MinderEvent
+	minderEvt := reconcilers.NewMinderEvent().
+		WithProviderID(ent.ProviderID).
+		WithProjectID(ent.ProjectID).
+		WithEntityID(ent.ID)
+
+	msg := message.NewMessage(uuid.New().String(), nil)
+	if err := minderEvt.ToMessage(msg); err != nil {
+		return nil, status.Errorf(codes.Internal, "error getting reconciler message: %v", err)
+	}
 	return msg, nil
 }
