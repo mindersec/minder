@@ -4,13 +4,11 @@
 package project
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util/cli"
@@ -23,13 +21,31 @@ import (
 var projectCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a sub-project within a minder control plane",
-	Long:  `The list command lists the projects available to you within a minder control plane.`,
-	RunE:  cli.GRPCClientWrapRunE(createCommand),
+	Long:  `The create command creates a sub-project within a minder control plane.`,
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+
+		format := viper.GetString("output")
+
+		// Ensure the output format is supported
+		if !app.IsOutputFormatSupported(format) {
+			return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
+		}
+
+		return nil
+	},
+	RunE: createCommand,
 }
 
-// listCommand is the command for listing projects
-func createCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewProjectsServiceClient(conn)
+// createCommand is the command for creating sub-projects
+func createCommand(cmd *cobra.Command, _ []string) error {
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewProjectsServiceClient)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer cleanup()
 
 	format := viper.GetString("output")
 	project := viper.GetString("project")
@@ -39,7 +55,7 @@ func createCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	resp, err := client.CreateProject(ctx, &minderv1.CreateProjectRequest{
+	resp, err := client.CreateProject(cmd.Context(), &minderv1.CreateProjectRequest{
 		Context: &minderv1.Context{
 			Project: &project,
 		},
@@ -53,11 +69,12 @@ func createCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	case app.JSON, app.YAML:
 		return cli.PrintProto(cmd, format, resp)
 	case app.Table:
-		t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(), []string{"ID", "Name"})
+		t := table.New(
+			table.Simple, layouts.Default, cmd.OutOrStdout(),
+			[]string{"ID", "Name"},
+		)
 		t.AddRow(resp.Project.ProjectId, resp.Project.Name)
 		t.Render()
-	default:
-		return fmt.Errorf("unsupported output format: %s", format)
 	}
 
 	return nil
