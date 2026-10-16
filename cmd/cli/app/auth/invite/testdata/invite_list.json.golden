@@ -1,0 +1,14 @@
+{
+  "invitations": [
+    {
+      "role": "admin",
+      "email": "user@example.com",
+      "project": "00000000-0000-0000-0000-000000000001",
+      "code": "test-invite-code-123",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "expiresAt": "2024-01-15T00:00:00Z",
+      "sponsor": "sponsor-user-id",
+      "sponsorDisplay": "Alice Sponsor"
+    }
+  ]
+}
