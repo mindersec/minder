@@ -41,11 +41,29 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 		return nil, status.Error(codes.InvalidArgument, "entity is required")
 	}
 
-	// TODO: Support other entity types, replace with switch and update remainder.
-	if entity.GetType() != pb.Entity_ENTITY_REPOSITORIES {
+	var entityType db.Entities
+	var topic string
+
+	switch entity.GetType() {
+	case pb.Entity_ENTITY_REPOSITORIES:
+		entityType = db.EntitiesRepository
+		topic = constants.TopicQueueReconcileRepoInit
+	case pb.Entity_ENTITY_ARTIFACTS:
+		entityType = db.EntitiesArtifact
+		topic = constants.TopicQueueReconcileEntityAdd
+	case pb.Entity_ENTITY_PULL_REQUESTS:
+		entityType = db.EntitiesPullRequest
+		topic = constants.TopicQueueReconcileEntityAdd
+	case pb.Entity_ENTITY_UNSPECIFIED,
+		pb.Entity_ENTITY_BUILD_ENVIRONMENTS,
+		pb.Entity_ENTITY_RELEASE,
+		pb.Entity_ENTITY_PIPELINE_RUN,
+		pb.Entity_ENTITY_TASK_RUN,
+		pb.Entity_ENTITY_BUILD:
+		return nil, status.Errorf(codes.InvalidArgument, "entity type %s is not supported", entity.GetType())
+	default:
 		return nil, status.Errorf(codes.InvalidArgument, "entity type %s is not supported", entity.GetType())
 	}
-	entityType := db.EntitiesRepository
 
 	if entity.GetId() == "" {
 		// Look up ID given name
@@ -66,14 +84,10 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 		entity.Id = dbEntity.ID.String()
 	}
 
-	var msg *message.Message
-	var topic string
-
-	msg, err = getRepositoryReconciliationMessage(ctx, s.store, entity.GetId(), entityCtx)
+	msg, err := getEntityReconciliationMessage(ctx, s.store, entity.GetId(), entityCtx)
 	if err != nil {
 		return nil, err
 	}
-	topic = constants.TopicQueueReconcileRepoInit
 
 	// This is a non-fatal error, so we'll just log it and continue with the next ones
 	if err := s.evt.Publish(topic, msg); err != nil {
@@ -83,35 +97,48 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 	return &pb.CreateEntityReconciliationTaskResponse{}, nil
 }
 
-func getRepositoryReconciliationMessage(ctx context.Context, store db.Store,
+func getEntityReconciliationMessage(ctx context.Context, store db.Store,
 	repoIdString string, entityCtx engcontext.EntityContext) (*message.Message, error) {
 	repoUUID, err := uuid.Parse(repoIdString)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error parsing repository id: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error parsing entity id: %v", err)
 	}
 
 	// Fetch entity by ID
 	ent, err := store.GetEntityByID(ctx, repoUUID)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, status.Errorf(codes.NotFound, "repository not found")
+		return nil, status.Errorf(codes.NotFound, "entity not found")
 	} else if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
+		return nil, status.Errorf(codes.Internal, "cannot read entity: %v", err)
 	}
 
 	// Verify project matches
 	if ent.ProjectID != entityCtx.Project.ID {
-		return nil, status.Errorf(codes.NotFound, "repository not found")
+		return nil, status.Errorf(codes.NotFound, "entity not found")
 	}
 
 	// Telemetry logging
 	logger.BusinessRecord(ctx).ProviderID = ent.ProviderID
 	logger.BusinessRecord(ctx).Project = ent.ProjectID
-	logger.BusinessRecord(ctx).Repository = ent.ID
 
-	msg, err := reconcilers.NewRepoReconcilerMessage(ent.ProviderID, ent.ID, ent.ProjectID)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error getting reconciler message: %v", err)
+	if ent.EntityType == db.EntitiesRepository {
+		logger.BusinessRecord(ctx).Repository = ent.ID
+		msg, err := reconcilers.NewRepoReconcilerMessage(ent.ProviderID, ent.ID, ent.ProjectID)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error getting reconciler message: %v", err)
+		}
+		return msg, nil
 	}
 
+	// For non-repository entities, use MinderEvent
+	minderEvt := reconcilers.NewMinderEvent().
+		WithProviderID(ent.ProviderID).
+		WithProjectID(ent.ProjectID).
+		WithEntityID(ent.ID)
+
+	msg := message.NewMessage(uuid.New().String(), nil)
+	if err := minderEvt.ToMessage(msg); err != nil {
+		return nil, status.Errorf(codes.Internal, "error getting reconciler message: %v", err)
+	}
 	return msg, nil
 }
