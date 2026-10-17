@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // cursorDelimiter is the delimiter used to encode/decode cursors
@@ -104,4 +106,36 @@ func (c *ProviderCursor) String() string {
 		return ""
 	}
 	return EncodeValue(c.CreatedAt.Format(time.RFC3339Nano))
+}
+
+// EntityCursor is a cursor for paginating entity listings by UUID
+type EntityCursor struct {
+	ID string // UUID string of the last seen entity
+}
+
+// NewEntityCursor creates a new EntityCursor from an encoded cursor string.
+// An empty string returns a zero cursor (start from beginning).
+func NewEntityCursor(encodedCursor string) (*EntityCursor, error) {
+	if encodedCursor == "" {
+		return &EntityCursor{}, nil
+	}
+
+	cursor, err := DecodeValue(encodedCursor)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding entity cursor: %w", err)
+	}
+
+	if _, err := uuid.Parse(cursor); err != nil {
+		return nil, fmt.Errorf("invalid entity cursor (not a UUID): %w", err)
+	}
+
+	return &EntityCursor{ID: cursor}, nil
+}
+
+// String encodes the EntityCursor to a base64 string. Returns "" for zero cursor.
+func (c *EntityCursor) String() string {
+	if c == nil || c.ID == "" {
+		return ""
+	}
+	return EncodeValue(c.ID)
 }

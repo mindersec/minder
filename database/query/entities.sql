@@ -183,3 +183,17 @@ WHERE ei.entity_type = sqlc.arg(entity_type)
   AND (sqlc.arg(provider_id)::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ei.provider_id = sqlc.arg(provider_id))
   AND p.key = sqlc.arg(key)
   AND p.value @> sqlc.arg(value)::jsonb;
+-- GetEntitiesByTypePaginated retrieves entities of a given type with cursor-based pagination.
+-- The cursor is the UUID of the last seen entity (exclusive lower bound on id).
+-- Results are ordered by id ASC for stable pagination.
+-- A zero UUID cursor means start from the beginning.
+
+-- name: GetEntitiesByTypePaginated :many
+SELECT * FROM entity_instances
+WHERE entity_instances.entity_type = $1
+    AND entity_instances.provider_id = sqlc.arg(provider_id)
+    AND entity_instances.project_id = ANY(sqlc.arg(projects)::uuid[])
+    AND (sqlc.arg(cursor)::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+         OR entity_instances.id > sqlc.arg(cursor)::uuid)
+ORDER BY entity_instances.id ASC
+LIMIT sqlc.arg(page_size);
