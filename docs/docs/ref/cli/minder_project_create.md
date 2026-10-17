@@ -7,7 +7,7 @@ Create a sub-project within a minder control plane
 
 ### Synopsis
 
-The list command lists the projects available to you within a minder control plane.
+The create command creates a sub-project within a minder control plane.
 
 ```
 minder project create [flags]

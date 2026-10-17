@@ -1060,6 +1060,21 @@ func (mr *MockStoreMockRecorder) GetEntitiesByType(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntitiesByType", reflect.TypeOf((*MockStore)(nil).GetEntitiesByType), ctx, arg)
 }
 
+// GetEntitiesByTypePaginated mocks base method.
+func (m *MockStore) GetEntitiesByTypePaginated(ctx context.Context, arg db.GetEntitiesByTypePaginatedParams) ([]db.EntityInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEntitiesByTypePaginated", ctx, arg)
+	ret0, _ := ret[0].([]db.EntityInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEntitiesByTypePaginated indicates an expected call of GetEntitiesByTypePaginated.
+func (mr *MockStoreMockRecorder) GetEntitiesByTypePaginated(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntitiesByTypePaginated", reflect.TypeOf((*MockStore)(nil).GetEntitiesByTypePaginated), ctx, arg)
+}
+
 // GetEntitiesWithProps mocks base method.
 func (m *MockStore) GetEntitiesWithProps(ctx context.Context, arg db.GetEntitiesWithPropsParams) ([]db.GetEntitiesWithPropsRow, error) {
 	m.ctrl.T.Helper()
@@ -2575,19 +2590,4 @@ func (m *MockStore) WithTransactionErr(fn func(db.ExtendQuerier) error) error {
 func (mr *MockStoreMockRecorder) WithTransactionErr(fn any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithTransactionErr", reflect.TypeOf((*MockStore)(nil).WithTransactionErr), fn)
-}
-
-// GetEntitiesByTypePaginated mocks base method.
-func (m *MockStore) GetEntitiesByTypePaginated(ctx context.Context, arg db.GetEntitiesByTypePaginatedParams) ([]db.EntityInstance, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEntitiesByTypePaginated", ctx, arg)
-	ret0, _ := ret[0].([]db.EntityInstance)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetEntitiesByTypePaginated indicates an expected call of GetEntitiesByTypePaginated.
-func (mr *MockStoreMockRecorder) GetEntitiesByTypePaginated(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntitiesByTypePaginated", reflect.TypeOf((*MockStore)(nil).GetEntitiesByTypePaginated), ctx, arg)
 }
