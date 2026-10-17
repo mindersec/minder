@@ -44,11 +44,13 @@ func ResetEntireTree(c *cobra.Command) {
 
 // CmdTestCase is the shared struct for all rule type CLI tests
 type CmdTestCase struct {
-	Name           string
-	Args           []string
-	MockSetup      func(t *testing.T, ctrl *gomock.Controller) context.Context
-	GoldenFileName string
-	ExpectedError  string
+	Name                 string
+	Args                 []string
+	MockSetup            func(t *testing.T, ctrl *gomock.Controller) context.Context
+	GoldenFileName       string
+	StderrGoldenFileName string
+	ExpectedStderr       string
+	ExpectedError        string
 }
 
 // RunCmdTests iterates over a slice of test cases and executes them
@@ -82,9 +84,10 @@ func RunCmdTests(
 				ctx = tc.MockSetup(t, ctrl)
 			}
 
-			buf := new(bytes.Buffer)
-			rootCmd.SetOut(buf)
-			rootCmd.SetErr(buf)
+			stdoutBuf := new(bytes.Buffer)
+			stderrBuf := new(bytes.Buffer)
+			rootCmd.SetOut(stdoutBuf)
+			rootCmd.SetErr(stderrBuf)
 			rootCmd.SetContext(ctx)
 
 			rootCmd.SetArgs(tc.Args)
@@ -101,7 +104,17 @@ func RunCmdTests(
 			}
 
 			require.NoError(t, err, "command execution should not fail")
-			checkGoldenFile(t, tc.GoldenFileName, buf.String())
+			if tc.GoldenFileName != "" {
+				checkGoldenFile(t, tc.GoldenFileName, stdoutBuf.String())
+			}
+
+			if tc.StderrGoldenFileName != "" {
+				checkGoldenFile(t, tc.StderrGoldenFileName, stderrBuf.String())
+			}
+
+			if tc.ExpectedStderr != "" {
+				assert.Contains(t, stderrBuf.String(), tc.ExpectedStderr)
+			}
 		})
 	}
 }
