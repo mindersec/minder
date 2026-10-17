@@ -19,12 +19,14 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/entities/models"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/projects/features"
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/providers/github"
 	"github.com/mindersec/minder/internal/repositories"
 	"github.com/mindersec/minder/internal/util"
+	"github.com/mindersec/minder/internal/util/cursor"
 	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
@@ -137,7 +139,7 @@ func (s *Server) repoCreateInfoFromUpstreamEntityRef(
 // This function will typically be called by the client to get a list of
 // repositories that are registered present in the minder database
 func (s *Server) ListRepositories(ctx context.Context,
-	_ *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
+	in *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
 	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 	providerName := entityCtx.Provider.Name
@@ -154,8 +156,23 @@ func (s *Server) ListRepositories(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
 	}
 
+	// Decode cursor
+	entityCursor, err := cursor.NewEntityCursor(in.GetCursor())
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid cursor: %v", err)
+	}
+
+	cursorID := uuid.Nil
+	if entityCursor.ID != "" {
+		cursorID, err = uuid.Parse(entityCursor.ID)
+		if err != nil {
+			return nil, util.UserVisibleError(codes.InvalidArgument, "invalid cursor ID")
+		}
+	}
+
 	// Fetch repositories using the service
-	repoEntities, err := s.repos.ListRepositories(ctx, projectID, provider.ID)
+	// Clamp limit to RepoPageSize — enforced identically in the service layer.
+	repoEntities, err := s.repos.ListRepositories(ctx, projectID, provider.ID, cursorID, repositories.RepoPageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -191,11 +208,19 @@ func (s *Server) ListRepositories(ctx context.Context,
 		results = append(results, pbRepo)
 	}
 
-	// TODO: Implement cursor-based pagination using entity IDs
-	// For now, return all results without pagination
+	// Build next cursor: if DB returned a full page, there may be more results.
+	// We compare against repoEntities (raw DB results) not results (proto-converted)
+	// because proto conversion errors can cause len(results) < len(repoEntities)
+	// even when a full page was returned, which would cause us to miss the cursor.
+	var nextCursor string
+	// Use the same page size constant the service uses — single source of truth.
+	if int64(len(repoEntities)) == int64(repositories.RepoPageSize) {
+		lastID := repoEntities[len(repoEntities)-1].Entity.ID
+		nextCursor = (&cursor.EntityCursor{ID: lastID.String()}).String()
+	}
 
 	resp.Results = results
-	resp.Cursor = ""
+	resp.Cursor = nextCursor
 
 	return &resp, nil
 }
@@ -390,20 +415,33 @@ func (s *Server) fetchRepositoriesForProvider(
 		return nil, err
 	}
 
-	registeredRepos, err := s.repos.ListRepositories(
-		ctx,
-		projectID,
-		providerID,
-	)
-	if err != nil {
-		zerolog.Ctx(ctx).Error().
-			Str("project_id", projectID.String()).
-			Str("provider_id", providerID.String()).
-			Err(err).Msg("cannot list registered repositories")
-		return nil, util.UserVisibleError(
-			codes.Internal,
-			"cannot list registered repositories",
+	// Paginate through all registered repos, a single page may not be enough.
+	var registeredRepos []*models.EntityWithProperties
+	cursorID := uuid.Nil
+	for {
+		page, err := s.repos.ListRepositories(
+			ctx,
+			projectID,
+			providerID,
+			cursorID,
+			repositories.RepoPageSize,
 		)
+		if err != nil {
+			zerolog.Ctx(ctx).Error().
+				Str("project_id", projectID.String()).
+				Str("provider_id", providerID.String()).
+				Err(err).Msg("cannot list registered repositories")
+			return nil, util.UserVisibleError(
+				codes.Internal,
+				"cannot list registered repositories",
+			)
+		}
+		registeredRepos = append(registeredRepos, page...)
+		// If we got fewer than a full page, we've seen everything.
+		if len(page) < int(repositories.RepoPageSize) {
+			break
+		}
+		cursorID = page[len(page)-1].Entity.ID
 	}
 
 	registered := make(map[string]bool)

@@ -122,6 +122,8 @@ func WithSuccessfulListRepositories(
 				gomock.Any(),
 				gomock.Any(),
 				gomock.Any(),
+				gomock.Any(),
+				gomock.Any(),
 			).
 			Return(repositories, nil).AnyTimes()
 	}
@@ -134,7 +136,32 @@ func WithFailedListRepositories(err error) func(RepoServiceMock) {
 				gomock.Any(),
 				gomock.Any(),
 				gomock.Any(),
+				gomock.Any(),
+				gomock.Any(),
 			).
 			Return(nil, err).AnyTimes()
+	}
+}
+
+// WithSuccessfulListRepositoriesInPages sets up the mock to return different
+// pages on successive calls, simulating cursor-based pagination.
+// Each call to ListRepositories returns the next page in the sequence.
+func WithSuccessfulListRepositoriesInPages(
+	pages [][]*models.EntityWithProperties,
+) func(RepoServiceMock) {
+	return func(mock RepoServiceMock) {
+		for _, page := range pages {
+			p := page // capture loop variable
+			mock.EXPECT().
+				ListRepositories(
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).
+				Return(p, nil).
+				Times(1)
+		}
 	}
 }
