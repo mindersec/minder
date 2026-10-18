@@ -117,6 +117,9 @@ type TelemetryStore struct {
 
 	// Metadata about the project tombstone
 	ProjectTombstone ProjectTombstone `json:"project_tombstone"`
+
+	// FeatureFlags records feature flag evaluations during this operation.
+	FeatureFlags map[string]bool `json:"feature_flags,omitempty"`
 }
 
 // AddRuleEval is a convenience method to add a rule evaluation result to the telemetry store.
@@ -148,6 +151,17 @@ func (ts *TelemetryStore) AddRuleEval(
 	}
 
 	ts.Evals = append(ts.Evals, red)
+}
+
+// AddFeatureFlag records a feature flag evaluation in the telemetry store.
+func (ts *TelemetryStore) AddFeatureFlag(flag string, value bool) {
+	if ts == nil {
+		return
+	}
+	if ts.FeatureFlags == nil {
+		ts.FeatureFlags = make(map[string]bool)
+	}
+	ts.FeatureFlags[flag] = value
 }
 
 // BusinessRecord provides the ability to store an observation about the current
@@ -218,6 +232,9 @@ func (ts *TelemetryStore) Record(e *zerolog.Event) *zerolog.Event {
 	}
 	if len(ts.Evals) > 0 {
 		e.Any("rules", ts.Evals)
+	}
+	if len(ts.FeatureFlags) > 0 {
+		e.Any("feature_flags", ts.FeatureFlags)
 	}
 	e.Str("telemetry", "true")
 	// Note: we explicitly don't call e.Send() here so that Send() occurs in the
