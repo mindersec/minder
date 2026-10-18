@@ -100,12 +100,11 @@ func RunCmdTests(
 			if tc.ExpectedError != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.ExpectedError)
-				return
-			}
-
-			require.NoError(t, err, "command execution should not fail")
-			if tc.GoldenFileName != "" {
-				checkGoldenFile(t, tc.GoldenFileName, stdoutBuf.String())
+			} else {
+				require.NoError(t, err, "command execution should not fail")
+				if tc.GoldenFileName != "" {
+					checkGoldenFile(t, tc.GoldenFileName, stdoutBuf.String())
+				}
 			}
 
 			if tc.StderrGoldenFileName != "" {

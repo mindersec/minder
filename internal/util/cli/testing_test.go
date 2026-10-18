@@ -10,8 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+//nolint:paralleltest // Cannot run in parallel because it swaps global Viper/Stdout state
 func TestRunCmdTests_StdoutAndStderrSeparation(t *testing.T) {
-	t.Parallel()
 
 	rootCmd := &cobra.Command{Use: "root"}
 	subCmd := &cobra.Command{
@@ -35,9 +35,10 @@ func TestRunCmdTests_StdoutAndStderrSeparation(t *testing.T) {
 			ExpectedStderr: "warning message on stderr",
 		},
 		{
-			Name:          "command returns error and stderr",
-			Args:          []string{"testcmd", "error"},
-			ExpectedError: "command failed",
+			Name:           "command returns error and stderr",
+			Args:           []string{"testcmd", "error"},
+			ExpectedStderr: "standard error output",
+			ExpectedError:  "command failed",
 		},
 	}
 
