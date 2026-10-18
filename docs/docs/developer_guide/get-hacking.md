@@ -35,6 +35,9 @@ The CLI is available in the `cmd/cli` directory. You can also use the pre-built
 go run cmd/cli/main.go --help
 ```
 
+See the [CLI Output Stream Conventions](./cli_streams.md) guide for conventions on
+standard output (`stdout`) vs standard error (`stderr`).
+
 ## APIs
 
 The APIs are defined in protobuf
