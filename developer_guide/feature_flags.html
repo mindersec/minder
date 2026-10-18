@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.10.2">
 <title data-rh="true">Using feature flags | Minder docs</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://docs.mindersec.dev/img/Minder_darkMode.png"><meta data-rh="true" name="twitter:image" content="https://docs.mindersec.dev/img/Minder_darkMode.png"><meta data-rh="true" property="og:url" content="https://docs.mindersec.dev/developer_guide/feature_flags"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Using feature flags | Minder docs"><meta data-rh="true" name="description" content="Minder is using OpenFeature for feature flags. For"><meta data-rh="true" property="og:description" content="Minder is using OpenFeature for feature flags. For"><link data-rh="true" rel="icon" href="/img/favicon.png"><link data-rh="true" rel="canonical" href="https://docs.mindersec.dev/developer_guide/feature_flags"><link data-rh="true" rel="alternate" href="https://docs.mindersec.dev/developer_guide/feature_flags" hreflang="en"><link data-rh="true" rel="alternate" href="https://docs.mindersec.dev/developer_guide/feature_flags" hreflang="x-default"><link data-rh="true" rel="preconnect" href="https://F7OP01WFHV-dsn.algolia.net" crossorigin="anonymous"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Feature flags","item":"https://docs.mindersec.dev/developer_guide/feature_flags"}]}</script><link rel="search" type="application/opensearchdescription+xml" title="Minder docs" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.bdfa33c7.css">
-<script src="/assets/js/runtime~main.d4530de0.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.f80fca24.js" defer="defer"></script>
 <script src="/assets/js/main.49146d2a.js" defer="defer"></script>
 </head>
 <body>
@@ -90,7 +90,7 @@ behavior over OpenFeature:</p>
 <li class="">We enforce that the default value of the flag is &quot;off&quot;, so you can&#x27;t end up
 with the confusing <code>disable_feature=false</code> in a config.</li>
 <li class="">We extract the user, project, and provider from <code>ctx</code>, so you don&#x27;t need to.</li>
-<li class="">Eventually, we&#x27;ll also record the flag settings in our telemetry records (WIP)</li>
+<li class="">Feature flag evaluations are recorded in telemetry logs under the <code>feature_flags</code> field</li>
 </ul>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="using-flags-during-development">Using flags during development<a href="#using-flags-during-development" class="hash-link" aria-label="Direct link to Using flags during development" title="Direct link to Using flags during development" translate="no">​</a></h2>
 <p>You can create a <code>flags-config.yaml</code> in the root Minder directory when running
