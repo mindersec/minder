@@ -15,6 +15,7 @@ import (
 
 	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/logger"
 	config "github.com/mindersec/minder/pkg/config/server"
 )
 
@@ -52,7 +53,7 @@ func Bool(ctx context.Context, client Interface, feature Experiment) bool {
 		return false
 	}
 	ret := client.Boolean(ctx, string(feature), false, fromContext(ctx))
-	// TODO: capture in telemetry records
+	logger.BusinessRecord(ctx).AddFeatureFlag(string(feature), ret)
 	return ret
 }
 

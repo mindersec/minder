@@ -121,7 +121,18 @@ func TestTelemetryStore_Record(t *testing.T) {
 		recordFunc: func(_ context.Context, _ engif.ActionsParams) {
 		},
 		expected:   `{"telemetry": "true"}`,
-		notPresent: []string{"project", "rules", "login_sha", "repository", "provider", "profile", "ruletypes", "artifact", "pr"},
+		notPresent: []string{"project", "rules", "login_sha", "repository", "provider", "profile", "ruletypes", "artifact", "pr", "feature_flags"},
+	}, {
+		name:      "feature flags recorded",
+		telemetry: &logger.TelemetryStore{},
+		evalParamsFunc: func() *engif.EvalStatusParams {
+			return nil
+		},
+		recordFunc: func(ctx context.Context, _ engif.ActionsParams) {
+			logger.BusinessRecord(ctx).AddFeatureFlag("my_flag", true)
+			logger.BusinessRecord(ctx).AddFeatureFlag("other_flag", false)
+		},
+		expected: `{"feature_flags": {"my_flag": true, "other_flag": false}}`,
 	}}
 
 	count := len(cases)
@@ -241,4 +252,11 @@ func TestProjectTombstoneEquals(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAddFeatureFlag_NilReceiver(t *testing.T) {
+	t.Parallel()
+	var ts *logger.TelemetryStore
+	// should not panic
+	ts.AddFeatureFlag("some_flag", true)
 }
