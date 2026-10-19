@@ -17,7 +17,7 @@ When developing or updating CLI commands, adhere to the guidelines below.
 | Stream | Intended Content | Cobra / Go API | Examples |
 |---|---|---|---|
 | **`stdout`** | Primary command results, payloads, and structured data | `cmd.OutOrStdout()` | JSON, YAML, table formatting, tokens, version details |
-| **`stderr`** | Errors, warnings, interactive prompts, banners, and mutation notices | `cmd.ErrOrStderr()`, `cmd.PrintErr*` | Error logs, login prompts, browser URLs, "Updated $foo" |
+| **`stderr`** | Errors, warnings, interactive prompts, banners, and mutation notices | `cmd.ErrOrStderr()`, `cmd.PrintErr*` | Error logs, login prompts, browser URLs, Updated repository foo/bar |
 
 ---
 
@@ -58,7 +58,7 @@ Include on `stderr`:
 
 When writing command logic:
 
-- **For `stdout`**: Write explicitly to `cmd.OutOrStdout()`:
+- **For `stdout`**: Write explicitly to `cmd.OutOrStdout()` using `fmt.Fprint*` or table helpers:
   ```go
   // Structured payload
   fmt.Fprintln(cmd.OutOrStdout(), jsonString)
@@ -66,9 +66,13 @@ When writing command logic:
   // Using table helpers
   t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(), headers)
   ```
-  *(Note: Cobra's `cmd.Print()` and `cmd.Println()` also write to `cmd.OutOrStdout()` when configured).*
 
-- **For `stderr`**: Use `cmd.ErrOrStderr()` or Cobra's built-in error printers:
+- **Avoid `cmd.Print*` for payloads**:
+  In Cobra, convenience methods like `cmd.Print()`, `cmd.Println()`, and `cmd.Printf()` delegate to `cmd.OutOrStderr()`,
+  falling back to `os.Stderr` when no output stream is set. In unit tests where `SetOut` is configured, they write to
+  the test's output buffer, masking stream bugs. Always use `fmt.Fprint*(cmd.OutOrStdout(), ...)` explicitly for payloads.
+
+- **For `stderr`**: Use `cmd.ErrOrStderr()` or Cobra's built-in error printers (`cmd.PrintErr*`):
   ```go
   // For formatted errors
   cmd.PrintErrf("Error processing resource: %v\n", err)
@@ -92,6 +96,6 @@ Minder's test harness in `internal/util/cli/testing.go` captures `stdout` and `s
 When writing tests for CLI commands:
 - **`GoldenFileName`**: Validates the expected contents of `stdout`. Golden files should only contain the clean
   payload (table, JSON, YAML, or raw value).
-- **`ExpectedStderr`**: Asserts that warnings, prompts, or error strings appear on `stderr`.
-- **Verify stream isolation**: Ensure that when a command encounters an error, no data is written to `stdout`, and
-  when a command succeeds without warnings, `stderr` remains completely empty.
+- **`ExpectedStderr`**: Asserts that `stderr` contains the given substring (checked via `assert.Contains`).
+- **Verify stream isolation**: On error, nothing should be written to `stdout`. For read-only commands that succeed,
+  `stderr` should normally be empty.
