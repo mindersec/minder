@@ -433,7 +433,7 @@ func (p *ghProviderService) getInstallationOwner(ctx context.Context, installati
 func (p *ghProviderService) ValidateOrgMembershipForToken(ctx context.Context, token *oauth2.Token, org string) (bool, error) {
 	membership, ghResponse, err := p.ghClientService.GetOrgMembership(ctx, token, org)
 	if err != nil {
-		if ghResponse.StatusCode == http.StatusNotFound {
+		if ghResponse != nil && ghResponse.StatusCode == http.StatusNotFound {
 			return false, nil
 		}
 		return false, fmt.Errorf("error getting user membership: %w", err)

@@ -76,7 +76,7 @@ behavior over OpenFeature:
 - We enforce that the default value of the flag is "off", so you can't end up
   with the confusing `disable_feature=false` in a config.
 - We extract the user, project, and provider from `ctx`, so you don't need to.
-- Eventually, we'll also record the flag settings in our telemetry records (WIP)
+- Feature flag evaluations are recorded in telemetry logs under the `feature_flags` field
 
 ## Using flags during development
 

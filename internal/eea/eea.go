@@ -20,9 +20,7 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/entities"
 	"github.com/mindersec/minder/internal/entities/properties/service"
-	pbinternal "github.com/mindersec/minder/internal/proto"
 	"github.com/mindersec/minder/internal/providers/manager"
-	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
@@ -223,12 +221,14 @@ func (e *EEA) FlushAll(ctx context.Context) error {
 			if errors.Is(err, sql.ErrNoRows) || errors.Is(err, service.ErrEntityNotFound) {
 				continue
 			}
-			return fmt.Errorf("error building entity wrapper: %w", err)
+			e.dropFlushCacheEntry(ctx, cache, fmt.Errorf("error building entity wrapper: %w", err))
+			continue
 		}
 
 		msg, err := eiw.BuildMessage()
 		if err != nil {
-			return fmt.Errorf("error building message: %w", err)
+			e.dropFlushCacheEntry(ctx, cache, fmt.Errorf("error building message: %w", err))
+			continue
 		}
 
 		msg.SetContext(ctx)
@@ -241,117 +241,52 @@ func (e *EEA) FlushAll(ctx context.Context) error {
 	return nil
 }
 
+// dropFlushCacheEntry logs a flush_cache row that could not be rebuilt into
+// an event and deletes it, so that one bad row does not block server startup.
+func (e *EEA) dropFlushCacheEntry(ctx context.Context, cache db.FlushCache, cause error) {
+	logger := zerolog.Ctx(ctx).With().
+		Str("component", "EEA").
+		Str("function", "FlushAll").
+		Str("entity", string(cache.Entity)).
+		Str("entity_id", cache.EntityInstanceID.String()).
+		Str("project_id", cache.ProjectID.String()).
+		Logger()
+
+	logger.Error().Err(cause).Msg("unable to rebuild queued event, dropping it from flush cache")
+
+	if _, err := e.querier.FlushCache(ctx, cache.EntityInstanceID); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		logger.Error().Err(err).Msg("error deleting entry from flush cache")
+	}
+}
+
 func (e *EEA) buildEntityWrapper(
 	ctx context.Context,
 	entity db.Entities,
 	projID uuid.UUID,
 	entityID uuid.UUID,
 ) (*entities.EntityInfoWrapper, error) {
-	switch entity {
-	case db.EntitiesRepository:
-		return e.buildRepositoryInfoWrapper(ctx, entityID, projID)
-	case db.EntitiesArtifact:
-		return e.buildArtifactInfoWrapper(ctx, entityID, projID)
-	case db.EntitiesPullRequest:
-		return e.buildPullRequestInfoWrapper(ctx, entityID, projID)
-	case db.EntitiesBuildEnvironment, db.EntitiesRelease,
-		db.EntitiesPipelineRun, db.EntitiesTaskRun, db.EntitiesBuild:
-		return nil, fmt.Errorf("entity type %q not yet supported", entity)
-	default:
-		return nil, fmt.Errorf("unknown entity type: %q", entity)
-	}
-}
-
-func (e *EEA) buildRepositoryInfoWrapper(
-	ctx context.Context,
-	repoID uuid.UUID,
-	projID uuid.UUID,
-) (*entities.EntityInfoWrapper, error) {
-	ent, err := e.entityFetcher.EntityWithPropertiesByID(ctx, repoID, nil)
+	ent, err := e.entityFetcher.EntityWithPropertiesByID(ctx, entityID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching entity: %w", err)
 	}
 
 	if ent.Entity.ProjectID != projID {
-		return nil, fmt.Errorf("entity %s does not belong to project %s", repoID, projID)
+		return nil, fmt.Errorf("entity %s does not belong to project %s", entityID, projID)
 	}
 
-	rawRepo, err := e.entityFetcher.EntityWithPropertiesAsProto(ctx, ent, e.provMan)
+	entType := entities.EntityTypeFromDB(entity)
+	if ent.Entity.Type != entType {
+		return nil, fmt.Errorf("entity %s has type %s, expected %s", entityID, ent.Entity.Type, entType)
+	}
+
+	pbEnt, err := e.entityFetcher.EntityWithPropertiesAsProto(ctx, ent, e.provMan)
 	if err != nil {
 		return nil, fmt.Errorf("error converting entity to protobuf: %w", err)
-	}
-
-	r, ok := rawRepo.(*minderv1.Repository)
-	if !ok {
-		return nil, fmt.Errorf("error converting entity to repository")
 	}
 
 	return entities.NewEntityInfoWrapper().
-		WithRepository(r).
-		WithID(repoID).
+		WithProtoMessage(entType, pbEnt).
+		WithID(entityID).
 		WithProjectID(projID).
-		WithProviderID(ent.Entity.ProviderID), nil
-}
-
-func (e *EEA) buildArtifactInfoWrapper(
-	ctx context.Context,
-	artID uuid.UUID,
-	projID uuid.UUID,
-) (*entities.EntityInfoWrapper, error) {
-	ent, err := e.entityFetcher.EntityWithPropertiesByID(ctx, artID, nil)
-	if err != nil {
-		return nil, fmt.Errorf("error fetching entity: %w", err)
-	}
-
-	if ent.Entity.ProjectID != projID {
-		return nil, fmt.Errorf("entity %s does not belong to project %s", artID, projID)
-	}
-
-	rawPR, err := e.entityFetcher.EntityWithPropertiesAsProto(ctx, ent, e.provMan)
-	if err != nil {
-		return nil, fmt.Errorf("error converting entity to protobuf: %w", err)
-	}
-
-	a, ok := rawPR.(*minderv1.Artifact)
-	if !ok {
-		return nil, fmt.Errorf("error converting entity to artifact")
-	}
-
-	eiw := entities.NewEntityInfoWrapper().
-		WithProjectID(projID).
-		WithArtifact(a).
-		WithID(artID).
-		WithProviderID(ent.Entity.ProviderID)
-	return eiw, nil
-}
-
-func (e *EEA) buildPullRequestInfoWrapper(
-	ctx context.Context,
-	prID uuid.UUID,
-	projID uuid.UUID,
-) (*entities.EntityInfoWrapper, error) {
-	ent, err := e.entityFetcher.EntityWithPropertiesByID(ctx, prID, nil)
-	if err != nil {
-		return nil, fmt.Errorf("error fetching entity: %w", err)
-	}
-
-	if ent.Entity.ProjectID != projID {
-		return nil, fmt.Errorf("entity %s does not belong to project %s", prID, projID)
-	}
-
-	rawPR, err := e.entityFetcher.EntityWithPropertiesAsProto(ctx, ent, e.provMan)
-	if err != nil {
-		return nil, fmt.Errorf("error converting entity to protobuf: %w", err)
-	}
-
-	pr, ok := rawPR.(*pbinternal.PullRequest)
-	if !ok {
-		return nil, fmt.Errorf("error converting entity to pull request")
-	}
-
-	return entities.NewEntityInfoWrapper().
-		WithProjectID(projID).
-		WithPullRequest(pr).
-		WithID(prID).
 		WithProviderID(ent.Entity.ProviderID), nil
 }
