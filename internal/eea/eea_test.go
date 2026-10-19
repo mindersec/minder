@@ -537,6 +537,117 @@ func TestFlushAllListFlushListsARepoThatGetsDeletedLater(t *testing.T) {
 	assert.Equal(t, int32(0), flushedMessages.count.Load(), "expected no messages")
 }
 
+// This scenario represents a flush_cache row that can't be rebuilt into an
+// event (here, the provider fails to convert the entity). The row should be
+// deleted from the cache and the remaining rows should still be flushed.
+func TestFlushAllDropsRowThatCannotBeRebuilt(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+	propsvc := propsvcmock.NewMockPropertiesService(ctrl)
+	provman := mockmanager.NewMockProviderManager(ctrl)
+
+	flushedMessages := newTestPubSub()
+
+	evt, err := eventer.New(ctx, nil, &serverconfig.EventConfig{
+		Driver:    "go-channel",
+		GoChannel: serverconfig.GoChannelEventConfig{},
+	})
+	require.NoError(t, err)
+
+	evt.Register(constants.TopicQueueEntityEvaluate, flushedMessages.Add)
+
+	runErr := make(chan error, 1)
+	go func() {
+		runErr <- evt.Run(ctx)
+	}()
+
+	<-evt.Running()
+
+	var eventThreshold int64 = 1
+	aggr := eea.NewEEA(mockStore, evt, &serverconfig.AggregatorConfig{
+		LockInterval: eventThreshold,
+	}, propsvc, provman)
+
+	projID := uuid.New()
+	brokenRepoID := uuid.New()
+	releaseID := uuid.New()
+
+	mockStore.EXPECT().ListFlushCache(ctx).
+		Return([]db.FlushCache{
+			{
+				ID:               uuid.New(),
+				Entity:           db.EntitiesRepository,
+				ProjectID:        projID,
+				EntityInstanceID: brokenRepoID,
+				QueuedAt:         time.Now(),
+			},
+			{
+				ID:               uuid.New(),
+				Entity:           db.EntitiesRelease,
+				ProjectID:        projID,
+				EntityInstanceID: releaseID,
+				QueuedAt:         time.Now(),
+			},
+		}, nil)
+
+	// the row that can't be rebuilt
+	propsvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(brokenRepoID), gomock.Nil()).
+		Return(&models.EntityWithProperties{
+			Entity: models.EntityInstance{
+				ID:         brokenRepoID,
+				Type:       minderv1.Entity_ENTITY_REPOSITORIES,
+				ProjectID:  projID,
+				ProviderID: providerID,
+			},
+			Properties: &properties.Properties{},
+		}, nil)
+	propsvc.EXPECT().EntityWithPropertiesAsProto(gomock.Any(),
+		entityWithID(brokenRepoID), gomock.Any()).
+		Return(nil, fmt.Errorf("provider not available"))
+	// it is deleted from the cache
+	mockStore.EXPECT().FlushCache(ctx, brokenRepoID).Times(1)
+
+	// the row after it is still flushed
+	propsvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(releaseID), gomock.Nil()).
+		Return(&models.EntityWithProperties{
+			Entity: models.EntityInstance{
+				ID:         releaseID,
+				Type:       minderv1.Entity_ENTITY_RELEASE,
+				ProjectID:  projID,
+				ProviderID: providerID,
+			},
+			Properties: &properties.Properties{},
+		}, nil)
+	propsvc.EXPECT().EntityWithPropertiesAsProto(gomock.Any(),
+		entityWithID(releaseID), gomock.Any()).
+		Return(&minderv1.EntityInstance{}, nil)
+	mockStore.EXPECT().FlushCache(ctx, releaseID).Times(1)
+
+	t.Log("Flushing all")
+	require.NoError(t, aggr.FlushAll(ctx), "expected no error")
+
+	flushedMessages.Wait()
+	assert.Equal(t, int32(1), flushedMessages.count.Load(), "expected one message")
+
+	cancel()
+	require.NoError(t, <-runErr)
+}
+
+// entityWithID matches a *models.EntityWithProperties with the given entity ID.
+func entityWithID(id uuid.UUID) gomock.Matcher {
+	return gomock.Cond(func(x any) bool {
+		ewp, ok := x.(*models.EntityWithProperties)
+		return ok && ewp.Entity.ID == id
+	})
+}
+
 type testPubSub struct {
 	// counts the number of messages added
 	count            *atomic.Int32

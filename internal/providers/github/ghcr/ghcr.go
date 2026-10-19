@@ -106,7 +106,7 @@ func (g *ImageLister) ListImages(ctx context.Context) ([]string, error) {
 		// artifacts, resp, err = g.client.Organizations.ListPackages(ctx, g.namespace, opt)
 		artifacts, resp, err = g.client.Users.ListPackages(ctx, g.Namespace(), opt)
 		if err != nil {
-			if resp.StatusCode == http.StatusNotFound {
+			if resp != nil && resp.StatusCode == http.StatusNotFound {
 				return allContainers, fmt.Errorf("packages not found for namespace %s: %w",
 					g.Namespace(), errors.New("not found"))
 			}
