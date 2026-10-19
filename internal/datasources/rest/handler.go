@@ -397,8 +397,30 @@ func retriableDo(dofunc func(*http.Request) (*http.Response, error), req *http.R
 	var resp *http.Response
 	retryCount := 0
 
+	// Each attempt consumes the request body, so make sure it can be
+	// replayed. Requests built without GetBody (e.g. provider requests
+	// with a manually assigned body) are buffered once here.
+	if req.GetBody == nil && req.Body != nil && req.Body != http.NoBody {
+		buf, err := io.ReadAll(req.Body)
+		_ = req.Body.Close()
+		if err != nil {
+			return nil, fmt.Errorf("cannot read request body: %w", err)
+		}
+		req.GetBody = func() (io.ReadCloser, error) {
+			return io.NopCloser(bytes.NewReader(buf)), nil
+		}
+		req.Body, _ = req.GetBody()
+	}
+
 	err := backoff.Retry(func() error {
 		var err error
+		if retryCount > 0 && req.GetBody != nil {
+			body, err := req.GetBody()
+			if err != nil {
+				return backoff.Permanent(fmt.Errorf("cannot rewind request body: %w", err))
+			}
+			req.Body = body
+		}
 		resp, err = dofunc(req)
 		if err != nil {
 			zerolog.Ctx(req.Context()).Debug().
