@@ -160,10 +160,12 @@ func (r *repositoryService) CreateRepository(
 	return pbRepo, nil
 }
 
-// RepoPageSize is the page size used for all repository listing operations.
-// Both the handler and service use this constant to guarantee cursor correctness.
-// Change this single value to adjust the page size across the entire call chain.
+// RepoPageSize is the default page size for listing repositories.
 const RepoPageSize int32 = 25
+
+// MaxRepoPageSize is the maximum page size allowed, matching the proto validation (0–100).
+// The handler may request limit+1 to detect next page existence.
+const MaxRepoPageSize int32 = 101
 
 func (r *repositoryService) ListRepositories(
 	ctx context.Context,
@@ -172,8 +174,11 @@ func (r *repositoryService) ListRepositories(
 	cursor uuid.UUID,
 	limit int32,
 ) (ents []*models.EntityWithProperties, outErr error) {
-	if limit <= 0 || limit > RepoPageSize {
+	if limit <= 0 {
 		limit = RepoPageSize
+	}
+	if limit > MaxRepoPageSize {
+		limit = MaxRepoPageSize
 	}
 	tx, err := r.store.BeginTransaction()
 	if err != nil {

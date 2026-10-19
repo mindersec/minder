@@ -710,7 +710,9 @@ func TestServer_ListRepositories_Pagination(t *testing.T) {
 	// Build exactly defaultPageSize repos to trigger cursor generation
 	// defaultPageSize in handlers_evalstatus.go is 25 (uint32)
 	pageSize := int64(reposvc.RepoPageSize)
-	repos := make([]*models.EntityWithProperties, int(pageSize))
+	// Build pageSize+1 repos so the handler sees a full page after fetching
+	// limit+1 rows (the limit+1 trick to detect next page existence).
+	repos := make([]*models.EntityWithProperties, int(pageSize)+1)
 	for i := range repos {
 		repos[i] = simpleDbRepository(repoName, remoteRepoId)
 	}

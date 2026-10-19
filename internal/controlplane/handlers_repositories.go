@@ -170,11 +170,25 @@ func (s *Server) ListRepositories(ctx context.Context,
 		}
 	}
 
-	// Fetch repositories using the service
-	// Clamp limit to RepoPageSize — enforced identically in the service layer.
-	repoEntities, err := s.repos.ListRepositories(ctx, projectID, provider.ID, cursorID, repositories.RepoPageSize)
+	// Resolve effective page size from request, falling back to RepoPageSize.
+	// Fetch limit+1 rows so we can detect whether a next page exists without
+	// returning a cursor that leads to an empty final page.
+	// in.GetLimit() returns int64 per proto; cap it to MaxRepoPageSize before
+	// converting to int32 to avoid overflow.
+	reqLimit := in.GetLimit()
+	if reqLimit <= 0 || reqLimit > int64(repositories.MaxRepoPageSize) {
+		reqLimit = int64(repositories.RepoPageSize)
+	}
+	effectiveLimit := int32(reqLimit) // safe: capped to MaxRepoPageSize above
+	repoEntities, err := s.repos.ListRepositories(ctx, projectID, provider.ID, cursorID, effectiveLimit+1)
 	if err != nil {
 		return nil, err
+	}
+
+	// If we got limit+1 results, there is a next page. Trim the extra row.
+	hasNextPage := len(repoEntities) > int(effectiveLimit)
+	if hasNextPage {
+		repoEntities = repoEntities[:effectiveLimit]
 	}
 
 	var resp pb.ListRepositoriesResponse
@@ -208,13 +222,11 @@ func (s *Server) ListRepositories(ctx context.Context,
 		results = append(results, pbRepo)
 	}
 
-	// Build next cursor: if DB returned a full page, there may be more results.
-	// We compare against repoEntities (raw DB results) not results (proto-converted)
-	// because proto conversion errors can cause len(results) < len(repoEntities)
-	// even when a full page was returned, which would cause us to miss the cursor.
+	// Build next cursor from the last entity in the trimmed page.
+	// hasNextPage was determined by fetching limit+1 rows above,
+	// so this cursor is guaranteed to lead to a non-empty page.
 	var nextCursor string
-	// Use the same page size constant the service uses — single source of truth.
-	if int64(len(repoEntities)) == int64(repositories.RepoPageSize) {
+	if hasNextPage && len(repoEntities) > 0 {
 		lastID := repoEntities[len(repoEntities)-1].Entity.ID
 		nextCursor = (&cursor.EntityCursor{ID: lastID.String()}).String()
 	}

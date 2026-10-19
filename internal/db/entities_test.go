@@ -553,3 +553,57 @@ func Test_GetEntitiesByHierarchy(t *testing.T) {
 		})
 	}
 }
+
+func TestGetEntitiesByTypePaginated(t *testing.T) {
+	t.Parallel()
+
+	org := createRandomOrganization(t)
+	proj := createRandomProject(t, org.ID)
+	prov := createRandomProvider(t, proj.ID)
+
+	// Insert 30 repositories so we need 3 full pages at page size 10.
+	const total = 30
+	created := make([]uuid.UUID, total)
+	for i := range created {
+		repo := createRandomRepository(t, proj.ID, prov)
+		created[i] = repo.ID
+	}
+
+	// Page through all results and collect every entity ID returned.
+	seen := make(map[uuid.UUID]int)
+	cursor := uuid.Nil
+	// small page size to exercise multiple pages
+	pageSize := int32(10)
+
+	for {
+		page, err := testQueries.GetEntitiesByTypePaginated(context.Background(),
+			GetEntitiesByTypePaginatedParams{
+				EntityType: EntitiesRepository,
+				ProviderID: prov.ID,
+				Projects:   []uuid.UUID{proj.ID},
+				Cursor:     cursor,
+				PageSize:   pageSize,
+			})
+		require.NoError(t, err)
+
+		for _, e := range page {
+			seen[e.ID]++
+		}
+
+		if len(page) < int(pageSize) {
+			// last page
+			break
+		}
+		cursor = page[len(page)-1].ID
+	}
+
+	// Every created repo must appear exactly once, no duplicates, no drops.
+	for _, id := range created {
+		require.Equal(t, 1, seen[id],
+			"repo %s appeared %d times, expected exactly 1", id, seen[id])
+	}
+
+	// Total seen must equal total created.
+	require.Len(t, seen, total,
+		"expected %d unique repos, got %d", total, len(seen))
+}
