@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
 package set_project_test
@@ -162,12 +162,18 @@ func TestSetProjectCommand(t *testing.T) {
 	})
 
 	t.Run("prints usage when no argument is provided", func(t *testing.T) {
+		tempDir := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", tempDir)
+
 		stdout, stderr, err := runSetProject(t, "set-project")
 		require.NoError(t, err)
 		assert.Contains(t, stdout+stderr, "Usage:")
 	})
 
 	t.Run("prints usage when more than one argument is provided", func(t *testing.T) {
+		tempDir := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", tempDir)
+
 		stdout, stderr, err := runSetProject(t, "set-project", uuid.New().String(), "extra-arg")
 		require.NoError(t, err)
 		assert.Contains(t, stdout+stderr, "Usage:")
