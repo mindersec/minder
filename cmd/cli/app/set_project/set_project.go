@@ -5,6 +5,7 @@
 package set_project
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -94,7 +95,8 @@ func spCommand(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// resolveProjectByName resolves a project name to a UUID by listing all projects
+// resolveProjectByName is the CLI entry point, creates a real gRPC client
+// and delegates to resolveProjectByNameFromClient
 func resolveProjectByName(cmd *cobra.Command, name string) (uuid.UUID, error) {
 	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewProjectsServiceClient)
 	if err != nil {
@@ -102,22 +104,37 @@ func resolveProjectByName(cmd *cobra.Command, name string) (uuid.UUID, error) {
 	}
 	defer cleanup()
 
-	resp, err := client.ListProjects(cmd.Context(), &minderv1.ListProjectsRequest{})
+	return resolveProjectByNameFromClient(cmd.Context(), client, name)
+}
+
+// resolveProjectByNameFromClient contains the pure resolution logic.
+// It is split out from resolveProjectByName so it can be tested with a mock client.
+func resolveProjectByNameFromClient(ctx context.Context, client minderv1.ProjectsServiceClient, name string) (uuid.UUID, error) {
+	resp, err := client.ListProjects(ctx, &minderv1.ListProjectsRequest{})
 	if err != nil {
 		return uuid.UUID{}, cli.MessageAndError("Error listing projects", err)
 	}
 
+	var matches []*minderv1.Project
 	for _, p := range resp.Projects {
 		if p.Name == name || p.DisplayName == name {
-			id, err := uuid.Parse(p.ProjectId)
-			if err != nil {
-				return uuid.UUID{}, cli.MessageAndError("Error parsing project ID from server", err)
-			}
-			return id, nil
+			matches = append(matches, p)
 		}
 	}
 
-	return uuid.UUID{}, fmt.Errorf("no project found with name %q", name)
+	if len(matches) == 0 {
+		return uuid.UUID{}, fmt.Errorf("no project found with name %q", name)
+	}
+	if len(matches) > 1 {
+		return uuid.UUID{}, fmt.Errorf("ambiguous name %q matches multiple projects, please use a UUID instead", name)
+	}
+
+	id, err := uuid.Parse(matches[0].ProjectId)
+	if err != nil {
+		return uuid.UUID{}, cli.MessageAndError("Error parsing project ID from server", err)
+	}
+
+	return id, nil
 }
 
 func init() {
