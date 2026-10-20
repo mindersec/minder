@@ -105,6 +105,6 @@ When writing tests for CLI commands:
   payload (table, JSON, YAML, or raw value). When updating existing tests or creating new ones, golden files can be
   generated or updated automatically by running tests with the `-update` flag (e.g. `go test ./... -update`) rather
   than modifying files manually.
-- **`ExpectedStderr`**: Asserts that `stderr` contains the given substring (checked via `assert.Contains`).
-- **Verify stream isolation**: On error, nothing should be written to `stdout`. For read-only commands that succeed,
-  `stderr` should normally be empty.
+- **`ExpectedStderr`**: Asserts that `stderr` contains the given substring (verified via `assert.Contains`).
+- **Verify stream isolation**: On error, no payload data should be written to `stdout`. For read-only commands that succeed,
+  `stderr` should normally remain completely empty.
