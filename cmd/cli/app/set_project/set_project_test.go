@@ -161,21 +161,23 @@ func TestSetProjectCommand(t *testing.T) {
 		assert.Contains(t, wrappedErr.Err.Error(), "invalid UUID")
 	})
 
-	t.Run("prints usage when no argument is provided", func(t *testing.T) {
+	t.Run("returns error when no argument is provided", func(t *testing.T) {
 		tempDir := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", tempDir)
 
 		stdout, stderr, err := runSetProject(t, "set-project")
-		require.NoError(t, err)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "accepts 1 arg(s), received 0")
 		assert.Contains(t, stdout+stderr, "Usage:")
 	})
 
-	t.Run("prints usage when more than one argument is provided", func(t *testing.T) {
+	t.Run("returns error when more than one argument is provided", func(t *testing.T) {
 		tempDir := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", tempDir)
 
 		stdout, stderr, err := runSetProject(t, "set-project", uuid.New().String(), "extra-arg")
-		require.NoError(t, err)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "accepts 1 arg(s), received 2")
 		assert.Contains(t, stdout+stderr, "Usage:")
 	})
 }
