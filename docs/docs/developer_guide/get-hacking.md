@@ -36,7 +36,7 @@ go run cmd/cli/main.go --help
 ```
 
 See the [CLI Output Stream Conventions](./cli_streams.md) guide for conventions on
-standard output (`stdout`) vs standard error (`stderr`).
+standard output (`stdout`) vs standard error (`stderr`) in client code.
 
 ## APIs
 
