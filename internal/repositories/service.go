@@ -65,7 +65,7 @@ type RepositoryService interface {
 	// ListRepositories retrieves all repositories for the
 	// specific provider and project, with cursor-based pagination.
 	// cursor is the UUID of the last seen entity (uuid.Nil = first page).
-	// limit is clamped to RepoPageSize in the implementation, pass 0 to use the default.
+	// limit defaults to RepoPageSize when 0 and is capped at MaxRepoPageSize.
 	ListRepositories(
 		ctx context.Context,
 		projectID uuid.UUID,
@@ -163,8 +163,9 @@ func (r *repositoryService) CreateRepository(
 // RepoPageSize is the default page size for listing repositories.
 const RepoPageSize int32 = 25
 
-// MaxRepoPageSize is the maximum page size allowed, matching the proto validation (0–100).
-// The handler may request limit+1 to detect next page existence.
+// MaxRepoPageSize is 100 (the proto-validated maximum) plus 1.
+// The extra 1 lets the handler request limit+1 rows to detect whether a next
+// page exists without returning a cursor that leads to an empty final page.
 const MaxRepoPageSize int32 = 101
 
 func (r *repositoryService) ListRepositories(
