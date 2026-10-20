@@ -412,15 +412,19 @@ func retriableDo(dofunc func(*http.Request) (*http.Response, error), req *http.R
 		req.Body, _ = req.GetBody()
 	}
 
-	err := backoff.Retry(func() error {
-		var err error
-		if retryCount > 0 && req.GetBody != nil {
-			body, err := req.GetBody()
-			if err != nil {
-				return backoff.Permanent(fmt.Errorf("cannot rewind request body: %w", err))
+	err := backoff.Retry(func() (err error) {
+		// Body needs to be reset (rewound) before each retry
+		defer func() {
+			if err != nil && req.GetBody != nil {
+				body, rewindErr := req.GetBody()
+				if rewindErr != nil {
+					err = backoff.Permanent(fmt.Errorf("cannot rewind request body: %w", rewindErr))
+					return
+				}
+				req.Body = body
 			}
-			req.Body = body
-		}
+		}()
+
 		resp, err = dofunc(req)
 		if err != nil {
 			zerolog.Ctx(req.Context()).Debug().
