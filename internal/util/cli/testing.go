@@ -48,6 +48,7 @@ type CmdTestCase struct {
 	Args           []string
 	MockSetup      func(t *testing.T, ctrl *gomock.Controller) context.Context
 	GoldenFileName string
+	ExpectedStderr string
 	ExpectedError  string
 }
 
@@ -82,9 +83,10 @@ func RunCmdTests(
 				ctx = tc.MockSetup(t, ctrl)
 			}
 
-			buf := new(bytes.Buffer)
-			rootCmd.SetOut(buf)
-			rootCmd.SetErr(buf)
+			stdoutBuf := new(bytes.Buffer)
+			stderrBuf := new(bytes.Buffer)
+			rootCmd.SetOut(stdoutBuf)
+			rootCmd.SetErr(stderrBuf)
 			rootCmd.SetContext(ctx)
 
 			rootCmd.SetArgs(tc.Args)
@@ -97,11 +99,16 @@ func RunCmdTests(
 			if tc.ExpectedError != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.ExpectedError)
-				return
+			} else {
+				require.NoError(t, err, "command execution should not fail")
+				if tc.GoldenFileName != "" {
+					checkGoldenFile(t, tc.GoldenFileName, stdoutBuf.String())
+				}
 			}
 
-			require.NoError(t, err, "command execution should not fail")
-			checkGoldenFile(t, tc.GoldenFileName, buf.String())
+			if tc.ExpectedStderr != "" {
+				assert.Contains(t, stderrBuf.String(), tc.ExpectedStderr)
+			}
 		})
 	}
 }
