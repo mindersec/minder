@@ -1234,3 +1234,82 @@ func TestPropertiesService_MultiPropertyWrites_EnsureTransaction(t *testing.T) {
 		require.False(t, restoredProps.GetProperty("is_private").GetBool())
 	})
 }
+
+func TestPropertiesService_PropertiesFromJSON(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		name        string
+		entity      db.EntityInstance
+		input       json.RawMessage
+		wantErr     error
+		checkResult func(t *testing.T, result *models.EntityWithProperties)
+	}{
+		{
+			name:   "happy path - all v1 wrappers",
+			entity: db.EntityInstance{ID: uuid.Nil, Name: "myorg/myrepo"},
+			input: json.RawMessage(`{
+				"repo_name":  {"version": "v1", "value": "minder"},
+				"is_private": {"version": "v1", "value": false}
+			}`),
+			checkResult: func(t *testing.T, result *models.EntityWithProperties) {
+				t.Helper()
+				require.Equal(t, "minder", result.Properties.GetProperty("repo_name").GetString())
+				require.Equal(t, false, result.Properties.GetProperty("is_private").GetBool())
+				require.Equal(t, "myorg/myrepo", result.Entity.Name)
+			},
+		},
+		{
+			name:   "bad version - one wrapper is v2",
+			entity: db.EntityInstance{ID: uuid.Nil, Name: "myorg/myrepo"},
+			input: json.RawMessage(`{
+				"repo_name":  {"version": "v1", "value": "minder"},
+				"is_private": {"version": "v2", "value": false}
+			}`),
+			wantErr: db.ErrBadPropVersion,
+		},
+		{
+			name:    "invalid JSON",
+			entity:  db.EntityInstance{ID: uuid.Nil, Name: "myorg/myrepo"},
+			input:   json.RawMessage(`not-json`),
+			wantErr: errors.New("error unmarshaling properties"),
+		},
+		{
+			name:   "empty object",
+			entity: db.EntityInstance{ID: uuid.Nil, Name: "myorg/myrepo"},
+			input:  json.RawMessage(`{}`),
+			checkResult: func(t *testing.T, result *models.EntityWithProperties) {
+				t.Helper()
+				count := 0
+				for range result.Properties.Iterate() {
+					count++
+				}
+				require.Equal(t, 0, count)
+			},
+		},
+	}
+
+	for _, tt := range scenarios {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			t.Cleanup(ctrl.Finish)
+
+			ps := NewPropertiesService(mockdb.NewMockStore(ctrl))
+			result, err := ps.PropertiesFromJSON(tt.entity, tt.input, nil)
+
+			if tt.wantErr != nil {
+				require.Error(t, err)
+				require.ErrorContains(t, err, tt.wantErr.Error())
+				require.Nil(t, result)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, result)
+				if tt.checkResult != nil {
+					tt.checkResult(t, result)
+				}
+			}
+		})
+	}
+}

@@ -318,9 +318,11 @@ func (*propertiesService) PropertiesFromJSON(
 		return nil, fmt.Errorf("error unmarshaling properties: %w", err)
 	}
 
-	// TODO: check that the version is "v1" (db.propValueV1) for each PropertyWrapper
 	propsMap := make(map[string]any, len(propData))
 	for k, v := range propData {
+		if v.Version != db.PropValueV1 {
+			return nil, fmt.Errorf("property %q: %w", k, db.ErrBadPropVersion)
+		}
 		propsMap[k] = v.Value
 	}
 	props := properties.NewProperties(propsMap)

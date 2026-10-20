@@ -11,7 +11,8 @@ import (
 	"github.com/google/uuid"
 )
 
-const propValueV1 = "v1"
+// PropValueV1 is the version string for v1 property values
+const PropValueV1 = "v1"
 
 // ErrBadPropVersion is returned when a property has an unexpected version
 var ErrBadPropVersion = errors.New("unexpected property version")
@@ -52,12 +53,12 @@ func propValueToDb(value any, version string) (json.RawMessage, error) {
 
 // PropValueToDbV1 serializes a property value to a JSON byte slice
 func PropValueToDbV1(value any) (json.RawMessage, error) {
-	return propValueToDb(value, propValueV1)
+	return propValueToDb(value, PropValueV1)
 }
 
 // PropValueFromDbV1 deserializes a property value from a JSON byte slice
 func PropValueFromDbV1(rawValue json.RawMessage) (any, error) {
-	return propValueFromDb(rawValue, propValueV1)
+	return propValueFromDb(rawValue, PropValueV1)
 }
 
 // UpsertPropertyValueV1Params is the input parameter for the UpsertProperty query
