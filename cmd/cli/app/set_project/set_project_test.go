@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/google/uuid"
@@ -21,6 +22,22 @@ import (
 	clientconfig "github.com/mindersec/minder/pkg/config/client"
 )
 
+func runSetProject(t *testing.T, args ...string) (string, string, error) {
+	t.Helper()
+	rootCmd := app.RootCmd
+	cli.ResetEntireTree(rootCmd)
+	viper.Reset()
+
+	stdoutBuf := new(bytes.Buffer)
+	stderrBuf := new(bytes.Buffer)
+	rootCmd.SetOut(stdoutBuf)
+	rootCmd.SetErr(stderrBuf)
+	rootCmd.SetArgs(args)
+
+	err := rootCmd.Execute()
+	return stdoutBuf.String(), stderrBuf.String(), err
+}
+
 //nolint:paralleltest // Cannot run in parallel because tests modify global env, viper, and root command state
 func TestSetProjectCommand(t *testing.T) {
 	t.Run("successfully sets valid project ID and creates config file", func(t *testing.T) {
@@ -28,22 +45,21 @@ func TestSetProjectCommand(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", tempDir)
 
 		targetProjectID := uuid.New().String()
-
-		rootCmd := app.RootCmd
-		cli.ResetEntireTree(rootCmd)
-		viper.Reset()
-
-		stdoutBuf := new(bytes.Buffer)
-		stderrBuf := new(bytes.Buffer)
-		rootCmd.SetOut(stdoutBuf)
-		rootCmd.SetErr(stderrBuf)
-		rootCmd.SetArgs([]string{"set-project", targetProjectID})
-
-		err := rootCmd.Execute()
+		stdout, stderr, err := runSetProject(t, "set-project", targetProjectID)
 		require.NoError(t, err)
+
+		assert.Empty(t, stdout, "stdout should be empty on successful set-project")
+		// On first run without existing config, initConfig creates empty config and prints a notice to stderr
+		assert.Contains(t, stderr, "creating")
 
 		configPath := filepath.Join(tempDir, "minder", "config.yaml")
 		assert.FileExists(t, configPath)
+
+		if runtime.GOOS != "windows" {
+			info, statErr := os.Stat(configPath)
+			require.NoError(t, statErr)
+			assert.Equal(t, os.FileMode(0o600), info.Mode().Perm(), "config file should have 0600 permissions")
+		}
 
 		content, err := os.ReadFile(configPath)
 		require.NoError(t, err)
@@ -76,19 +92,17 @@ func TestSetProjectCommand(t *testing.T) {
 		require.NoError(t, os.WriteFile(configPath, data, 0o600))
 
 		newProjectID := uuid.New().String()
-
-		rootCmd := app.RootCmd
-		cli.ResetEntireTree(rootCmd)
-		viper.Reset()
-
-		stdoutBuf := new(bytes.Buffer)
-		stderrBuf := new(bytes.Buffer)
-		rootCmd.SetOut(stdoutBuf)
-		rootCmd.SetErr(stderrBuf)
-		rootCmd.SetArgs([]string{"set-project", newProjectID})
-
-		err = rootCmd.Execute()
+		stdout, stderr, err := runSetProject(t, "set-project", newProjectID)
 		require.NoError(t, err)
+
+		assert.Empty(t, stdout, "stdout should be empty on successful update")
+		assert.Empty(t, stderr, "stderr should be empty on successful update when config file exists")
+
+		if runtime.GOOS != "windows" {
+			info, statErr := os.Stat(configPath)
+			require.NoError(t, statErr)
+			assert.Equal(t, os.FileMode(0o600), info.Mode().Perm(), "config file should have 0600 permissions")
+		}
 
 		content, err := os.ReadFile(configPath)
 		require.NoError(t, err)
@@ -105,31 +119,32 @@ func TestSetProjectCommand(t *testing.T) {
 
 	t.Run("works using aliases cd and sp", func(t *testing.T) {
 		for _, alias := range []string{"cd", "sp"} {
-			tempDir := t.TempDir()
-			t.Setenv("XDG_CONFIG_HOME", tempDir)
+			t.Run(alias, func(t *testing.T) {
+				tempDir := t.TempDir()
+				t.Setenv("XDG_CONFIG_HOME", tempDir)
 
-			projectID := uuid.New().String()
+				// Pre-create the config directory and config file so initConfig does not print creation notice
+				configDir := filepath.Join(tempDir, "minder")
+				require.NoError(t, os.MkdirAll(configDir, 0o700))
+				configPath := filepath.Join(configDir, "config.yaml")
+				require.NoError(t, os.WriteFile(configPath, []byte{}, 0o600))
 
-			rootCmd := app.RootCmd
-			cli.ResetEntireTree(rootCmd)
-			viper.Reset()
+				projectID := uuid.New().String()
+				stdout, stderr, err := runSetProject(t, alias, projectID)
+				require.NoError(t, err)
 
-			rootCmd.SetOut(new(bytes.Buffer))
-			rootCmd.SetErr(new(bytes.Buffer))
-			rootCmd.SetArgs([]string{alias, projectID})
+				assert.Empty(t, stdout)
+				assert.Empty(t, stderr)
 
-			err := rootCmd.Execute()
-			require.NoError(t, err)
+				content, err := os.ReadFile(configPath)
+				require.NoError(t, err)
 
-			configPath := filepath.Join(tempDir, "minder", "config.yaml")
-			content, err := os.ReadFile(configPath)
-			require.NoError(t, err)
+				var cfg clientconfig.Config
+				err = yaml.Unmarshal(content, &cfg)
+				require.NoError(t, err)
 
-			var cfg clientconfig.Config
-			err = yaml.Unmarshal(content, &cfg)
-			require.NoError(t, err)
-
-			assert.Equal(t, projectID, cfg.Project)
+				assert.Equal(t, projectID, cfg.Project)
+			})
 		}
 	})
 
@@ -137,15 +152,7 @@ func TestSetProjectCommand(t *testing.T) {
 		tempDir := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", tempDir)
 
-		rootCmd := app.RootCmd
-		cli.ResetEntireTree(rootCmd)
-		viper.Reset()
-
-		rootCmd.SetOut(new(bytes.Buffer))
-		rootCmd.SetErr(new(bytes.Buffer))
-		rootCmd.SetArgs([]string{"set-project", "invalid-uuid-string"})
-
-		err := rootCmd.Execute()
+		_, _, err := runSetProject(t, "set-project", "invalid-uuid-string")
 		require.Error(t, err)
 
 		var wrappedErr *cli.ErrWrappedCLIError
@@ -154,33 +161,15 @@ func TestSetProjectCommand(t *testing.T) {
 		assert.Contains(t, wrappedErr.Err.Error(), "invalid UUID")
 	})
 
-	t.Run("returns usage error when no argument is provided", func(t *testing.T) {
-		rootCmd := app.RootCmd
-		cli.ResetEntireTree(rootCmd)
-		viper.Reset()
-
-		stdoutBuf := new(bytes.Buffer)
-		stderrBuf := new(bytes.Buffer)
-		rootCmd.SetOut(stdoutBuf)
-		rootCmd.SetErr(stderrBuf)
-		rootCmd.SetArgs([]string{"set-project"})
-
-		err := rootCmd.Execute()
+	t.Run("prints usage when no argument is provided", func(t *testing.T) {
+		stdout, stderr, err := runSetProject(t, "set-project")
 		require.NoError(t, err)
+		assert.Contains(t, stdout+stderr, "Usage:")
 	})
 
-	t.Run("returns usage error when more than one argument is provided", func(t *testing.T) {
-		rootCmd := app.RootCmd
-		cli.ResetEntireTree(rootCmd)
-		viper.Reset()
-
-		stdoutBuf := new(bytes.Buffer)
-		stderrBuf := new(bytes.Buffer)
-		rootCmd.SetOut(stdoutBuf)
-		rootCmd.SetErr(stderrBuf)
-		rootCmd.SetArgs([]string{"set-project", uuid.New().String(), "extra-arg"})
-
-		err := rootCmd.Execute()
+	t.Run("prints usage when more than one argument is provided", func(t *testing.T) {
+		stdout, stderr, err := runSetProject(t, "set-project", uuid.New().String(), "extra-arg")
 		require.NoError(t, err)
+		assert.Contains(t, stdout+stderr, "Usage:")
 	})
 }
