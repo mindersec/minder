@@ -143,6 +143,7 @@ func TestFetchAllProperties(t *testing.T) {
 		entType        minderv1.Entity
 		props          *properties.Properties
 		wantName       string
+		wantRepo       string
 		wantUpstreamID string
 		wantErr        string
 		wantErrIs      error
@@ -152,6 +153,7 @@ func TestFetchAllProperties(t *testing.T) {
 			entType:        minderv1.Entity_ENTITY_ARTIFACTS,
 			props:          properties.NewProperties(map[string]any{properties.PropertyName: "myimage:v1.2"}),
 			wantName:       "myimage:v1.2",
+			wantRepo:       "myimage",
 			wantUpstreamID: "myimage@" + taggedDigest,
 		},
 		{
@@ -159,6 +161,7 @@ func TestFetchAllProperties(t *testing.T) {
 			entType:        minderv1.Entity_ENTITY_ARTIFACTS,
 			props:          properties.NewProperties(map[string]any{properties.PropertyName: "myimage"}),
 			wantName:       "myimage",
+			wantRepo:       "myimage",
 			wantUpstreamID: "myimage@" + latestDigest,
 		},
 		{
@@ -166,6 +169,7 @@ func TestFetchAllProperties(t *testing.T) {
 			entType:        minderv1.Entity_ENTITY_ARTIFACTS,
 			props:          properties.NewProperties(map[string]any{properties.PropertyName: "myimage:multi"}),
 			wantName:       "myimage:multi",
+			wantRepo:       "myimage",
 			wantUpstreamID: "myimage@" + multiArchDigest,
 		},
 		{
@@ -223,6 +227,7 @@ func TestFetchAllProperties(t *testing.T) {
 
 			assert.Equal(t, tt.wantName, got.GetProperty(properties.PropertyName).GetString())
 			assert.Equal(t, tt.wantUpstreamID, got.GetProperty(properties.PropertyUpstreamID).GetString())
+			assert.Equal(t, tt.wantRepo, got.GetProperty(oci.ArtifactPropertyRepository).GetString())
 			assert.Equal(t, string(verifyif.ArtifactTypeContainer),
 				got.GetProperty(properties.ArtifactPropertyType).GetString())
 		})
@@ -326,19 +331,19 @@ func TestPropertiesToProtoMessage(t *testing.T) {
 		{
 			name:     "tagged name",
 			entType:  minderv1.Entity_ENTITY_ARTIFACTS,
-			props:    oci.NewArtifactProperties("myimage:v1.2", "myimage@sha256:abc"),
+			props:    oci.NewArtifactProperties("myimage:v1.2", "myimage", "myimage@sha256:abc"),
 			wantName: "myimage",
 		},
 		{
 			name:     "untagged name",
 			entType:  minderv1.Entity_ENTITY_ARTIFACTS,
-			props:    oci.NewArtifactProperties("myimage", "myimage@sha256:abc"),
+			props:    oci.NewArtifactProperties("myimage", "myimage", "myimage@sha256:abc"),
 			wantName: "myimage",
 		},
 		{
 			name:      "unsupported entity type",
 			entType:   minderv1.Entity_ENTITY_REPOSITORIES,
-			props:     oci.NewArtifactProperties("myimage", "myimage@sha256:abc"),
+			props:     oci.NewArtifactProperties("myimage", "myimage", "myimage@sha256:abc"),
 			wantErrIs: provifv1.ErrUnsupportedEntity,
 		},
 	}

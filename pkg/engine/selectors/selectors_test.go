@@ -803,6 +803,38 @@ func TestSelectSelectorEntity(t *testing.T) {
 			selected: false,
 		},
 		{
+			name: "Select an artifact by its OCI repository property",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_ARTIFACTS,
+					Selector: "artifact.properties['oci/repository'] == 'myimage'",
+				},
+			},
+			selectorEntityBld: newTestArtifactSelectorEntity(
+				newGithubProviderSelector(),
+				artifactWithProperties(map[string]any{
+					"oci/repository": "myimage",
+				}),
+			),
+			selected: true,
+		},
+		{
+			name: "Skip an artifact whose OCI repository property does not match",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_ARTIFACTS,
+					Selector: "artifact.properties['oci/repository'] == 'myimage'",
+				},
+			},
+			selectorEntityBld: newTestArtifactSelectorEntity(
+				newGithubProviderSelector(),
+				artifactWithProperties(map[string]any{
+					"oci/repository": "otherimage",
+				}),
+			),
+			selected: false,
+		},
+		{
 			name: "Multiple selectors with the same entity type, the first one is true",
 			exprs: []models.ProfileSelector{
 				{

@@ -119,18 +119,20 @@ func TestArtifactNameFromProperties(t *testing.T) {
 func TestNewArtifactProperties(t *testing.T) {
 	t.Parallel()
 
-	props := NewArtifactProperties("myimage:v1.2", "myimage@sha256:abc")
+	props := NewArtifactProperties("myimage:v1.2", "myimage", "myimage@sha256:abc")
 
 	for _, key := range []string{
 		properties.PropertyName,
 		properties.PropertyUpstreamID,
 		properties.ArtifactPropertyType,
+		ArtifactPropertyRepository,
 	} {
 		require.NotNil(t, props.GetProperty(key), "missing property %q", key)
 	}
 
 	assert.Equal(t, "myimage:v1.2", props.GetProperty(properties.PropertyName).GetString())
 	assert.Equal(t, "myimage@sha256:abc", props.GetProperty(properties.PropertyUpstreamID).GetString())
+	assert.Equal(t, "myimage", props.GetProperty(ArtifactPropertyRepository).GetString())
 
 	typ, err := props.GetProperty(properties.ArtifactPropertyType).AsString()
 	require.NoError(t, err)
@@ -149,13 +151,13 @@ func TestArtifactV1FromProperties(t *testing.T) {
 	}{
 		{
 			name:      "tagged name drops the tag",
-			props:     NewArtifactProperties("myimage:v1.2", "myimage@sha256:abc"),
+			props:     NewArtifactProperties("myimage:v1.2", "myimage", "myimage@sha256:abc"),
 			namespace: "testns",
 			wantName:  "myimage",
 		},
 		{
 			name:      "untagged name is unchanged",
-			props:     NewArtifactProperties("myimage", "myimage@sha256:abc"),
+			props:     NewArtifactProperties("myimage", "myimage", "myimage@sha256:abc"),
 			namespace: "testns",
 			wantName:  "myimage",
 		},
@@ -175,7 +177,7 @@ func TestArtifactV1FromProperties(t *testing.T) {
 		},
 		{
 			name:    "empty namespace",
-			props:   NewArtifactProperties("myimage", "myimage@sha256:abc"),
+			props:   NewArtifactProperties("myimage", "myimage", "myimage@sha256:abc"),
 			wantErr: "artifact namespace is empty",
 		},
 	}
