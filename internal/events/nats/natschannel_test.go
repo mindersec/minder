@@ -287,6 +287,39 @@ func TestNatsChannelPublishBeforeSubscribe(t *testing.T) {
 	require.NoError(t, err, "closing the subscriber deleted the consumer")
 }
 
+// A consumer created by another process between the lookup and the create, with
+// a different config (old nats.go used a random deliver subject), is reused.
+func TestCreateConsumerReusesExisting(t *testing.T) {
+	t.Parallel()
+	server := natstest.RunRandClientPortServer()
+	require.NoError(t, server.EnableJetStream(&natsserver.JetStreamConfig{StoreDir: t.TempDir()}))
+	defer server.Shutdown()
+	ctx := context.Background()
+
+	conn, err := nats.Connect(server.ClientURL())
+	require.NoError(t, err)
+	defer conn.Close()
+	js, err := jetstream.New(conn)
+	require.NoError(t, err)
+	_, err = js.CreateStream(ctx, jetstream.StreamConfig{Name: "test", Subjects: []string{"test.>"}})
+	require.NoError(t, err)
+
+	inbox := nats.NewInbox()
+	_, err = js.CreatePushConsumer(ctx, "test", jetstream.ConsumerConfig{
+		Durable:        "test-test",
+		DeliverSubject: inbox,
+		DeliverGroup:   "test-test",
+		FilterSubject:  "test.test",
+		AckPolicy:      jetstream.AckExplicitPolicy,
+	})
+	require.NoError(t, err)
+
+	require.NoError(t, createConsumer(ctx, js, "test", "test.test", "test-test"))
+	consumer, err := js.PushConsumer(ctx, "test", "test-test")
+	require.NoError(t, err)
+	require.Equal(t, inbox, consumer.CachedInfo().Config.DeliverSubject)
+}
+
 func buildDriverPair(ctx context.Context, cfg serverconfig.EventConfig) (message.Publisher, message.Subscriber, common.DriverCloser, <-chan *message.Message, error) {
 	pub, sub, closer, err := BuildNatsChannelDriver(&cfg)
 	if err != nil {
