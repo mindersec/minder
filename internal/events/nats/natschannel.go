@@ -171,11 +171,17 @@ func (c *cloudEventsNatsAdapter) ensureConsumer(ctx context.Context, subject str
 	if err == nil || !errors.Is(err, jetstream.ErrConsumerNotFound) {
 		return err
 	}
+	return createConsumer(ctx, js, c.cfg.Prefix, subject, name)
+}
+
+func createConsumer(ctx context.Context, js jetstream.JetStream, stream string, subject string, name string) error {
 	// The config matches what nats.go creates for a queue subscription, except
 	// for the deliver subject, which is fixed so that concurrent creation
 	// requests from several processes are identical and all succeed.
-	_, err = js.CreatePushConsumer(ctx, c.cfg.Prefix, jetstream.ConsumerConfig{
-		Durable:        name,
+	_, err := js.CreatePushConsumer(ctx, stream, jetstream.ConsumerConfig{
+		Durable: name,
+		// Deployments using NATS subject permissions need to allow `_minder.>`
+		// in addition to `_INBOX.>`.
 		DeliverSubject: "_minder.deliver." + name,
 		DeliverGroup:   name,
 		FilterSubject:  subject,
@@ -183,6 +189,10 @@ func (c *cloudEventsNatsAdapter) ensureConsumer(ctx context.Context, subject str
 		AckPolicy:      jetstream.AckExplicitPolicy,
 		ReplayPolicy:   jetstream.ReplayInstantPolicy,
 	})
+	if errors.Is(err, jetstream.ErrConsumerExists) {
+		// Another process created it between our lookup and create.
+		_, err = js.PushConsumer(ctx, stream, name)
+	}
 	return err
 }
 

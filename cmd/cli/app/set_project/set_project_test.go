@@ -1,140 +1,183 @@
 // SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package set_project
+package set_project_test
 
 import (
-	"context"
+	"bytes"
+	"os"
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/mock/gomock"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"gopkg.in/yaml.v3"
 
-	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	mockv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1/mock"
+	"github.com/mindersec/minder/cmd/cli/app"
+	_ "github.com/mindersec/minder/cmd/cli/app/set_project"
+	"github.com/mindersec/minder/internal/util/cli"
+	clientconfig "github.com/mindersec/minder/pkg/config/client"
 )
 
-func TestResolveProjectByName_MatchesName(t *testing.T) {
-	t.Parallel()
+func runSetProject(t *testing.T, args ...string) (string, string, error) {
+	t.Helper()
+	rootCmd := app.RootCmd
+	cli.ResetEntireTree(rootCmd)
+	viper.Reset()
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	stdoutBuf := new(bytes.Buffer)
+	stderrBuf := new(bytes.Buffer)
+	rootCmd.SetOut(stdoutBuf)
+	rootCmd.SetErr(stderrBuf)
+	rootCmd.SetArgs(args)
 
-	projectID := uuid.New()
-	mockClient := mockv1.NewMockProjectsServiceClient(ctrl)
+	err := rootCmd.Execute()
+	return stdoutBuf.String(), stderrBuf.String(), err
+}
 
-	mockClient.EXPECT().
-		ListProjects(gomock.Any(), gomock.Any()).
-		Return(&minderv1.ListProjectsResponse{
-			Projects: []*minderv1.Project{
-				{ProjectId: projectID.String(), Name: "my-project", DisplayName: "My Project"},
+//nolint:paralleltest // Cannot run in parallel because tests modify global env, viper, and root command state
+func TestSetProjectCommand(t *testing.T) {
+	t.Run("successfully sets valid project ID and creates config file", func(t *testing.T) {
+		tempDir := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", tempDir)
+
+		targetProjectID := uuid.New().String()
+		stdout, stderr, err := runSetProject(t, "set-project", targetProjectID)
+		require.NoError(t, err)
+
+		assert.Empty(t, stdout, "stdout should be empty on successful set-project")
+		// On first run without existing config, initConfig creates empty config and prints a notice to stderr
+		assert.Contains(t, stderr, "creating")
+
+		configPath := filepath.Join(tempDir, "minder", "config.yaml")
+		assert.FileExists(t, configPath)
+
+		if runtime.GOOS != "windows" {
+			info, statErr := os.Stat(configPath)
+			require.NoError(t, statErr)
+			assert.Equal(t, os.FileMode(0o600), info.Mode().Perm(), "config file should have 0600 permissions")
+		}
+
+		content, err := os.ReadFile(configPath)
+		require.NoError(t, err)
+
+		var cfg clientconfig.Config
+		err = yaml.Unmarshal(content, &cfg)
+		require.NoError(t, err)
+
+		assert.Equal(t, targetProjectID, cfg.Project)
+	})
+
+	t.Run("successfully updates existing config file preserving other fields", func(t *testing.T) {
+		tempDir := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", tempDir)
+
+		configDir := filepath.Join(tempDir, "minder")
+		require.NoError(t, os.MkdirAll(configDir, 0o700))
+
+		configPath := filepath.Join(configDir, "config.yaml")
+		initialConfig := clientconfig.Config{
+			Project: uuid.New().String(),
+			GRPCClientConfig: clientconfig.GRPCClientConfig{
+				Host:     "custom.minder.host",
+				Port:     8443,
+				Insecure: true,
 			},
-		}, nil)
+		}
+		data, err := yaml.Marshal(initialConfig)
+		require.NoError(t, err)
+		require.NoError(t, os.WriteFile(configPath, data, 0o600))
 
-	got, err := resolveProjectByNameFromClient(context.Background(), mockClient, "my-project")
-	require.NoError(t, err)
-	require.Equal(t, projectID, got)
-}
+		newProjectID := uuid.New().String()
+		stdout, stderr, err := runSetProject(t, "set-project", newProjectID)
+		require.NoError(t, err)
 
-func TestResolveProjectByName_MatchesDisplayName(t *testing.T) {
-	t.Parallel()
+		assert.Empty(t, stdout, "stdout should be empty on successful update")
+		assert.Empty(t, stderr, "stderr should be empty on successful update when config file exists")
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+		if runtime.GOOS != "windows" {
+			info, statErr := os.Stat(configPath)
+			require.NoError(t, statErr)
+			assert.Equal(t, os.FileMode(0o600), info.Mode().Perm(), "config file should have 0600 permissions")
+		}
 
-	projectID := uuid.New()
-	mockClient := mockv1.NewMockProjectsServiceClient(ctrl)
+		content, err := os.ReadFile(configPath)
+		require.NoError(t, err)
 
-	mockClient.EXPECT().
-		ListProjects(gomock.Any(), gomock.Any()).
-		Return(&minderv1.ListProjectsResponse{
-			Projects: []*minderv1.Project{
-				{ProjectId: projectID.String(), Name: "my-project", DisplayName: "My Project"},
-			},
-		}, nil)
+		var updatedCfg clientconfig.Config
+		err = yaml.Unmarshal(content, &updatedCfg)
+		require.NoError(t, err)
 
-	got, err := resolveProjectByNameFromClient(context.Background(), mockClient, "My Project")
-	require.NoError(t, err)
-	require.Equal(t, projectID, got)
-}
+		assert.Equal(t, newProjectID, updatedCfg.Project)
+		assert.Equal(t, "custom.minder.host", updatedCfg.GRPCClientConfig.Host)
+		assert.Equal(t, 8443, updatedCfg.GRPCClientConfig.Port)
+		assert.True(t, updatedCfg.GRPCClientConfig.Insecure)
+	})
 
-func TestResolveProjectByName_AmbiguousName(t *testing.T) {
-	t.Parallel()
+	t.Run("works using aliases cd and sp", func(t *testing.T) {
+		for _, alias := range []string{"cd", "sp"} {
+			t.Run(alias, func(t *testing.T) {
+				tempDir := t.TempDir()
+				t.Setenv("XDG_CONFIG_HOME", tempDir)
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+				// Pre-create the config directory and config file so initConfig does not print creation notice
+				configDir := filepath.Join(tempDir, "minder")
+				require.NoError(t, os.MkdirAll(configDir, 0o700))
+				configPath := filepath.Join(configDir, "config.yaml")
+				require.NoError(t, os.WriteFile(configPath, []byte{}, 0o600))
 
-	mockClient := mockv1.NewMockProjectsServiceClient(ctrl)
+				projectID := uuid.New().String()
+				stdout, stderr, err := runSetProject(t, alias, projectID)
+				require.NoError(t, err)
 
-	mockClient.EXPECT().
-		ListProjects(gomock.Any(), gomock.Any()).
-		Return(&minderv1.ListProjectsResponse{
-			Projects: []*minderv1.Project{
-				{ProjectId: uuid.New().String(), Name: "dev", DisplayName: "Dev"},
-				{ProjectId: uuid.New().String(), Name: "dev", DisplayName: "Dev"},
-			},
-		}, nil)
+				assert.Empty(t, stdout)
+				assert.Empty(t, stderr)
 
-	_, err := resolveProjectByNameFromClient(context.Background(), mockClient, "dev")
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "ambiguous name")
-	require.Contains(t, err.Error(), "please use a UUID instead")
-}
+				content, err := os.ReadFile(configPath)
+				require.NoError(t, err)
 
-func TestResolveProjectByName_NotFound(t *testing.T) {
-	t.Parallel()
+				var cfg clientconfig.Config
+				err = yaml.Unmarshal(content, &cfg)
+				require.NoError(t, err)
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+				assert.Equal(t, projectID, cfg.Project)
+			})
+		}
+	})
 
-	mockClient := mockv1.NewMockProjectsServiceClient(ctrl)
+	t.Run("returns error when project ID is not a valid UUID", func(t *testing.T) {
+		tempDir := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", tempDir)
 
-	mockClient.EXPECT().
-		ListProjects(gomock.Any(), gomock.Any()).
-		Return(&minderv1.ListProjectsResponse{
-			Projects: []*minderv1.Project{
-				{ProjectId: uuid.New().String(), Name: "other-project", DisplayName: "Other"},
-			},
-		}, nil)
+		_, _, err := runSetProject(t, "set-project", "invalid-uuid-string")
+		require.Error(t, err)
 
-	_, err := resolveProjectByNameFromClient(context.Background(), mockClient, "does-not-exist")
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "no project found")
-}
+		var wrappedErr *cli.ErrWrappedCLIError
+		require.ErrorAs(t, err, &wrappedErr)
+		assert.Equal(t, "Error parsing project ID", wrappedErr.Message)
+		assert.Contains(t, wrappedErr.Err.Error(), "invalid UUID")
+	})
 
-func TestResolveProjectByName_EmptyList(t *testing.T) {
-	t.Parallel()
+	t.Run("returns error when no argument is provided", func(t *testing.T) {
+		tempDir := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", tempDir)
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+		stdout, stderr, err := runSetProject(t, "set-project")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "accepts 1 arg(s), received 0")
+		assert.Contains(t, stdout+stderr, "Usage:")
+	})
 
-	mockClient := mockv1.NewMockProjectsServiceClient(ctrl)
+	t.Run("returns error when more than one argument is provided", func(t *testing.T) {
+		tempDir := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", tempDir)
 
-	mockClient.EXPECT().
-		ListProjects(gomock.Any(), gomock.Any()).
-		Return(&minderv1.ListProjectsResponse{Projects: []*minderv1.Project{}}, nil)
-
-	_, err := resolveProjectByNameFromClient(context.Background(), mockClient, "any-name")
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "no project found")
-}
-
-func TestResolveProjectByName_ServerError(t *testing.T) {
-	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockClient := mockv1.NewMockProjectsServiceClient(ctrl)
-
-	mockClient.EXPECT().
-		ListProjects(gomock.Any(), gomock.Any()).
-		Return(nil, status.Error(codes.Internal, "server error"))
-
-	_, err := resolveProjectByNameFromClient(context.Background(), mockClient, "my-project")
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "server error")
+		stdout, stderr, err := runSetProject(t, "set-project", uuid.New().String(), "extra-arg")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "accepts 1 arg(s), received 2")
+		assert.Contains(t, stdout+stderr, "Usage:")
+	})
 }

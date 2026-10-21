@@ -57,6 +57,7 @@ func TestCreateCommand(t *testing.T) {
 				return cli.WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), client)
 			},
 			GoldenFileName: "create_warning.table",
+			ExpectedStderr: "Warning: Rego V0 is deprecated",
 		},
 
 		{
