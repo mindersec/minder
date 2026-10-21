@@ -125,7 +125,7 @@ func EnsureCredentials(cmd *cobra.Command, _ []string) error {
 		if err != nil {
 			return MessageAndError("Error fetching credentials from Minder", err)
 		}
-		cmd.Printf("Your access credentials have been saved to %s\n", tokenFile)
+		cmd.PrintErrf("Your access credentials have been saved to %s\n", tokenFile)
 	}
 	return nil
 }

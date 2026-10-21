@@ -1,25 +1,21 @@
-// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
 package auth
 
 import (
-	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util/cli"
 )
 
-func setupTestCredentials(t *testing.T, token string) {
+func setupTestCredentials(t *testing.T, credsContent []byte) {
 	t.Helper()
 	tempDir := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", tempDir)
@@ -31,6 +27,12 @@ func setupTestCredentials(t *testing.T, token string) {
 	err = os.WriteFile(filepath.Join(minderDir, "config.yaml"), []byte{}, 0o600)
 	require.NoError(t, err)
 
+	err = os.WriteFile(filepath.Join(minderDir, "credentials.json"), credsContent, 0o600)
+	require.NoError(t, err)
+}
+
+func validCredentialsJSON(t *testing.T, token string) []byte {
+	t.Helper()
 	creds := cli.OpenIdCredentials{
 		AccessToken:          token,
 		RefreshToken:         "dummy-refresh-token",
@@ -38,99 +40,39 @@ func setupTestCredentials(t *testing.T, token string) {
 	}
 	data, err := json.Marshal(creds)
 	require.NoError(t, err)
-
-	err = os.WriteFile(filepath.Join(minderDir, "credentials.json"), data, 0o600)
-	require.NoError(t, err)
-}
-
-func setupCorruptCredentials(t *testing.T) {
-	t.Helper()
-	tempDir := t.TempDir()
-	t.Setenv("XDG_CONFIG_HOME", tempDir)
-
-	minderDir := filepath.Join(tempDir, "minder")
-	err := os.MkdirAll(minderDir, 0o700)
-	require.NoError(t, err)
-
-	err = os.WriteFile(filepath.Join(minderDir, "config.yaml"), []byte{}, 0o600)
-	require.NoError(t, err)
-
-	err = os.WriteFile(filepath.Join(minderDir, "credentials.json"), []byte("invalid-json{"), 0o600)
-	require.NoError(t, err)
+	return data
 }
 
 //nolint:paralleltest // Cannot run in parallel because it swaps global Viper/Stdout/Env state
 func TestTokenCommand(t *testing.T) {
-	t.Run("valid token printed to stdout via RunCmdTests", func(t *testing.T) {
-		setupTestCredentials(t, "test-token-value-12345")
+	t.Run("valid token printed to stdout with clean stderr", func(t *testing.T) {
+		const expectedToken = "test-token-value-12345"
+		setupTestCredentials(t, validCredentialsJSON(t, expectedToken))
 
 		tests := []cli.CmdTestCase{
 			{
-				Name:           "prints access token to stdout",
-				Args:           []string{"auth", "token"},
-				GoldenFileName: "token",
+				Name:              "prints access token to stdout and leaves stderr empty",
+				Args:              []string{"auth", "token"},
+				ExpectedStdout:    expectedToken,
+				ExpectEmptyStderr: true,
 			},
 		}
 
 		cli.RunCmdTests(t, tests, AuthCmd)
 	})
 
-	t.Run("error output to stderr on corrupt credentials via RunCmdTests", func(t *testing.T) {
-		setupCorruptCredentials(t)
+	t.Run("error output to stderr with clean stdout on corrupt credentials", func(t *testing.T) {
+		setupTestCredentials(t, []byte("invalid-json{"))
 
 		tests := []cli.CmdTestCase{
 			{
-				Name:           "routes errors to stderr",
-				Args:           []string{"auth", "token"},
-				ExpectedStderr: "Error getting token:",
-				ExpectedError:  "error loading credentials",
+				Name:              "routes error to stderr and leaves stdout empty",
+				Args:              []string{"auth", "token"},
+				ExpectedError:     "error loading credentials",
+				ExpectEmptyStdout: true,
 			},
 		}
 
 		cli.RunCmdTests(t, tests, AuthCmd)
-	})
-}
-
-//nolint:paralleltest // Cannot run in parallel because it swaps global Viper/Stdout/Env state
-func TestTokenCommand_StreamsSeparation(t *testing.T) {
-	t.Run("clean stdout and empty stderr on success", func(t *testing.T) {
-		expectedToken := "clean-auth-token-xyz"
-		setupTestCredentials(t, expectedToken)
-
-		rootCmd := app.RootCmd
-		cli.ResetEntireTree(rootCmd)
-		viper.Reset()
-
-		stdoutBuf := new(bytes.Buffer)
-		stderrBuf := new(bytes.Buffer)
-		rootCmd.SetOut(stdoutBuf)
-		rootCmd.SetErr(stderrBuf)
-		rootCmd.SetArgs([]string{"auth", "token"})
-
-		err := rootCmd.Execute()
-		require.NoError(t, err)
-
-		assert.Equal(t, expectedToken, stdoutBuf.String(), "token should be printed to stdout cleanly")
-		assert.Empty(t, stderrBuf.String(), "stderr must be empty when getting token succeeds")
-	})
-
-	t.Run("error routed to stderr and empty stdout on failure", func(t *testing.T) {
-		setupCorruptCredentials(t)
-
-		rootCmd := app.RootCmd
-		cli.ResetEntireTree(rootCmd)
-		viper.Reset()
-
-		stdoutBuf := new(bytes.Buffer)
-		stderrBuf := new(bytes.Buffer)
-		rootCmd.SetOut(stdoutBuf)
-		rootCmd.SetErr(stderrBuf)
-		rootCmd.SetArgs([]string{"auth", "token"})
-
-		err := rootCmd.Execute()
-		require.Error(t, err)
-
-		assert.Contains(t, stderrBuf.String(), "Error getting token:", "error message must be routed to stderr")
-		assert.Empty(t, stdoutBuf.String(), "stdout must remain clean and empty when an error occurs")
 	})
 }

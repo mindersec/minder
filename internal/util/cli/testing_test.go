@@ -15,7 +15,8 @@ func TestRunCmdTests_StdoutAndStderrSeparation(t *testing.T) {
 
 	rootCmd := &cobra.Command{Use: "root"}
 	subCmd := &cobra.Command{
-		Use: "testcmd",
+		Use:          "testcmd",
+		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 && args[0] == "error" {
 				cmd.PrintErrln("standard error output")
@@ -35,10 +36,11 @@ func TestRunCmdTests_StdoutAndStderrSeparation(t *testing.T) {
 			ExpectedStderr: "warning message on stderr",
 		},
 		{
-			Name:           "command returns error and stderr",
-			Args:           []string{"testcmd", "error"},
-			ExpectedStderr: "standard error output",
-			ExpectedError:  "command failed",
+			Name:              "command returns error and stderr with empty stdout",
+			Args:              []string{"testcmd", "error"},
+			ExpectedStderr:    "standard error output",
+			ExpectedError:     "command failed",
+			ExpectEmptyStdout: true,
 		},
 	}
 
