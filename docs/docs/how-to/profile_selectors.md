@@ -114,6 +114,29 @@ while the properties are provider-specific and prefixed with the provider name.
 | `github/repo_name`  | The GitHub repo name (e.g. `stacklok`). Empty for org packages.              | string |
 | `github/repo_owner` | The GitHub repo owner (e.g. `minder`). Empty for org packages.               | string |
 
+## Artifact properties set by the DockerHub and Quay providers
+
+| Field            | Description                                                                                     | Type   |
+| ---------------- | ----------------------------------------------------------------------------------------------- | ------ |
+| `oci/repository` | The full repository path without the registry or tag, e.g. `library/alpine` for `alpine:latest` | string |
+| `oci/namespace`  | The provider namespace the artifact belongs to, e.g. `library`                                  | string |
+| `oci/registry`   | The registry host serving the artifact, e.g. `docker.io` or `quay.io`                           | string |
+
+For example, to select DockerHub or Quay artifacts by repository:
+
+```yaml
+selection:
+  - entity: artifact
+    selector: artifact.properties['oci/repository'].endsWith('/envoy')
+    comment: 'Any envoy image, in any namespace'
+  - entity: artifact
+    selector: artifact.properties['oci/repository'] == 'library/alpine'
+    comment: 'The library/alpine repository, at any tag'
+  - entity: artifact
+    selector: artifact.properties['oci/repository'].startsWith('myorg/')
+    comment: 'Every repository in the myorg namespace'
+```
+
 ## Pull request selectors
 
 | Field  | Description                                                  | Type   |

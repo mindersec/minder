@@ -189,7 +189,7 @@ func (d *dockerHubImageLister) FetchAllProperties(
 		return nil, fmt.Errorf("failed to resolve digest for %q: %w", name, err)
 	}
 
-	return oci.NewArtifactProperties(name, repo, repo+"@"+digest), nil
+	return oci.NewArtifactProperties(name, d.namespace, d.GetRegistry(), repo+"@"+digest)
 }
 
 // FetchProperty implements the provider interface

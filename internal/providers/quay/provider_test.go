@@ -135,7 +135,8 @@ func TestFetchAllProperties(t *testing.T) {
 	require.NotEqual(t, taggedDigest, latestDigest)
 
 	q := &quayImageLister{
-		OCI: oci.New(nil, host, path.Join(host, namespace)),
+		OCI:       oci.New(nil, host, path.Join(host, namespace)),
+		namespace: namespace,
 	}
 
 	tests := []struct {
@@ -153,7 +154,7 @@ func TestFetchAllProperties(t *testing.T) {
 			entType:        minderv1.Entity_ENTITY_ARTIFACTS,
 			props:          properties.NewProperties(map[string]any{properties.PropertyName: "myimage:v1.2"}),
 			wantName:       "myimage:v1.2",
-			wantRepo:       "myimage",
+			wantRepo:       namespace + "/myimage",
 			wantUpstreamID: "myimage@" + taggedDigest,
 		},
 		{
@@ -161,7 +162,7 @@ func TestFetchAllProperties(t *testing.T) {
 			entType:        minderv1.Entity_ENTITY_ARTIFACTS,
 			props:          properties.NewProperties(map[string]any{properties.PropertyName: "myimage"}),
 			wantName:       "myimage",
-			wantRepo:       "myimage",
+			wantRepo:       namespace + "/myimage",
 			wantUpstreamID: "myimage@" + latestDigest,
 		},
 		{
@@ -169,7 +170,7 @@ func TestFetchAllProperties(t *testing.T) {
 			entType:        minderv1.Entity_ENTITY_ARTIFACTS,
 			props:          properties.NewProperties(map[string]any{properties.PropertyName: "myimage:multi"}),
 			wantName:       "myimage:multi",
-			wantRepo:       "myimage",
+			wantRepo:       namespace + "/myimage",
 			wantUpstreamID: "myimage@" + multiArchDigest,
 		},
 		{
@@ -228,6 +229,8 @@ func TestFetchAllProperties(t *testing.T) {
 			assert.Equal(t, tt.wantName, got.GetProperty(properties.PropertyName).GetString())
 			assert.Equal(t, tt.wantUpstreamID, got.GetProperty(properties.PropertyUpstreamID).GetString())
 			assert.Equal(t, tt.wantRepo, got.GetProperty(oci.ArtifactPropertyRepository).GetString())
+			assert.Equal(t, namespace, got.GetProperty(oci.ArtifactPropertyNamespace).GetString())
+			assert.Equal(t, host, got.GetProperty(oci.ArtifactPropertyRegistry).GetString())
 			assert.Equal(t, string(verifyif.ArtifactTypeContainer),
 				got.GetProperty(properties.ArtifactPropertyType).GetString())
 		})
@@ -331,19 +334,19 @@ func TestPropertiesToProtoMessage(t *testing.T) {
 		{
 			name:     "tagged name",
 			entType:  minderv1.Entity_ENTITY_ARTIFACTS,
-			props:    oci.NewArtifactProperties("myimage:v1.2", "myimage", "myimage@sha256:abc"),
+			props:    mustArtifactProperties(t, "myimage:v1.2"),
 			wantName: "myimage",
 		},
 		{
 			name:     "untagged name",
 			entType:  minderv1.Entity_ENTITY_ARTIFACTS,
-			props:    oci.NewArtifactProperties("myimage", "myimage", "myimage@sha256:abc"),
+			props:    mustArtifactProperties(t, "myimage"),
 			wantName: "myimage",
 		},
 		{
 			name:      "unsupported entity type",
 			entType:   minderv1.Entity_ENTITY_REPOSITORIES,
-			props:     oci.NewArtifactProperties("myimage", "myimage", "myimage@sha256:abc"),
+			props:     mustArtifactProperties(t, "myimage"),
 			wantErrIs: provifv1.ErrUnsupportedEntity,
 		},
 	}
@@ -409,4 +412,11 @@ func TestConvertedArtifactImageRef(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, res, 1)
 	assert.False(t, res[0].IsSigned)
+}
+
+func mustArtifactProperties(t *testing.T, ref string) *properties.Properties {
+	t.Helper()
+	props, err := oci.NewArtifactProperties(ref, "testns", "quay.io", "myimage@sha256:abc")
+	require.NoError(t, err)
+	return props
 }
