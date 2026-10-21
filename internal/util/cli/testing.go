@@ -48,8 +48,15 @@ type CmdTestCase struct {
 	Args           []string
 	MockSetup      func(t *testing.T, ctrl *gomock.Controller) context.Context
 	GoldenFileName string
+	// ExpectedStdout asserts an exact match against the standard output stream.
+	ExpectedStdout string
+	// ExpectedStderr asserts that standard error contains the specified substring.
 	ExpectedStderr string
 	ExpectedError  string
+	// ExpectEmptyStdout asserts that standard output is completely empty.
+	ExpectEmptyStdout bool
+	// ExpectEmptyStderr asserts that standard error is completely empty.
+	ExpectEmptyStderr bool
 }
 
 // RunCmdTests iterates over a slice of test cases and executes them
@@ -106,8 +113,20 @@ func RunCmdTests(
 				}
 			}
 
+			if tc.ExpectedStdout != "" {
+				assert.Equal(t, tc.ExpectedStdout, stdoutBuf.String())
+			}
+
 			if tc.ExpectedStderr != "" {
 				assert.Contains(t, stderrBuf.String(), tc.ExpectedStderr)
+			}
+
+			if tc.ExpectEmptyStdout {
+				assert.Empty(t, stdoutBuf.String(), "expected stdout to be empty")
+			}
+
+			if tc.ExpectEmptyStderr {
+				assert.Empty(t, stderrBuf.String(), "expected stderr to be empty")
 			}
 		})
 	}

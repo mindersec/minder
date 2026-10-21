@@ -125,7 +125,7 @@ func EnsureCredentials(cmd *cobra.Command, _ []string) error {
 		if err != nil {
 			return MessageAndError("Error fetching credentials from Minder", err)
 		}
-		cmd.Printf("Your access credentials have been saved to %s\n", tokenFile)
+		cmd.PrintErrf("Your access credentials have been saved to %s\n", tokenFile)
 	}
 	return nil
 }
@@ -234,7 +234,7 @@ func Login(
 		msg, writeErr := writeError(w, loginerr)
 		if writeErr != nil {
 			// if we cannot display the access denied page, just print an error message
-			cmd.Println(msg)
+			cmd.PrintErrln(msg)
 		}
 		errChan <- loginerr
 	}
@@ -307,7 +307,7 @@ func loginWithBrowserFlow(
 		_, err := w.Write(loginSuccessHtml)
 		if err != nil {
 			// if we cannot display the success page, just print a success message
-			cmd.Println("Authentication Successful")
+			cmd.PrintErrln("Authentication Successful")
 		}
 	}
 
@@ -325,7 +325,7 @@ func loginWithBrowserFlow(
 		err := server.ListenAndServe()
 		// ignore error if it's just a graceful shutdown
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			cmd.Printf("Error starting server: %v\n", err)
+			cmd.PrintErrf("Error starting server: %v\n", err)
 		}
 	}()
 
@@ -335,16 +335,16 @@ func loginWithBrowserFlow(
 	loginUrl := fmt.Sprintf("http://localhost:%v/login", port)
 
 	// Redirect user to provider to log in
-	cmd.Printf("Your browser will now be opened to: %s\n", loginUrl)
+	cmd.PrintErrf("Your browser will now be opened to: %s\n", loginUrl)
 
 	// open user's browser to login page
 	if err := browser.OpenURL(loginUrl); err != nil {
-		cmd.Printf("You may login by pasting this URL into your browser: %s\n", loginUrl)
+		cmd.PrintErrf("You may login by pasting this URL into your browser: %s\n", loginUrl)
 	}
 
-	cmd.Println("Please follow the instructions on the page to log in.")
+	cmd.PrintErrln("Please follow the instructions on the page to log in.")
 
-	cmd.Println("Waiting for token...")
+	cmd.PrintErrln("Waiting for token...")
 
 	// wait for the token to be received
 	var token *oauth2.Token
@@ -384,20 +384,20 @@ func loginWithDeviceFlow(
 	}
 
 	// Step 2: Display user code and verification URL
-	cmd.Println()
-	cmd.Println("To sign in, use a web browser to open the page:")
-	cmd.Printf("  %s\n", deviceAuthResp.VerificationURI)
-	cmd.Println()
-	cmd.Printf("And enter the code: %s\n", deviceAuthResp.UserCode)
-	cmd.Println()
+	cmd.PrintErrln()
+	cmd.PrintErrln("To sign in, use a web browser to open the page:")
+	cmd.PrintErrf("  %s\n", deviceAuthResp.VerificationURI)
+	cmd.PrintErrln()
+	cmd.PrintErrf("And enter the code: %s\n", deviceAuthResp.UserCode)
+	cmd.PrintErrln()
 
 	// If there's a complete verification URI, show it as an alternative
 	if deviceAuthResp.VerificationURIComplete != "" {
-		cmd.Printf("Or open this URL directly: %s\n", deviceAuthResp.VerificationURIComplete)
-		cmd.Println()
+		cmd.PrintErrf("Or open this URL directly: %s\n", deviceAuthResp.VerificationURIComplete)
+		cmd.PrintErrln()
 	}
 
-	cmd.Println("Waiting for authorization...")
+	cmd.PrintErrln("Waiting for authorization...")
 
 	// Step 3: Poll for tokens
 	interval := time.Duration(deviceAuthResp.Interval) * time.Second
