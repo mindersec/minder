@@ -32,7 +32,7 @@
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "redocusaurus": "^2.5.2",
-    "styled-components": "^6.5.3"
+    "styled-components": "^6.6.0"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.10.2",
@@ -43,7 +43,7 @@
     "eslint-plugin-react": "^7.37.5",
     "globals": "^17.13.0",
     "markdownlint-cli2": "0.23.3",
-    "prettier": "3.9.9",
+    "prettier": "3.9.10",
     "typescript-eslint": "^8.54.0"
   },
   "browserslist": {
