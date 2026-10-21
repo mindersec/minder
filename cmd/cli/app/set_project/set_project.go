@@ -35,7 +35,7 @@ using an absolute path in a filesystem.`,
 }
 
 // spCommand is the command for changing the current project
-func spCommand(_ *cobra.Command, args []string) error {
+func spCommand(cmd *cobra.Command, args []string) error {
 	project := args[0]
 
 	projectID, err := uuid.Parse(project)
