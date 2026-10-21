@@ -44,14 +44,18 @@ func ResetEntireTree(c *cobra.Command) {
 
 // CmdTestCase is the shared struct for all rule type CLI tests
 type CmdTestCase struct {
-	Name              string
-	Args              []string
-	MockSetup         func(t *testing.T, ctrl *gomock.Controller) context.Context
-	GoldenFileName    string
-	ExpectedStdout    string
-	ExpectedStderr    string
-	ExpectedError     string
+	Name           string
+	Args           []string
+	MockSetup      func(t *testing.T, ctrl *gomock.Controller) context.Context
+	GoldenFileName string
+	// ExpectedStdout asserts an exact match against the standard output stream.
+	ExpectedStdout string
+	// ExpectedStderr asserts that standard error contains the specified substring.
+	ExpectedStderr string
+	ExpectedError  string
+	// ExpectEmptyStdout asserts that standard output is completely empty.
 	ExpectEmptyStdout bool
+	// ExpectEmptyStderr asserts that standard error is completely empty.
 	ExpectEmptyStderr bool
 }
 

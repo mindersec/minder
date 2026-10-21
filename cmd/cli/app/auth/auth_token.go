@@ -6,6 +6,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -62,7 +63,7 @@ func TokenCommand(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	cmd.Print(creds)
+	fmt.Fprint(cmd.OutOrStdout(), creds)
 	return nil
 }
 
