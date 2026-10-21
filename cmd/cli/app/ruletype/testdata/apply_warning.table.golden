@@ -1,4 +1,3 @@
-Warning: Rego V0 is deprecated
  NAME                   │ ENTITY TYPE │ DESCRIPTION                                                 
 ────────────────────────┼─────────────┼─────────────────────────────────────────────────────────────
  secret_push_protection │ repository  │ Verifies that secret push protection is enabled for a given 

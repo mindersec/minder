@@ -11,6 +11,7 @@ First off, thank you for taking the time to contribute to Minder! :+1: :tada: Mi
   - [Not sure how to start contributing...](#not-sure-how-to-start-contributing)
   - [Pull Request Process](#pull-request-process)
   - [Contributing to docs](#contributing-to-docs)
+  - [CLI Conventions](#cli-conventions)
   - [Commit Message Guidelines](#commit-message-guidelines)
 
 ## Code of Conduct
@@ -77,6 +78,9 @@ go test ./...
 
 ### Contributing to docs
 Follow [this guide](https://github.com/mindersec/minder/blob/main/docs/README.md) for instructions on building, running, and previewing Minder's documentation.
+
+### CLI Conventions
+When implementing or updating CLI commands, follow the [CLI Output Stream Conventions](docs/docs/developer_guide/cli_streams.md) to ensure consistent routing of command payloads to `stdout` and diagnostic messages, prompts, warnings, and errors to `stderr`.
 
 ### Commit Message Guidelines
 We follow the commit formatting recommendations found on [Chris Beams' How to Write a Git Commit Message article](https://chris.beams.io/posts/git-commit/):
