@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -98,4 +99,24 @@ func (q *Queries) GetTypedEntitiesByPropertyV1(
 		Key:        key,
 		Value:      jsonVal,
 	})
+}
+
+// PropMapFromJSON converts pre-fetched {"key": value} data from JSON_OBJECT_AGG
+// into a map of property key to value, validating that each entry is v1.
+func PropMapFromJSON(propsData json.RawMessage) (map[string]any, error) {
+	var propData map[string]PropertyWrapper
+
+	err := json.Unmarshal(propsData, &propData)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshaling properties: %w", err)
+	}
+
+	propsMap := make(map[string]any, len(propData))
+	for k, v := range propData {
+		if v.Version != PropValueV1 {
+			return nil, fmt.Errorf("property %q: %w", k, ErrBadPropVersion)
+		}
+		propsMap[k] = v.Value
+	}
+	return propsMap, nil
 }
