@@ -119,22 +119,71 @@ func TestArtifactNameFromProperties(t *testing.T) {
 func TestNewArtifactProperties(t *testing.T) {
 	t.Parallel()
 
-	props := NewArtifactProperties("myimage:v1.2", "myimage@sha256:abc")
-
-	for _, key := range []string{
-		properties.PropertyName,
-		properties.PropertyUpstreamID,
-		properties.ArtifactPropertyType,
-	} {
-		require.NotNil(t, props.GetProperty(key), "missing property %q", key)
+	tests := []struct {
+		name         string
+		artifactName string
+		namespace    string
+		registry     string
+		wantRepo     string
+		wantErr      string
+	}{
+		{
+			name:         "DockerHub tagged image",
+			artifactName: "alpine:latest",
+			namespace:    "library",
+			registry:     "docker.io",
+			wantRepo:     "library/alpine",
+		},
+		{
+			name:         "untagged image",
+			artifactName: "alpine",
+			namespace:    "library",
+			registry:     "docker.io",
+			wantRepo:     "library/alpine",
+		},
+		{
+			name:         "Quay image",
+			artifactName: "envoy:v1.30",
+			namespace:    "myorg",
+			registry:     "quay.io",
+			wantRepo:     "myorg/envoy",
+		},
+		{
+			name:         "missing repository",
+			artifactName: ":v1.2",
+			namespace:    "library",
+			registry:     "docker.io",
+			wantErr:      "missing repository",
+		},
+		{
+			name:         "empty tag",
+			artifactName: "alpine:",
+			namespace:    "library",
+			registry:     "docker.io",
+			wantErr:      "empty tag",
+		},
 	}
 
-	assert.Equal(t, "myimage:v1.2", props.GetProperty(properties.PropertyName).GetString())
-	assert.Equal(t, "myimage@sha256:abc", props.GetProperty(properties.PropertyUpstreamID).GetString())
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	typ, err := props.GetProperty(properties.ArtifactPropertyType).AsString()
-	require.NoError(t, err)
-	assert.Equal(t, "container", typ)
+			props, err := NewArtifactProperties(tt.artifactName, tt.namespace, tt.registry, "upstream-id")
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+				assert.Nil(t, props)
+				return
+			}
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.artifactName, props.GetProperty(properties.PropertyName).GetString())
+			assert.Equal(t, "upstream-id", props.GetProperty(properties.PropertyUpstreamID).GetString())
+			assert.Equal(t, "container", props.GetProperty(properties.ArtifactPropertyType).GetString())
+			assert.Equal(t, tt.wantRepo, props.GetProperty(ArtifactPropertyRepository).GetString())
+			assert.Equal(t, tt.namespace, props.GetProperty(ArtifactPropertyNamespace).GetString())
+			assert.Equal(t, tt.registry, props.GetProperty(ArtifactPropertyRegistry).GetString())
+		})
+	}
 }
 
 func TestArtifactV1FromProperties(t *testing.T) {
@@ -149,13 +198,13 @@ func TestArtifactV1FromProperties(t *testing.T) {
 	}{
 		{
 			name:      "tagged name drops the tag",
-			props:     NewArtifactProperties("myimage:v1.2", "myimage@sha256:abc"),
+			props:     mustArtifactProperties(t, "myimage:v1.2"),
 			namespace: "testns",
 			wantName:  "myimage",
 		},
 		{
 			name:      "untagged name is unchanged",
-			props:     NewArtifactProperties("myimage", "myimage@sha256:abc"),
+			props:     mustArtifactProperties(t, "myimage"),
 			namespace: "testns",
 			wantName:  "myimage",
 		},
@@ -175,7 +224,7 @@ func TestArtifactV1FromProperties(t *testing.T) {
 		},
 		{
 			name:    "empty namespace",
-			props:   NewArtifactProperties("myimage", "myimage@sha256:abc"),
+			props:   mustArtifactProperties(t, "myimage"),
 			wantErr: "artifact namespace is empty",
 		},
 	}
@@ -198,4 +247,11 @@ func TestArtifactV1FromProperties(t *testing.T) {
 			assert.Equal(t, "container", got.GetType())
 		})
 	}
+}
+
+func mustArtifactProperties(t *testing.T, name string) *properties.Properties {
+	t.Helper()
+	props, err := NewArtifactProperties(name, "testns", "docker.io", "myimage@sha256:abc")
+	require.NoError(t, err)
+	return props
 }

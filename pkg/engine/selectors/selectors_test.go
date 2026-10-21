@@ -38,6 +38,24 @@ func newGithubProviderSelector() testProviderSelectorBuilder {
 	}
 }
 
+func newDockerHubProviderSelector() testProviderSelectorBuilder {
+	return func() *internalpb.SelectorProvider {
+		return &internalpb.SelectorProvider{
+			Name:  "my-dockerhub",
+			Class: "dockerhub",
+		}
+	}
+}
+
+func newQuayProviderSelector() testProviderSelectorBuilder {
+	return func() *internalpb.SelectorProvider {
+		return &internalpb.SelectorProvider{
+			Name:  "my-quay",
+			Class: "quay",
+		}
+	}
+}
+
 type testSelectorEntityBuilder func() *internalpb.SelectorEntity
 type testRepoOption func(selRepo *internalpb.SelectorRepository)
 type testArtifactOption func(selArtifact *internalpb.SelectorArtifact)
@@ -798,6 +816,102 @@ func TestSelectSelectorEntity(t *testing.T) {
 				newGithubProviderSelector(),
 				artifactWithProperties(map[string]any{
 					"github": map[string]any{"type": "container"},
+				}),
+			),
+			selected: false,
+		},
+		{
+			name: "Select one OCI repository at any tag",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_ARTIFACTS,
+					Selector: "artifact.properties['oci/repository'] == 'library/alpine'",
+				},
+			},
+			selectorEntityBld: newTestArtifactSelectorEntity(
+				newDockerHubProviderSelector(),
+				artifactWithProperties(map[string]any{
+					"oci/repository": "library/alpine",
+				}),
+			),
+			selected: true,
+		},
+		{
+			name: "Skip a different OCI repository",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_ARTIFACTS,
+					Selector: "artifact.properties['oci/repository'] == 'library/alpine'",
+				},
+			},
+			selectorEntityBld: newTestArtifactSelectorEntity(
+				newDockerHubProviderSelector(),
+				artifactWithProperties(map[string]any{
+					"oci/repository": "library/nginx",
+				}),
+			),
+			selected: false,
+		},
+		{
+			name: "Select an OCI repository by name in any namespace",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_ARTIFACTS,
+					Selector: "artifact.properties['oci/repository'].endsWith('/envoy')",
+				},
+			},
+			selectorEntityBld: newTestArtifactSelectorEntity(
+				newQuayProviderSelector(),
+				artifactWithProperties(map[string]any{
+					"oci/repository": "envoyproxy/envoy",
+				}),
+			),
+			selected: true,
+		},
+		{
+			name: "Skip an OCI repository that only shares a name prefix",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_ARTIFACTS,
+					Selector: "artifact.properties['oci/repository'].endsWith('/envoy')",
+				},
+			},
+			selectorEntityBld: newTestArtifactSelectorEntity(
+				newQuayProviderSelector(),
+				artifactWithProperties(map[string]any{
+					"oci/repository": "envoyproxy/envoy-gateway",
+				}),
+			),
+			selected: false,
+		},
+		{
+			name: "Select OCI repositories under a namespace prefix",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_ARTIFACTS,
+					Selector: "artifact.properties['oci/repository'].startsWith('myorg/')",
+				},
+			},
+			selectorEntityBld: newTestArtifactSelectorEntity(
+				newQuayProviderSelector(),
+				artifactWithProperties(map[string]any{
+					"oci/repository": "myorg/app",
+				}),
+			),
+			selected: true,
+		},
+		{
+			name: "Skip OCI repositories in a namespace that only shares a prefix",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_ARTIFACTS,
+					Selector: "artifact.properties['oci/repository'].startsWith('myorg/')",
+				},
+			},
+			selectorEntityBld: newTestArtifactSelectorEntity(
+				newQuayProviderSelector(),
+				artifactWithProperties(map[string]any{
+					"oci/repository": "myorgextra/app",
 				}),
 			),
 			selected: false,

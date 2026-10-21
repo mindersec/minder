@@ -4,8 +4,10 @@
 package oci
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
+	"path"
 	"strings"
 
 	"github.com/mindersec/minder/internal/verifier/verifyif"
@@ -16,6 +18,16 @@ import (
 // DefaultTag is the tag used when an image reference does not specify one.
 const DefaultTag = "latest"
 
+const (
+	// ArtifactPropertyRepository is the full repository path of a container artifact, without the
+	// registry or tag, as defined by the OCI distribution spec (e.g. "library/alpine").
+	ArtifactPropertyRepository = "oci/repository"
+	// ArtifactPropertyNamespace is the provider namespace the artifact belongs to (e.g. "library").
+	ArtifactPropertyNamespace = "oci/namespace"
+	// ArtifactPropertyRegistry is the registry host serving the artifact (e.g. "docker.io").
+	ArtifactPropertyRegistry = "oci/registry"
+)
+
 // ParseImageRef splits a namespace-relative "repo[:tag]" reference, defaulting the tag to DefaultTag.
 func ParseImageRef(ref string) (repo, tag string, err error) {
 	repo, tag, hasTag := strings.Cut(ref, ":")
@@ -25,10 +37,7 @@ func ParseImageRef(ref string) (repo, tag string, err error) {
 	if hasTag && tag == "" {
 		return "", "", fmt.Errorf("invalid image reference %q: empty tag", ref)
 	}
-	if !hasTag {
-		tag = DefaultTag
-	}
-	return repo, tag, nil
+	return repo, cmp.Or(tag, DefaultTag), nil
 }
 
 // ArtifactNameFromProperties returns the non-empty artifact name from props.
@@ -43,13 +52,22 @@ func ArtifactNameFromProperties(props *properties.Properties) (string, error) {
 	return name, nil
 }
 
-// NewArtifactProperties builds the properties for a container artifact entity.
-func NewArtifactProperties(name, upstreamID string) *properties.Properties {
+// NewArtifactProperties builds the properties for a container artifact entity. name is the
+// namespace-relative "repo[:tag]" reference; the repository is derived from it.
+func NewArtifactProperties(name, namespace, registry, upstreamID string) (*properties.Properties, error) {
+	repo, _, err := ParseImageRef(name)
+	if err != nil {
+		return nil, err
+	}
+
 	return properties.NewProperties(map[string]any{
 		properties.PropertyName:         name,
 		properties.PropertyUpstreamID:   upstreamID,
 		properties.ArtifactPropertyType: string(verifyif.ArtifactTypeContainer),
-	})
+		ArtifactPropertyRepository:      path.Join(namespace, repo),
+		ArtifactPropertyNamespace:       namespace,
+		ArtifactPropertyRegistry:        registry,
+	}), nil
 }
 
 // ArtifactV1FromProperties converts container artifact properties to a minder v1 Artifact.
