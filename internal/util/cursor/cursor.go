@@ -108,34 +108,34 @@ func (c *ProviderCursor) String() string {
 	return EncodeValue(c.CreatedAt.Format(time.RFC3339Nano))
 }
 
-// EntityCursor is a cursor for paginating entity listings by UUID
+// EntityCursor holds the UUID of the last seen entity for keyset pagination.
 type EntityCursor struct {
-	ID string // UUID string of the last seen entity
+	ID uuid.UUID
 }
 
-// NewEntityCursor creates a new EntityCursor from an encoded cursor string.
-// An empty string returns a zero cursor (start from beginning).
+// NewEntityCursor decodes an encoded cursor string into an EntityCursor.
+// An empty string returns a zero cursor (uuid.Nil) meaning start from the beginning.
 func NewEntityCursor(encodedCursor string) (*EntityCursor, error) {
 	if encodedCursor == "" {
-		return &EntityCursor{}, nil
+		return &EntityCursor{ID: uuid.Nil}, nil
 	}
 
-	cursor, err := DecodeValue(encodedCursor)
+	raw, err := DecodeValue(encodedCursor)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding entity cursor: %w", err)
 	}
 
-	if _, err := uuid.Parse(cursor); err != nil {
+	id, err := uuid.Parse(raw)
+	if err != nil {
 		return nil, fmt.Errorf("invalid entity cursor (not a UUID): %w", err)
 	}
-
-	return &EntityCursor{ID: cursor}, nil
+	return &EntityCursor{ID: id}, nil
 }
 
-// String encodes the EntityCursor to a base64 string. Returns "" for zero cursor.
+// String encodes the EntityCursor to a base64 string. Returns "" for uuid.Nil.
 func (c *EntityCursor) String() string {
-	if c == nil || c.ID == "" {
+	if c == nil || c.ID == uuid.Nil {
 		return ""
 	}
-	return EncodeValue(c.ID)
+	return EncodeValue(c.ID.String())
 }

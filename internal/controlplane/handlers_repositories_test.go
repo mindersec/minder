@@ -708,13 +708,15 @@ func TestServer_ListRepositories_Pagination(t *testing.T) {
 	t.Parallel()
 
 	// Build exactly defaultPageSize repos to trigger cursor generation
-	// defaultPageSize in handlers_evalstatus.go is 25 (uint32)
+	// RepoPageSize is now 100 (the proto max).
+	// Build pageSize+1 repos so the handler sees hasNextPage=true after
+	// fetching reqLimit+1 rows (the limit+1 trick).
 	pageSize := int64(reposvc.RepoPageSize)
-	// Build pageSize+1 repos so the handler sees a full page after fetching
-	// limit+1 rows (the limit+1 trick to detect next page existence).
 	repos := make([]*models.EntityWithProperties, int(pageSize)+1)
 	for i := range repos {
 		repos[i] = simpleDbRepository(repoName, remoteRepoId)
+		// Give each repo a unique ID so the cursor is non-nil.
+		repos[i].Entity.ID = uuid.New()
 	}
 
 	scenarios := []struct {
@@ -839,8 +841,7 @@ func TestServer_ListRepositories_Pagination(t *testing.T) {
 				// proving the encode/decode round-trip is correct.
 				decoded, decErr := cursor.NewEntityCursor(res.Cursor)
 				require.NoError(t, decErr, "cursor must be decodeable")
-				_, parseErr := uuid.Parse(decoded.ID)
-				require.NoError(t, parseErr, "cursor must decode to a valid UUID")
+				require.NotEqual(t, uuid.Nil, decoded.ID, "cursor must decode to a non-nil UUID")
 			} else {
 				require.Empty(t, res.Cursor,
 					"expected empty cursor on last page")
@@ -852,12 +853,10 @@ func TestServer_ListRepositories_Pagination(t *testing.T) {
 func TestFetchRepositoriesForProvider_PaginatesAllPages(t *testing.T) {
 	t.Parallel()
 
-	// RepoPageSize is the single constant shared by handler and service (currently 25).
-	// We build 3 pages: two full pages and one partial, totalling 60 repos.
-	// The pagination loop in fetchRepositoriesForProvider must make exactly 3
-	// ListRepositories calls and collect all 60 before returning.
-	pageSize := int(reposvc.RepoPageSize)
-	const totalRepos = 60
+	// Use MaxRepoPageSize-1 (100) as page size — this matches what
+	// fetchRepositoriesForProvider passes to the service.
+	pageSize := int(reposvc.MaxRepoPageSize - 1) // 100
+	const totalRepos = 210
 	partialSize := totalRepos - 2*pageSize // 10
 
 	// Each repo gets a distinct UUID so we can verify the cursor advances.
@@ -919,13 +918,19 @@ func TestFetchRepositoriesForProvider_PaginatesAllPages(t *testing.T) {
 				gomock.Cond(func(c any) bool {
 					return c.(uuid.UUID) == expCursor
 				}),
-				// Verify the limit is always RepoPageSize.
-				gomock.Eq(reposvc.RepoPageSize),
+				// fetchRepositoriesForProvider passes MaxRepoPageSize-1 (100) to minimise round-trips.
+				gomock.Eq(reposvc.MaxRepoPageSize-1),
 			).
-			DoAndReturn(func(_ context.Context, _, _, _ uuid.UUID, _ int32) ([]*models.EntityWithProperties, error) {
+			DoAndReturn(func(_ context.Context, _, _, _ uuid.UUID, limit int32) ([]*models.EntityWithProperties, uuid.UUID, error) {
 				callCount++
 				allCollected = append(allCollected, p...)
-				return p, nil
+				// Return uuid.Nil on the last page (fewer rows than limit).
+				// This matches what the real service does.
+				var nextID uuid.UUID
+				if int32(len(p)) == limit {
+					nextID = p[len(p)-1].Entity.ID
+				}
+				return p, nextID, nil
 			}).
 			Times(1)
 	}
@@ -960,9 +965,9 @@ func TestFetchRepositoriesForProvider_PaginatesAllPages(t *testing.T) {
 
 	// The loop made exactly 3 calls (two full pages + one partial).
 	require.Equal(t, 3, callCount,
-		"expected exactly 3 ListRepositories calls for 60 repos at page size %d", pageSize)
+		"expected exactly 3 ListRepositories calls for %d repos at page size %d", totalRepos, pageSize)
 
-	// All 60 repos were collected across the 3 pages.
+	// All repos were collected across the 3 pages.
 	require.Len(t, allCollected, totalRepos,
 		"expected all %d repositories to be collected, got %d", totalRepos, len(allCollected))
 

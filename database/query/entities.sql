@@ -58,7 +58,8 @@ WHERE
     entity_instances.name = sqlc.arg(name)
     AND entity_instances.project_id = $1
     AND entity_instances.entity_type = $2
-    AND entity_instances.provider_id = sqlc.arg(provider_id)
+    AND (sqlc.arg(provider_id)::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+         OR entity_instances.provider_id = sqlc.arg(provider_id))
 LIMIT 1;
 
 -- GetEntitiesByType retrieves all entities of a given type for a project or hierarchy of projects.
@@ -191,7 +192,8 @@ WHERE ei.entity_type = sqlc.arg(entity_type)
 -- name: GetEntitiesByTypePaginated :many
 SELECT * FROM entity_instances
 WHERE entity_instances.entity_type = $1
-    AND entity_instances.provider_id = sqlc.arg(provider_id)
+    AND (sqlc.arg(provider_id)::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+         OR entity_instances.provider_id = sqlc.arg(provider_id))
     AND entity_instances.project_id = ANY(sqlc.arg(projects)::uuid[])
     AND (sqlc.arg(cursor)::uuid = '00000000-0000-0000-0000-000000000000'::uuid
          OR entity_instances.id > sqlc.arg(cursor)::uuid)

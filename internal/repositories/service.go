@@ -62,17 +62,18 @@ type RepositoryService interface {
 		providerName string,
 	) error
 
-	// ListRepositories retrieves all repositories for the
+	// ListRepositories retrieves a page of repositories for the
 	// specific provider and project, with cursor-based pagination.
 	// cursor is the UUID of the last seen entity (uuid.Nil = first page).
-	// limit defaults to RepoPageSize when 0 and is capped at MaxRepoPageSize.
+	// limit defaults to RepoPageSize when 0 and is capped at MaxRepoPageSize-1.
+	// Returns the entities and the cursor to pass for the next page (uuid.Nil = last page).
 	ListRepositories(
 		ctx context.Context,
 		projectID uuid.UUID,
 		providerID uuid.UUID,
 		cursor uuid.UUID,
 		limit int32,
-	) ([]*models.EntityWithProperties, error)
+	) ([]*models.EntityWithProperties, uuid.UUID, error)
 
 	// GetRepositoryById retrieves a repository by its ID and project.
 	GetRepositoryById(ctx context.Context, repositoryID uuid.UUID, projectID uuid.UUID) (*pb.Repository, error)
@@ -161,11 +162,11 @@ func (r *repositoryService) CreateRepository(
 }
 
 // RepoPageSize is the default page size for listing repositories.
-const RepoPageSize int32 = 25
+const RepoPageSize int32 = 100
 
-// MaxRepoPageSize is 100 (the proto-validated maximum) plus 1.
-// The extra 1 lets the handler request limit+1 rows to detect whether a next
-// page exists without returning a cursor that leads to an empty final page.
+// MaxRepoPageSize is the proto-validated maximum (100) plus 1.
+// The +1 lets callers request limit+1 rows to detect a next page without
+// returning an empty final page. Clients may request at most MaxRepoPageSize-1 (100).
 const MaxRepoPageSize int32 = 101
 
 func (r *repositoryService) ListRepositories(
@@ -174,7 +175,7 @@ func (r *repositoryService) ListRepositories(
 	providerID uuid.UUID,
 	cursor uuid.UUID,
 	limit int32,
-) (ents []*models.EntityWithProperties, outErr error) {
+) (ents []*models.EntityWithProperties, nextCursor uuid.UUID, outErr error) {
 	if limit <= 0 {
 		limit = RepoPageSize
 	}
@@ -183,7 +184,7 @@ func (r *repositoryService) ListRepositories(
 	}
 	tx, err := r.store.BeginTransaction()
 	if err != nil {
-		return nil, fmt.Errorf("error starting transaction: %w", err)
+		return nil, uuid.Nil, fmt.Errorf("error starting transaction: %w", err)
 	}
 
 	defer func() {
@@ -204,7 +205,7 @@ func (r *repositoryService) ListRepositories(
 		PageSize:   limit,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error fetching repositories: %w", err)
+		return nil, uuid.Nil, fmt.Errorf("error fetching repositories: %w", err)
 	}
 
 	ents = make([]*models.EntityWithProperties, 0, len(repoEnts))
@@ -212,12 +213,12 @@ func (r *repositoryService) ListRepositories(
 		ewp, err := r.propSvc.EntityWithPropertiesByID(ctx, ent.ID,
 			service.CallBuilder().WithStoreOrTransaction(qtx))
 		if err != nil {
-			return nil, fmt.Errorf("error fetching properties for repository: %w", err)
+			return nil, uuid.Nil, fmt.Errorf("error fetching properties for repository: %w", err)
 		}
 
 		if err := r.propSvc.RetrieveAllPropertiesForEntity(ctx, ewp, r.providerManager,
 			service.ReadBuilder().WithStoreOrTransaction(qtx).TolerateStaleData()); err != nil {
-			return nil, fmt.Errorf("error fetching properties for repository: %w", err)
+			return nil, uuid.Nil, fmt.Errorf("error fetching properties for repository: %w", err)
 		}
 
 		ents = append(ents, ewp)
@@ -226,10 +227,16 @@ func (r *repositoryService) ListRepositories(
 	// We care about commiting the transaction since the `RetrieveAllPropertiesForEntity`
 	// call above may have modified the properties of the entities
 	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("error committing transaction: %w", err)
+		return nil, uuid.Nil, fmt.Errorf("error committing transaction: %w", err)
 	}
 
-	return ents, nil
+	// Only set nextCursor when we returned a full page.
+	// If fewer rows came back we are on the last page, return uuid.Nil
+	// so callers can stop paginating without an extra round-trip.
+	if len(ents) == int(limit) {
+		nextCursor = ents[len(ents)-1].Entity.ID
+	}
+	return ents, nextCursor, nil
 }
 
 func (r *repositoryService) GetRepositoryById(

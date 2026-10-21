@@ -119,12 +119,13 @@ func (mr *MockRepositoryServiceMockRecorder) GetRepositoryByName(ctx, repoOwner,
 }
 
 // ListRepositories mocks base method.
-func (m *MockRepositoryService) ListRepositories(ctx context.Context, projectID, providerID, cursor uuid.UUID, limit int32) ([]*models.EntityWithProperties, error) {
+func (m *MockRepositoryService) ListRepositories(ctx context.Context, projectID, providerID, cursor uuid.UUID, limit int32) ([]*models.EntityWithProperties, uuid.UUID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListRepositories", ctx, projectID, providerID, cursor, limit)
 	ret0, _ := ret[0].([]*models.EntityWithProperties)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(uuid.UUID)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // ListRepositories indicates an expected call of ListRepositories.

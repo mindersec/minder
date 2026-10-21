@@ -409,7 +409,8 @@ const getEntitiesByTypePaginated = `-- name: GetEntitiesByTypePaginated :many
 
 SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
 WHERE entity_instances.entity_type = $1
-    AND entity_instances.provider_id = $2
+    AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+         OR entity_instances.provider_id = $2)
     AND entity_instances.project_id = ANY($3::uuid[])
     AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid
          OR entity_instances.id > $4::uuid)
@@ -577,7 +578,8 @@ WHERE
     entity_instances.name = $3
     AND entity_instances.project_id = $1
     AND entity_instances.entity_type = $2
-    AND entity_instances.provider_id = $4
+    AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+         OR entity_instances.provider_id = $4)
 LIMIT 1
 `
 

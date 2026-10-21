@@ -58,7 +58,11 @@ func listCommand(cmd *cobra.Command, _ []string) error {
 	// Paginate through all pages until cursor is empty.
 	var allRepos []*minderv1.Repository
 	var cursor string
-	for {
+	const maxPaginationRequests = 100
+	reqCount := 0
+	for reqCount < maxPaginationRequests {
+
+		reqCount++
 		resp, err := client.ListRepositories(cmd.Context(), &minderv1.ListRepositoriesRequest{
 			Context: &minderv1.Context{Provider: &provider, Project: &project},
 			Cursor:  cursor,
