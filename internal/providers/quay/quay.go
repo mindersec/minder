@@ -191,7 +191,7 @@ func (q *quayImageLister) FetchAllProperties(
 		return nil, fmt.Errorf("failed to resolve digest for %q: %w", name, err)
 	}
 
-	return oci.NewArtifactProperties(name, repo+"@"+digest), nil
+	return oci.NewArtifactProperties(name, q.namespace, q.GetRegistry(), repo+"@"+digest)
 }
 
 // FetchProperty implements the provider interface
@@ -240,6 +240,7 @@ func (q *quayImageLister) RegisterEntity(
 	// TODO: create a repository notification so push events create artifact entities
 	// automatically:
 	// https://docs.quay.io/api/swagger/#!/repositorynotification/createRepoNotification
+	// Once implemented, CreationOptions must set RegisterWithProvider and PublishReconciliationEvent to true.
 	return props, nil
 }
 

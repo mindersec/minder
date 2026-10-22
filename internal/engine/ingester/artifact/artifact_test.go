@@ -337,8 +337,10 @@ func TestArtifactIngestDockerHub(t *testing.T) {
 		&pb.DockerHubProviderConfig{Namespace: proto.String(namespace)})
 	require.NoError(t, err)
 
-	msg, err := dh.PropertiesToProtoMessage(pb.Entity_ENTITY_ARTIFACTS,
-		oci.NewArtifactProperties("myimage:v1.2", "myimage@"+digest))
+	props, err := oci.NewArtifactProperties("myimage:v1.2", namespace, dh.GetRegistry(), "myimage@"+digest)
+	require.NoError(t, err)
+
+	msg, err := dh.PropertiesToProtoMessage(pb.Entity_ENTITY_ARTIFACTS, props)
 	require.NoError(t, err)
 	art, ok := msg.(*pb.Artifact)
 	require.True(t, ok, "expected *pb.Artifact, got %T", msg)

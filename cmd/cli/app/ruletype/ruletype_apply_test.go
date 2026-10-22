@@ -98,6 +98,7 @@ func TestApplyCommand(t *testing.T) {
 				return cli.WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), client)
 			},
 			GoldenFileName: "apply_warning.table",
+			ExpectedStderr: "Warning: Rego V0 is deprecated",
 		},
 		{
 			Name: "apply with empty file fails",

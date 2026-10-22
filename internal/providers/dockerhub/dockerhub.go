@@ -189,7 +189,7 @@ func (d *dockerHubImageLister) FetchAllProperties(
 		return nil, fmt.Errorf("failed to resolve digest for %q: %w", name, err)
 	}
 
-	return oci.NewArtifactProperties(name, repo+"@"+digest), nil
+	return oci.NewArtifactProperties(name, d.namespace, d.GetRegistry(), repo+"@"+digest)
 }
 
 // FetchProperty implements the provider interface
@@ -238,6 +238,7 @@ func (d *dockerHubImageLister) RegisterEntity(
 	// TODO: register a repository webhook so push events create artifact entities
 	// automatically. DockerHub only documents manual setup:
 	// https://docs.docker.com/docker-hub/repos/manage/webhooks/
+	// Once implemented, CreationOptions must set RegisterWithProvider and PublishReconciliationEvent to true.
 	return props, nil
 }
 

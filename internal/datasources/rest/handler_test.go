@@ -727,6 +727,89 @@ func Test_retriableDo_ClosesBodyOnRateLimit(t *testing.T) {
 	}
 }
 
+func Test_restHandler_RetryResendsBody(t *testing.T) {
+	t.Parallel()
+
+	const payload = `{"key":"value"}`
+
+	tests := []struct {
+		name        string
+		addProvider bool
+		// closeConn makes the server close the connection after the 429,
+		// so net/http cannot transparently replay the request on it.
+		closeConn bool
+	}{
+		{name: "direct HTTP request"},
+		{name: "direct HTTP request, connection closed after 429", closeConn: true},
+		{name: "provider request", addProvider: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var mu sync.Mutex
+			var received []string
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				b, err := io.ReadAll(r.Body)
+				require.NoError(t, err)
+
+				mu.Lock()
+				received = append(received, string(b))
+				attempt := len(received)
+				mu.Unlock()
+
+				if attempt == 1 {
+					if tt.closeConn {
+						w.Header().Set("Connection", "close")
+					}
+					w.WriteHeader(http.StatusTooManyRequests)
+					return
+				}
+				w.WriteHeader(http.StatusOK)
+				_, err = w.Write([]byte("ok"))
+				require.NoError(t, err)
+			}))
+			defer server.Close()
+
+			var provider interfaces.RESTProvider
+			if tt.addProvider {
+				ctrl := gomock.NewController(t)
+				mock := mock_v1.NewMockREST(ctrl)
+				mock.EXPECT().GetBaseURL().Return(server.URL)
+				mock.EXPECT().NewRequest(http.MethodPost, server.URL, nil).
+					DoAndReturn(func(method, url string, _ any) (*http.Request, error) {
+						return http.NewRequest(method, url, nil)
+					})
+				mock.EXPECT().Do(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, req *http.Request) (*http.Response, error) {
+						return http.DefaultClient.Do(req)
+					}).AnyTimes()
+				provider = mock
+			}
+
+			h := &restHandler{
+				endpointTmpl:      server.URL,
+				method:            http.MethodPost,
+				body:              payload,
+				testOnlyTransport: http.DefaultTransport,
+				provider:          provider,
+			}
+			initMetrics()
+
+			got, err := h.Call(context.Background(), nil, map[string]any{})
+			require.NoError(t, err)
+			assert.Equal(t, buildRestOutput(http.StatusOK, "ok"), got)
+
+			mu.Lock()
+			defer mu.Unlock()
+			require.Len(t, received, 2, "expected one rate-limited attempt and one retry")
+			assert.Equal(t, payload, received[0], "first attempt body")
+			assert.Equal(t, payload, received[1], "retry body")
+		})
+	}
+}
+
 func Test_newHandlerFromDef_DefaultExpectedStatus(t *testing.T) {
 	t.Parallel()
 
