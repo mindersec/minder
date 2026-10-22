@@ -133,8 +133,8 @@ func NewEntityCursor(encodedCursor string) (*EntityCursor, error) {
 }
 
 // String encodes the EntityCursor to a base64 string. Returns "" for uuid.Nil.
-func (c *EntityCursor) String() string {
-	if c == nil || c.ID == uuid.Nil {
+func (c EntityCursor) String() string {
+	if c.ID == uuid.Nil {
 		return ""
 	}
 	return EncodeValue(c.ID.String())

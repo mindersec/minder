@@ -55,14 +55,9 @@ func listCommand(cmd *cobra.Command, _ []string) error {
 	}
 	defer cleanup()
 
-	// Paginate through all pages until cursor is empty.
 	var allRepos []*minderv1.Repository
 	var cursor string
-	const maxPaginationRequests = 100
-	reqCount := 0
-	for reqCount < maxPaginationRequests {
-
-		reqCount++
+	for range 100 {
 		resp, err := client.ListRepositories(cmd.Context(), &minderv1.ListRepositoriesRequest{
 			Context: &minderv1.Context{Provider: &provider, Project: &project},
 			Cursor:  cursor,
@@ -100,7 +95,6 @@ func listCommand(cmd *cobra.Command, _ []string) error {
 		}
 		t.Render()
 	case app.JSON, app.YAML:
-		// Build a combined response for JSON/YAML output.
 		return cli.PrintProto(cmd, format, &minderv1.ListRepositoriesResponse{Results: allRepos})
 	}
 	return nil

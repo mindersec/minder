@@ -58,8 +58,7 @@ WHERE
     entity_instances.name = sqlc.arg(name)
     AND entity_instances.project_id = $1
     AND entity_instances.entity_type = $2
-    AND (sqlc.arg(provider_id)::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-         OR entity_instances.provider_id = sqlc.arg(provider_id))
+    AND entity_instances.provider_id = sqlc.arg(provider_id)
 LIMIT 1;
 
 -- GetEntitiesByType retrieves all entities of a given type for a project or hierarchy of projects.
@@ -181,9 +180,10 @@ FROM entity_instances ei
          JOIN properties p ON ei.id = p.entity_id
 WHERE ei.entity_type = sqlc.arg(entity_type)
   AND (sqlc.arg(project_id)::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ei.project_id = sqlc.arg(project_id))
-  AND (sqlc.arg(provider_id)::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ei.provider_id = sqlc.arg(provider_id))
+  AND ei.provider_id = sqlc.arg(provider_id)
   AND p.key = sqlc.arg(key)
   AND p.value @> sqlc.arg(value)::jsonb;
+
 -- GetEntitiesByTypePaginated retrieves entities of a given type with cursor-based pagination.
 -- The cursor is the UUID of the last seen entity (exclusive lower bound on id).
 -- Results are ordered by id ASC for stable pagination.

@@ -127,11 +127,11 @@ func WithSuccessfulListRepositories(
 				gomock.Any(),
 				gomock.Any(),
 			).
-			DoAndReturn(func(_ context.Context, _, _, _ uuid.UUID, limit int32) ([]*models.EntityWithProperties, uuid.UUID, error) {
+			DoAndReturn(func(_ context.Context, _, _, _ uuid.UUID, limit int) ([]*models.EntityWithProperties, uuid.UUID, error) {
 				// Return the last entity ID as cursor when a full page is returned,
 				// matching real service behaviour used by the handler for next-page detection.
 				var nextCursor uuid.UUID
-				if int32(len(repositories)) == limit {
+				if len(repositories) == limit {
 					nextCursor = repositories[len(repositories)-1].Entity.ID
 				}
 				return repositories, nextCursor, nil

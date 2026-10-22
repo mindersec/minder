@@ -162,31 +162,15 @@ func (s *Server) ListRepositories(ctx context.Context,
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid cursor: %v", err)
 	}
 
-	// already uuid.UUID; uuid.Nil means first page
-	cursorID := entityCursor.ID
-
-	// Clamp the requested page size to 1–100. Fetch limit+1 rows to
-	// detect a next page without returning an empty last page.
-	reqLimit := in.GetLimit()
-	if reqLimit <= 0 || reqLimit > int64(repositories.MaxRepoPageSize-1) {
-		reqLimit = int64(repositories.RepoPageSize)
+	// Clamp the requested page size; the service enforces the cap internally.
+	reqLimit := int(in.GetLimit())
+	if reqLimit <= 0 {
+		reqLimit = repositories.RepoPageSize
 	}
-	effectiveLimit := int32(reqLimit)
-	repoEntities, lastCursorID, err := s.repos.ListRepositories(ctx, projectID, provider.ID, cursorID, effectiveLimit+1)
+
+	repoEntities, lastCursorID, err := s.repos.ListRepositories(ctx, projectID, provider.ID, entityCursor.ID, reqLimit)
 	if err != nil {
 		return nil, err
-	}
-
-	// If we got limit+1 results, there is a next page. Trim the extra row.
-	hasNextPage := len(repoEntities) > int(effectiveLimit)
-	if hasNextPage {
-		repoEntities = repoEntities[:effectiveLimit]
-	}
-
-	// Build next cursor from the value the service already computed.
-	var nextCursor string
-	if hasNextPage {
-		nextCursor = (&cursor.EntityCursor{ID: lastCursorID}).String()
 	}
 
 	var resp pb.ListRepositoriesResponse
@@ -221,7 +205,9 @@ func (s *Server) ListRepositories(ctx context.Context,
 	}
 
 	resp.Results = results
-	resp.Cursor = nextCursor
+	if lastCursorID != uuid.Nil {
+		resp.Cursor = cursor.EntityCursor{ID: lastCursorID}.String()
+	}
 
 	return &resp, nil
 }
@@ -416,7 +402,7 @@ func (s *Server) fetchRepositoriesForProvider(
 		return nil, err
 	}
 
-	// Paginate through all registered repos, a single page may not be enough.
+	// Paginate through all registered repos.
 	var registeredRepos []*models.EntityWithProperties
 	cursorID := uuid.Nil
 	for {
@@ -425,7 +411,7 @@ func (s *Server) fetchRepositoriesForProvider(
 			projectID,
 			providerID,
 			cursorID,
-			repositories.MaxRepoPageSize-1, // minimise round-trips
+			repositories.RepoPageSize,
 		)
 		if err != nil {
 			zerolog.Ctx(ctx).Error().
@@ -435,7 +421,6 @@ func (s *Server) fetchRepositoriesForProvider(
 			return nil, status.Errorf(codes.Internal, "cannot list registered repositories")
 		}
 		registeredRepos = append(registeredRepos, page...)
-		// Service returns uuid.Nil when there are no more pages.
 		if nextID == uuid.Nil {
 			break
 		}

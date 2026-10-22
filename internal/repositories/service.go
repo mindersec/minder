@@ -65,14 +65,14 @@ type RepositoryService interface {
 	// ListRepositories retrieves a page of repositories for the
 	// specific provider and project, with cursor-based pagination.
 	// cursor is the UUID of the last seen entity (uuid.Nil = first page).
-	// limit defaults to RepoPageSize when 0 and is capped at MaxRepoPageSize-1.
+	// limit defaults to RepoPageSize when 0 and is capped at RepoPageSize.
 	// Returns the entities and the cursor to pass for the next page (uuid.Nil = last page).
 	ListRepositories(
 		ctx context.Context,
 		projectID uuid.UUID,
 		providerID uuid.UUID,
 		cursor uuid.UUID,
-		limit int32,
+		limit int,
 	) ([]*models.EntityWithProperties, uuid.UUID, error)
 
 	// GetRepositoryById retrieves a repository by its ID and project.
@@ -161,26 +161,21 @@ func (r *repositoryService) CreateRepository(
 	return pbRepo, nil
 }
 
-// RepoPageSize is the default page size for listing repositories.
-const RepoPageSize int32 = 100
-
-// MaxRepoPageSize is the proto-validated maximum (100) plus 1.
-// The +1 lets callers request limit+1 rows to detect a next page without
-// returning an empty final page. Clients may request at most MaxRepoPageSize-1 (100).
-const MaxRepoPageSize int32 = 101
+// RepoPageSize is the default and maximum page size for listing repositories.
+const RepoPageSize = 100
 
 func (r *repositoryService) ListRepositories(
 	ctx context.Context,
 	projectID uuid.UUID,
 	providerID uuid.UUID,
 	cursor uuid.UUID,
-	limit int32,
+	limit int,
 ) (ents []*models.EntityWithProperties, nextCursor uuid.UUID, outErr error) {
 	if limit <= 0 {
 		limit = RepoPageSize
 	}
-	if limit > MaxRepoPageSize {
-		limit = MaxRepoPageSize
+	if limit > RepoPageSize {
+		limit = RepoPageSize
 	}
 	tx, err := r.store.BeginTransaction()
 	if err != nil {
@@ -197,12 +192,14 @@ func (r *repositoryService) ListRepositories(
 
 	qtx := r.store.GetQuerierWithTransaction(tx)
 
+	// Fetch limit+1 rows to detect whether a next page exists
+	// without returning an empty final page.
 	repoEnts, err := qtx.GetEntitiesByTypePaginated(ctx, db.GetEntitiesByTypePaginatedParams{
 		EntityType: db.EntitiesRepository,
 		ProviderID: providerID,
 		Projects:   []uuid.UUID{projectID},
 		Cursor:     cursor,
-		PageSize:   limit,
+		PageSize:   int32(limit + 1),
 	})
 	if err != nil {
 		return nil, uuid.Nil, fmt.Errorf("error fetching repositories: %w", err)
@@ -230,10 +227,9 @@ func (r *repositoryService) ListRepositories(
 		return nil, uuid.Nil, fmt.Errorf("error committing transaction: %w", err)
 	}
 
-	// Only set nextCursor when we returned a full page.
-	// If fewer rows came back we are on the last page, return uuid.Nil
-	// so callers can stop paginating without an extra round-trip.
-	if len(ents) == int(limit) {
+	// If we got limit+1 results, there is a next page. Trim the extra row.
+	if len(ents) > limit {
+		ents = ents[:limit]
 		nextCursor = ents[len(ents)-1].Entity.ID
 	}
 	return ents, nextCursor, nil

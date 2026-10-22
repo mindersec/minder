@@ -240,14 +240,10 @@ func quickstartCommand(
 	defer cancel()
 
 	// Get the list of all registered repositories
-	// Paginate through all pages to get the complete list of registered repos.
 	var registeredRepos []string
 	var cursor string
-	const maxPaginationRequests = 100
-	reqCount := 0
-	for reqCount < maxPaginationRequests {
-
-		reqCount++
+	// Do not fetch more than 100 pages
+	for range 100 {
 		listResp, err := repoClient.ListRepositories(ctx, &minderv1.ListRepositoriesRequest{
 			Context: &minderv1.Context{Provider: &provider, Project: &project},
 			Cursor:  cursor,

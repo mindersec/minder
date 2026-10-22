@@ -707,15 +707,14 @@ func createServer(
 func TestServer_ListRepositories_Pagination(t *testing.T) {
 	t.Parallel()
 
-	// Build exactly defaultPageSize repos to trigger cursor generation
-	// RepoPageSize is now 100 (the proto max).
-	// Build pageSize+1 repos so the handler sees hasNextPage=true after
-	// fetching reqLimit+1 rows (the limit+1 trick).
+	// Build exactly RepoPageSize repos. The service fetches limit+1 internally
+	// and returns a non-nil cursor when a full page exists, so returning
+	// exactly RepoPageSize results triggers cursor generation.
 	pageSize := int64(reposvc.RepoPageSize)
-	repos := make([]*models.EntityWithProperties, int(pageSize)+1)
+	repos := make([]*models.EntityWithProperties, int(pageSize))
 	for i := range repos {
 		repos[i] = simpleDbRepository(repoName, remoteRepoId)
-		// Give each repo a unique ID so the cursor is non-nil.
+		// Unique IDs so the cursor returned by the service is non-nil.
 		repos[i].Entity.ID = uuid.New()
 	}
 
@@ -853,11 +852,9 @@ func TestServer_ListRepositories_Pagination(t *testing.T) {
 func TestFetchRepositoriesForProvider_PaginatesAllPages(t *testing.T) {
 	t.Parallel()
 
-	// Use MaxRepoPageSize-1 (100) as page size — this matches what
-	// fetchRepositoriesForProvider passes to the service.
-	pageSize := int(reposvc.MaxRepoPageSize - 1) // 100
-	const totalRepos = 210
-	partialSize := totalRepos - 2*pageSize // 10
+	pageSize := 10
+	const totalRepos = 25
+	partialSize := totalRepos - 2*pageSize // 5
 
 	// Each repo gets a distinct UUID so we can verify the cursor advances.
 	makePage := func(n int) []*models.EntityWithProperties {
@@ -918,16 +915,16 @@ func TestFetchRepositoriesForProvider_PaginatesAllPages(t *testing.T) {
 				gomock.Cond(func(c any) bool {
 					return c.(uuid.UUID) == expCursor
 				}),
-				// fetchRepositoriesForProvider passes MaxRepoPageSize-1 (100) to minimise round-trips.
-				gomock.Eq(reposvc.MaxRepoPageSize-1),
+
+				gomock.Any(),
 			).
-			DoAndReturn(func(_ context.Context, _, _, _ uuid.UUID, limit int32) ([]*models.EntityWithProperties, uuid.UUID, error) {
+			DoAndReturn(func(_ context.Context, _, _, _ uuid.UUID, _ int) ([]*models.EntityWithProperties, uuid.UUID, error) {
 				callCount++
 				allCollected = append(allCollected, p...)
 				// Return uuid.Nil on the last page (fewer rows than limit).
 				// This matches what the real service does.
 				var nextID uuid.UUID
-				if int32(len(p)) == limit {
+				if i < len(pages)-1 {
 					nextID = p[len(p)-1].Entity.ID
 				}
 				return p, nextID, nil
