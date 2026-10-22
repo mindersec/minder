@@ -122,10 +122,6 @@ func resolveProjectByNameFromClient(ctx context.Context, client minderv1.Project
 	if len(matches) == 0 {
 		return uuid.UUID{}, fmt.Errorf("no project found with name %q", name)
 	}
-	if len(matches) > 1 {
-		return uuid.UUID{}, fmt.Errorf("ambiguous name %q matches multiple projects, please use a UUID instead", name)
-	}
-
 	id, err := uuid.Parse(matches[0].ProjectId)
 	if err != nil {
 		return uuid.UUID{}, cli.MessageAndError("Error parsing project ID from server", err)

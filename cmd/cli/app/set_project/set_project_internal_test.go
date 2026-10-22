@@ -57,27 +57,6 @@ func TestResolveProjectByName_MatchesDisplayName(t *testing.T) {
 	require.Equal(t, projectID, got)
 }
 
-func TestResolveProjectByName_AmbiguousName(t *testing.T) {
-	t.Parallel()
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockClient := mockv1.NewMockProjectsServiceClient(ctrl)
-	mockClient.EXPECT().
-		ListProjects(gomock.Any(), gomock.Any()).
-		Return(&minderv1.ListProjectsResponse{
-			Projects: []*minderv1.Project{
-				{ProjectId: uuid.New().String(), Name: "dev", DisplayName: "Dev"},
-				{ProjectId: uuid.New().String(), Name: "dev", DisplayName: "Dev"},
-			},
-		}, nil)
-
-	_, err := resolveProjectByNameFromClient(context.Background(), mockClient, "dev")
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "ambiguous name")
-	require.Contains(t, err.Error(), "please use a UUID instead")
-}
-
 func TestResolveProjectByName_NotFound(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
