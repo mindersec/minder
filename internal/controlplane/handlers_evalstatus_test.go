@@ -14,6 +14,8 @@ import (
 	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -843,6 +845,75 @@ func TestListEvaluationHistoryIncludeOutputs(t *testing.T) {
 			} else {
 				require.Nil(t, resp.Data[0].Status.Output)
 			}
+		})
+	}
+}
+
+func TestListEvaluationHistoryCursorPageSize(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		cursor       *minderv1.Cursor
+		expectedSize uint32
+		expectedErr  bool
+	}{
+		{
+			name:         "no cursor uses default size",
+			cursor:       nil,
+			expectedSize: defaultPageSize,
+		},
+		{
+			name:         "cursor without size uses default size",
+			cursor:       &minderv1.Cursor{Cursor: "KzEyMzQ1Njc4OTA="},
+			expectedSize: defaultPageSize,
+		},
+		{
+			name:         "cursor with size uses requested size",
+			cursor:       &minderv1.Cursor{Cursor: "KzEyMzQ1Njc4OTA=", Size: 10},
+			expectedSize: 10,
+		},
+		{
+			name:        "cursor with size above max is rejected",
+			cursor:      &minderv1.Cursor{Cursor: "KzEyMzQ1Njc4OTA=", Size: maxPageSize + 1},
+			expectedErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			mockHist := mockhistory.NewMockEvaluationHistoryService(ctrl)
+
+			if !tt.expectedErr {
+				mockStore.EXPECT().BeginTransaction().Return(nil, nil)
+				mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
+				mockStore.EXPECT().Rollback(gomock.Any()).Return(nil)
+				mockStore.EXPECT().Commit(gomock.Any()).Return(nil)
+
+				mockHist.EXPECT().
+					ListEvaluationHistory(gomock.Any(), gomock.Any(), gomock.Any(), tt.expectedSize, gomock.Any(), gomock.Any()).
+					Return(&history.ListEvaluationHistoryResult{}, nil)
+			}
+
+			server := Server{store: mockStore, history: mockHist}
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Project: engcontext.Project{ID: uuid.New()},
+			})
+
+			_, err := server.ListEvaluationHistory(ctx, &minderv1.ListEvaluationHistoryRequest{
+				Cursor: tt.cursor,
+			})
+			if tt.expectedErr {
+				require.Equal(t, codes.InvalidArgument, status.Code(err))
+				return
+			}
+			require.NoError(t, err)
 		})
 	}
 }

@@ -7,11 +7,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 )
 
-const propValueV1 = "v1"
+// PropValueV1 is the version string for v1 property values
+const PropValueV1 = "v1"
 
 // ErrBadPropVersion is returned when a property has an unexpected version
 var ErrBadPropVersion = errors.New("unexpected property version")
@@ -52,12 +54,12 @@ func propValueToDb(value any, version string) (json.RawMessage, error) {
 
 // PropValueToDbV1 serializes a property value to a JSON byte slice
 func PropValueToDbV1(value any) (json.RawMessage, error) {
-	return propValueToDb(value, propValueV1)
+	return propValueToDb(value, PropValueV1)
 }
 
 // PropValueFromDbV1 deserializes a property value from a JSON byte slice
 func PropValueFromDbV1(rawValue json.RawMessage) (any, error) {
-	return propValueFromDb(rawValue, propValueV1)
+	return propValueFromDb(rawValue, PropValueV1)
 }
 
 // UpsertPropertyValueV1Params is the input parameter for the UpsertProperty query
@@ -97,4 +99,24 @@ func (q *Queries) GetTypedEntitiesByPropertyV1(
 		Key:        key,
 		Value:      jsonVal,
 	})
+}
+
+// PropMapFromJSON converts pre-fetched {"key": value} data from JSON_OBJECT_AGG
+// into a map of property key to value, validating that each entry is v1.
+func PropMapFromJSON(propsData json.RawMessage) (map[string]any, error) {
+	var propData map[string]PropertyWrapper
+
+	err := json.Unmarshal(propsData, &propData)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshaling properties: %w", err)
+	}
+
+	propsMap := make(map[string]any, len(propData))
+	for k, v := range propData {
+		if v.Version != PropValueV1 {
+			return nil, fmt.Errorf("property %q: %w", k, ErrBadPropVersion)
+		}
+		propsMap[k] = v.Value
+	}
+	return propsMap, nil
 }

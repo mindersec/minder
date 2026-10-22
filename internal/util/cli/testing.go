@@ -48,7 +48,15 @@ type CmdTestCase struct {
 	Args           []string
 	MockSetup      func(t *testing.T, ctrl *gomock.Controller) context.Context
 	GoldenFileName string
+	// ExpectedStdout asserts an exact match against the standard output stream.
+	ExpectedStdout string
+	// ExpectedStderr asserts that standard error contains the specified substring.
+	ExpectedStderr string
 	ExpectedError  string
+	// ExpectEmptyStdout asserts that standard output is completely empty.
+	ExpectEmptyStdout bool
+	// ExpectEmptyStderr asserts that standard error is completely empty.
+	ExpectEmptyStderr bool
 }
 
 // RunCmdTests iterates over a slice of test cases and executes them
@@ -82,9 +90,10 @@ func RunCmdTests(
 				ctx = tc.MockSetup(t, ctrl)
 			}
 
-			buf := new(bytes.Buffer)
-			rootCmd.SetOut(buf)
-			rootCmd.SetErr(buf)
+			stdoutBuf := new(bytes.Buffer)
+			stderrBuf := new(bytes.Buffer)
+			rootCmd.SetOut(stdoutBuf)
+			rootCmd.SetErr(stderrBuf)
 			rootCmd.SetContext(ctx)
 
 			rootCmd.SetArgs(tc.Args)
@@ -97,11 +106,28 @@ func RunCmdTests(
 			if tc.ExpectedError != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.ExpectedError)
-				return
+			} else {
+				require.NoError(t, err, "command execution should not fail")
+				if tc.GoldenFileName != "" {
+					checkGoldenFile(t, tc.GoldenFileName, stdoutBuf.String())
+				}
 			}
 
-			require.NoError(t, err, "command execution should not fail")
-			checkGoldenFile(t, tc.GoldenFileName, buf.String())
+			if tc.ExpectedStdout != "" {
+				assert.Equal(t, tc.ExpectedStdout, stdoutBuf.String())
+			}
+
+			if tc.ExpectedStderr != "" {
+				assert.Contains(t, stderrBuf.String(), tc.ExpectedStderr)
+			}
+
+			if tc.ExpectEmptyStdout {
+				assert.Empty(t, stdoutBuf.String(), "expected stdout to be empty")
+			}
+
+			if tc.ExpectEmptyStderr {
+				assert.Empty(t, stderrBuf.String(), "expected stderr to be empty")
+			}
 		})
 	}
 }

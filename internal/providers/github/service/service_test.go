@@ -594,4 +594,9 @@ func TestProviderService_ValidateOrgMembershipForToken(t *testing.T) {
 	require.Error(t, err)
 	require.False(t, member)
 
+	// Transport error with no HTTP response
+	mocks.svcMock.EXPECT().GetOrgMembership(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil, fmt.Errorf("test error"))
+	member, err = provSvc.ValidateOrgMembershipForToken(context.Background(), &oauth2.Token{}, "test-org")
+	require.Error(t, err)
+	require.False(t, member)
 }

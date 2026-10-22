@@ -7,6 +7,10 @@ on:
   pull_request:
     branches: [ 'main', 'release-*' ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
 
   check:
@@ -43,7 +47,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: chainguard-dev/actions/boilerplate@84b1be4c638f12d4256ddddef17af98853b6d0d9 # v1.6.40
+      - uses: chainguard-dev/actions/boilerplate@3403a578b543fd3f0debdaef9dd989ae54e3fcef # v1.6.41
         with:
           extension: ${{ matrix.extension }}
           language: ${{ matrix.language }}
