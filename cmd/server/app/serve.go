@@ -4,10 +4,12 @@
 package app
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog"
@@ -38,7 +40,7 @@ var serveCmd = &cobra.Command{
 	Short: "Start the minder platform",
 	Long:  `Starts the minder platform, which includes the gRPC server and the HTTP gateway.`,
 	RunE: func(cmd *cobra.Command, _ []string) error {
-		ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
+		ctx, cancel := serverContext(cmd.Context())
 		defer cancel()
 
 		cfg, err := config.ReadConfigFromViper[serverconfig.Config](viper.GetViper())
@@ -164,6 +166,10 @@ var serveCmd = &cobra.Command{
 			otel.GetMeterProvider(),
 		)
 	},
+}
+
+func serverContext(parent context.Context) (context.Context, context.CancelFunc) {
+	return signal.NotifyContext(parent, os.Interrupt, syscall.SIGTERM)
 }
 
 func init() {
