@@ -36,9 +36,8 @@ func getCommand(cmd *cobra.Command, _ []string) error {
 	id := viper.GetString("id")
 	name := viper.GetString("name")
 
-	// Ensure the output format is supported
-	if !app.IsOutputFormatSupported(format) {
-		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
+	if err := app.IsOutputFormatSupported(format); err != nil {
+		return err
 	}
 	if id == "" && name == "" {
 		return cli.MessageAndError("Error getting profile", fmt.Errorf("id or name required"))
