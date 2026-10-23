@@ -98,14 +98,14 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 }
 
 func getEntityReconciliationMessage(ctx context.Context, store db.Store,
-	repoIdString string, entityCtx engcontext.EntityContext) (*message.Message, error) {
-	repoUUID, err := uuid.Parse(repoIdString)
+	entityIdString string, entityCtx engcontext.EntityContext) (*message.Message, error) {
+	entityUUID, err := uuid.Parse(entityIdString)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error parsing entity id: %v", err)
 	}
 
 	// Fetch entity by ID
-	ent, err := store.GetEntityByID(ctx, repoUUID)
+	ent, err := store.GetEntityByID(ctx, entityUUID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "entity not found")
 	} else if err != nil {
@@ -120,6 +120,7 @@ func getEntityReconciliationMessage(ctx context.Context, store db.Store,
 	// Telemetry logging
 	logger.BusinessRecord(ctx).ProviderID = ent.ProviderID
 	logger.BusinessRecord(ctx).Project = ent.ProjectID
+	logger.BusinessRecord(ctx).Entity = ent.ID
 
 	if ent.EntityType == db.EntitiesRepository {
 		logger.BusinessRecord(ctx).Repository = ent.ID
