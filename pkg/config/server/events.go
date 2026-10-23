@@ -67,8 +67,10 @@ type NatsConfig struct {
 	URL string `mapstructure:"url" default:"nats://localhost:4222"`
 	// Prefix is the prefix for the NATS subjects to subscribe to
 	Prefix string `mapstructure:"prefix" default:"minder"`
-	// Queue is the name of the queue group to join when consuming messages
-	// queue groups allow multiple process to round-robin process messages.
+	// Queue is unused; consumer and queue group names are derived from
+	// the subject (prefix + topic).
+	//
+	// Deprecated: this setting has no effect and will be removed.
 	Queue string `mapstructure:"queue" default:"minder"`
 }
 
