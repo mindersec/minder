@@ -37,7 +37,7 @@ complexity.
 > security issues, so writing and improving rules and remediations is a good
 > place to get started.
 
-**Last updated:** April 2026
+**Last updated:** October 2026
 
 ## Major Efforts
 
@@ -64,7 +64,7 @@ Last year, Minder added the ability to output data from rule evaluations for
 consumption by remediations and alerts. We can extend this functionality to
 enable a number of additional capabilities with a minimal code footprint.
 
-Some of the suggested capabilities:
+Capabilities enabled by rule output include:
 
 - **Inventory rules**: Rather than pass/fail assessment of repository status,
   leverage rule evaluation to collect (for example) all the actions used by a
@@ -72,10 +72,13 @@ Some of the suggested capabilities:
   output could then be used to import data into an external software inventory
   control system.
 
+  **This has been largely implemented in the Minder engine, but lacks examples
+  in the [rules and profiles](https://github.com/mindersec/minder-rules-and-profiles).**
+
 - **Rule-driven child entities**: Leveraging inventory rules, we could add a
   remediation which supports managing (upsert / delete) Minder entities detected
   through an inventory rule. This could even replace some of the built-in
-  lifecycle rules (e.g. for PRs).
+  lifecycle rules (e.g. creating PRs or releases from a repository).
 
 - **External remediation**: Currently, the Minder server uses a GitHub App with
   high levels of permissions in order to perform remediations. If the data
@@ -89,33 +92,6 @@ Some of the suggested capabilities:
 Inventory rules are nearing completion, while the other two bullet points still
 need design and discussion.
 
-### Improve Rule Testing Infrastructure
-
-**Status**: Subject of an
-[LFX Mentorship Project, Summer 2026](https://mentorship.lfx.linuxfoundation.org/project/40b209ce-c759-4648-9d83-31db4ba1d481).
-Tracked in [#6434](https://github.com/mindersec/minder/issues/6434)
-
-[Full proposal in Google Docs](https://docs.google.com/document/d/1laRud0GSPqVg_rZ3ahD8GfRJYY2Bf-JL66nEXGZJ4kk/edit).
-
-The primary goals of this 12-week engagement are to:
-
-1. **Improve Rule Testing Tools**: Develop a standalone testing command for
-   Minder rules.
-1. **Robust Testing**: Allow for the definition and execution of multiple
-   distinct test cases against a single rule.
-1. **Focus on Local Execution**: Tests should be able to execute locally without
-   requiring network access to external resources.
-1. **Support Diverse Data Ingestion**: Design the framework to accommodate tests
-   for rules covering all current data ingestion methods: REST API, Git
-   repositories, and declared data sources.
-1. **Provide Automated CI Tooling**: Implement CI workflows to automatically
-   detect and run tests.
-1. **Update Existing Rules**: Migrate and update existing tests within the
-   github.com/mindersec/minder-rules-and-profiles repository to utilize the new
-   framework.
-1. **Documentation and UX**: Create documentation for the new tooling and
-   address potential client-side UX issues related to testing.
-
 ### Improve Flexibility of Pull Request Rules
 
 **Status**: Discussion in
@@ -127,7 +103,8 @@ a linked action. These include suggesting edits and commenting on specific lines
 of content. It would be more flexible to add remediation or alerting action
 support for this functionality, which would allow plugging in different
 dependency information sources or other tools which can provide line-level
-comments.
+comments.  This ties in to the "rule output handling" as well -- much of the
+remediation flexibility may come from data retrieved during rule processing.
 
 Functionality under consideration:
 
@@ -146,8 +123,9 @@ Functionality under consideration:
   comments.
 
 - **Enabling content suggestions**: It's not clear whether the GitHub suggestion
-  block format is sufficient, or whether Minder should provide a better
-  mechanism for suggesting fixes to PRs when the rule remediation supports it
+  block format is sufficient (i.e. using line-level comments with the `suggestion`
+  preformatted block, or whether Minder should provide a better mechanism for
+  suggesting fixes to PRs when the rule remediation supports it
   (for example, pinning GitHub Actions to SHAs during PR review).
 
 Note that CI systems like GitHub Actions can be another route for some
@@ -159,9 +137,9 @@ for checking content.
 
 **Status**: Tracked in [#6435](https://github.com/mindersec/minder/issues/6435)
 
-Minder has _some_ support for [GitLab Cloud](https://gitlab.com/), but setup is
-neither well-documented nor well-tested. Additionally, Minder does not currently
-support any of the following Git Forges:
+Minder has _some_ support for [GitLab Cloud](https://gitlab.com/), but the GitLab
+provider does not support remediations currently. Additionally, Minder does not
+currently support any of the following Git Forges:
 
 - **[Forgejo](https://forgejo.org/)**: not started; this should be designed to
   work with both Codeberg and self-hosted Forgejo, which may require additional
@@ -189,13 +167,18 @@ security properties:
   [artifacts](https://oras.land/docs/glossary/#artifacts) and
   [config](https://oras.land/docs/glossary/#config) contents as well as via the
   [referrers API](https://oras.land/docs/glossary/#manifest-referrers-api)
+- Remediation actions where appropriate
 
 Concrete OCI registries which may need specific implementations (particularly
 around credential handling; possibly also enumeration of registries, namespaces,
 and repositories) include:
 
 - Major Cloud Providers (AWS ECR, Google GCR, Azure ACR, etc)
-- Major OSS Providers (Quay.io, Harbor, GHCR, DockerHub)
+- Major OSS Providers (Harbor, GHCR)
+
+Note that most of the current OCI registries implemented do not support provider
+authentication because Minder providers do not currently support Basic (username
++ password) auth.
 
 ### Human Identity Improvements
 
@@ -242,7 +225,7 @@ of the data which might be presented alongside a Minder rule identity.
 
 ### Status Sharing and Export (Badges)
 
-**Status**: Tracked in [#6438](https://github.com/mindersec/minder/6438)
+**Status**: Tracked in [#6438](https://github.com/mindersec/minder/issues/6438)
 
 One use for Minder is to evaluate projects against specific conformance
 criteria, like the [OpenSSF Security Baseline](https://baseline.openssf.org).
@@ -289,7 +272,7 @@ https://github.com/StacklokLabs/minder-mcp
 - **Project hierarchies:** Enable users to create nested projects and group
   repositories within those projects. Projects will inherit profile rules in
   order to simplify profile and policy management.
-- **Other Provider Coverage:** OCI Registries have a fairy common and
+- **Other Provider Coverage:** OCI Registries have a fairly common and
   standardized artifact format, and _somewhat_ standardized authentication
   mechanisms. There are also a number of ecosystem-specific artifact
   distribution platforms such as PyPI, npm, Homebrew, and Hugging Face which
