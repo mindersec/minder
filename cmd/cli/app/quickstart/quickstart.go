@@ -240,17 +240,25 @@ func quickstartCommand(
 	defer cancel()
 
 	// Get the list of all registered repositories
-	listResp, err := repoClient.ListRepositories(ctx, &minderv1.ListRepositoriesRequest{
-		Context: &minderv1.Context{Provider: &provider, Project: &project},
-	})
-	if err != nil {
-		return cli.MessageAndError("Error getting list of repos", err)
-	}
-
 	var registeredRepos []string
-	for _, result := range listResp.Results {
-		r := fmt.Sprintf("%s/%s", result.Owner, result.Name)
-		registeredRepos = append(registeredRepos, r)
+	var cursor string
+	// Do not fetch more than 100 pages
+	for range 100 {
+		listResp, err := repoClient.ListRepositories(ctx, &minderv1.ListRepositoriesRequest{
+			Context: &minderv1.Context{Provider: &provider, Project: &project},
+			Cursor:  cursor,
+		})
+		if err != nil {
+			return cli.MessageAndError("Error getting list of repos", err)
+		}
+		for _, result := range listResp.Results {
+			r := fmt.Sprintf("%s/%s", result.Owner, result.Name)
+			registeredRepos = append(registeredRepos, r)
+		}
+		cursor = listResp.Cursor
+		if cursor == "" {
+			break
+		}
 	}
 
 	return loadCatalog(cmd, ruleClient, profileClient, provider, project, registeredRepos)
