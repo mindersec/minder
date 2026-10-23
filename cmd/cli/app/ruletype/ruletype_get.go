@@ -38,12 +38,7 @@ var getCmd = &cobra.Command{
 			return fmt.Errorf("please provide either the --id or --name flag, but not both")
 		}
 
-		// Ensure the output format is supported
-		if !app.IsOutputFormatSupported(format) {
-			return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
-		}
-
-		return nil
+		return app.IsOutputFormatSupported(format)
 	},
 	RunE: getCommand,
 }

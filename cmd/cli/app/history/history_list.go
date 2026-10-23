@@ -33,13 +33,8 @@ var listCmd = &cobra.Command{
 			return fmt.Errorf("error binding flags: %w", err)
 		}
 		format := viper.GetString("output")
-		if !app.IsOutputFormatSupported(format) {
-			return cli.MessageAndError(
-				fmt.Sprintf("Output format %s not supported", format),
-				fmt.Errorf("invalid argument"),
-			)
-		}
-		return nil
+
+		return app.IsOutputFormatSupported(format)
 	},
 	RunE: listCommand,
 }
