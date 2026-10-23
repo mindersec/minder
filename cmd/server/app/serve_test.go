@@ -12,6 +12,10 @@ import (
 	"time"
 )
 
+// This test sends SIGTERM to the process, so it must not run in parallel with
+// other tests that install process-wide signal handlers.
+//
+//nolint:paralleltest
 func TestServerContextStopsOnSIGTERM(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("Windows does not support sending SIGTERM to the current process")
