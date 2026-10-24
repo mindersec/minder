@@ -5,6 +5,7 @@
 package set_project
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util/cli"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/config"
 	clientconfig "github.com/mindersec/minder/pkg/config/client"
 )
@@ -33,13 +35,15 @@ using an absolute path in a filesystem.`,
 }
 
 // spCommand is the command for changing the current project
-func spCommand(_ *cobra.Command, args []string) error {
+func spCommand(cmd *cobra.Command, args []string) error {
 	project := args[0]
 
-	_, err := uuid.Parse(project)
-	// TODO: Implement `cd` to a project name
+	projectID, err := uuid.Parse(project)
 	if err != nil {
-		return cli.MessageAndError("Error parsing project ID", err)
+		projectID, err = resolveProjectByName(cmd, project)
+		if err != nil {
+			return err
+		}
 	}
 
 	configFile := viper.GetViper().ConfigFileUsed()
@@ -64,7 +68,7 @@ func spCommand(_ *cobra.Command, args []string) error {
 		return fmt.Errorf("unable to read config: %w", err)
 	}
 
-	cfg.Project = project
+	cfg.Project = projectID.String()
 
 	w, err := os.OpenFile(filepath.Clean(configFile), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {
@@ -86,6 +90,44 @@ func spCommand(_ *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+// resolveProjectByName is the CLI entry point, creates a real gRPC client
+// and delegates to resolveProjectByNameFromClient
+func resolveProjectByName(cmd *cobra.Command, name string) (uuid.UUID, error) {
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewProjectsServiceClient)
+	if err != nil {
+		return uuid.UUID{}, cli.MessageAndError("Error creating client", err)
+	}
+	defer cleanup()
+
+	return resolveProjectByNameFromClient(cmd.Context(), client, name)
+}
+
+// resolveProjectByNameFromClient contains the pure resolution logic.
+// It is split out from resolveProjectByName so it can be tested with a mock client.
+func resolveProjectByNameFromClient(ctx context.Context, client minderv1.ProjectsServiceClient, name string) (uuid.UUID, error) {
+	resp, err := client.ListProjects(ctx, &minderv1.ListProjectsRequest{})
+	if err != nil {
+		return uuid.UUID{}, cli.MessageAndError("Error listing projects", err)
+	}
+
+	var matches []*minderv1.Project
+	for _, p := range resp.Projects {
+		if p.Name == name || p.DisplayName == name {
+			matches = append(matches, p)
+		}
+	}
+
+	if len(matches) == 0 {
+		return uuid.UUID{}, fmt.Errorf("no project found with name %q", name)
+	}
+	id, err := uuid.Parse(matches[0].ProjectId)
+	if err != nil {
+		return uuid.UUID{}, cli.MessageAndError("Error parsing project ID from server", err)
+	}
+
+	return id, nil
 }
 
 func init() {
