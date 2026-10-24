@@ -25,7 +25,7 @@ minder history list [flags]
       --from string                  Filter evaluation history list by time
   -h, --help                         help for list
       --profile-name strings         Filter evaluation history list by profile name
-      --remediation-status strings   Filter evaluation history list by remediation status - one of failure, failure, error, success, skipped, not_available
+      --remediation-status strings   Filter evaluation history list by remediation status - one of failure, error, success, skipped, not_available
   -s, --size uint                    Change the number of items fetched (default 25)
       --to string                    Filter evaluation history list by time
 ```

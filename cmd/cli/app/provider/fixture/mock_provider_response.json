@@ -1,0 +1,11 @@
+{
+  "providers": [
+    {
+      "name": "github-app",
+      "version": "v1",
+      "project": "test-project",
+      "implements": ["PROVIDER_TYPE_GITHUB"],
+      "authFlows": ["AUTHORIZATION_FLOW_GITHUB_APP_FLOW"]
+    }
+  ]
+}

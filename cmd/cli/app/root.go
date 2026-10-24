@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -174,14 +175,12 @@ func initConfig() {
 	}
 }
 
-// IsOutputFormatSupported returns true if the output format is supported
-func IsOutputFormatSupported(output string) bool {
-	for _, format := range SupportedOutputFormats() {
-		if output == format {
-			return true
-		}
+// IsOutputFormatSupported returns error if the output format is not supported
+func IsOutputFormatSupported(output string) error {
+	if slices.Contains(SupportedOutputFormats(), output) {
+		return nil
 	}
-	return false
+	return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", output), fmt.Errorf("invalid argument"))
 }
 
 // SupportedOutputFormats returns the supported output formats

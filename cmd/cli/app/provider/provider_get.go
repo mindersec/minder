@@ -4,14 +4,12 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"reflect"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util/cli"
@@ -24,7 +22,7 @@ var getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get a given provider available in a specific project",
 	Long:  `The minder provider get command gets a given provider available in a specific project.`,
-	RunE:  cli.GRPCClientWrapRunE(GetProviderCommand),
+	RunE:  getProviderCommand,
 }
 
 func init() {
@@ -38,19 +36,25 @@ func init() {
 	}
 }
 
-// GetProviderCommand lists the providers available in a specific project
-func GetProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewProvidersServiceClient(conn)
+// getProviderCommand gets a given provider available in a specific project
+func getProviderCommand(cmd *cobra.Command, _ []string) error {
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+		return fmt.Errorf("error binding flags: %w", err)
+	}
+
+	cmd.SilenceUsage = true
+
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewProvidersServiceClient)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
 
 	project := viper.GetString("project")
 	format := viper.GetString("output")
 	name := viper.GetString("name")
 
-	// No longer print usage on returned error, since we've parsed our inputs
-	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
-	cmd.SilenceUsage = true
-
-	out, err := client.GetProvider(ctx, &minderv1.GetProviderRequest{
+	out, err := client.GetProvider(cmd.Context(), &minderv1.GetProviderRequest{
 		Context: &minderv1.Context{
 			Project: &project,
 		},
@@ -89,12 +93,7 @@ func GetProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, con
 	}
 }
 
-// mapToKvPairs converts a map to a list of key-value pairs
-// TODO(jakub): This works OK now that we have a low-number of config options
-// if we have more elaborate configs, we might want to just dump the config as YAML, but for the usual
-// case now (1 option..) that would not be very readable
 func mapToKvPairs(m map[string]any, parentKey string, result *[]string, nesting int) {
-	// just in case
 	if nesting > 10 {
 		return
 	}
@@ -111,7 +110,6 @@ func mapToKvPairs(m map[string]any, parentKey string, result *[]string, nesting 
 			nestedMap := value.(map[string]any)
 			mapToKvPairs(nestedMap, fullKey, result, nesting+1)
 		default:
-			// this should work for most types, if not, we'll likely just switch to printing YAML
 			*result = append(*result, fmt.Sprintf("%s=%v", fullKey, value))
 		}
 	}
