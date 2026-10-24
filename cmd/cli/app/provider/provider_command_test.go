@@ -120,7 +120,42 @@ func TestDeleteProviderCommand(t *testing.T) {
 
 //nolint:paralleltest
 func TestGetProviderCommand(t *testing.T) {
+	setupSuccess := func(t *testing.T, ctrl *gomock.Controller) context.Context {
+		t.Helper()
+		client := mockv1.NewMockProvidersServiceClient(ctrl)
+		mockResponse := &minderv1.GetProviderResponse{}
+		cli.LoadFixture(t, "mock_provider_get_response.json", mockResponse)
+		client.EXPECT().
+			GetProvider(gomock.Any(), gomock.Any()).
+			Return(mockResponse, nil)
+		return cli.WithRPCClient[minderv1.ProvidersServiceClient](context.Background(), client)
+	}
+
 	tests := []cli.CmdTestCase{
+		{
+			Name:           "get provider - table output",
+			Args:           []string{"provider", "get", "-n", "github-app", "-o", "table"},
+			MockSetup:      setupSuccess,
+			GoldenFileName: "get_provider.table",
+		},
+		{
+			Name:           "get provider - default output (table)",
+			Args:           []string{"provider", "get", "-n", "github-app"},
+			MockSetup:      setupSuccess,
+			GoldenFileName: "get_provider.table",
+		},
+		{
+			Name:           "get provider - json output",
+			Args:           []string{"provider", "get", "-n", "github-app", "-o", "json"},
+			MockSetup:      setupSuccess,
+			GoldenFileName: "get_provider.json",
+		},
+		{
+			Name:           "get provider - yaml output",
+			Args:           []string{"provider", "get", "-n", "github-app", "-o", "yaml"},
+			MockSetup:      setupSuccess,
+			GoldenFileName: "get_provider.yaml",
+		},
 		{
 			Name: "get grpc error",
 			Args: []string{"provider", "get", "-n", "github-app"},
@@ -133,6 +168,16 @@ func TestGetProviderCommand(t *testing.T) {
 				return cli.WithRPCClient[minderv1.ProvidersServiceClient](context.Background(), client)
 			},
 			ExpectedError: "provider not found",
+		},
+		{
+			Name:          "fails when name flag is missing",
+			Args:          []string{"provider", "get"},
+			ExpectedError: `required flag(s) "name" not set`,
+		},
+		{
+			Name:          "fails on invalid output format",
+			Args:          []string{"provider", "get", "-n", "github-app", "-o", "invalid_format"},
+			ExpectedError: "invalid argument",
 		},
 	}
 

@@ -22,7 +22,16 @@ var getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get a given provider available in a specific project",
 	Long:  `The minder provider get command gets a given provider available in a specific project.`,
-	RunE:  getProviderCommand,
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+
+		format := viper.GetString("output")
+
+		return app.IsOutputFormatSupported(format)
+	},
+	RunE: getProviderCommand,
 }
 
 func init() {
@@ -38,10 +47,6 @@ func init() {
 
 // getProviderCommand gets a given provider available in a specific project
 func getProviderCommand(cmd *cobra.Command, _ []string) error {
-	if err := viper.BindPFlags(cmd.Flags()); err != nil {
-		return fmt.Errorf("error binding flags: %w", err)
-	}
-
 	cmd.SilenceUsage = true
 
 	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewProvidersServiceClient)
@@ -87,10 +92,8 @@ func getProviderCommand(cmd *cobra.Command, _ []string) error {
 		}
 
 		t.Render()
-		return nil
-	default:
-		return fmt.Errorf("output format %s not supported", format)
 	}
+	return nil
 }
 
 func mapToKvPairs(m map[string]any, parentKey string, result *[]string, nesting int) {
