@@ -77,13 +77,17 @@ func TestDeleteProviderCommand(t *testing.T) {
 				t.Helper()
 				client := mockv1.NewMockProvidersServiceClient(ctrl)
 				client.EXPECT().
-					DeleteProvider(gomock.Any(), gomock.Any()).
+					DeleteProvider(gomock.Any(), gomock.Cond(func(req any) bool {
+						r, ok := req.(*minderv1.DeleteProviderRequest)
+						return ok && r.GetContext().GetProvider() == "github-app"
+					})).
 					Return(&minderv1.DeleteProviderResponse{
 						Name: "github-app",
 					}, nil)
 				return cli.WithRPCClient[minderv1.ProvidersServiceClient](context.Background(), client)
 			},
-			GoldenFileName: "delete_by_name.txt",
+			ExpectedStderr:    "Successfully deleted provider with name: github-app\n",
+			ExpectEmptyStdout: true,
 		},
 		{
 			Name: "delete by id",
@@ -92,13 +96,17 @@ func TestDeleteProviderCommand(t *testing.T) {
 				t.Helper()
 				client := mockv1.NewMockProvidersServiceClient(ctrl)
 				client.EXPECT().
-					DeleteProviderByID(gomock.Any(), gomock.Any()).
+					DeleteProviderByID(gomock.Any(), gomock.Cond(func(req any) bool {
+						r, ok := req.(*minderv1.DeleteProviderByIDRequest)
+						return ok && r.GetId() == "test-id"
+					})).
 					Return(&minderv1.DeleteProviderByIDResponse{
 						Id: "test-id",
 					}, nil)
 				return cli.WithRPCClient[minderv1.ProvidersServiceClient](context.Background(), client)
 			},
-			GoldenFileName: "delete_by_id.txt",
+			ExpectedStderr:    "Successfully deleted provider with id: test-id\n",
+			ExpectEmptyStdout: true,
 		},
 		{
 			Name: "delete grpc error",
@@ -111,7 +119,18 @@ func TestDeleteProviderCommand(t *testing.T) {
 					Return(nil, status.Error(codes.NotFound, "provider not found"))
 				return cli.WithRPCClient[minderv1.ProvidersServiceClient](context.Background(), client)
 			},
-			ExpectedError: "provider not found",
+			ExpectedError:     "provider not found",
+			ExpectEmptyStdout: true,
+		},
+		{
+			Name:          "fails when missing both name and id",
+			Args:          []string{"provider", "delete"},
+			ExpectedError: `at least one of the flags in the group [name id] is required`,
+		},
+		{
+			Name:          "fails when providing both name and id",
+			Args:          []string{"provider", "delete", "-n", "github-app", "-i", "test-id"},
+			ExpectedError: `none of the others can be`,
 		},
 	}
 
@@ -126,35 +145,42 @@ func TestGetProviderCommand(t *testing.T) {
 		mockResponse := &minderv1.GetProviderResponse{}
 		cli.LoadFixture(t, "mock_provider_get_response.json", mockResponse)
 		client.EXPECT().
-			GetProvider(gomock.Any(), gomock.Any()).
+			GetProvider(gomock.Any(), gomock.Cond(func(req any) bool {
+				r, ok := req.(*minderv1.GetProviderRequest)
+				return ok && r.GetName() == "github-app"
+			})).
 			Return(mockResponse, nil)
 		return cli.WithRPCClient[minderv1.ProvidersServiceClient](context.Background(), client)
 	}
 
 	tests := []cli.CmdTestCase{
 		{
-			Name:           "get provider - table output",
-			Args:           []string{"provider", "get", "-n", "github-app", "-o", "table"},
-			MockSetup:      setupSuccess,
-			GoldenFileName: "get_provider.table",
+			Name:              "get provider - table output",
+			Args:              []string{"provider", "get", "-n", "github-app", "-o", "table"},
+			MockSetup:         setupSuccess,
+			GoldenFileName:    "get_provider.table",
+			ExpectEmptyStderr: true,
 		},
 		{
-			Name:           "get provider - default output (table)",
-			Args:           []string{"provider", "get", "-n", "github-app"},
-			MockSetup:      setupSuccess,
-			GoldenFileName: "get_provider.table",
+			Name:              "get provider - default output (table)",
+			Args:              []string{"provider", "get", "-n", "github-app"},
+			MockSetup:         setupSuccess,
+			GoldenFileName:    "get_provider.table",
+			ExpectEmptyStderr: true,
 		},
 		{
-			Name:           "get provider - json output",
-			Args:           []string{"provider", "get", "-n", "github-app", "-o", "json"},
-			MockSetup:      setupSuccess,
-			GoldenFileName: "get_provider.json",
+			Name:              "get provider - json output",
+			Args:              []string{"provider", "get", "-n", "github-app", "-o", "json"},
+			MockSetup:         setupSuccess,
+			GoldenFileName:    "get_provider.json",
+			ExpectEmptyStderr: true,
 		},
 		{
-			Name:           "get provider - yaml output",
-			Args:           []string{"provider", "get", "-n", "github-app", "-o", "yaml"},
-			MockSetup:      setupSuccess,
-			GoldenFileName: "get_provider.yaml",
+			Name:              "get provider - yaml output",
+			Args:              []string{"provider", "get", "-n", "github-app", "-o", "yaml"},
+			MockSetup:         setupSuccess,
+			GoldenFileName:    "get_provider.yaml",
+			ExpectEmptyStderr: true,
 		},
 		{
 			Name: "get grpc error",
@@ -163,11 +189,15 @@ func TestGetProviderCommand(t *testing.T) {
 				t.Helper()
 				client := mockv1.NewMockProvidersServiceClient(ctrl)
 				client.EXPECT().
-					GetProvider(gomock.Any(), gomock.Any()).
+					GetProvider(gomock.Any(), gomock.Cond(func(req any) bool {
+						r, ok := req.(*minderv1.GetProviderRequest)
+						return ok && r.GetName() == "github-app"
+					})).
 					Return(nil, status.Error(codes.NotFound, "provider not found"))
 				return cli.WithRPCClient[minderv1.ProvidersServiceClient](context.Background(), client)
 			},
-			ExpectedError: "provider not found",
+			ExpectedError:     "provider not found",
+			ExpectEmptyStdout: true,
 		},
 		{
 			Name:          "fails when name flag is missing",
