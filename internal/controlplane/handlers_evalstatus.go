@@ -131,7 +131,9 @@ func (s *Server) ListEvaluationHistory(
 			)
 		}
 		cursor = parsedCursor
-		size = in.GetCursor().GetSize()
+		if in.GetCursor().GetSize() != 0 {
+			size = in.GetCursor().GetSize()
+		}
 	}
 
 	if size > maxPageSize {

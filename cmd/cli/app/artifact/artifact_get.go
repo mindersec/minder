@@ -59,9 +59,8 @@ func getCommand(cmd *cobra.Command, _ []string) error {
 	artifactName := viper.GetString("name")
 	format := viper.GetString("output")
 
-	// Ensure the output format is supported
-	if !app.IsOutputFormatSupported(format) {
-		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
+	if err := app.IsOutputFormatSupported(format); err != nil {
+		return err
 	}
 
 	// No longer print usage on returned error, since we've parsed our inputs

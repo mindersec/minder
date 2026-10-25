@@ -24,12 +24,13 @@ var logoutCmd = &cobra.Command{
 		if err != nil {
 			return cli.MessageAndError("Unable to read config", err)
 		}
-		if err := cli.RemoveCredentials(clientConfig.GRPCClientConfig.GetGRPCAddress()); err != nil {
-			return cli.MessageAndError("Error removing credentials", err)
-		}
 		// No longer print usage on returned error, since we've parsed our inputs
 		// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 		cmd.SilenceUsage = true
+
+		if err := cli.RemoveCredentials(clientConfig.GRPCClientConfig.GetGRPCAddress()); err != nil {
+			return cli.MessageAndError("Error removing credentials", err)
+		}
 
 		issuerUrlStr := clientConfig.Identity.CLI.IssuerUrl
 
@@ -42,8 +43,8 @@ var logoutCmd = &cobra.Command{
 		// endpoint for WWW-Authenticate or use the JWT realm to determine the rp URL
 		// https://pkg.go.dev/github.com/zitadel/oidc/v3@v3.34.1/pkg/client/rp#EndSession
 		logoutUrl := parsedURL.JoinPath("realms", clientConfig.Identity.CLI.Realm, "/protocol/openid-connect/logout")
-		cmd.Println(cli.SuccessBanner.Render("You have successfully logged out of the CLI."))
-		cmd.Printf("If you would like to log out of the browser, you can visit %s\n", logoutUrl.String())
+		cmd.PrintErrln(cli.SuccessBanner.Render("You have successfully logged out of the CLI."))
+		cmd.PrintErrf("If you would like to log out of the browser, you can visit %s\n", logoutUrl.String())
 		return nil
 	},
 }

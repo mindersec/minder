@@ -311,20 +311,12 @@ func (ps *propertiesService) EntityWithPropertiesByID(
 func (*propertiesService) PropertiesFromJSON(
 	entity db.EntityInstance, propsData json.RawMessage, _ *CallOptions,
 ) (*models.EntityWithProperties, error) {
-	var propData map[string]db.PropertyWrapper
-
-	err := json.Unmarshal(propsData, &propData)
+	propsMap, err := db.PropMapFromJSON(propsData)
 	if err != nil {
-		return nil, fmt.Errorf("error unmarshaling properties: %w", err)
+		return nil, err
 	}
 
-	// TODO: check that the version is "v1" (db.propValueV1) for each PropertyWrapper
-	propsMap := make(map[string]any, len(propData))
-	for k, v := range propData {
-		propsMap[k] = v.Value
-	}
 	props := properties.NewProperties(propsMap)
-
 	ewp := models.NewEntityWithProperties(entity, props)
 	return ewp, nil
 }

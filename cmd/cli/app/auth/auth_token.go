@@ -6,6 +6,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -48,8 +49,8 @@ func TokenCommand(cmd *cobra.Command, _ []string) error {
 	realm := clientConfig.Identity.CLI.Realm
 	creds, err := cli.GetToken(cmd, grpcCfg.GetGRPCAddress(), opts, issuerUrl, realm, clientId)
 	if err != nil {
-		cmd.Printf("Error getting token: %v\n", err)
 		if errors.Is(err, os.ErrNotExist) || errors.Is(err, cli.ErrGettingRefreshToken) {
+			cmd.PrintErrf("Error getting token: %v\n", err)
 			// wait for the token to be received
 			token, err := cli.Login(ctx, cmd, clientConfig, []string{}, skipBrowser)
 			if err != nil {
@@ -62,7 +63,7 @@ func TokenCommand(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	cmd.Print(creds)
+	fmt.Fprint(cmd.OutOrStdout(), creds)
 	return nil
 }
 

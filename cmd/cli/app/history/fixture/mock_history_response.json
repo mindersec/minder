@@ -1,0 +1,24 @@
+{
+  "data": [
+    {
+      "evaluatedAt": "2024-01-01T00:00:00Z",
+      "entity": {
+        "type": "ENTITY_REPOSITORIES",
+        "name": "example-repo"
+      },
+      "rule": {
+        "name": "secret_scanning"
+      },
+      "status": {
+        "status": "success"
+      },
+      "remediation": {
+        "status": "not_available"
+      },
+      "alert": {
+        "status": "not_available"
+      }
+    }
+  ],
+  "page": {}
+}

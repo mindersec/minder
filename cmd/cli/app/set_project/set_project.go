@@ -28,15 +28,12 @@ var SetProjectCmd = &cobra.Command{
 	Long: `The minder set-project command moves the current context to another project.
 Passing a UUID will move the context to the project with that UUID. This is akin to
 using an absolute path in a filesystem.`,
+	Args: cobra.ExactArgs(1),
 	RunE: spCommand,
 }
 
 // spCommand is the command for changing the current project
-func spCommand(cmd *cobra.Command, args []string) error {
-	if len(args) != 1 {
-		return cmd.Usage()
-	}
-
+func spCommand(_ *cobra.Command, args []string) error {
 	project := args[0]
 
 	_, err := uuid.Parse(project)

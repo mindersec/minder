@@ -114,6 +114,38 @@ while the properties are provider-specific and prefixed with the provider name.
 | `github/repo_name`  | The GitHub repo name (e.g. `stacklok`). Empty for org packages.              | string |
 | `github/repo_owner` | The GitHub repo owner (e.g. `minder`). Empty for org packages.               | string |
 
+## Artifact properties set by the DockerHub and Quay providers
+
+| Field            | Description                                                                                     | Type   |
+| ---------------- | ----------------------------------------------------------------------------------------------- | ------ |
+| `oci/repository` | The full repository path without the registry or tag, e.g. `library/alpine` for `alpine:latest` | string |
+| `oci/namespace`  | The provider namespace the artifact belongs to, e.g. `library`                                  | string |
+| `oci/registry`   | The registry host serving the artifact, e.g. `docker.io` or `quay.io`                           | string |
+
+For example, this profile applies only to `envoy` images, in any namespace:
+
+```yaml
+name: envoy-images
+selection:
+  - entity: artifact
+    selector: artifact.properties['oci/repository'].endsWith('/envoy')
+```
+
+Or, to select one repository at any tag:
+
+```yaml
+selector: artifact.properties['oci/repository'] == 'library/alpine'
+```
+
+Or, to select every repository in the `myorg` namespace:
+
+```yaml
+selector: artifact.properties['oci/repository'].startsWith('myorg/')
+```
+
+An artifact must match every selector under `selection:` that applies to it, so
+use one of these expressions per profile rather than listing them together.
+
 ## Pull request selectors
 
 | Field  | Description                                                  | Type   |
