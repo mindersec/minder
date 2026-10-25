@@ -6,7 +6,9 @@ package oci
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -14,6 +16,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -215,10 +218,15 @@ func (ov *OCI) GetArtifactVersions(
 
 	out := make([]*minderv1.ArtifactVersion, 0, len(tags))
 	for _, t := range tags {
-		// TODO: We probably should try to surface errors while returning a subset
-		// of manifests.
 		img, err := ov.getImage(ctx, artifact.GetName(), t)
 		if err != nil {
+			if isNotFound(err) {
+				zerolog.Ctx(ctx).Info().
+					Str("name", artifact.GetName()).
+					Str("tag", t).
+					Msg("skipping artifact version: tag no longer exists")
+				continue
+			}
 			return nil, err
 		}
 
@@ -277,6 +285,13 @@ func resolveCreatedAt(man *v1.Manifest, configFile func() (*v1.ConfigFile, error
 	}
 
 	return cfg.Created.Time, nil
+}
+
+// isNotFound returns true when err is a registry 404 / MANIFEST_UNKNOWN,
+// meaning the tag was deleted after it appeared in the listing.
+func isNotFound(err error) bool {
+	var terr *transport.Error
+	return errors.As(err, &terr) && terr.StatusCode == http.StatusNotFound
 }
 
 // getReferenceString returns the reference string for a given container name and tag
