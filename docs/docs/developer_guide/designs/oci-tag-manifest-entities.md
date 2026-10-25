@@ -1,4 +1,3 @@
-
 # Tag and Manifest Entities for OCI Artifacts -- Design
 
 **Author:** Shreya Baranwal
@@ -40,7 +39,7 @@ These models create several problems:
 
 | Problem | Evidence and status |
 |---|---|
-| DockerHub and Quay entities combine a mutable tag reference with an immutable digest. When a tag moves, the `upstream_id` changes while the entity remains the same. | #6954; [`service.go`](https://github.com/mindersec/minder/blob/900dae34d72c69bdc1fd9f86ace9aeeef03a9d65/internal/entities/properties/service/service.go#L212-L221). **Verified.** |
+| DockerHub and Quay entities combine a mutable tag reference with an immutable digest. When a tag moves, the `upstream_id` changes while the entity remains the same. | [#6954](https://github.com/mindersec/minder/issues/6954); [`service.go`](https://github.com/mindersec/minder/blob/900dae34d72c69bdc1fd9f86ace9aeeef03a9d65/internal/entities/properties/service/service.go#L212-L221). **Verified.** |
 | A `repo:tag` entity evaluates every tag in the repository rather than only the tag named by the entity. | [`oci.go`](https://github.com/mindersec/minder/blob/900dae34d72c69bdc1fd9f86ace9aeeef03a9d65/internal/providers/oci/oci.go#L211). **Inferred.** |
 | A digest referenced by multiple tags can be evaluated repeatedly on DockerHub and Quay. | [`oci.go`](https://github.com/mindersec/minder/blob/900dae34d72c69bdc1fd9f86ace9aeeef03a9d65/internal/providers/oci/oci.go#L248-L249); #6775 review. **Verified.** |
 | Untagged manifests are not discovered on DockerHub and Quay, or are filtered out on GitHub. | [`versionsfilter.go`](https://github.com/mindersec/minder/blob/900dae34d72c69bdc1fd9f86ace9aeeef03a9d65/internal/providers/artifact/versionsfilter.go#L71-L74). **Verified.** |
@@ -389,7 +388,7 @@ These findings are related to the current OCI implementation but are outside the
 
 ## 15. Does this generalize beyond OCI?
 
-This question was raised by @intelligent-ears on #6954: at the Oct 22 community meeting, maintainers noted that release-style entities (e.g. npm, PyPI) have a similar gap, and Evan sketched a hierarchy along the lines of `Account → Distribution channel → Release → Artifact`.That hierarchy comes from the Oct 22, 2026 community meeting notes: ‘Evan came up with a quick set of possible entities around releases: Account (admin group within the distribution), Distribution channel (npm package, pypi package), Release (specific version), Artifact (component in that release, e.g. platform-specific binary).’ Verified.
+This question was raised by [@intelligent-ears](https://github.com/intelligent-ears) on [#6954](https://github.com/mindersec/minder/issues/6954): at the Oct 22 community meeting, maintainers noted that release-style entities (e.g. npm, PyPI) have a similar gap, and Evan sketched a hierarchy along the lines of `Account → Distribution channel → Release → Artifact`. That hierarchy comes from the Oct 22, 2026 community meeting notes: ‘Evan came up with a quick set of possible entities around releases: Account (admin group within the distribution), Distribution channel (npm package, pypi package), Release (specific version), Artifact (component in that release, e.g. platform-specific binary).’ Verified.
 
 **npm** has a concept that maps closely onto Tag and Manifest:
 
