@@ -389,7 +389,7 @@ These findings are related to the current OCI implementation but are outside the
 
 ## 15. Does this generalize beyond OCI?
 
-This question was raised by @intelligent-ears on #6954: at the Oct 22 community meeting, maintainers noted that release-style entities (e.g. npm, PyPI) have a similar gap, and Evan sketched a hierarchy along the lines of `Account → Distribution channel → Release → Artifact`. That specific hierarchy wasn't found in Evan's own written words on GitHub or in the docs fetched for this section, so it's treated here as **unverified**; what follows instead checks the Tag/Manifest split directly against npm and PyPI's documented and observed behaviour.
+This question was raised by @intelligent-ears on #6954: at the Oct 22 community meeting, maintainers noted that release-style entities (e.g. npm, PyPI) have a similar gap, and Evan sketched a hierarchy along the lines of `Account → Distribution channel → Release → Artifact`.That hierarchy comes from the Oct 22, 2026 community meeting notes: ‘Evan came up with a quick set of possible entities around releases: Account (admin group within the distribution), Distribution channel (npm package, pypi package), Release (specific version), Artifact (component in that release, e.g. platform-specific binary).’ Verified.
 
 **npm** has a concept that maps closely onto Tag and Manifest:
 
