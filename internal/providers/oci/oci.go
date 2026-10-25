@@ -241,7 +241,7 @@ func (ov *OCI) GetArtifactVersions(
 		// TODO: Consider caching
 		digest, err := ov.GetDigest(ctx, artifact.GetName(), t)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get digest")
+			return nil, fmt.Errorf("unable to get digest for tag %s: %w", t, err)
 		}
 
 		out = append(out, &minderv1.ArtifactVersion{
@@ -296,7 +296,7 @@ func (o *OCI) getReference(contname, tag string) (name.Reference, error) {
 
 // getDigestFromRef returns the digest of a container image reference
 // TODO: Move this to a more appropriate location
-// TODO: Implement authentication
+// TODO(#6972): Implement authentication
 func getDigestFromRef(ctx context.Context, ref name.Reference) (string, error) {
 	// Use the tag's top-level digest (the index for multi-arch tags), not a platform image's.
 	desc, err := remote.Get(ref, remote.WithContext(ctx), remote.WithUserAgent(constants.ServerUserAgent))

@@ -1,0 +1,16 @@
+{
+  "name":  "github-app",
+  "class":  "github-app",
+  "project":  "test-project",
+  "version":  "v1",
+  "implements":  [
+    "PROVIDER_TYPE_GITHUB"
+  ],
+  "config":  {
+    "endpoint":  "https://api.github.com"
+  },
+  "authFlows":  [
+    "AUTHORIZATION_FLOW_GITHUB_APP_FLOW"
+  ],
+  "id":  "12345678-1234-1234-1234-123456789abc"
+}

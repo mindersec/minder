@@ -1,0 +1,12 @@
+authFlows:
+  - AUTHORIZATION_FLOW_GITHUB_APP_FLOW
+class: github-app
+config:
+  endpoint: https://api.github.com
+id: 12345678-1234-1234-1234-123456789abc
+implements:
+  - PROVIDER_TYPE_GITHUB
+name: github-app
+project: test-project
+version: v1
+
