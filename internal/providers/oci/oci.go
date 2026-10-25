@@ -241,7 +241,7 @@ func (ov *OCI) GetArtifactVersions(
 		// TODO: Consider caching
 		digest, err := ov.GetDigest(ctx, artifact.GetName(), t)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get digest")
+			return nil, fmt.Errorf("unable to get digest for tag %s: %w", t, err)
 		}
 
 		out = append(out, &minderv1.ArtifactVersion{
