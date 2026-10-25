@@ -26,6 +26,9 @@ type TestKit struct {
 	// HTTP
 	httpHandler http.Handler
 
+	// artifact backs the OCI provider methods. Set by WithArtifact.
+	artifact *ArtifactFixture
+
 	// canImplement backs CanImplement. Defaults to always returning true.
 	canImplement func(trait minderv1.ProviderType) bool
 }
