@@ -1,0 +1,22 @@
+{
+  "data_source": {
+    "id": "00000000-0000-0000-0000-000000000002",
+    "name": "test-data-2",
+    "version": "v1",
+    "type": "data-source",
+    "context": {
+      "project_id": "00000000-0000-0000-0000-000000000001"
+    },
+    "rest": {
+      "def": {
+        "lookup_status": {
+          "endpoint": "https://status.github.com/api/status.json",
+          "parse": "json",
+          "input_schema": {
+            "properties": {}
+          }
+        }
+      }
+    }
+  }
+}

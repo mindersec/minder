@@ -11,7 +11,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -25,8 +24,14 @@ var applyCmd = &cobra.Command{
 	Use:   "apply [files...]",
 	Short: "Apply a data source",
 	Long:  `The datasource apply subcommand lets you create or update data sources for a project within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(applyCommand),
-	Args:  cobra.ArbitraryArgs,
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+		return nil
+	},
+	RunE: applyCommand,
+	Args: cobra.ArbitraryArgs,
 }
 
 func init() {
@@ -37,9 +42,7 @@ func init() {
 }
 
 // applyCommand is the datasource apply subcommand
-func applyCommand(_ context.Context, cmd *cobra.Command, args []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewDataSourceServiceClient(conn)
-
+func applyCommand(cmd *cobra.Command, args []string) error {
 	project := viper.GetString("project")
 
 	fileFlag, err := cmd.Flags().GetStringArray("file")
@@ -67,36 +70,16 @@ func applyCommand(_ context.Context, cmd *cobra.Command, args []string, conn *gr
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewDataSourceServiceClient)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer cleanup()
+
 	table := initializeTableForList(cmd.OutOrStdout())
 
-	applyFunc := func(ctx context.Context, fileName string, ds *minderv1.DataSource) (*minderv1.DataSource, error) {
-		createResp, err := client.CreateDataSource(ctx, &minderv1.CreateDataSourceRequest{
-			DataSource: ds,
-		})
-
-		if err == nil {
-			return createResp.DataSource, nil
-		}
-
-		st, ok := status.FromError(err)
-		if !ok {
-			// We can't parse the error, so just return it
-			return nil, fmt.Errorf("error creating data source from %s: %w", fileName, err)
-		}
-
-		if st.Code() != codes.AlreadyExists {
-			return nil, fmt.Errorf("error creating data source from %s: %w", fileName, err)
-		}
-
-		updateResp, err := client.UpdateDataSource(ctx, &minderv1.UpdateDataSourceRequest{
-			DataSource: ds,
-		})
-
-		if err != nil {
-			return nil, fmt.Errorf("error updating data source from %s: %w", fileName, err)
-		}
-
-		return updateResp.DataSource, nil
+	applyFunc := func(ctx context.Context, fn string, ds *minderv1.DataSource) (*minderv1.DataSource, error) {
+		return createOrUpdateDataSource(ctx, client, fn, ds)
 	}
 
 	for _, f := range files {
@@ -117,4 +100,32 @@ func applyCommand(_ context.Context, cmd *cobra.Command, args []string, conn *gr
 	// Render the table
 	table.Render()
 	return nil
+}
+
+func createOrUpdateDataSource(
+	ctx context.Context,
+	client minderv1.DataSourceServiceClient,
+	fileName string,
+	ds *minderv1.DataSource,
+) (*minderv1.DataSource, error) {
+	createResp, err := client.CreateDataSource(ctx, &minderv1.CreateDataSourceRequest{
+		DataSource: ds,
+	})
+	if err == nil {
+		return createResp.DataSource, nil
+	}
+
+	st, ok := status.FromError(err)
+	if !ok || st.Code() != codes.AlreadyExists {
+		return nil, fmt.Errorf("error creating data source from %s: %w", fileName, err)
+	}
+
+	updateResp, err := client.UpdateDataSource(ctx, &minderv1.UpdateDataSourceRequest{
+		DataSource: ds,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error updating data source from %s: %w", fileName, err)
+	}
+
+	return updateResp.DataSource, nil
 }

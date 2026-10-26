@@ -1,0 +1,28 @@
+{
+  "data_source": {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "name": "test-data",
+    "version": "v1",
+    "type": "data-source",
+    "context": {
+      "project_id": "00000000-0000-0000-0000-000000000001"
+    },
+    "rest": {
+      "def": {
+        "lookup": {
+          "endpoint": "https://www.bestpractices.dev/projects/{id}.json",
+          "parse": "json",
+          "input_schema": {
+            "required": ["id"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The project ID to lookup"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

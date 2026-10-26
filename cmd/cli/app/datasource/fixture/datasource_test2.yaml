@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
+---
+version: v1
+type: data-source
+name: test-data-2
+rest:
+  def:
+    lookup_status:
+      endpoint: 'https://status.github.com/api/status.json'
+      parse: json
+      input_schema:
+        properties: {}
