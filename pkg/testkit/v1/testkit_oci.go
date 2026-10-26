@@ -19,6 +19,7 @@ import (
 	"github.com/sigstore/sigstore-go/pkg/verify"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/mindersec/minder/internal/verifier/verifyif"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	provv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
@@ -82,6 +83,22 @@ type VerificationFixture struct {
 	Result *verify.VerificationResult
 }
 
+// Validate reports whether the fixture is a combination a real verifier
+// could return. A verified result must be signed and carry a signing
+// certificate, since the verifier only reports one after checking it.
+func (f VerificationFixture) Validate() error {
+	if !f.IsVerified {
+		return nil
+	}
+	if !f.IsSigned {
+		return errors.New("a verified result must also be signed")
+	}
+	if f.Result == nil || f.Result.Signature == nil || f.Result.Signature.Certificate == nil {
+		return errors.New("a verified result must include a signing certificate")
+	}
+	return nil
+}
+
 // Resolved returns a copy of the version with Digest and MediaType filled in
 // from Manifest. It returns an error if neither Manifest nor Digest is set,
 // if Digest does not match Manifest, or if Manifest is not valid JSON.
@@ -127,6 +144,8 @@ type resolvedVersion struct {
 	digest    string
 	createdAt time.Time
 	manifest  *provv1.RawManifest
+	// verification is what the TestKit verifier returns for this digest.
+	verification []verifyif.Result
 }
 
 func (tk *TestKit) resolveArtifactVersions() ([]resolvedVersion, error) {
@@ -151,10 +170,16 @@ func resolveVersion(v ArtifactVersionFixture) (resolvedVersion, error) {
 		return resolvedVersion{}, err
 	}
 
+	verification, err := verificationResults(v.Verification)
+	if err != nil {
+		return resolvedVersion{}, err
+	}
+
 	rv := resolvedVersion{
-		tags:      slices.Clone(v.Tags),
-		digest:    v.Digest,
-		createdAt: v.CreatedAt,
+		tags:         slices.Clone(v.Tags),
+		digest:       v.Digest,
+		createdAt:    v.CreatedAt,
+		verification: verification,
 	}
 	if rv.createdAt.IsZero() {
 		rv.createdAt = time.Now()
@@ -278,8 +303,20 @@ func (tk *TestKit) GetRegistry() string {
 	return tk.artifact.Registry
 }
 
+// ErrNetworkAccess is returned when something tries to use TestKit
+// credentials to reach a real registry.
+var ErrNetworkAccess = errors.New("TestKit does not contact real registries")
+
 // GetAuthenticator implements the OCI interface. TestKit never talks to a
-// registry, so it always returns anonymous credentials.
+// registry, so the returned authenticator fails on use. Anything that
+// tries to reach a registry with it gets an error instead of silently
+// going out to the network.
 func (*TestKit) GetAuthenticator() (authn.Authenticator, error) {
-	return authn.Anonymous, nil
+	return refusingAuthenticator{}, nil
+}
+
+type refusingAuthenticator struct{}
+
+func (refusingAuthenticator) Authorization() (*authn.AuthConfig, error) {
+	return nil, ErrNetworkAccess
 }

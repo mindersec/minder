@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -284,9 +283,12 @@ func TestOCIRegistryAndAuth(t *testing.T) {
 	tk := tkv1.NewTestKit(tkv1.WithArtifact(tkv1.ArtifactFixture{Registry: "ghcr.io"}))
 	assert.Equal(t, "ghcr.io", tk.GetRegistry())
 
+	// The authenticator refuses to produce credentials, so anything that
+	// tries to reach a real registry through TestKit fails loudly.
 	auth, err := tk.GetAuthenticator()
 	require.NoError(t, err)
-	assert.Equal(t, authn.Anonymous, auth)
+	_, err = auth.Authorization()
+	require.ErrorIs(t, err, tkv1.ErrNetworkAccess)
 
 	_, err = tk.GetManifest(context.Background(), "minder", "v1")
 	require.Error(t, err)

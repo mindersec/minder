@@ -10,6 +10,7 @@ import (
 	"testing/fstest"
 	"time"
 
+	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.starlark.net/starlark"
@@ -151,11 +152,30 @@ func TestVerificationBuiltins(t *testing.T) {
 	att := fixture.Versions[3].Verification[1]
 	require.NotNil(t, att.Result)
 	require.NotNil(t, att.Result.Statement)
-	assert.Nil(t, att.Result.Signature)
+	// Verified by default, so it carries an (empty) certificate.
+	require.NotNil(t, att.Result.Signature)
+	assert.Equal(t, certificate.Summary{}, *att.Result.Signature.Certificate)
 	assert.Equal(t, "https://slsa.dev/provenance/v1", att.Result.Statement.GetPredicateType())
 	assert.Equal(t, "https://actions.github.io/buildtypes/workflow/v1",
 		att.Result.Statement.GetPredicate().GetFields()["buildDefinition"].
 			GetStructValue().GetFields()["buildType"].GetStringValue())
+}
+
+func TestSignedAlwaysProducesValidFixture(t *testing.T) {
+	t.Parallel()
+
+	// signed() with no certificate fields used to leave Signature nil on a
+	// verified result, which crashed the artifact ingester.
+	fixture := evalArtifact(t, `artifact(versions=[
+		version(tags=["bare"], digest="sha256:1", verification=signed()),
+		version(tags=["unverified"], digest="sha256:2", verification=signed(verified=False)),
+		version(tags=["unsigned"], digest="sha256:3", verification=unsigned()),
+	])`)
+	for _, v := range fixture.Versions {
+		for _, ver := range v.Verification {
+			assert.NoError(t, ver.Validate(), "tags %v", v.Tags)
+		}
+	}
 }
 
 const verificationResultJSON = `{

@@ -35,3 +35,11 @@ type ArtifactVerifier interface {
 	VerifyContainer(ctx context.Context,
 		owner, artifact, checksumref string) ([]Result, error)
 }
+
+// ArtifactVerifierProvider is optionally implemented by providers that
+// supply their own artifact verifier, e.g. a test provider serving canned
+// results. If ArtifactVerifier returns false, the caller falls back to its
+// default verifier.
+type ArtifactVerifierProvider interface {
+	ArtifactVerifier() (ArtifactVerifier, bool)
+}

@@ -1,0 +1,53 @@
+type: rule-type
+version: v1
+name: multiarch_rule
+display_name: Multi-arch signed image
+release_phase: alpha
+context:
+  provider: github
+  project: 00000000-0000-0000-0000-000000000000
+severity:
+  value: info
+description: |
+  Stand-in for the multi-arch example rule planned for
+  minder-rules-and-profiles. Passes when every ingested version is a
+  verified, signed image index that covers linux/amd64 and linux/arm64.
+def:
+  in_entity: artifact
+  param_schema:
+    type: object
+    properties:
+      type:
+        type: string
+        default: container
+        enum: ["container"]
+  rule_schema: {}
+  ingest:
+    type: artifact
+    artifact: {}
+  eval:
+    type: rego
+    rego:
+      type: deny-by-default
+      def: |
+        package minder
+
+        import rego.v1
+
+        default allow := false
+
+        required := {"linux/amd64", "linux/arm64"}
+
+        platforms(img) := {p |
+          index := json.unmarshal(base64.decode(img.Manifest.content))
+          some m in index.manifests
+          p := sprintf("%s/%s", [m.platform.os, m.platform.architecture])
+        }
+
+        allow if {
+          count(input.ingested) > 0
+          every img in input.ingested {
+            img.Verification.is_verified
+            required - platforms(img) == set()
+          }
+        }

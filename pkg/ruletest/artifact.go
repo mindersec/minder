@@ -231,13 +231,16 @@ func builtinSigned(
 	}
 
 	fixture := tkv1.VerificationFixture{IsSigned: true, IsVerified: verified}
-	if hasCert || statement != nil {
+	if verified || statement != nil {
 		fixture.Result = &verify.VerificationResult{
 			MediaType: verify.VerificationResultMediaType01,
 			Statement: statement,
 		}
 	}
-	if hasCert {
+	// A verified result always carries a certificate, even when no
+	// certificate fields were given, as the real verifier only reports a
+	// result as verified after checking one.
+	if verified {
 		fixture.Result.Signature = &verify.SignatureVerificationResult{
 			Certificate: &certificate.Summary{
 				SubjectAlternativeName: san,

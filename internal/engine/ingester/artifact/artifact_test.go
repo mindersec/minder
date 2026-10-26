@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
+	"github.com/sigstore/sigstore-go/pkg/verify"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/proto"
@@ -488,6 +489,97 @@ func TestSignerIdentityFromCertificate(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.Equal(t, tc.expected, identity)
+		})
+	}
+}
+
+// verifierProvider is an OCI provider that supplies its own verifier.
+type verifierProvider struct {
+	*mock_v1.MockOCI
+	verifier verifyif.ArtifactVerifier
+}
+
+func (p verifierProvider) ArtifactVerifier() (verifyif.ArtifactVerifier, bool) {
+	return p.verifier, p.verifier != nil
+}
+
+// ingestOneVersion runs the ingester against an OCI provider serving one
+// version with digest, returning the ingested images.
+func ingestOneVersion(
+	t *testing.T, prov provinfv1.Provider, mockOCI *mock_v1.MockOCI, art *pb.Artifact, digest string,
+) []imageInfo {
+	t.Helper()
+
+	mockOCI.EXPECT().GetRegistry().Return("registry.example.test").AnyTimes()
+	mockOCI.EXPECT().
+		GetArtifactVersions(gomock.Any(), art, gomock.Any()).
+		Return([]*pb.ArtifactVersion{
+			{Sha: digest, Tags: []string{"v1"}, CreatedAt: timestamppb.New(time.Now())},
+		}, nil)
+	mockOCI.EXPECT().GetRawManifest(gomock.Any(), art.Name, digest).Return(nil, errors.New("not needed"))
+
+	ing, err := NewArtifactDataIngest(prov)
+	require.NoError(t, err)
+
+	got, err := ing.Ingest(context.Background(), art, map[string]any{"name": art.Name})
+	require.NoError(t, err)
+	results, ok := got.Object.([]imageInfo)
+	require.True(t, ok, "expected result object to be []imageInfo")
+	return results
+}
+
+func TestArtifactIngestUsesProviderVerifier(t *testing.T) {
+	t.Parallel()
+
+	const digest = "sha256:1234"
+	art := &pb.Artifact{Owner: "ns", Name: "app", Type: "container"}
+
+	ctrl := gomock.NewController(t)
+	mockOCI := mock_v1.NewMockOCI(ctrl)
+	mockVerifier := mockverify.NewMockArtifactVerifier(ctrl)
+	mockVerifier.EXPECT().
+		Verify(gomock.Any(), verifyif.ArtifactTypeContainer, "ns", "app", digest).
+		Return([]verifyif.Result{{IsSigned: true}}, nil)
+
+	// The provider's verifier is used without setting ing.artifactVerifier,
+	// so no sigstore verifier (and no TUF fetch) is ever built.
+	prov := verifierProvider{MockOCI: mockOCI, verifier: mockVerifier}
+	results := ingestOneVersion(t, prov, mockOCI, art, digest)
+
+	require.Len(t, results, 1)
+	require.True(t, results[0].Verification.IsSigned)
+	require.False(t, results[0].Verification.IsVerified)
+}
+
+func TestArtifactIngestVerifiedWithoutCertificate(t *testing.T) {
+	t.Parallel()
+
+	const digest = "sha256:1234"
+	art := &pb.Artifact{Owner: "ns", Name: "app", Type: "container"}
+
+	tests := map[string]verifyif.Result{
+		"nil signature": {IsSigned: true, IsVerified: true},
+		"nil certificate": {IsSigned: true, IsVerified: true, VerificationResult: verify.VerificationResult{
+			Signature: &verify.SignatureVerificationResult{},
+		}},
+	}
+	for name, res := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			mockOCI := mock_v1.NewMockOCI(ctrl)
+			mockVerifier := mockverify.NewMockArtifactVerifier(ctrl)
+			mockVerifier.EXPECT().
+				Verify(gomock.Any(), verifyif.ArtifactTypeContainer, "ns", "app", digest).
+				Return([]verifyif.Result{res}, nil)
+
+			prov := verifierProvider{MockOCI: mockOCI, verifier: mockVerifier}
+			results := ingestOneVersion(t, prov, mockOCI, art, digest)
+
+			// Must not panic; the result stays verified with empty signer fields.
+			require.Len(t, results, 1)
+			require.Equal(t, verification{IsSigned: true, IsVerified: true}, results[0].Verification)
 		})
 	}
 }
