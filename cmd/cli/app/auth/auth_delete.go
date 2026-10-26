@@ -4,17 +4,17 @@
 package auth
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/lestrrat-go/jwx/v3/jwt"
 	"github.com/lestrrat-go/jwx/v3/jwt/openid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/config"
+	clientconfig "github.com/mindersec/minder/pkg/config/client"
 )
 
 // deleteCmd represents the account deletion command
@@ -22,22 +22,39 @@ var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Permanently delete account",
 	Long:  `Permanently delete account. All associated user data will be permanently removed.`,
-	RunE:  cli.GRPCClientWrapRunE(deleteCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		return viper.BindPFlags(cmd.Flags())
+	},
+	RunE: deleteCommand,
 }
 
 // deleteCommand is the account deletion subcommand
-func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewUserServiceClient(conn)
+func deleteCommand(cmd *cobra.Command, _ []string) error {
+	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
+	if err != nil || clientConfig == nil {
+		return cli.MessageAndError("Error reading config", err)
+	}
+
+	serverAddress := clientConfig.GRPCClientConfig.GetGRPCAddress()
 	yesFlag := viper.GetBool("yes-delete-my-account")
 
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewUserServiceClient)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer cleanup()
+
 	// Ensure the user already exists in the local database
-	_, _, err := userRegistered(ctx, client)
+	exists, _, err := userRegistered(cmd.Context(), client)
 	if err != nil {
 		return cli.MessageAndError("Error checking if user exists", err)
 	}
+	if !exists {
+		return fmt.Errorf("user does not exist")
+	}
 
-	// We read name and email from the JWT.  We don't need to validate it here.
-	creds, err := cli.LoadCredentials(conn.CanonicalTarget())
+	// We read name and email from the JWT. We don't need to validate it here.
+	creds, err := cli.LoadCredentials(serverAddress)
 	if err != nil {
 		return cli.MessageAndError("Error loading credentials from file", err)
 	}
@@ -73,14 +90,14 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 		}
 	}
 
-	_, err = client.DeleteUser(ctx, &minderv1.DeleteUserRequest{})
+	_, err = client.DeleteUser(cmd.Context(), &minderv1.DeleteUserRequest{})
 	if err != nil {
 		return cli.MessageAndError("Error deleting user", err)
 	}
 
 	// This step is added to avoid confusing the users by seeing their credentials locally, however it is not
 	// directly related to user deletion because the token will expire after 5 minutes and cannot be refreshed
-	err = cli.RemoveCredentials(conn.CanonicalTarget())
+	err = cli.RemoveCredentials(serverAddress)
 	if err != nil {
 		cmd.Println(cli.WarningBanner.Render("Failed to remove locally stored credentials."))
 	}
