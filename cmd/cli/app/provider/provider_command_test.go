@@ -213,3 +213,172 @@ func TestGetProviderCommand(t *testing.T) {
 
 	cli.RunCmdTests(t, tests, ProviderCmd)
 }
+
+//nolint:paralleltest
+func TestUpdateProviderCommand(t *testing.T) {
+	setupSuccess := func(t *testing.T, ctrl *gomock.Controller) context.Context {
+		t.Helper()
+		client := mockv1.NewMockProvidersServiceClient(ctrl)
+		mockResponse := &minderv1.GetProviderResponse{}
+		cli.LoadFixture(t, "mock_provider_get_response.json", mockResponse)
+
+		client.EXPECT().
+			GetProvider(gomock.Any(), gomock.Cond(func(req any) bool {
+				r, ok := req.(*minderv1.GetProviderRequest)
+				return ok && r.GetName() == "github-app"
+			})).
+			Return(mockResponse, nil)
+
+		client.EXPECT().
+			PatchProvider(gomock.Any(), gomock.Cond(func(req any) bool {
+				r, ok := req.(*minderv1.PatchProviderRequest)
+				if !ok || r.GetPatch() == nil || r.GetPatch().GetConfig() == nil {
+					return false
+				}
+				cfg := r.GetPatch().GetConfig().AsMap()
+				autoReg, ok := cfg["auto_registration"].(map[string]any)
+				if !ok {
+					return false
+				}
+				entities, ok := autoReg["entities"].(map[string]any)
+				if !ok {
+					return false
+				}
+				repo, ok := entities["repository"].(map[string]any)
+				if !ok {
+					return false
+				}
+				return repo["enabled"] == true
+			})).
+			Return(&minderv1.PatchProviderResponse{}, nil)
+
+		return cli.WithRPCClient[minderv1.ProvidersServiceClient](context.Background(), client)
+	}
+
+	tests := []cli.CmdTestCase{
+		{
+			Name:              "update provider successfully with set-attribute",
+			Args:              []string{"provider", "update", "-n", "github-app", "-s", "auto_registration.entities.repository.enabled=true"},
+			MockSetup:         setupSuccess,
+			ExpectedStdout:    "Provider updated successfully\n",
+			ExpectEmptyStderr: true,
+		},
+		{
+			Name: "update provider successfully with unset-attribute",
+			Args: []string{"provider", "update", "-n", "github-app", "-u", "auto_registration.entities.repository.enabled"},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
+				t.Helper()
+				client := mockv1.NewMockProvidersServiceClient(ctrl)
+				mockResponse := &minderv1.GetProviderResponse{}
+				cli.LoadFixture(t, "mock_provider_get_response.json", mockResponse)
+
+				client.EXPECT().
+					GetProvider(gomock.Any(), gomock.Cond(func(req any) bool {
+						r, ok := req.(*minderv1.GetProviderRequest)
+						return ok && r.GetName() == "github-app"
+					})).
+					Return(mockResponse, nil)
+
+				client.EXPECT().
+					PatchProvider(gomock.Any(), gomock.Any()).
+					Return(&minderv1.PatchProviderResponse{}, nil)
+
+				return cli.WithRPCClient[minderv1.ProvidersServiceClient](context.Background(), client)
+			},
+			ExpectedStdout:    "Provider updated successfully\n",
+			ExpectEmptyStderr: true,
+		},
+		{
+			Name:          "fails when name flag is missing",
+			Args:          []string{"provider", "update", "-s", "auto_registration.entities.repository.enabled=true"},
+			ExpectedError: `required flag(s) "name" not set`,
+		},
+		{
+			Name: "fails on invalid set-attribute syntax",
+			Args: []string{"provider", "update", "-n", "github-app", "-s", "invalid_attribute"},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
+				t.Helper()
+				client := mockv1.NewMockProvidersServiceClient(ctrl)
+				mockResponse := &minderv1.GetProviderResponse{}
+				cli.LoadFixture(t, "mock_provider_get_response.json", mockResponse)
+
+				client.EXPECT().
+					GetProvider(gomock.Any(), gomock.Any()).
+					Return(mockResponse, nil)
+
+				return cli.WithRPCClient[minderv1.ProvidersServiceClient](context.Background(), client)
+			},
+			ExpectedError: "invalid attribute format",
+		},
+		{
+			Name: "fails on non-existent config attribute path",
+			Args: []string{"provider", "update", "-n", "github-app", "-s", "non_existent.field=value"},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
+				t.Helper()
+				client := mockv1.NewMockProvidersServiceClient(ctrl)
+				mockResponse := &minderv1.GetProviderResponse{}
+				cli.LoadFixture(t, "mock_provider_get_response.json", mockResponse)
+
+				client.EXPECT().
+					GetProvider(gomock.Any(), gomock.Any()).
+					Return(mockResponse, nil)
+
+				return cli.WithRPCClient[minderv1.ProvidersServiceClient](context.Background(), client)
+			},
+			ExpectedError: "is not a valid attribute",
+		},
+		{
+			Name: "fails on non-existent unset-attribute path",
+			Args: []string{"provider", "update", "-n", "github-app", "-u", "non_existent.field"},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
+				t.Helper()
+				client := mockv1.NewMockProvidersServiceClient(ctrl)
+				mockResponse := &minderv1.GetProviderResponse{}
+				cli.LoadFixture(t, "mock_provider_get_response.json", mockResponse)
+
+				client.EXPECT().
+					GetProvider(gomock.Any(), gomock.Any()).
+					Return(mockResponse, nil)
+
+				return cli.WithRPCClient[minderv1.ProvidersServiceClient](context.Background(), client)
+			},
+			ExpectedError: "is not a valid attribute",
+		},
+		{
+			Name: "fails on GetProvider grpc error",
+			Args: []string{"provider", "update", "-n", "github-app", "-s", "auto_registration.entities.repository.enabled=true"},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
+				t.Helper()
+				client := mockv1.NewMockProvidersServiceClient(ctrl)
+				client.EXPECT().
+					GetProvider(gomock.Any(), gomock.Any()).
+					Return(nil, status.Error(codes.NotFound, "provider not found"))
+				return cli.WithRPCClient[minderv1.ProvidersServiceClient](context.Background(), client)
+			},
+			ExpectedError: "provider not found",
+		},
+		{
+			Name: "fails on PatchProvider grpc error",
+			Args: []string{"provider", "update", "-n", "github-app", "-s", "auto_registration.entities.repository.enabled=true"},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
+				t.Helper()
+				client := mockv1.NewMockProvidersServiceClient(ctrl)
+				mockResponse := &minderv1.GetProviderResponse{}
+				cli.LoadFixture(t, "mock_provider_get_response.json", mockResponse)
+
+				client.EXPECT().
+					GetProvider(gomock.Any(), gomock.Any()).
+					Return(mockResponse, nil)
+
+				client.EXPECT().
+					PatchProvider(gomock.Any(), gomock.Any()).
+					Return(nil, status.Error(codes.Internal, "internal server error"))
+
+				return cli.WithRPCClient[minderv1.ProvidersServiceClient](context.Background(), client)
+			},
+			ExpectedError: "internal server error",
+		},
+	}
+
+	cli.RunCmdTests(t, tests, ProviderCmd)
+}
