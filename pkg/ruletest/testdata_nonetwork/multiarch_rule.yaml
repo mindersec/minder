@@ -1,3 +1,6 @@
+# Copyright 2026 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
 type: rule-type
 version: v1
 name: multiarch_rule
