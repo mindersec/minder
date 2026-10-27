@@ -260,3 +260,147 @@ func TestGetArtifactVersions_ReturnsErrorOnNonNotFound(t *testing.T) {
 type alwaysIncludeFilter struct{}
 
 func (*alwaysIncludeFilter) IsSkippable(_ time.Time, _ []string) error { return nil }
+
+func TestGetArtifactVersions_IndexWithNoAMD64Variant(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(registry.New(registry.Logger(log.New(io.Discard, "", 0))))
+	t.Cleanup(srv.Close)
+	host := strings.TrimPrefix(srv.URL, "http://")
+
+	arm64img, err := random.Image(256, 1)
+	require.NoError(t, err)
+
+	idx := mutate.AppendManifests(
+		mutate.Annotations(empty.Index, map[string]string{
+			imgspecv1.AnnotationCreated: time.Now().UTC().Format(time.RFC3339),
+		}).(v1.ImageIndex),
+		mutate.IndexAddendum{
+			Add: arm64img,
+			Descriptor: v1.Descriptor{
+				Platform: &v1.Platform{OS: "linux", Architecture: "arm64"},
+			},
+		},
+	)
+
+	ref, err := name.NewTag(fmt.Sprintf("%s/testns/myimage:latest", host))
+	require.NoError(t, err)
+	require.NoError(t, remote.WriteIndex(ref, idx))
+
+	// Get the top-level index digest to assert against
+	desc, err := remote.Get(ref)
+	require.NoError(t, err)
+	wantDigest := desc.Digest.String()
+
+	o := New(nil, host, path.Join(host, "testns"))
+	artifact := &minderv1.Artifact{Name: "myimage"}
+
+	versions, err := o.GetArtifactVersions(context.Background(), artifact, &alwaysIncludeFilter{})
+	require.NoError(t, err)
+	require.Len(t, versions, 1)
+	assert.Equal(t, wantDigest, versions[0].Sha)
+}
+
+func TestGetArtifactVersions_IndexWithoutAnnotationUsesFirstChild(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(registry.New(registry.Logger(log.New(io.Discard, "", 0))))
+	t.Cleanup(srv.Close)
+	host := strings.TrimPrefix(srv.URL, "http://")
+
+	// Build arm64-only index with NO annotation, exercises firstChildCreatedAt
+	arm64img, err := random.Image(256, 1)
+	require.NoError(t, err)
+
+	// Set a known creation time in the image config
+	expectedTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	arm64img, err = mutate.ConfigFile(arm64img, &v1.ConfigFile{
+		Created:      v1.Time{Time: expectedTime},
+		OS:           "linux",
+		Architecture: "arm64",
+	})
+	require.NoError(t, err)
+
+	// No annotations on the index, forces firstChildCreatedAt fallback
+	idx := mutate.AppendManifests(
+		empty.Index,
+		mutate.IndexAddendum{
+			Add: arm64img,
+			Descriptor: v1.Descriptor{
+				Platform: &v1.Platform{OS: "linux", Architecture: "arm64"},
+			},
+		},
+	)
+
+	ref, err := name.NewTag(fmt.Sprintf("%s/testns/myimage:latest", host))
+	require.NoError(t, err)
+	require.NoError(t, remote.WriteIndex(ref, idx))
+
+	o := New(nil, host, path.Join(host, "testns"))
+	artifact := &minderv1.Artifact{Name: "myimage"}
+
+	versions, err := o.GetArtifactVersions(context.Background(), artifact, &alwaysIncludeFilter{})
+	require.NoError(t, err)
+	require.Len(t, versions, 1)
+	assert.Equal(t, expectedTime, versions[0].CreatedAt.AsTime())
+}
+
+func TestGetArtifactVersions_IndexUsesFirstValidChildTimestamp(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(registry.New(registry.Logger(log.New(io.Discard, "", 0))))
+	t.Cleanup(srv.Close)
+	host := strings.TrimPrefix(srv.URL, "http://")
+
+	olderTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+	newerTime := time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC)
+
+	arm64img, err := random.Image(256, 1)
+	require.NoError(t, err)
+	arm64img, err = mutate.ConfigFile(arm64img, &v1.ConfigFile{
+		Created:      v1.Time{Time: olderTime},
+		OS:           "linux",
+		Architecture: "arm64",
+	})
+	require.NoError(t, err)
+
+	arm32img, err := random.Image(256, 1)
+	require.NoError(t, err)
+	arm32img, err = mutate.ConfigFile(arm32img, &v1.ConfigFile{
+		Created:      v1.Time{Time: newerTime},
+		OS:           "linux",
+		Architecture: "arm",
+	})
+	require.NoError(t, err)
+
+	// No index-level annotation, forces firstChildCreatedAt
+	idx := mutate.AppendManifests(
+		empty.Index,
+		mutate.IndexAddendum{
+			Add: arm64img,
+			Descriptor: v1.Descriptor{
+				Platform: &v1.Platform{OS: "linux", Architecture: "arm64"},
+			},
+		},
+		mutate.IndexAddendum{
+			Add: arm32img,
+			Descriptor: v1.Descriptor{
+				Platform: &v1.Platform{OS: "linux", Architecture: "arm"},
+			},
+		},
+	)
+
+	ref, err := name.NewTag(fmt.Sprintf("%s/testns/myimage:latest", host))
+	require.NoError(t, err)
+	require.NoError(t, remote.WriteIndex(ref, idx))
+
+	o := New(nil, host, path.Join(host, "testns"))
+	artifact := &minderv1.Artifact{Name: "myimage"}
+
+	versions, err := o.GetArtifactVersions(context.Background(), artifact, &alwaysIncludeFilter{})
+	require.NoError(t, err)
+	require.Len(t, versions, 1)
+	// Returns the first child with a valid timestamp (arm64, olderTime)
+	// All platforms in a CI run have close timestamps; first valid is enough, see issue:#6975
+	assert.Equal(t, olderTime, versions[0].CreatedAt.AsTime())
+}
