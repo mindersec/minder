@@ -8,7 +8,10 @@ update a role to a subject on a project
 ### Synopsis
 
 The minder project role update command allows one to update a role
-to a user (subject) on a particular project.
+to a user (subject) on a particular project, or update an existing invitation.
+
+Note: Invitation codes are one-time bearer tokens. Anyone with access to the code
+or URL can use it to join the project. Share invitation codes only over trusted channels.
 
 ```
 minder project role update [flags]
