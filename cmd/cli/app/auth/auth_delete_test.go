@@ -72,7 +72,8 @@ func TestDeleteCommand(t *testing.T) {
 
 					return cli.WithRPCClient[minderv1.UserServiceClient](context.Background(), client)
 				},
-				GoldenFileName: "auth_delete_success.txt",
+				ExpectEmptyStdout: true,
+				ExpectedStderr:    "Successfully deleted account.",
 			},
 		}
 
