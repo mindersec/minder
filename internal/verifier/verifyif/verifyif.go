@@ -40,6 +40,10 @@ type ArtifactVerifier interface {
 // supply their own artifact verifier, e.g. a test provider serving canned
 // results. If ArtifactVerifier returns false, the caller falls back to its
 // default verifier.
+//
+// This is intended for test providers only, such as TestKit. A real
+// production provider should not implement this interface, since doing
+// so bypasses actual signature verification.
 type ArtifactVerifierProvider interface {
 	ArtifactVerifier() (ArtifactVerifier, bool)
 }
