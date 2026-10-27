@@ -99,9 +99,9 @@ func deleteCommand(cmd *cobra.Command, _ []string) error {
 	// directly related to user deletion because the token will expire after 5 minutes and cannot be refreshed
 	err = cli.RemoveCredentials(serverAddress)
 	if err != nil {
-		cmd.Println(cli.WarningBanner.Render("Failed to remove locally stored credentials."))
+		cmd.PrintErrln(cli.WarningBanner.Render("Failed to remove locally stored credentials."))
 	}
-	cmd.Println(cli.SuccessBanner.Render("Successfully deleted account. It may take up to 10 minutes for " +
+	cmd.PrintErrln(cli.SuccessBanner.Render("Successfully deleted account. It may take up to 10 minutes for " +
 		"all data to be removed."))
 	return nil
 }
