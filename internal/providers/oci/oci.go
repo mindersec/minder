@@ -6,7 +6,9 @@ package oci
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -14,6 +16,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -215,10 +218,15 @@ func (ov *OCI) GetArtifactVersions(
 
 	out := make([]*minderv1.ArtifactVersion, 0, len(tags))
 	for _, t := range tags {
-		// TODO: We probably should try to surface errors while returning a subset
-		// of manifests.
 		img, err := ov.getImage(ctx, artifact.GetName(), t)
 		if err != nil {
+			if isNotFound(err) {
+				zerolog.Ctx(ctx).Info().
+					Str("name", artifact.GetName()).
+					Str("tag", t).
+					Msg("skipping artifact version: tag no longer exists")
+				continue
+			}
 			return nil, err
 		}
 
@@ -241,7 +249,7 @@ func (ov *OCI) GetArtifactVersions(
 		// TODO: Consider caching
 		digest, err := ov.GetDigest(ctx, artifact.GetName(), t)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get digest")
+			return nil, fmt.Errorf("unable to get digest for tag %s: %w", t, err)
 		}
 
 		out = append(out, &minderv1.ArtifactVersion{
@@ -279,6 +287,13 @@ func resolveCreatedAt(man *v1.Manifest, configFile func() (*v1.ConfigFile, error
 	return cfg.Created.Time, nil
 }
 
+// isNotFound returns true when err is a registry 404 / MANIFEST_UNKNOWN,
+// meaning the tag was deleted after it appeared in the listing.
+func isNotFound(err error) bool {
+	var terr *transport.Error
+	return errors.As(err, &terr) && terr.StatusCode == http.StatusNotFound
+}
+
 // getReferenceString returns the reference string for a given container name and tag
 func (o *OCI) getReferenceString(contname, tag string) string {
 	return fmt.Sprintf("%s/%s:%s", o.baseURL, contname, tag)
@@ -296,8 +311,7 @@ func (o *OCI) getReference(contname, tag string) (name.Reference, error) {
 
 // getDigestFromRef returns the digest of a container image reference
 // TODO: Move this to a more appropriate location
-// TODO: Implement authentication
-// TODO: Implement authentication
+// TODO(#6972): Implement authentication
 func getDigestFromRef(ctx context.Context, ref name.Reference) (string, error) {
 	// Use the tag's top-level digest (the index for multi-arch tags), not a platform image's.
 	desc, err := remote.Get(ref, remote.WithContext(ctx), remote.WithUserAgent(constants.ServerUserAgent))

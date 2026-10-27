@@ -4,7 +4,6 @@
 package history
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"os"
@@ -14,7 +13,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mindersec/minder/cmd/cli/app"
@@ -30,16 +28,30 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List history",
 	Long:  `The history list subcommand lets you list history within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(listCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+		format := viper.GetString("output")
+
+		return app.IsOutputFormatSupported(format)
+	},
+	RunE: listCommand,
 }
 
 const (
 	defaultPageSize = 25
 )
 
-// listCommand is the profile "list" subcommand
-func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewEvalResultsServiceClient(conn)
+// listCommand is the history "list" subcommand
+func listCommand(cmd *cobra.Command, _ []string) error {
+	cmd.SilenceUsage = true
+
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewEvalResultsServiceClient)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
 
 	project := viper.GetString("project")
 	profileName := viper.GetStringSlice("profile-name")
@@ -59,11 +71,6 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	size := viper.GetUint32("size")
 
 	format := viper.GetString("output")
-
-	// Ensure the output format is supported
-	if !app.IsOutputFormatSupported(format) {
-		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
-	}
 
 	// validate the filters which need validation
 	if err := validatedFilter(evalStatus, evalStatuses); err != nil {
@@ -107,9 +114,9 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		req.To = timestamppb.New(to)
 	}
 
-	resp, err := client.ListEvaluationHistory(ctx, req)
+	resp, err := client.ListEvaluationHistory(cmd.Context(), req)
 	if err != nil {
-		return cli.MessageAndError("Error getting profile status", err)
+		return cli.MessageAndError("Error getting evaluation history", err)
 	}
 
 	switch format {
@@ -143,24 +150,20 @@ func printTable(w io.Writer, resp *minderv1.ListEvaluationHistoryResponse, emoji
 
 	renderRuleEvaluationStatusTable(resp.Data, historyTable, emoji)
 	historyTable.Render()
-	fmt.Println("")
+	fmt.Fprintln(w, "")
 	if next := getNext(resp); next != nil {
 		// Ordering is fixed for evaluation history
 		// log and the next page points to older
 		// records.
-		msg := fmt.Sprintf("Older records: %s",
-			cli.CursorStyle.Render(next.Cursor),
-		)
-		fmt.Fprintln(w, msg)
+		fmt.Fprintf(w, "Older records: %s\n",
+			cli.CursorStyle.Render(next.Cursor))
 	}
 	if prev := getPrev(resp); prev != nil {
 		// Ordering is fixed for evaluation history
 		// log and the previous page points to newer
 		// records.
-		msg := fmt.Sprintf("Newer records: %s",
-			cli.CursorStyle.Render(prev.Cursor),
-		)
-		fmt.Fprintln(w, msg)
+		fmt.Fprintf(w, "Newer records: %s\n",
+			cli.CursorStyle.Render(prev.Cursor))
 	}
 }
 
@@ -260,7 +263,6 @@ var evalStatuses = []string{
 }
 
 var remediationStatuses = []string{
-	string(db.RemediationStatusTypesFailure),
 	string(db.RemediationStatusTypesFailure),
 	string(db.RemediationStatusTypesError),
 	string(db.RemediationStatusTypesSuccess),

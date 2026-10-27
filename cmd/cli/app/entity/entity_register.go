@@ -35,12 +35,7 @@ For example, for a GitHub repository:
 
 		format := viper.GetString("output")
 
-		// Ensure the output format is supported
-		if !app.IsOutputFormatSupported(format) {
-			return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
-		}
-
-		return nil
+		return app.IsOutputFormatSupported(format)
 	},
 	RunE: registerCommand,
 }

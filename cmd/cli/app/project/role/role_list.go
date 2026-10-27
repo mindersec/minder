@@ -4,14 +4,12 @@
 package role
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util/cli"
@@ -25,25 +23,34 @@ var listCmd = &cobra.Command{
 	Short: "List roles on a project within the minder control plane",
 	Long: `The minder project role list command allows one to list roles
 available on a particular project.`,
-	RunE: cli.GRPCClientWrapRunE(ListCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+
+		format := viper.GetString("output")
+
+		return app.IsOutputFormatSupported(format)
+	},
+	RunE: listCommand,
 }
 
-// ListCommand is the command for listing roles
-func ListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewPermissionsServiceClient(conn)
-
+// listCommand is the command for listing roles
+func listCommand(cmd *cobra.Command, _ []string) error {
 	project := viper.GetString("project")
 	format := viper.GetString("output")
-	// Ensure the output format is supported
-	if !app.IsOutputFormatSupported(format) {
-		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
-	}
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	resp, err := client.ListRoles(ctx, &minderv1.ListRolesRequest{
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewPermissionsServiceClient)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	resp, err := client.ListRoles(cmd.Context(), &minderv1.ListRolesRequest{
 		Context: &minderv1.Context{
 			Project: &project,
 		},

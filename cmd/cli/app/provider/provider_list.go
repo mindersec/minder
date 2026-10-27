@@ -4,13 +4,11 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util/cli"
@@ -23,7 +21,7 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List the providers available in a specific project",
 	Long:  `The minder provider list command lists the providers available in a specific project.`,
-	RunE:  cli.GRPCClientWrapRunE(ListProviderCommand),
+	RunE:  listProviderCommand,
 }
 
 func init() {
@@ -35,20 +33,28 @@ func init() {
 	// TODO: implement pagination in CLI
 }
 
-// ListProviderCommand lists the providers available in a specific project
-func ListProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
+// listProviderCommand lists the providers available in a specific project
+func listProviderCommand(cmd *cobra.Command, _ []string) error {
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+		return fmt.Errorf("error binding flags: %w", err)
+	}
 
-	client := minderv1.NewProvidersServiceClient(conn)
+	cmd.SilenceUsage = true
+
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewProvidersServiceClient)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
 
 	project := viper.GetString("project")
 	format := viper.GetString("output")
 
 	cursor := ""
-
 	out := &minderv1.ListProvidersResponse{}
 
 	for {
-		resp, err := client.ListProviders(ctx, &minderv1.ListProvidersRequest{
+		resp, err := client.ListProviders(cmd.Context(), &minderv1.ListProvidersRequest{
 			Context: &minderv1.Context{
 				Project: &project,
 			},

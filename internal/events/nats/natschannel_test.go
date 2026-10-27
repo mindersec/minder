@@ -36,7 +36,6 @@ func TestNatsChannel(t *testing.T) {
 		Nats: serverconfig.NatsConfig{
 			URL:    server.ClientURL(),
 			Prefix: "test",
-			Queue:  "minder",
 		},
 	}
 	ctx := context.Background()
@@ -138,7 +137,6 @@ func TestNatsChannelSubscriberCloseKeepsConsumer(t *testing.T) {
 		Nats: serverconfig.NatsConfig{
 			URL:    server.ClientURL(),
 			Prefix: "test",
-			Queue:  "minder",
 		},
 	}
 	ctx := context.Background()
@@ -212,7 +210,6 @@ func TestNatsChannelPublishBeforeSubscribe(t *testing.T) {
 		Nats: serverconfig.NatsConfig{
 			URL:    server.ClientURL(),
 			Prefix: "test",
-			Queue:  "minder",
 		},
 	}
 	ctx := context.Background()
