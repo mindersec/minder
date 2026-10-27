@@ -191,7 +191,7 @@ func updateProviderCommand(
 		return cli.MessageAndError("failed to update provider", err)
 	}
 
-	cmd.Println("Provider updated successfully")
+	cmd.PrintErrln("Provider updated successfully")
 	return nil
 }
 

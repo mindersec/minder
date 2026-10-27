@@ -52,7 +52,7 @@ func deleteCommand(cmd *cobra.Command, _ []string) error {
 		if err != nil {
 			return cli.MessageAndError("Error deleting repo by id", err)
 		}
-		cmd.Println("Successfully deleted repo with id:", resp.RepositoryId)
+		cmd.PrintErrln("Successfully deleted repo with id:", resp.RepositoryId)
 	} else {
 		// delete repo by name
 		resp, err := client.DeleteRepositoryByName(cmd.Context(), &minderv1.DeleteRepositoryByNameRequest{
@@ -62,7 +62,7 @@ func deleteCommand(cmd *cobra.Command, _ []string) error {
 		if err != nil {
 			return cli.MessageAndError("Error deleting repo by name", err)
 		}
-		cmd.Println("Successfully deleted repo with name:", resp.Name)
+		cmd.PrintErrln("Successfully deleted repo with name:", resp.Name)
 	}
 	return nil
 }
