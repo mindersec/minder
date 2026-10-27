@@ -32,7 +32,8 @@ func TestDeleteCommand(t *testing.T) {
 					Return(&minderv1.DeleteEntityByIdResponse{Id: entityID}, nil)
 				return cli.WithRPCClient[minderv1.EntityInstanceServiceClient](context.Background(), client)
 			},
-			GoldenFileName: "delete_by_id.txt",
+			ExpectEmptyStdout: true,
+			ExpectedStderr:    "Successfully deleted entity with ID: " + entityID + "\n",
 		},
 		{
 			Name:          "missing required id flag",
