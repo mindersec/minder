@@ -11,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util/cli"
@@ -31,20 +32,23 @@ or URL can use it to join the project. Share invitation codes only over trusted 
 		}
 
 		format := viper.GetString("output")
+		if err := app.IsOutputFormatSupported(format); err != nil {
+			return err
+		}
 
-		return app.IsOutputFormatSupported(format)
+		sub := viper.GetString("sub")
+		invitationExpiration := viper.GetDuration("invitation-expiration")
+		if sub != "" && invitationExpiration > 0 {
+			return fmt.Errorf("cannot specify invitation-expiration when granting access to a subject")
+		}
+
+		return nil
 	},
 	RunE: GrantCommand,
 }
 
 // GrantCommand is the command for granting roles
 func GrantCommand(cmd *cobra.Command, _ []string) error {
-	sub := viper.GetString("sub")
-	r := viper.GetString("role")
-	project := viper.GetString("project")
-	email := viper.GetString("email")
-	format := viper.GetString("output")
-
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
@@ -55,12 +59,19 @@ func GrantCommand(cmd *cobra.Command, _ []string) error {
 	}
 	defer cleanup()
 
+	sub := viper.GetString("sub")
+	invitationExpiration := viper.GetDuration("invitation-expiration")
+	r := viper.GetString("role")
+	project := viper.GetString("project")
+	email := viper.GetString("email")
+	format := viper.GetString("output")
 	roleAssignment := &minderv1.RoleAssignment{
 		Role:    r,
 		Subject: sub,
 	}
 	failMsg := "Error granting role"
 	successMsg := "Granted role successfully."
+	var expProto *durationpb.Duration
 	// Only send an email if one is provided
 	if email != "" {
 		roleAssignment = &minderv1.RoleAssignment{
@@ -69,13 +80,17 @@ func GrantCommand(cmd *cobra.Command, _ []string) error {
 		}
 		failMsg = "Error creating an invite"
 		successMsg = "Invite created successfully."
+		if invitationExpiration > 0 {
+			expProto = durationpb.New(invitationExpiration)
+		}
 	}
 
 	resp, err := client.AssignRole(cmd.Context(), &minderv1.AssignRoleRequest{
 		Context: &minderv1.Context{
 			Project: &project,
 		},
-		RoleAssignment: roleAssignment,
+		RoleAssignment:       roleAssignment,
+		InvitationExpiration: expProto,
 	})
 	if err != nil {
 		return cli.MessageAndError(failMsg, err)
@@ -118,6 +133,8 @@ func init() {
 	grantCmd.Flags().StringP("email", "e", "", "email to send invitation to")
 	grantCmd.Flags().StringP("output", "o", app.Table,
 		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
+	grantCmd.Flags().Duration("invitation-expiration", 0,
+		"duration for which the invitation is valid (e.g. 24h, 48h). Defaults to server maximum (typically 7 days)")
 	grantCmd.MarkFlagsOneRequired("sub", "email")
 	grantCmd.MarkFlagsMutuallyExclusive("sub", "email")
 	if err := grantCmd.MarkFlagRequired("role"); err != nil {

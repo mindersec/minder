@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"buf.build/go/protovalidate"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -720,6 +721,76 @@ func TestRuleType_Definition_Remediate_GhBranchProtectionType_Validate(t *testin
 			t.Parallel()
 
 			err := tt.ghp.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestAssignRoleRequest_Validate(t *testing.T) {
+	t.Parallel()
+
+	validator, err := protovalidate.New()
+	if err != nil {
+		t.Fatalf("create validator: %v", err)
+	}
+
+	tests := []struct {
+		name    string
+		req     *AssignRoleRequest
+		wantErr bool
+	}{
+		{
+			name: "valid with no expiration",
+			req: &AssignRoleRequest{
+				RoleAssignment: &RoleAssignment{
+					Role:  "admin",
+					Email: "user@example.com",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid with positive duration",
+			req: &AssignRoleRequest{
+				RoleAssignment: &RoleAssignment{
+					Role:  "admin",
+					Email: "user@example.com",
+				},
+				InvitationExpiration: &durationpb.Duration{Seconds: 3600},
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid with zero duration",
+			req: &AssignRoleRequest{
+				RoleAssignment: &RoleAssignment{
+					Role:  "admin",
+					Email: "user@example.com",
+				},
+				InvitationExpiration: &durationpb.Duration{Seconds: 0},
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid with negative duration",
+			req: &AssignRoleRequest{
+				RoleAssignment: &RoleAssignment{
+					Role:  "admin",
+					Email: "user@example.com",
+				},
+				InvitationExpiration: &durationpb.Duration{Seconds: -100},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := validator.Validate(tt.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}

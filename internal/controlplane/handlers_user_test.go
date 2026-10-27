@@ -493,15 +493,15 @@ func TestListInvitations(t *testing.T) {
 	})
 	fakeInviteService := fake.NewFakeInviteService()
 	invite, err := fakeInviteService.CreateInvite(
-		inviteCtx, nil, nil, serverconfig.EmailConfig{}, project, authz.RoleViewer, userEmail)
+		inviteCtx, nil, nil, serverconfig.EmailConfig{}, project, authz.RoleViewer, userEmail, time.Time{})
 	require.NoError(t, err)
 	// Add a second invite to project 2
 	invite2, err := fakeInviteService.CreateInvite(
-		inviteCtx, nil, nil, serverconfig.EmailConfig{}, project2, authz.RoleAdmin, userEmail)
+		inviteCtx, nil, nil, serverconfig.EmailConfig{}, project2, authz.RoleAdmin, userEmail, time.Time{})
 	require.NoError(t, err)
 	// And invite another user to project 1
 	invite3, err := fakeInviteService.CreateInvite(
-		inviteCtx, nil, nil, serverconfig.EmailConfig{}, project, authz.RoleAdmin, otherUser)
+		inviteCtx, nil, nil, serverconfig.EmailConfig{}, project, authz.RoleAdmin, otherUser, time.Time{})
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -644,7 +644,7 @@ func TestResolveInvitation(t *testing.T) {
 					UserID:    userSubject,
 					HumanName: userEmail, // Fake uses this to get email
 				})
-				invite, err := fake.CreateInvite(ctx, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleAdmin, userEmail)
+				invite, err := fake.CreateInvite(ctx, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleAdmin, userEmail, time.Time{})
 				require.NoError(t, err)
 
 				store.EXPECT().BeginTransaction().Return(&sql.Tx{}, nil)
@@ -658,7 +658,7 @@ func TestResolveInvitation(t *testing.T) {
 			name: "expired invitation",
 			setup: func(fake *fake.FakeInviteService, store *mockdb.MockStore) string {
 				fake.Time = time.Now().Add(-10 * 24 * time.Hour)
-				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleAdmin, userEmail)
+				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleAdmin, userEmail, time.Time{})
 				fake.Time = time.Time{}
 				require.NoError(t, err)
 
@@ -673,7 +673,7 @@ func TestResolveInvitation(t *testing.T) {
 			name:   "Success accept",
 			accept: true,
 			setup: func(fake *fake.FakeInviteService, store *mockdb.MockStore) string {
-				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleViewer, userEmail)
+				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleViewer, userEmail, time.Time{})
 				require.NoError(t, err)
 
 				tx := sql.Tx{}
@@ -695,7 +695,7 @@ func TestResolveInvitation(t *testing.T) {
 			name:   "Success decline",
 			accept: false,
 			setup: func(fake *fake.FakeInviteService, store *mockdb.MockStore) string {
-				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleViewer, userEmail)
+				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleViewer, userEmail, time.Time{})
 				require.NoError(t, err)
 
 				tx := sql.Tx{}
@@ -714,7 +714,7 @@ func TestResolveInvitation(t *testing.T) {
 			name:   "Can't accept for current role",
 			accept: true,
 			setup: func(fake *fake.FakeInviteService, store *mockdb.MockStore) string {
-				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleViewer, userEmail)
+				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleViewer, userEmail, time.Time{})
 				require.NoError(t, err)
 
 				tx := sql.Tx{}
@@ -741,7 +741,7 @@ func TestResolveInvitation(t *testing.T) {
 			name:   "Update role if accepting existing invite",
 			accept: true,
 			setup: func(fake *fake.FakeInviteService, store *mockdb.MockStore) string {
-				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleEditor, userEmail)
+				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleEditor, userEmail, time.Time{})
 				require.NoError(t, err)
 
 				tx := sql.Tx{}
@@ -772,7 +772,7 @@ func TestResolveInvitation(t *testing.T) {
 			name:   "Success create user",
 			accept: true,
 			setup: func(fake *fake.FakeInviteService, store *mockdb.MockStore) string {
-				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleViewer, userEmail)
+				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleViewer, userEmail, time.Time{})
 				require.NoError(t, err)
 
 				tx := sql.Tx{}

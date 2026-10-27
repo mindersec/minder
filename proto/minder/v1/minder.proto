@@ -8,6 +8,7 @@ import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/protobuf/descriptor.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/field_mask.proto";
 import "buf/validate/validate.proto";
@@ -3404,6 +3405,12 @@ message AssignRoleRequest {
     // role_assignment is the role assignment to be created.
     RoleAssignment role_assignment = 2 [
         (google.api.field_behavior) = REQUIRED
+    ];
+    // invitation_expiration is an optional requested validity duration for the invitation.
+    // If not set, or if it exceeds the server-configured maximum, the server-configured
+    // maximum will be used.
+    google.protobuf.Duration invitation_expiration = 3 [
+        (buf.validate.field).duration.gt = {}
     ];
 }
 

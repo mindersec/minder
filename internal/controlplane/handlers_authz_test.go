@@ -25,6 +25,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	mockdb "github.com/mindersec/minder/database/mock"
@@ -490,7 +491,7 @@ func TestRoleManagement(t *testing.T) {
 		setup: func(ctx context.Context, fakeInvites *fake.FakeInviteService, _ *mock.SimpleClient) {
 			// Pre-populate an invitation in the fake (simulating a previously-created invite)
 			_, _ = fakeInvites.CreateInvite(ctx, nil, nil, serverconfig.EmailConfig{},
-				project, authz.RoleEditor, "george@happyplace.dev")
+				project, authz.RoleEditor, "george@happyplace.dev", time.Time{})
 		},
 		result: &minder.ListRoleAssignmentsResponse{
 			RoleAssignments: []*minder.RoleAssignment{},
@@ -530,7 +531,7 @@ func TestRoleManagement(t *testing.T) {
 				Role:    authz.RoleAdmin.String(),
 			}}
 			_, _ = fakeInvites.CreateInvite(ctx, nil, nil, serverconfig.EmailConfig{},
-				project, authz.RoleEditor, "invitee@example.com")
+				project, authz.RoleEditor, "invitee@example.com", time.Time{})
 		},
 		result: &minder.ListRoleAssignmentsResponse{
 			RoleAssignments: []*minder.RoleAssignment{{
@@ -674,6 +675,7 @@ func TestUpdateRole(t *testing.T) {
 		expectedError      string
 		expectedInvitation bool
 		expectedRole       bool
+		expiredInvite      bool
 	}{
 		{
 			name:          "error when self update",
@@ -688,6 +690,12 @@ func TestUpdateRole(t *testing.T) {
 			name:               "request with email updates invite",
 			inviteeEmail:       "other@example.com",
 			expectedInvitation: true,
+		},
+		{
+			name:               "updating expired invite renews expiration",
+			inviteeEmail:       "expired@example.com",
+			expectedInvitation: true,
+			expiredInvite:      true,
 		},
 		{
 			name:         "request with subject updates role assignment",
@@ -720,8 +728,12 @@ func TestUpdateRole(t *testing.T) {
 			fakeInviteService := fake.NewFakeInviteService()
 			// Pre-populate invite for update test
 			if tc.expectedInvitation && tc.inviteeEmail != "" {
+				exp := time.Time{}
+				if tc.expiredInvite {
+					exp = time.Now().Add(-24 * time.Hour)
+				}
 				_, _ = fakeInviteService.CreateInvite(ctx, nil, nil, serverconfig.EmailConfig{},
-					projectID, authzRole, tc.inviteeEmail)
+					projectID, authzRole, tc.inviteeEmail, exp)
 			}
 			mockRoleService := mockroles.NewMockRoleService(ctrl)
 			if tc.expectedRole {
@@ -756,6 +768,9 @@ func TestUpdateRole(t *testing.T) {
 			require.NoError(t, err)
 			if tc.expectedInvitation {
 				require.Equal(t, 1, len(response.Invitations))
+				require.False(t, response.Invitations[0].Expired)
+				require.NotNil(t, response.Invitations[0].ExpiresAt)
+				require.True(t, response.Invitations[0].ExpiresAt.AsTime().After(time.Now()))
 			}
 			if tc.expectedRole {
 				require.Equal(t, 1, len(response.RoleAssignments))
@@ -773,13 +788,16 @@ func TestAssignRole(t *testing.T) {
 	otherProject := uuid.New()
 
 	tests := []struct {
-		name          string
-		project       uuid.UUID
-		inviteeEmail  string
-		subject       string
-		buildStubs    func(t *testing.T, store *mockdb.MockStore)
-		expectedError string
-		userIdentity  *auth.Identity
+		name                 string
+		project              uuid.UUID
+		inviteeEmail         string
+		subject              string
+		invitationExpiration *durationpb.Duration
+		serverMaxExpiration  time.Duration
+		buildStubs           func(t *testing.T, store *mockdb.MockStore)
+		expectedError        string
+		userIdentity         *auth.Identity
+		expectedExpiration   time.Duration
 	}{
 		{
 			name:          "error with no subject or email",
@@ -799,6 +817,19 @@ func TestAssignRole(t *testing.T) {
 		{
 			name:         "request with email creates invite",
 			inviteeEmail: "other@example.com",
+		},
+		{
+			name:                 "request with email and custom expiration creates invite with custom expiration",
+			inviteeEmail:         "custom-exp@example.com",
+			invitationExpiration: durationpb.New(24 * time.Hour),
+			expectedExpiration:   24 * time.Hour,
+		},
+		{
+			name:                 "request with email and expiration exceeding server max is capped",
+			inviteeEmail:         "capped-exp@example.com",
+			invitationExpiration: durationpb.New(14 * 24 * time.Hour),
+			serverMaxExpiration:  48 * time.Hour,
+			expectedExpiration:   48 * time.Hour,
 		},
 		{
 			name:    "request with human subject returns error",
@@ -874,9 +905,15 @@ func TestAssignRole(t *testing.T) {
 				roles:    mockRoleService,
 				store:    mockStore,
 				idClient: idClient,
-				cfg:      &serverconfig.Config{Email: serverconfig.EmailConfig{}},
+				cfg: &serverconfig.Config{
+					Email: serverconfig.EmailConfig{},
+					Invitations: serverconfig.InvitationsConfig{
+						MaxExpiration: tc.serverMaxExpiration,
+					},
+				},
 			}
 
+			before := time.Now()
 			response, err := server.AssignRole(ctx, &minder.AssignRoleRequest{
 				Context: &minder.Context{
 					Project: &projectIdString,
@@ -886,6 +923,7 @@ func TestAssignRole(t *testing.T) {
 					Subject: tc.subject,
 					Email:   tc.inviteeEmail,
 				},
+				InvitationExpiration: tc.invitationExpiration,
 			})
 
 			if tc.expectedError != "" {
@@ -900,6 +938,12 @@ func TestAssignRole(t *testing.T) {
 			} else {
 				require.Equal(t, authzRole.String(), response.Invitation.Role)
 				require.Equal(t, projectIdString, response.Invitation.Project)
+				if tc.expectedExpiration > 0 {
+					actualExp := response.Invitation.ExpiresAt.AsTime()
+					require.True(t, actualExp.After(before.Add(tc.expectedExpiration-5*time.Second)) &&
+						actualExp.Before(time.Now().Add(tc.expectedExpiration+5*time.Second)),
+						"actual expiration %v not within expected duration %v", actualExp, tc.expectedExpiration)
+				}
 			}
 		})
 	}
@@ -920,6 +964,7 @@ func TestRemoveRole(t *testing.T) {
 		expectedError      string
 		expectedInvitation bool
 		expectedRole       bool
+		expiredInvite      bool
 	}{
 		{
 			name:          "error with no subject or email",
@@ -967,7 +1012,7 @@ func TestRemoveRole(t *testing.T) {
 			// Pre-populate invite for delete test
 			if tc.expectedInvitation && tc.inviteeEmail != "" {
 				_, _ = fakeInviteService.CreateInvite(ctx, nil, nil, serverconfig.EmailConfig{},
-					projectID, authzRole, tc.inviteeEmail)
+					projectID, authzRole, tc.inviteeEmail, time.Time{})
 			}
 			mockRoleService := mockroles.NewMockRoleService(ctrl)
 			if tc.expectedRole {
