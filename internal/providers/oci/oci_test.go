@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"net/http/httptest"
 	"path"
 	"strings"
@@ -26,6 +27,8 @@ import (
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestResolveCreatedAt(t *testing.T) {
@@ -194,3 +197,66 @@ func TestGetDigest(t *testing.T) {
 		})
 	}
 }
+
+// newRegistryWithManifestOverride starts a test registry pre-loaded with v1
+// and v2 tags and returns a server that intercepts GET .../manifests/v2,
+// responding with the given HTTP status code instead of serving the real
+// manifest. Tag listing is passed through unchanged, so v2 always appears
+// in the list and getImage is actually reached for that tag.
+func newRegistryWithManifestOverride(t *testing.T, namespace, overrideTag string, overrideStatus int) (host string) {
+	t.Helper()
+	reg := registry.New(registry.Logger(log.New(io.Discard, "", 0)))
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet && strings.HasSuffix(r.URL.Path, "/manifests/"+overrideTag) {
+			w.WriteHeader(overrideStatus)
+			return
+		}
+		reg.ServeHTTP(w, r)
+	}))
+	t.Cleanup(srv.Close)
+	host = strings.TrimPrefix(srv.URL, "http://")
+
+	for _, tag := range []string{"v1", "v2"} {
+		img, err := random.Image(256, 1)
+		require.NoError(t, err)
+		ref, err := name.NewTag(fmt.Sprintf("%s/%s/myimage:%s", host, namespace, tag))
+		require.NoError(t, err)
+		require.NoError(t, remote.Write(ref, img))
+	}
+	return host
+}
+
+func TestGetArtifactVersions_SkipsDeletedTag(t *testing.T) {
+	t.Parallel()
+
+	const namespace = "testns"
+	// 404 for v2 manifests: tag still listed but getImage returns not-found.
+	host := newRegistryWithManifestOverride(t, namespace, "v2", http.StatusNotFound)
+
+	o := New(nil, host, path.Join(host, namespace))
+	artifact := &minderv1.Artifact{Name: "myimage"}
+
+	versions, err := o.GetArtifactVersions(context.Background(), artifact, &alwaysIncludeFilter{})
+	require.NoError(t, err)
+	require.Len(t, versions, 1)
+	assert.Equal(t, []string{"v1"}, versions[0].Tags)
+}
+
+func TestGetArtifactVersions_ReturnsErrorOnNonNotFound(t *testing.T) {
+	t.Parallel()
+
+	const namespace = "testns"
+	// 429 for v2 manifests: rate-limit must propagate as an error, not be skipped.
+	host := newRegistryWithManifestOverride(t, namespace, "v2", http.StatusTooManyRequests)
+
+	o := New(nil, host, path.Join(host, namespace))
+	artifact := &minderv1.Artifact{Name: "myimage"}
+
+	_, err := o.GetArtifactVersions(context.Background(), artifact, &alwaysIncludeFilter{})
+	require.Error(t, err)
+}
+
+// alwaysIncludeFilter is a GetArtifactVersionsFilter that never skips anything.
+type alwaysIncludeFilter struct{}
+
+func (*alwaysIncludeFilter) IsSkippable(_ time.Time, _ []string) error { return nil }

@@ -1,0 +1,7 @@
+ NAME     │ DESCRIPTION                                                                             
+──────────┼─────────────────────────────────────────────────────────────────────────────────────────
+ admin    │ Administrator with full access to project resources                                     
+──────────┼─────────────────────────────────────────────────────────────────────────────────────────
+ editor   │ Editor with read and write access to profiles and rule types                            
+──────────┼─────────────────────────────────────────────────────────────────────────────────────────
+ viewer   │ Viewer with read-only access to project resources                                       

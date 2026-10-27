@@ -17,7 +17,13 @@ var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete a given provider available in a specific project",
 	Long:  `The minder provider delete command deletes a given provider available in a specific project.`,
-	RunE:  deleteProviderCommand,
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+		return nil
+	},
+	RunE: deleteProviderCommand,
 }
 
 func init() {
@@ -31,10 +37,6 @@ func init() {
 
 // deleteProviderCommand deletes the provider in a specific project
 func deleteProviderCommand(cmd *cobra.Command, _ []string) error {
-	if err := viper.BindPFlags(cmd.Flags()); err != nil {
-		return fmt.Errorf("error binding flags: %w", err)
-	}
-
 	cmd.SilenceUsage = true
 
 	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewProvidersServiceClient)
@@ -57,7 +59,7 @@ func deleteProviderCommand(cmd *cobra.Command, _ []string) error {
 		if err != nil {
 			return cli.MessageAndError("Error deleting provider by id", err)
 		}
-		cmd.Println("Successfully deleted provider with id:", resp.Id)
+		cmd.PrintErrln("Successfully deleted provider with id:", resp.Id)
 	} else {
 		resp, err := client.DeleteProvider(cmd.Context(), &minderv1.DeleteProviderRequest{
 			Context: &minderv1.Context{Provider: &name, Project: &project},
@@ -65,7 +67,7 @@ func deleteProviderCommand(cmd *cobra.Command, _ []string) error {
 		if err != nil {
 			return cli.MessageAndError("Error deleting provider by name", err)
 		}
-		cmd.Println("Successfully deleted provider with name:", resp.Name)
+		cmd.PrintErrln("Successfully deleted provider with name:", resp.Name)
 	}
 
 	return nil

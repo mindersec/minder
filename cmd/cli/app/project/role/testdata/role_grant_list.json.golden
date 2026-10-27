@@ -1,0 +1,28 @@
+{
+  "roleAssignments": [
+    {
+      "role": "admin",
+      "subject": "sub-12345",
+      "displayName": "Alice Admin",
+      "project": "00000000-0000-0000-0000-000000000001"
+    },
+    {
+      "role": "editor",
+      "subject": "sub-67890",
+      "displayName": "Bob Editor",
+      "project": "00000000-0000-0000-0000-000000000001"
+    }
+  ],
+  "invitations": [
+    {
+      "role": "viewer",
+      "email": "charlie@example.com",
+      "project": "00000000-0000-0000-0000-000000000001",
+      "code": "test-invite-code-123",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "expiresAt": "2024-01-15T00:00:00Z",
+      "sponsor": "sponsor-user-id",
+      "sponsorDisplay": "Alice Admin"
+    }
+  ]
+}

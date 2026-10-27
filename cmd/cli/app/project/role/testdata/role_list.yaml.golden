@@ -1,0 +1,8 @@
+roles:
+  - description: Administrator with full access to project resources
+    name: admin
+  - description: Editor with read and write access to profiles and rule types
+    name: editor
+  - description: Viewer with read-only access to project resources
+    name: viewer
+
