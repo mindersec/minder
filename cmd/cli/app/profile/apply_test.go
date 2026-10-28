@@ -40,6 +40,7 @@ func TestApplyCommand(t *testing.T) {
 				return cli.WithRPCClient[minderv1.ProfileServiceClient](context.Background(), client)
 			},
 			GoldenFileName: "apply_create.table",
+			ExpectedStderr: "Successfully created new profile named: mock-attestation-profile\n",
 		},
 		{
 			Name: "apply update existing profile via positional arg",
@@ -62,6 +63,7 @@ func TestApplyCommand(t *testing.T) {
 				return cli.WithRPCClient[minderv1.ProfileServiceClient](context.Background(), client)
 			},
 			GoldenFileName: "apply_update.table",
+			ExpectedStderr: "Successfully updated existing profile named: mock-dependabot-profile\n",
 		},
 		{
 			Name: "apply multiple files (create and update)",
@@ -91,6 +93,7 @@ func TestApplyCommand(t *testing.T) {
 				return cli.WithRPCClient[minderv1.ProfileServiceClient](context.Background(), client)
 			},
 			GoldenFileName: "apply_multiple.table",
+			ExpectedStderr: "Successfully created new profile named: mock-attestation-profile\nSuccessfully updated existing profile named: mock-dependabot-profile\n",
 		},
 		{
 			Name:          "no files specified",

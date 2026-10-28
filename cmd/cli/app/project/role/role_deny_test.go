@@ -59,16 +59,18 @@ func TestRoleDenyCommand(t *testing.T) {
 
 	tests := []cli.CmdTestCase{
 		{
-			Name:           "deny role from subject",
-			Args:           []string{"project", "role", "deny", "-j", testProject, "-s", testSubject, "-r", testRole},
-			MockSetup:      setupMockDenySubject,
-			GoldenFileName: "role_deny_sub.txt",
+			Name:              "deny role from subject",
+			Args:              []string{"project", "role", "deny", "-j", testProject, "-s", testSubject, "-r", testRole},
+			MockSetup:         setupMockDenySubject,
+			ExpectEmptyStdout: true,
+			ExpectedStderr:    "Denied role successfully.\n",
 		},
 		{
-			Name:           "delete invite by email",
-			Args:           []string{"project", "role", "deny", "-j", testProject, "-e", testEmail, "-r", "viewer"},
-			MockSetup:      setupMockDenyEmail,
-			GoldenFileName: "role_deny_email.txt",
+			Name:              "delete invite by email",
+			Args:              []string{"project", "role", "deny", "-j", testProject, "-e", testEmail, "-r", "viewer"},
+			MockSetup:         setupMockDenyEmail,
+			ExpectEmptyStdout: true,
+			ExpectedStderr:    "Invite deleted successfully.\n",
 		},
 		{
 			Name: "fails when required role flag is missing",

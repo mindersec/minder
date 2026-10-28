@@ -153,30 +153,30 @@ func printDeleteResults(
 	remainingRuleTypes []ruleTypeBlock,
 ) {
 	if len(deletedRuleTypes) == 0 && len(remainingRuleTypes) == 0 {
-		cmd.Println("There are no rule types to delete")
+		cmd.PrintErrln("There are no rule types to delete")
 		return
 	}
 
 	if len(deletedRuleTypes) > 0 {
-		cmd.Println("\nThe following rule type(s) were successfully deleted:")
+		cmd.PrintErrln("\nThe following rule type(s) were successfully deleted:")
 		for _, ruleType := range deletedRuleTypes {
-			cmd.Println(ruleType)
+			cmd.PrintErrln(ruleType)
 		}
 	}
 
 	if len(remainingRuleTypes) > 0 {
-		cmd.Println("\nThe following rule type(s) are referenced by existing profiles and were not deleted:")
+		cmd.PrintErrln("\nThe following rule type(s) are referenced by existing profiles and were not deleted:")
 		for _, ruleType := range remainingRuleTypes {
-			cmd.Println(ruleType.Name)
+			cmd.PrintErrln(ruleType.Name)
 		}
 
-		cmd.Println("\nThey are referenced by profiles:")
+		cmd.PrintErrln("\nThey are referenced by profiles:")
 
 		seen := map[string]bool{}
 		for _, b := range remainingRuleTypes {
 			for _, p := range b.Profiles {
 				if !seen[p] {
-					cmd.Println(p)
+					cmd.PrintErrln(p)
 					seen[p] = true
 				}
 			}

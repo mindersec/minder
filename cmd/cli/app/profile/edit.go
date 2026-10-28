@@ -101,7 +101,7 @@ func editCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	if string(updatedBytes) == yamlString {
-		cmd.Println("No changes made to the profile. Aborting update.")
+		cmd.PrintErrln("No changes made to the profile. Aborting update.")
 		return nil
 	}
 
@@ -188,7 +188,7 @@ func updateProfile(
 		return cli.MessageAndError("Error updating profile", err)
 	}
 
-	cmd.Println("Successfully updated profile named:", resp.GetProfile().GetName())
+	cmd.PrintErrln("Successfully updated profile named:", resp.GetProfile().GetName())
 	return nil
 }
 
