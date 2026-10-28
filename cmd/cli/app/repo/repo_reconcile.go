@@ -65,7 +65,7 @@ func reconcileCommand(cmd *cobra.Command, _ []string) error {
 		return cli.MessageAndError("Error creating reconciliation task", err)
 	}
 
-	cmd.Println("Reconciliation task created")
+	cmd.PrintErrln("Reconciliation task created")
 	return nil
 }
 
