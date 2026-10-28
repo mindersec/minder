@@ -6,9 +6,6 @@ version: v1
 name: multiarch_rule
 display_name: Multi-arch signed image
 release_phase: alpha
-context:
-  provider: github
-  project: 00000000-0000-0000-0000-000000000000
 severity:
   value: info
 description: |
