@@ -8,7 +8,10 @@ Grant a role to a subject on a project within the minder control plane
 ### Synopsis
 
 The minder project role grant command allows one to grant a role
-to a user (subject) on a particular project.
+to a user (subject) on a particular project, or send an invitation to an email address.
+
+Note: Invitation codes are one-time bearer tokens. Anyone with access to the code
+or URL can use it to join the project. Share invitation codes only over trusted channels.
 
 ```
 minder project role grant [flags]

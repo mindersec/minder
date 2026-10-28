@@ -20,6 +20,11 @@ var RoleCmd = &cobra.Command{
 	},
 }
 
+// inviteBearerWarning is printed to stderr when an invitation code is displayed.
+const inviteBearerWarning = "Warning: Invitation codes are one-time bearer tokens. " +
+	"Anyone with access to this code or URL can use it to join the project. " +
+	"Share it only over trusted channels."
+
 func init() {
 	project.ProjectCmd.AddCommand(RoleCmd)
 	RoleCmd.PersistentFlags().StringP("project", "j", "", "ID of the project")

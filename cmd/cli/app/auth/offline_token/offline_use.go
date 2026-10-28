@@ -5,7 +5,6 @@
 package offline_token
 
 import (
-	"context"
 	"fmt"
 	"net/url"
 	"os"
@@ -30,11 +29,17 @@ for the minder control plane.
 Offline tokens are used to authenticate to the minder control plane without
 requiring the user's presence. This is useful for long-running processes
 that need to authenticate to the control plane.`,
-	RunE: cli.GRPCClientWrapRunE(offlineUseCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return err
+		}
+		return viper.BindEnv("token", "MINDER_OFFLINE_TOKEN")
+	},
+	RunE: offlineUseCommand,
 }
 
 // offlineUseCommand is the offline-token use subcommand
-func offlineUseCommand(_ context.Context, cmd *cobra.Command, _ []string, _ *grpc.ClientConn) error {
+func offlineUseCommand(cmd *cobra.Command, _ []string) error {
 	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
 	if err != nil {
 		return fmt.Errorf("error reading config: %w", err)
@@ -90,7 +95,7 @@ func offlineUseCommand(_ context.Context, cmd *cobra.Command, _ []string, _ *grp
 		cmd.PrintErrf("couldn't save credentials: %s\n", err)
 	}
 
-	cmd.Printf("Your access credentials have been saved to %s\n", filePath)
+	cmd.PrintErrf("Your access credentials have been saved to %s\n", filePath)
 
 	return nil
 }
@@ -103,15 +108,4 @@ func init() {
 		"The offline token to use. Also settable through the MINDER_OFFLINE_TOKEN environment variable.")
 
 	offlineTokenUseCmd.MarkFlagsMutuallyExclusive("file", "token")
-
-	if err := viper.BindPFlag("file", offlineTokenUseCmd.Flag("file")); err != nil {
-		panic(err)
-	}
-	if err := viper.BindPFlag("token", offlineTokenUseCmd.Flag("token")); err != nil {
-		panic(err)
-	}
-
-	if err := viper.BindEnv("token", "MINDER_OFFLINE_TOKEN"); err != nil {
-		panic(err)
-	}
 }

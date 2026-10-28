@@ -1,0 +1,8 @@
+{
+  "roleAssignment": {
+    "role": "editor",
+    "subject": "sub-12345",
+    "project": "00000000-0000-0000-0000-000000000001",
+    "displayName": "Alice Admin"
+  }
+}

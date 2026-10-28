@@ -36,8 +36,8 @@ func (e *ErrWrappedCLIError) Error() string {
 
 // PrintYesNoPrompt prints a yes/no prompt to the user and returns false if the user did not respond with yes or y
 func PrintYesNoPrompt(cmd *cobra.Command, promptMsg, confirmMsg, fallbackMsg string, defaultYes bool) bool {
-	// Print the warning banner with the prompt message
-	cmd.Println(WarningBanner.Render(promptMsg))
+	// Print the warning banner with the prompt message to stderr
+	cmd.PrintErrln(WarningBanner.Render(promptMsg))
 
 	// Determine the default confirmation value
 	defConf := confirmation.No
@@ -49,13 +49,13 @@ func PrintYesNoPrompt(cmd *cobra.Command, promptMsg, confirmMsg, fallbackMsg str
 	input := confirmation.New(confirmMsg, defConf)
 	ok, err := input.RunPrompt()
 	if err != nil {
-		cmd.Println(WarningBanner.Render(fmt.Sprintf("Error reading input: %v", err)))
+		cmd.PrintErrln(WarningBanner.Render(fmt.Sprintf("Error reading input: %v", err)))
 		ok = false
 	}
 
 	// If the user did not confirm, print the fallback message
 	if !ok {
-		cmd.Println(Header.Render(fallbackMsg))
+		cmd.PrintErrln(Header.Render(fallbackMsg))
 	}
 	return ok
 }

@@ -4,7 +4,6 @@
 package role
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"strings"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util/cli"
@@ -26,24 +24,34 @@ var grantListCmd = &cobra.Command{
 	Short: "List role grants within a given project",
 	Long: `The minder project role grant list command lists all role grants
 on a particular project.`,
-	RunE: cli.GRPCClientWrapRunE(GrantListCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+
+		format := viper.GetString("output")
+
+		return app.IsOutputFormatSupported(format)
+	},
+	RunE: grantListCommand,
 }
 
-// GrantListCommand is the command for listing grants
-func GrantListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewPermissionsServiceClient(conn)
-
+// grantListCommand is the command for listing grants
+func grantListCommand(cmd *cobra.Command, _ []string) error {
 	project := viper.GetString("project")
 	format := viper.GetString("output")
-	if err := app.IsOutputFormatSupported(format); err != nil {
-		return err
-	}
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	resp, err := client.ListRoleAssignments(ctx, &minderv1.ListRoleAssignmentsRequest{
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewPermissionsServiceClient)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	resp, err := client.ListRoleAssignments(cmd.Context(), &minderv1.ListRoleAssignmentsRequest{
 		Context: &minderv1.Context{
 			Project: &project,
 		},
@@ -62,6 +70,7 @@ func GrantListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn 
 		}
 		t.Render()
 		if len(resp.Invitations) > 0 {
+			fmt.Fprintln(cmd.OutOrStdout())
 			t := initializeTableForGrantListInvitations(cmd.OutOrStdout())
 			for _, r := range resp.Invitations {
 				t.AddRow(r.Email, r.Role, r.SponsorDisplay, r.ExpiresAt.AsTime().Format(time.RFC3339))

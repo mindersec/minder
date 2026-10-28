@@ -5,36 +5,39 @@
 package offline_token
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/pkg/config"
 	clientconfig "github.com/mindersec/minder/pkg/config/client"
 )
 
-// offlineTokenRevokeCmd represents the offline-token use command
+// offlineTokenRevokeCmd represents the offline-token revoke command
 var offlineTokenRevokeCmd = &cobra.Command{
 	Use:   "revoke",
 	Short: "Revoke an offline token",
-	Long: `The minder auth offline-token use command project lets you revoke an offline token
+	Long: `The minder auth offline-token revoke command project lets you revoke an offline token
 for the minder control plane.
 
 Offline tokens are used to authenticate to the minder control plane without
 requiring the user's presence. This is useful for long-running processes
 that need to authenticate to the control plane.`,
-
-	RunE: cli.GRPCClientWrapRunE(offlineRevokeCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return err
+		}
+		return viper.BindEnv("token", "MINDER_OFFLINE_TOKEN")
+	},
+	RunE: offlineRevokeCommand,
 }
 
 // offlineRevokeCommand is the offline-token revoke subcommand
-func offlineRevokeCommand(_ context.Context, cmd *cobra.Command, _ []string, _ *grpc.ClientConn) error {
+func offlineRevokeCommand(cmd *cobra.Command, _ []string) error {
 	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
 	if err != nil {
 		return fmt.Errorf("error reading config: %w", err)
@@ -64,7 +67,7 @@ func offlineRevokeCommand(_ context.Context, cmd *cobra.Command, _ []string, _ *
 		return fmt.Errorf("couldn't revoke token: %v", err)
 	}
 
-	cmd.Printf("Token revoked\n")
+	cmd.PrintErrf("Token revoked\n")
 
 	return nil
 }
@@ -77,15 +80,4 @@ func init() {
 		"The offline token to revoke. Also settable through the MINDER_OFFLINE_TOKEN environment variable.")
 
 	offlineTokenRevokeCmd.MarkFlagsMutuallyExclusive("file", "token")
-
-	if err := viper.BindPFlag("file", offlineTokenRevokeCmd.Flag("file")); err != nil {
-		panic(err)
-	}
-	if err := viper.BindPFlag("token", offlineTokenRevokeCmd.Flag("token")); err != nil {
-		panic(err)
-	}
-
-	if err := viper.BindEnv("token", "MINDER_OFFLINE_TOKEN"); err != nil {
-		panic(err)
-	}
 }

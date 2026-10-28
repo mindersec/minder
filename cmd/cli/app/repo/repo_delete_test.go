@@ -41,7 +41,8 @@ func TestDeleteCommand(t *testing.T) {
 
 				return cli.WithRPCClient[minderv1.RepositoryServiceClient](context.Background(), client)
 			},
-			GoldenFileName: "delete_name.txt",
+			ExpectEmptyStdout: true,
+			ExpectedStderr:    "Successfully deleted repo with name: mock-owner/mock-repo\n",
 		},
 		{
 			Name: "delete repository by id",
@@ -60,7 +61,8 @@ func TestDeleteCommand(t *testing.T) {
 
 				return cli.WithRPCClient[minderv1.RepositoryServiceClient](context.Background(), client)
 			},
-			GoldenFileName: "delete_id.txt",
+			ExpectEmptyStdout: true,
+			ExpectedStderr:    "Successfully deleted repo with id: " + repoID + "\n",
 		},
 		{
 			Name:          "fails when missing both name and id",

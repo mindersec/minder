@@ -45,7 +45,7 @@ func deleteCommand(cmd *cobra.Command, _ []string) error {
 		return cli.MessageAndError("Error deleting sub-project", err)
 	}
 
-	cmd.Println("Successfully deleted project with id:", resp.ProjectId)
+	cmd.PrintErrln("Successfully deleted project with id:", resp.ProjectId)
 
 	return nil
 }
