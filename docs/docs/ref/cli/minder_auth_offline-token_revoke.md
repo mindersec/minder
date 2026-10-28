@@ -7,7 +7,7 @@ Revoke an offline token
 
 ### Synopsis
 
-The minder auth offline-token use command project lets you revoke an offline token
+The minder auth offline-token revoke command project lets you revoke an offline token
 for the minder control plane.
 
 Offline tokens are used to authenticate to the minder control plane without
