@@ -9,23 +9,11 @@
 
 ENTITY = {"owner": "acme", "name": "app", "type": "container"}
 
-def index(platforms):
-    manifests = []
-    for i, p in enumerate(platforms):
-        os, arch = p.split("/")
-        manifests.append({
-            "mediaType": "application/vnd.oci.image.manifest.v1+json",
-            "digest": "sha256:" + (str(i) * 64),
-            "size": 1,
-            "platform": {"os": os, "architecture": arch},
-        })
-    return json.encode({
-        "schemaVersion": 2,
-        "mediaType": "application/vnd.oci.image.index.v1+json",
-        "manifests": manifests,
-    })
+FIXTURES = txtar(read_file("multiarch.txtar"))
 
-MULTIARCH = index(["linux/amd64", "linux/arm64"])
+MULTIARCH = FIXTURES["index-multiarch.json"]
+AMD64_ONLY = FIXTURES["index-amd64-only.json"]
+SIGNED = verification_json(FIXTURES["verification-signed.json"])
 
 def run(manifest, verification):
     return eval(
@@ -38,7 +26,7 @@ def run(manifest, verification):
     )
 
 def test_multiarch_signed():
-    res = run(MULTIARCH, signed(san = "https://github.com/acme/app/.github/workflows/build.yml@refs/heads/main"))
+    res = run(MULTIARCH, SIGNED)
     assert.eq(res["status"], "pass")
 
 def test_multiarch_unsigned():
@@ -53,5 +41,5 @@ def test_multiarch_signed_without_certificate_fields():
     assert.eq(res["status"], "pass")
 
 def test_multiarch_missing_arm64():
-    res = run(index(["linux/amd64"]), signed())
+    res = run(AMD64_ONLY, signed())
     assert.eq(res["status"], "fail")

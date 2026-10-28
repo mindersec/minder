@@ -1,0 +1,49 @@
+SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
+SPDX-License-Identifier: Apache-2.0
+
+Fixtures for multiarch_test.star. The index manifests are raw OCI image
+indexes; the version digest is computed from these bytes. The
+verification document is a sigstore-go VerificationResult, as accepted by
+verification_json().
+
+-- index-multiarch.json --
+{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.index.v1+json",
+  "manifests": [
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "size": 1,
+      "platform": {"os": "linux", "architecture": "amd64"}
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "size": 1,
+      "platform": {"os": "linux", "architecture": "arm64"}
+    }
+  ]
+}
+-- index-amd64-only.json --
+{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.index.v1+json",
+  "manifests": [
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "size": 1,
+      "platform": {"os": "linux", "architecture": "amd64"}
+    }
+  ]
+}
+-- verification-signed.json --
+{
+  "mediaType": "application/vnd.dev.sigstore.verificationresult+json;version=0.1",
+  "signature": {
+    "certificate": {
+      "subjectAlternativeName": "https://github.com/acme/app/.github/workflows/build.yml@refs/heads/main"
+    }
+  }
+}
