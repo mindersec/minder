@@ -37,13 +37,14 @@ def run(manifest, verification):
         ),
     )
 
-def test_multiarch_signed_and_unsigned_differ():
-    signed_res = run(MULTIARCH, signed(san = "https://github.com/acme/app/.github/workflows/build.yml@refs/heads/main"))
-    unsigned_res = run(MULTIARCH, unsigned())
+def test_multiarch_signed():
+    res = run(MULTIARCH, signed(san = "https://github.com/acme/app/.github/workflows/build.yml@refs/heads/main"))
+    assert.eq(res["status"], "pass")
 
-    assert.eq(signed_res["status"], "pass")
-    assert.eq(unsigned_res["status"], "fail")
-    assert.ne(signed_res["status"], unsigned_res["status"])
+def test_multiarch_unsigned():
+    res = run(MULTIARCH, unsigned())
+    assert.eq(res["status"], "fail")
+    assert.contains(res["details"], "image is not signed and verified")
 
 def test_multiarch_signed_without_certificate_fields():
     # signed() with no certificate arguments used to leave Signature nil,

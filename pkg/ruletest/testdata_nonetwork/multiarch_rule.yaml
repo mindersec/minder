@@ -51,3 +51,10 @@ def:
             required - platforms(img) == set()
           }
         }
+
+        default message := "image does not meet multi-arch signing requirements"
+
+        message := "image is not signed and verified" if {
+          some img in input.ingested
+          not img.Verification.is_verified
+        }
