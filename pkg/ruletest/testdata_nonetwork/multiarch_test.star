@@ -13,13 +13,17 @@ def index(platforms):
     manifests = []
     for i, p in enumerate(platforms):
         os, arch = p.split("/")
-        manifests.append(
-            '{"mediaType":"application/vnd.oci.image.manifest.v1+json",' +
-            '"digest":"sha256:' + (str(i) * 64) + '","size":1,' +
-            '"platform":{"os":"' + os + '","architecture":"' + arch + '"}}'
-        )
-    return ('{"schemaVersion":2,"mediaType":"application/vnd.oci.image.index.v1+json",' +
-            '"manifests":[' + ",".join(manifests) + "]}")
+        manifests.append({
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": "sha256:" + (str(i) * 64),
+            "size": 1,
+            "platform": {"os": os, "architecture": arch},
+        })
+    return json.encode({
+        "schemaVersion": 2,
+        "mediaType": "application/vnd.oci.image.index.v1+json",
+        "manifests": manifests,
+    })
 
 MULTIARCH = index(["linux/amd64", "linux/arm64"])
 
