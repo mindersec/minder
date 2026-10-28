@@ -1,0 +1,10 @@
+Invite created successfully.
+ INVITEE                        │ ROLE      │ SPONSOR           │ EXPIRES AT                        
+────────────────────────────────┼───────────┼───────────────────┼───────────────────────────────────
+ charlie@example.com            │ viewer    │ Alice Admin       │ 2024-01-15T00:00:00Z              
+
+The invitee can accept it by running: 
+
+minder auth invite accept test-invite-code-123
+
+Or by visiting: https://minder.example.com/invite/test-invite-code-123

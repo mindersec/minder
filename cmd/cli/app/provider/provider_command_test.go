@@ -260,8 +260,8 @@ func TestUpdateProviderCommand(t *testing.T) {
 			Name:              "update provider successfully with set-attribute",
 			Args:              []string{"provider", "update", "-n", "github-app", "-s", "auto_registration.entities.repository.enabled=true"},
 			MockSetup:         setupSuccess,
-			ExpectedStdout:    "Provider updated successfully\n",
-			ExpectEmptyStderr: true,
+			ExpectEmptyStdout: true,
+			ExpectedStderr:    "Provider updated successfully\n",
 		},
 		{
 			Name: "update provider successfully with unset-attribute",
@@ -285,8 +285,8 @@ func TestUpdateProviderCommand(t *testing.T) {
 
 				return cli.WithRPCClient[minderv1.ProvidersServiceClient](context.Background(), client)
 			},
-			ExpectedStdout:    "Provider updated successfully\n",
-			ExpectEmptyStderr: true,
+			ExpectEmptyStdout: true,
+			ExpectedStderr:    "Provider updated successfully\n",
 		},
 		{
 			Name:          "fails when name flag is missing",

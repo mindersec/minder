@@ -64,7 +64,7 @@ func offlineRevokeCommand(_ context.Context, cmd *cobra.Command, _ []string, _ *
 		return fmt.Errorf("couldn't revoke token: %v", err)
 	}
 
-	cmd.Printf("Token revoked\n")
+	cmd.PrintErrf("Token revoked\n")
 
 	return nil
 }
