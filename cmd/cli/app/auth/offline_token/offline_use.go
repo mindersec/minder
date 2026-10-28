@@ -90,7 +90,7 @@ func offlineUseCommand(_ context.Context, cmd *cobra.Command, _ []string, _ *grp
 		cmd.PrintErrf("couldn't save credentials: %s\n", err)
 	}
 
-	cmd.Printf("Your access credentials have been saved to %s\n", filePath)
+	cmd.PrintErrf("Your access credentials have been saved to %s\n", filePath)
 
 	return nil
 }

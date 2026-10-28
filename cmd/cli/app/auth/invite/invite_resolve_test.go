@@ -42,10 +42,11 @@ func TestInviteAcceptCommand(t *testing.T) {
 
 	tests := []cli.CmdTestCase{
 		{
-			Name:           "accept invitation successfully",
-			Args:           []string{"auth", "invite", "accept", testCode},
-			MockSetup:      setupSuccess,
-			GoldenFileName: "invite_accept",
+			Name:              "accept invitation successfully",
+			Args:              []string{"auth", "invite", "accept", testCode},
+			MockSetup:         setupSuccess,
+			ExpectEmptyStdout: true,
+			ExpectedStderr:    "Invitation test-invite-code-123 for alice@example.com to become admin of project test-project was accepted!\n",
 		},
 		{
 			Name:          "fails when code argument is missing",
@@ -101,10 +102,11 @@ func TestInviteDeclineCommand(t *testing.T) {
 
 	tests := []cli.CmdTestCase{
 		{
-			Name:           "decline invitation successfully",
-			Args:           []string{"auth", "invite", "decline", testCode},
-			MockSetup:      setupSuccess,
-			GoldenFileName: "invite_decline",
+			Name:              "decline invitation successfully",
+			Args:              []string{"auth", "invite", "decline", testCode},
+			MockSetup:         setupSuccess,
+			ExpectEmptyStdout: true,
+			ExpectedStderr:    "Invitation test-invite-code-456 for bob@example.com to become editor of project test-project was declined!\n",
 		},
 		{
 			Name:          "fails when code argument is missing",

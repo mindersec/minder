@@ -145,7 +145,7 @@ func (s *Severity_Value) UnmarshalJSON(b []byte) error {
 	return s.FromString(str)
 }
 
-// InitializedStringValue returns the string value of the severity
+// InitializedStringValue returns the string value of the rule type release phase
 // with initialization done.
 func (s *RuleTypeReleasePhase) InitializedStringValue() (string, error) {
 	return s.EnsureDefault().Enum().AsString()
@@ -153,7 +153,11 @@ func (s *RuleTypeReleasePhase) InitializedStringValue() (string, error) {
 
 // EnsureDefault ensures the rule type release phase has a default value
 func (s *RuleTypeReleasePhase) EnsureDefault() *RuleTypeReleasePhase {
-	if s == nil || *s == RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED {
+	if s == nil {
+		val := RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_GA
+		return &val
+	}
+	if *s == RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED {
 		*s = RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_GA
 	}
 	return s

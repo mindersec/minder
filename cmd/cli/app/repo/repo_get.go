@@ -27,7 +27,11 @@ var getCmd = &cobra.Command{
 		format := viper.GetString("output")
 
 		// Ensure the output format is supported
-		if !app.IsOutputFormatSupported(format) || format == app.Table {
+		if err := app.IsOutputFormatSupported(format); err != nil {
+			return err
+		}
+
+		if format == app.Table {
 			return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
 		}
 

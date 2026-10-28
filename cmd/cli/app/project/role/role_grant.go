@@ -4,7 +4,6 @@
 package role
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util/cli"
@@ -24,27 +22,35 @@ var grantCmd = &cobra.Command{
 	Short: "Grant a role to a subject on a project within the minder control plane",
 	Long: `The minder project role grant command allows one to grant a role
 to a user (subject) on a particular project.`,
-	RunE: cli.GRPCClientWrapRunE(GrantCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+
+		format := viper.GetString("output")
+
+		return app.IsOutputFormatSupported(format)
+	},
+	RunE: GrantCommand,
 }
 
 // GrantCommand is the command for granting roles
-func GrantCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewPermissionsServiceClient(conn)
-
+func GrantCommand(cmd *cobra.Command, _ []string) error {
 	sub := viper.GetString("sub")
 	r := viper.GetString("role")
 	project := viper.GetString("project")
 	email := viper.GetString("email")
 	format := viper.GetString("output")
 
-	// Ensure the output format is supported
-	if !app.IsOutputFormatSupported(format) {
-		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
-	}
-
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
+
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewPermissionsServiceClient)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
 
 	roleAssignment := &minderv1.RoleAssignment{
 		Role:    r,
@@ -62,7 +68,7 @@ func GrantCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grp
 		successMsg = "Invite created successfully."
 	}
 
-	resp, err := client.AssignRole(ctx, &minderv1.AssignRoleRequest{
+	resp, err := client.AssignRole(cmd.Context(), &minderv1.AssignRoleRequest{
 		Context: &minderv1.Context{
 			Project: &project,
 		},

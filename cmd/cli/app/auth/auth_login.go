@@ -55,30 +55,30 @@ func LoginCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	if !registered {
-		cmd.Println("First login, registering user...")
+		cmd.PrintErrln("First login, registering user...")
 		newUser, err := client.CreateUser(ctx, &minderv1.CreateUserRequest{})
 		if err != nil {
 			return cli.MessageAndError("Error registering user", err)
 		}
 
-		cmd.Println(cli.SuccessBanner.Render(
+		cmd.PrintErrln(cli.SuccessBanner.Render(
 			"You have been successfully registered. Welcome!"))
-		cmd.Println(cli.WarningBanner.Render(
+		cmd.PrintErrln(cli.WarningBanner.Render(
 			"Minder is currently under active development and considered experimental, " +
 				" we therefore provide no data retention or service stability guarantees.",
 		))
-		cmd.Println(cli.Header.Render("Here are your details:"))
+		cmd.PrintErrln(cli.Header.Render("Here are your details:"))
 
 		renderNewUser(conn.Target(), newUser, cmd.OutOrStdout())
 	} else {
-		cmd.Println(cli.SuccessBanner.Render(
+		cmd.PrintErrln(cli.SuccessBanner.Render(
 			"You have successfully logged in."))
 
-		cmd.Println(cli.Header.Render("Here are your details:"))
+		cmd.PrintErrln(cli.Header.Render("Here are your details:"))
 		renderUserInfo(conn.Target(), userInfo, cmd.OutOrStdout())
 	}
 
-	cmd.Printf("Your access credentials have been saved to %s\n", filePath)
+	cmd.PrintErrf("Your access credentials have been saved to %s\n", filePath)
 	return nil
 }
 

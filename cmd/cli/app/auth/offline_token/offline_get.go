@@ -57,7 +57,7 @@ func offlineGetCommand(ctx context.Context, cmd *cobra.Command, _ []string, _ *g
 		return fmt.Errorf("error writing offline token to file: %w", err)
 	}
 
-	cmd.Printf("Offline token written to %s\n", f)
+	cmd.PrintErrf("Offline token written to %s\n", f)
 
 	return nil
 }

@@ -4,13 +4,11 @@
 package role
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util/cli"
@@ -22,27 +20,35 @@ var updateCmd = &cobra.Command{
 	Short: "update a role to a subject on a project",
 	Long: `The minder project role update command allows one to update a role
 to a user (subject) on a particular project.`,
-	RunE: cli.GRPCClientWrapRunE(UpdateCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+
+		format := viper.GetString("output")
+
+		return app.IsOutputFormatSupported(format)
+	},
+	RunE: UpdateCommand,
 }
 
 // UpdateCommand is the command for granting roles
-func UpdateCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewPermissionsServiceClient(conn)
-
+func UpdateCommand(cmd *cobra.Command, _ []string) error {
 	role := viper.GetString("role")
 	project := viper.GetString("project")
 	sub := viper.GetString("sub")
 	email := viper.GetString("email")
 	format := viper.GetString("output")
 
-	// Ensure the output format is supported
-	if !app.IsOutputFormatSupported(format) {
-		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
-	}
-
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
+
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewPermissionsServiceClient)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
 
 	req := &minderv1.UpdateRoleRequest{
 		Context: &minderv1.Context{
@@ -59,7 +65,7 @@ func UpdateCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 		successMsg = "Invite updated successfully."
 	}
 
-	resp, err := client.UpdateRole(ctx, req)
+	resp, err := client.UpdateRole(cmd.Context(), req)
 	if err != nil {
 		return cli.MessageAndError(failMsg, err)
 	}
