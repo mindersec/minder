@@ -88,6 +88,11 @@ func TestApplyCommand(t *testing.T) {
 			Args:          []string{"apply", filepath.Join("fixture", "empty_file.yaml")},
 			ExpectedError: "no resources found",
 		},
+		{
+			Name:          "apply with --git flag invalid url",
+			Args:          []string{"apply", "--git", "invalid-url"},
+			ExpectedError: "git URL must include scheme and host",
+		},
 	}
 
 	cli.RunCmdTests(t, tests, applyCmd)
