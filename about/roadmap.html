@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.10.2">
 <title data-rh="true">Roadmap | Minder docs</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://docs.mindersec.dev/img/Minder_darkMode.png"><meta data-rh="true" name="twitter:image" content="https://docs.mindersec.dev/img/Minder_darkMode.png"><meta data-rh="true" property="og:url" content="https://docs.mindersec.dev/about/roadmap"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Roadmap | Minder docs"><meta data-rh="true" name="description" content="About this roadmap"><meta data-rh="true" property="og:description" content="About this roadmap"><link data-rh="true" rel="icon" href="/img/favicon.png"><link data-rh="true" rel="canonical" href="https://docs.mindersec.dev/about/roadmap"><link data-rh="true" rel="alternate" href="https://docs.mindersec.dev/about/roadmap" hreflang="en"><link data-rh="true" rel="alternate" href="https://docs.mindersec.dev/about/roadmap" hreflang="x-default"><link data-rh="true" rel="preconnect" href="https://F7OP01WFHV-dsn.algolia.net" crossorigin="anonymous"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Roadmap","item":"https://docs.mindersec.dev/about/roadmap"}]}</script><link rel="search" type="application/opensearchdescription+xml" title="Minder docs" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.bdfa33c7.css">
-<script src="/assets/js/runtime~main.e84f0bdf.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.743f5117.js" defer="defer"></script>
 <script src="/assets/js/main.2e2d43b1.js" defer="defer"></script>
 </head>
 <body>
@@ -18,70 +18,243 @@ learn about what features we&#x27;re working on, what stage they&#x27;re in, and
 expect to bring them to you. Priorities and requirements may change based on
 community feedback, roadblocks encountered, community contributions, and other
 factors. If you depend on a specific item, we encourage you to reach out to
-<a href="https://openssf.slack.com/archives/C07SP9RSM2L" target="_blank" rel="noopener noreferrer" class="">the Minder team on OpenSSF Slack
-(<code>#minder</code>)</a> to get updated
-status information, or help us deliver that feature by contributing to Minder.</p>
+<a href="https://openssf.slack.com/archives/C07SP9RSM2L" target="_blank" rel="noopener noreferrer" class="">the Minder team on OpenSSF Slack (<code>#minder</code>)</a>
+to get updated status information, or help us deliver that feature by
+<a href="https://github.com/mindersec/minder/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer" class="">contributing to Minder</a>.</p>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="how-to-contribute">How to contribute<a href="#how-to-contribute" class="hash-link" aria-label="Direct link to How to contribute" title="Direct link to How to contribute" translate="no">​</a></h2>
 <p>Have any questions or comments about items on the Minder roadmap? Share your
-feedback via
-<a href="https://github.com/mindersec/minder/discussions" target="_blank" rel="noopener noreferrer" class="">Minder GitHub Discussions</a>.</p>
-<p><strong>Last updated:</strong> June 2024</p>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="in-progress">In progress<a href="#in-progress" class="hash-link" aria-label="Direct link to In progress" title="Direct link to In progress" translate="no">​</a></h2>
+feedback in Slack or GitHub issues. As they approach implementation, Roadmap
+items will start with a tracking design issue, followed by specific
+implementation sub-issues, and <em>may</em> use GitHub projects depending on the
+complexity.</p>
+<blockquote>
+<p>Looking for a smaller task?</p>
+<p>The Minder repository has a number of
+<a href="https://github.com/mindersec/minder/issues?q=state%3Aopen%20label%3A%22good%20first%20issue%22" target="_blank" rel="noopener noreferrer" class="">good first issues</a>.
+Before starting work on an issue, it&#x27;s generally a good idea to announce your
+intent on the issue, which can prevent duplicated work if someone else is also
+working on the same item.</p>
+<p>Another good place to get started is in the
+<a href="https://github.com/mindersec/minder-rules-and-profiles/" target="_blank" rel="noopener noreferrer" class=""><code>minder-rules-and-profiles</code> repository</a>.
+The core goal of Minder is to provide a system for solving supply chain
+security issues, so writing and improving rules and remediations is a good
+place to get started.</p>
+</blockquote>
+<p><strong>Last updated:</strong> October 2026</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="major-efforts">Major Efforts<a href="#major-efforts" class="hash-link" aria-label="Direct link to Major Efforts" title="Direct link to Major Efforts" translate="no">​</a></h2>
+<p>One key principle behind many of these efforts is that Minder is a supply chain
+security <em>platform</em>: much of the benefit of a platform is the ability to build
+new functionality on top of existing platform primitives, rather than needing to
+extend Minder for each new supply chain development. Where possible, the aim is
+to enable Minder users to use rule types, profiles, selectors, and other
+automation to evolve the platform with minimal changes to the underlying Minder
+server.</p>
+<p>With that said, there are still a number of core capabilities which have not yet
+been built to enable this vision, so this roadmap lays out a number of avenues
+for improving Minder&#x27;s utility and adoption. We will also prioritize features
+which improve the user experience for Minder users -- both rule authors
+(administrators) and developers working in a project which has adopted Minder.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="improve-rule-output-handling">Improve Rule Output Handling<a href="#improve-rule-output-handling" class="hash-link" aria-label="Direct link to Improve Rule Output Handling" title="Direct link to Improve Rule Output Handling" translate="no">​</a></h3>
+<p><strong>Status</strong>: In progress, tracked in
+<a href="https://github.com/mindersec/minder/issues/6105" target="_blank" rel="noopener noreferrer" class="">#6105</a></p>
+<p>Last year, Minder added the ability to output data from rule evaluations for
+consumption by remediations and alerts. We can extend this functionality to
+enable a number of additional capabilities with a minimal code footprint.</p>
+<p>Capabilities enabled by rule output include:</p>
 <ul>
-<li class=""><strong>Improved information about alerts:</strong> Improve the verbiage and explanation
-about the state of rule evaluations, and how you can remediate the problems.</li>
-<li class=""><strong>Enforce license information for dependencies:</strong> Ensure that dependencies in
-your repositories use licenses that you approve.</li>
-<li class=""><strong>Create policy to manage licenses in PRs:</strong> Add a rule type to block and/or
-add comments to pull requests based on the licenses of the dependencies they
-import.</li>
-<li class=""><strong>Generalized &quot;provider&quot; support:</strong> Improve the ability for developers to add
-integration points to Minder to provide custom information about entities in
-their software development lifecycle.</li>
+<li class="">
+<p><strong>Inventory rules</strong>: Rather than pass/fail assessment of repository status,
+leverage rule evaluation to collect (for example) all the actions used by a
+repository or all the container images used in all Dockerfiles. Minder rule
+output could then be used to import data into an external software inventory
+control system.</p>
+<p><strong>This has been largely implemented in the Minder engine, but lacks examples
+in the <a href="https://github.com/mindersec/minder-rules-and-profiles" target="_blank" rel="noopener noreferrer" class="">rules and profiles</a>.</strong></p>
+</li>
+<li class="">
+<p><strong>Rule-driven child entities</strong>: Leveraging inventory rules, we could add a
+remediation which supports managing (upsert / delete) Minder entities detected
+through an inventory rule. This could even replace some of the built-in
+lifecycle rules (e.g. creating PRs or releases from a repository).</p>
+</li>
+<li class="">
+<p><strong>External remediation</strong>: Currently, the Minder server uses a GitHub App with
+high levels of permissions in order to perform remediations. If the data
+needed for remediations (remediation definition, context, and rule output) is
+available through the API, it should be possible to build an external system
+to query rule status and perform remediation using a more powerful token held
+<em>outside</em> of the Minder server. This would reduce the risk / &quot;blast radius&quot; of
+a Minder server compromise, and allow users to adopt hosted Minder scanning
+while keeping powerful GitHub keys under local supervision.</p>
+</li>
 </ul>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="next">Next<a href="#next" class="hash-link" aria-label="Direct link to Next" title="Direct link to Next" translate="no">​</a></h2>
+<p>Inventory rules are nearing completion, while the other two bullet points still
+need design and discussion.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="improve-flexibility-of-pull-request-rules">Improve Flexibility of Pull Request Rules<a href="#improve-flexibility-of-pull-request-rules" class="hash-link" aria-label="Direct link to Improve Flexibility of Pull Request Rules" title="Direct link to Improve Flexibility of Pull Request Rules" translate="no">​</a></h3>
+<p><strong>Status</strong>: Discussion in
+<a href="https://github.com/mindersec/minder/issues/4452" target="_blank" rel="noopener noreferrer" class="">#4452</a>, not well-defined yet.</p>
+<p>There are several <code>pull_request</code> entity evaluators (e.g. OSV, Trusty, Frizbee)
+which perform special commenting operations either during rule evaluation or as
+a linked action. These include suggesting edits and commenting on specific lines
+of content. It would be more flexible to add remediation or alerting action
+support for this functionality, which would allow plugging in different
+dependency information sources or other tools which can provide line-level
+comments.  This ties in to the &quot;rule output handling&quot; as well -- much of the
+remediation flexibility may come from data retrieved during rule processing.</p>
+<p>Functionality under consideration:</p>
 <ul>
-<li class=""><strong>Report CVEs and license info for ingested SBOMs:</strong>
-Ingest SBOMS and identify dependencies; show CVEs, and license information
-including any changes over time.</li>
-<li class=""><strong>Block PRs based on Minder rules:</strong> In addition to adding comments to pull
-requests (as is currently available), add the option to block pull requests
-as a policy remediation.</li>
-<li class=""><strong>Policy events:</strong> Provide information about rule evaluation as it changes,
-and historical rule evaluation.</li>
-<li class=""><strong>Generate SBOMs:</strong> Enable users to automatically create and sign SBOMs.</li>
+<li class="">
+<p><strong>Line-level comments</strong>: It should be possible to add comments to a PR. This
+should be generally supported across different Git Forges; something like
+<a href="https://sarifweb.azurewebsites.net/" target="_blank" rel="noopener noreferrer" class="">SARIF</a> (or a reasonable subset) might be
+an appropriate format for recording comments. The line-level comments will
+probably leverage the <code>output</code> data described in
+<a href="#improve-rule-output-handling" class="">the previous section</a>.</p>
+</li>
+<li class="">
+<p><strong>PR checks</strong>: using something like the
+<a href="https://docs.github.com/en/apps/creating-github-apps/writing-code-for-a-github-app/building-ci-checks-with-a-github-app" target="_blank" rel="noopener noreferrer" class="">GitHub Checks API</a>
+to enable reporting status on specific commits in a PR. This probably requires
+some comparison with the line-level comments approach to determine if both are
+necessary, and how the checks and annotations API differs from general PR
+comments.</p>
+</li>
+<li class="">
+<p><strong>Enabling content suggestions</strong>: It&#x27;s not clear whether the GitHub suggestion
+block format is sufficient (i.e. using line-level comments with the <code>suggestion</code>
+preformatted block, or whether Minder should provide a better mechanism for
+suggesting fixes to PRs when the rule remediation supports it
+(for example, pinning GitHub Actions to SHAs during PR review).</p>
+</li>
 </ul>
+<p>Note that CI systems like GitHub Actions can be another route for some
+line-level PR checks; we should document when to have Minder directly generate
+PR-level comments, and when it makes more sense for Minder to install CI actions
+for checking content.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="expand-source-forge-provider-coverage">Expand Source Forge Provider Coverage<a href="#expand-source-forge-provider-coverage" class="hash-link" aria-label="Direct link to Expand Source Forge Provider Coverage" title="Direct link to Expand Source Forge Provider Coverage" translate="no">​</a></h3>
+<p><strong>Status</strong>: Tracked in <a href="https://github.com/mindersec/minder/issues/6435" target="_blank" rel="noopener noreferrer" class="">#6435</a></p>
+<p>Minder has <em>some</em> support for <a href="https://gitlab.com/" target="_blank" rel="noopener noreferrer" class="">GitLab Cloud</a>, but the GitLab
+provider does not support remediations currently. Additionally, Minder does not
+currently support any of the following Git Forges:</p>
+<ul>
+<li class=""><strong><a href="https://forgejo.org/" target="_blank" rel="noopener noreferrer" class="">Forgejo</a></strong>: not started; this should be designed to
+work with both Codeberg and self-hosted Forgejo, which may require additional
+work on Provider infrastructure</li>
+<li class=""><strong>GitHub Enterprise</strong>: this work would probably need to be funded</li>
+<li class=""><strong>GitLab (on-premise)</strong>: again, this might need to be funded</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="expand-oci-registry-provider-coverage">Expand OCI Registry Provider Coverage<a href="#expand-oci-registry-provider-coverage" class="hash-link" aria-label="Direct link to Expand OCI Registry Provider Coverage" title="Direct link to Expand OCI Registry Provider Coverage" translate="no">​</a></h3>
+<p><strong>Status</strong>: Tracked in <a href="https://github.com/mindersec/minder/issues/6436" target="_blank" rel="noopener noreferrer" class="">#6436</a></p>
+<p>In addition to adding support for Git Forges (where the Minder entity model is
+well-tested), Minder has some support for artifact repositories (primarily OCI
+repositories such as GHCR and DockerHub). This should be expanded, possibly
+following the <a href="#improve-rule-output-handling" class="">&quot;rule-driven child entities&quot;</a> work
+to enable automatic generation of dependent entities given a known parent.</p>
+<p>Additionally, further work should be done to enable managing OCI registry
+security properties:</p>
+<ul>
+<li class="">Verify settings (immutable tags, MFA enabled, permissions, etc) for
+repositories and possibly hierarchical namespaces</li>
+<li class="">Establish best practices for credential handling for remote OCI registries</li>
+<li class="">Expand support for validating both
+<a href="https://oras.land/docs/glossary/#artifacts" target="_blank" rel="noopener noreferrer" class="">artifacts</a> and
+<a href="https://oras.land/docs/glossary/#config" target="_blank" rel="noopener noreferrer" class="">config</a> contents as well as via the
+<a href="https://oras.land/docs/glossary/#manifest-referrers-api" target="_blank" rel="noopener noreferrer" class="">referrers API</a></li>
+<li class="">Remediation actions where appropriate</li>
+</ul>
+<p>Concrete OCI registries which may need specific implementations (particularly
+around credential handling; possibly also enumeration of registries, namespaces,
+and repositories) include:</p>
+<ul>
+<li class="">Major Cloud Providers (AWS ECR, Google GCR, Azure ACR, etc)</li>
+<li class="">Major OSS Providers (Harbor, GHCR)</li>
+</ul>
+<p>Note that most of the current OCI registries implemented do not support provider
+authentication because Minder providers do not currently support Basic (username</p>
+<ul>
+<li class="">password) auth.</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="human-identity-improvements">Human Identity Improvements<a href="#human-identity-improvements" class="hash-link" aria-label="Direct link to Human Identity Improvements" title="Direct link to Human Identity Improvements" translate="no">​</a></h3>
+<p><strong>Status</strong>: Under discussion in
+<a href="https://github.com/mindersec/minder/issues/6217" target="_blank" rel="noopener noreferrer" class="">#6217</a></p>
+<p>Minder is currently tightly coupled to Keycloak, but this is a historical
+accident, rather than an intentional design. The main requirements for an
+identity provider are:</p>
+<ol>
+<li class="">Support issuing OpenID Connect (OIDC) JWTs for authentication</li>
+<li class="">Support an API for mapping OIDC <code>sub</code> claims to user names (for listing
+access to a project)</li>
+<li class="">Notification for deleted accounts (to enable GDPR / project cleanup when
+there are no active users)</li>
+</ol>
+<p>Note that requirements 2. and 3. are not an intrinsic part of OIDC, and may
+require custom code for each provider. Additionally, Minder does not currently
+support individual projects registering their own identity providers, which
+would allow e.g. a company to grant access to their own governed identities
+(human or robot).</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="rule-identity-improvements">Rule Identity Improvements<a href="#rule-identity-improvements" class="hash-link" aria-label="Direct link to Rule Identity Improvements" title="Direct link to Rule Identity Improvements" translate="no">​</a></h3>
+<p><strong>Status</strong>: Tracked in <a href="https://github.com/mindersec/minder/issues/6437" target="_blank" rel="noopener noreferrer" class="">#6437</a></p>
+<p>Minder datasources support
+<a class="" href="/understand/providers#defining-a-data-source">using the <code>providerAuth</code> field</a>
+to authenticate rules to the API which manages the entity, but do not support
+any form of other authentication. Rule identity would be useful for calling
+third-party or custom API endpoints to collect security data (either
+company-specific like approved security exceptions, or paid-access such as
+vulnerability feeds). Minder should consider defining identities for executing
+rule types (based on the enclosing project), and using
+<a href="https://openid.net/developers/how-connect-works/" target="_blank" rel="noopener noreferrer" class="">OIDC</a> or
+<a href="https://spiffe.io/" target="_blank" rel="noopener noreferrer" class="">SPIFFE</a> to provide a unique identity for each Minder
+project or rule executing in the project. For APIs which require static secrets
+like API keys, secret stores such as Vault, OpenBao, or cloud provider APIs can
+avoid the need for building secret storage directly into Minder.</p>
+<p>GitHub Actions may
+<a href="https://docs.github.com/en/actions/reference/security/oidc#oidc-token-claims" target="_blank" rel="noopener noreferrer" class="">provide an example</a>
+of the data which might be presented alongside a Minder rule identity.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="status-sharing-and-export-badges">Status Sharing and Export (Badges)<a href="#status-sharing-and-export-badges" class="hash-link" aria-label="Direct link to Status Sharing and Export (Badges)" title="Direct link to Status Sharing and Export (Badges)" translate="no">​</a></h3>
+<p><strong>Status</strong>: Tracked in <a href="https://github.com/mindersec/minder/issues/6438" target="_blank" rel="noopener noreferrer" class="">#6438</a></p>
+<p>One use for Minder is to evaluate projects against specific conformance
+criteria, like the <a href="https://baseline.openssf.org" target="_blank" rel="noopener noreferrer" class="">OpenSSF Security Baseline</a>.
+The
+<a href="https://github.com/mindersec/minder-rules-and-profiles/tree/main/security-baseline" target="_blank" rel="noopener noreferrer" class=""><code>security-baseline</code> profile</a>
+profile enables this tracking, but there is no clear way to share this status
+(in comparison with e.g. the <a href="https://scorecard.dev/" target="_blank" rel="noopener noreferrer" class="">OpenSSF Scorecard</a> and
+<a href="https://www.bestpractices.dev/en" target="_blank" rel="noopener noreferrer" class="">Best Practices</a> badges).</p>
+<p>OpenFGA provides an underlying sharing and relationship mechanism for projects
+to be able to share <em>select</em> compliance reports either with the world or with
+select audiences (such as project sponsors). Currently, Minder does not track
+specific resources which could be used to grant &quot;badge-read&quot; or &quot;audit&quot;-type
+permissions in OpenFGA. The solution would probably need to support at least:</p>
+<ul>
+<li class="">Share all reports (policy evaluation results) for an entity.</li>
+<li class="">Share all reports (policy evaluation results) for an entity and its
+dependents.</li>
+<li class="">Share one specific report (policy evaluation results) for an entity.</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="improved-integration-testing">Improved integration testing<a href="#improved-integration-testing" class="hash-link" aria-label="Direct link to Improved integration testing" title="Direct link to Improved integration testing" translate="no">​</a></h3>
+<p><strong>Status</strong>: Tracked in <a href="https://github.com/mindersec/minder/issues/6439" target="_blank" rel="noopener noreferrer" class="">#6439</a></p>
+<p>Update <a href="https://github.com/mindersec/smoke-tests" target="_blank" rel="noopener noreferrer" class="">Minder smoke tests</a>, and run a
+subset of them automatically against Minder Helm releases, updating / adding
+tags to releases which have passed integration tests. This should simplify
+running Minder servers and keeping them up to date.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ui-for-minder-servers">UI for Minder servers<a href="#ui-for-minder-servers" class="hash-link" aria-label="Direct link to UI for Minder servers" title="Direct link to UI for Minder servers" translate="no">​</a></h3>
+<p><strong>Status</strong>: In progress by Custcodian, being considered for donation</p>
+<p>Currently private; preview available at <a href="https://console.custcodian.dev/" target="_blank" rel="noopener noreferrer" class="">https://console.custcodian.dev/</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="mcp-server-for-minder">MCP Server for Minder<a href="#mcp-server-for-minder" class="hash-link" aria-label="Direct link to MCP Server for Minder" title="Direct link to MCP Server for Minder" translate="no">​</a></h3>
+<p><strong>Status</strong>: In progress, proposed for donation by Stacklok</p>
+<p><a href="https://github.com/StacklokLabs/minder-mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/StacklokLabs/minder-mcp</a></p>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="future-considerations">Future considerations<a href="#future-considerations" class="hash-link" aria-label="Direct link to Future considerations" title="Direct link to Future considerations" translate="no">​</a></h2>
 <ul>
 <li class=""><strong>Project hierarchies:</strong> Enable users to create nested projects and group
 repositories within those projects. Projects will inherit profile rules in
 order to simplify profile and policy management.</li>
-<li class=""><strong>Automate the generation and signing of SLSA provenance statements:</strong> Enable
-users to generate SLSA provenance statements (e.g. through SLSA GitHub
-generator) and sign them with Sigstore.</li>
-<li class=""><strong>Register GitLab and Bitbucket repositories:</strong> In addition to managing GitHub
-repositories, enable users to manage configuration and policy for other source
-control providers.</li>
-<li class=""><strong>Export a Minder &#x27;badge/certification&#x27; that shows what practices a project
-followed:</strong> Create a badge that OSS maintainers and enterprise developers can
-create and share with others that asserts the Minder practices and policies
-their projects follow.</li>
-<li class=""><strong>Temporary permissions to providers vs. long-running:</strong> Policy remediation
-currently requires long-running permissions to providers such as GitHub;
-provide the option to enable temporary permissions.</li>
-<li class=""><strong>Create PRs for dependency updates:</strong> As a policy autoremediation option,
-enable Minder to automatically create pull requests to update dependencies
-based on vulnerabilities or license changes.</li>
-<li class=""><strong>Drive policy through git (config management):</strong> Enable users to dynamically
-create and maintain policies from other sources, e.g. Git, allowing for easier
-policy maintenance and the ability to manage policies through GitOps
-workflows.</li>
-<li class=""><strong>Integrations with additional OSS and commercial tools:</strong> Integrate with
-tools that run code and secrets scanning (eg Snyk), and behavior analysis (eg
-<a href="https://github.com/ossf/package-analysis" target="_blank" rel="noopener noreferrer" class="">OSSF Package Analysis tool</a>).</li>
-<li class=""><strong>Help package authors improve OpenSSF Scorecard scores:</strong> Provide policies
-to improve OpenSSF Scorecard scores through targeted remediations.</li>
-</ul></div></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/about/changelog"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Changelog</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/about/contributing"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Contributing to Minder</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#about-this-roadmap" class="table-of-contents__link toc-highlight">About this roadmap</a></li><li><a href="#how-to-contribute" class="table-of-contents__link toc-highlight">How to contribute</a></li><li><a href="#in-progress" class="table-of-contents__link toc-highlight">In progress</a></li><li><a href="#next" class="table-of-contents__link toc-highlight">Next</a></li><li><a href="#future-considerations" class="table-of-contents__link toc-highlight">Future considerations</a></li></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Docs</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/">Minder</a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/mindersec/minder" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 Minder a Series of LF Projects, LLC
+<li class=""><strong>Other Provider Coverage:</strong> OCI Registries have a fairly common and
+standardized artifact format, and <em>somewhat</em> standardized authentication
+mechanisms. There are also a number of ecosystem-specific artifact
+distribution platforms such as PyPI, npm, Homebrew, and Hugging Face which
+could benefit from Minder policy enforcement. This is probably most
+interesting for enforcement at scale (e.g. foundations or larger companies
+with OSS engagement), and would need additional research on requirements.</li>
+</ul></div></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/about/changelog"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Changelog</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/about/contributing"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Contributing to Minder</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#about-this-roadmap" class="table-of-contents__link toc-highlight">About this roadmap</a></li><li><a href="#how-to-contribute" class="table-of-contents__link toc-highlight">How to contribute</a></li><li><a href="#major-efforts" class="table-of-contents__link toc-highlight">Major Efforts</a><ul><li><a href="#improve-rule-output-handling" class="table-of-contents__link toc-highlight">Improve Rule Output Handling</a></li><li><a href="#improve-flexibility-of-pull-request-rules" class="table-of-contents__link toc-highlight">Improve Flexibility of Pull Request Rules</a></li><li><a href="#expand-source-forge-provider-coverage" class="table-of-contents__link toc-highlight">Expand Source Forge Provider Coverage</a></li><li><a href="#expand-oci-registry-provider-coverage" class="table-of-contents__link toc-highlight">Expand OCI Registry Provider Coverage</a></li><li><a href="#human-identity-improvements" class="table-of-contents__link toc-highlight">Human Identity Improvements</a></li><li><a href="#rule-identity-improvements" class="table-of-contents__link toc-highlight">Rule Identity Improvements</a></li><li><a href="#status-sharing-and-export-badges" class="table-of-contents__link toc-highlight">Status Sharing and Export (Badges)</a></li><li><a href="#improved-integration-testing" class="table-of-contents__link toc-highlight">Improved integration testing</a></li><li><a href="#ui-for-minder-servers" class="table-of-contents__link toc-highlight">UI for Minder servers</a></li><li><a href="#mcp-server-for-minder" class="table-of-contents__link toc-highlight">MCP Server for Minder</a></li></ul></li><li><a href="#future-considerations" class="table-of-contents__link toc-highlight">Future considerations</a></li></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Docs</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/">Minder</a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/mindersec/minder" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 Minder a Series of LF Projects, LLC
 For web site terms of use, trademark policy and other project policies please see https://lfprojects.org.</div></div></div></footer></div>
 </body>
 </html>
