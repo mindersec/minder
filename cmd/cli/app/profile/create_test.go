@@ -39,6 +39,7 @@ func TestCreateCommand(t *testing.T) {
 				return cli.WithRPCClient[minderv1.ProfileServiceClient](context.Background(), client)
 			},
 			GoldenFileName: "create_success.table",
+			ExpectedStderr: "Successfully created new profile named: mock-attestation-profile\n",
 		},
 		{
 			Name: "create failure connection error",

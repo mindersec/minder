@@ -47,7 +47,8 @@ func TestDeleteCommand(t *testing.T) {
 
 				return cli.WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), client)
 			},
-			GoldenFileName: "delete_single.txt",
+			ExpectEmptyStdout: true,
+			ExpectedStderr:    "\nThe following rule type(s) were successfully deleted:\nsecret_push_protection\n",
 		},
 		{
 			Name: "delete all rule types",
@@ -73,7 +74,8 @@ func TestDeleteCommand(t *testing.T) {
 
 				return cli.WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), client)
 			},
-			GoldenFileName: "delete_all.txt",
+			ExpectEmptyStdout: true,
+			ExpectedStderr:    "\nThe following rule type(s) were successfully deleted:\nsecret_push_protection\nsecret_scanning\ntest_base_file_rule\n",
 		},
 		{
 			Name: "partial failure - profile reference",
@@ -97,7 +99,8 @@ func TestDeleteCommand(t *testing.T) {
 
 				return cli.WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), client)
 			},
-			GoldenFileName: "delete_partial_failure.txt",
+			ExpectEmptyStdout: true,
+			ExpectedStderr:    "\nThe following rule type(s) are referenced by existing profiles and were not deleted:\nsecret_scanning\n\nThey are referenced by profiles:\nmy-security-profile\n",
 		},
 		{
 			Name:          "missing required flags",

@@ -76,7 +76,7 @@ func createCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	// display the name above the table
-	cmd.Printf("Successfully created new profile named: %s\n", profile.GetName())
+	cmd.PrintErrf("Successfully created new profile named: %s\n", profile.GetName())
 	table.Render()
 	return nil
 }
