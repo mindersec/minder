@@ -25,6 +25,7 @@ import (
 	"github.com/rs/zerolog"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
+	"golang.org/x/sync/singleflight"
 
 	minder_jwt "github.com/mindersec/minder/internal/auth/jwt"
 )
@@ -46,7 +47,19 @@ type Validator struct {
 	jwks           *jwk.Cache
 	aud            string
 	allowedIssuers []string
-	allowedCerts   map[string]struct{}
+
+	// certsMu guards allowedCerts. It is only held for map access, never
+	// across network calls or jwks.Register (which calls IsAllowed).
+	certsMu      sync.RWMutex
+	allowedCerts map[string]struct{}
+	// mu guards jwksURLs. It is only held for map access, never across
+	// network calls or jwks.Register.
+	mu sync.RWMutex
+	// jwksURLs maps an allowed issuer to the JWKS URL from its discovery doc.
+	jwksURLs map[string]string
+	// discovery makes concurrent first requests for an issuer share one
+	// discovery and registration.
+	discovery singleflight.Group
 }
 
 var _ minder_jwt.Validator = (*Validator)(nil)
@@ -79,10 +92,11 @@ func NewDynamicValidator(ctx context.Context, aud string, issuers []string) *Val
 		}
 	})
 
-	ret := Validator{
+	ret := &Validator{
 		aud:            aud,
 		allowedIssuers: issuers,
 		allowedCerts:   make(map[string]struct{}),
+		jwksURLs:       make(map[string]string),
 	}
 	var err error
 	ret.jwks, err = jwk.NewCache(ctx, httprc.NewClient(httprc.WithWhitelist(ret)))
@@ -90,11 +104,11 @@ func NewDynamicValidator(ctx context.Context, aud string, issuers []string) *Val
 		zerolog.Ctx(context.Background()).Warn().Err(err).Msg("Failed to create JWK cache")
 		return nil
 	}
-	return &ret
+	return ret
 }
 
 // ParseAndValidate implements jwt.Validator.
-func (m Validator) ParseAndValidate(tokenString string) (openid.Token, error) {
+func (m *Validator) ParseAndValidate(tokenString string) (openid.Token, error) {
 	if dynamicAuths != nil {
 		dynamicAuths.Add(context.Background(), 1)
 	}
@@ -137,15 +151,18 @@ func (m Validator) ParseAndValidate(tokenString string) (openid.Token, error) {
 }
 
 // getKeySet fetches the JWK set for the given issuer and adds it to the cache.
-// this implementation is not ideal:
+// Once discovery succeeds for an issuer, its JWKS URL is cached and the
+// well-known URL is not fetched again. Failed discovery is retried on the next
+// request. This implementation is not ideal:
 // - we never re-fetch the well-known URL, so if the JWKS URL changes, we won't pick it up
 // - we also never invalidate JWKS URLs in the cache or allow-list.
 // Adding the above logic would add a lot of complexity for only theoretical benefit.
 //
 // IMPORTANT CONSTRAINT: As the issuer is a potentially attacker-controlled arbitrary value
 // this function should not store any per-issuer state except for a bounded set of URLs
-// (such as the allowlist).
-func (m Validator) getKeySet(issuer string) (jwk.Set, error) {
+// (such as the allowlist). The issuer to JWKS URL cache is only written after the issuer
+// is checked against allowedIssuers, so it is bounded by that list.
+func (m *Validator) getKeySet(issuer string) (jwk.Set, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if !slices.Contains(m.allowedIssuers, issuer) {
@@ -154,20 +171,46 @@ func (m Validator) getKeySet(issuer string) (jwk.Set, error) {
 		}
 		return nil, fmt.Errorf("issuer %s is not allowed", issuer)
 	}
+	m.mu.RLock()
+	jwksUrl, ok := m.jwksURLs[issuer]
+	m.mu.RUnlock()
+	if !ok {
+		v, err, _ := m.discovery.Do(issuer, func() (any, error) {
+			return m.registerIssuer(ctx, issuer)
+		})
+		if err != nil {
+			return nil, err
+		}
+		jwksUrl = v.(string)
+	}
+	return m.jwks.Lookup(ctx, jwksUrl)
+}
+
+// registerIssuer fetches the issuer's JWKS URL, registers it with the JWK
+// cache and caches it for the issuer. Nothing is cached on failure, so the
+// next request retries.
+func (m *Validator) registerIssuer(ctx context.Context, issuer string) (string, error) {
 	jwksUrl, err := getJWKSUrlForOpenId(ctx, issuer)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch JWKS URL from openid: %w", err)
+		return "", fmt.Errorf("failed to fetch JWKS URL from openid: %w", err)
 	}
+	// A failed Register can still leave the URL registered (e.g. if the first
+	// fetch times out), so check before registering again.
 	if !m.jwks.IsRegistered(ctx, jwksUrl) {
 		if cachedIssuers != nil {
 			cachedIssuers.Add(ctx, 1)
 		}
+		m.certsMu.Lock()
 		m.allowedCerts[jwksUrl] = struct{}{}
+		m.certsMu.Unlock()
 		if err := m.jwks.Register(ctx, jwksUrl, jwk.WithMinInterval(15*time.Minute)); err != nil {
-			return nil, fmt.Errorf("failed to register JWKS URL: %w", err)
+			return "", fmt.Errorf("failed to register JWKS URL: %w", err)
 		}
 	}
-	return m.jwks.Lookup(ctx, jwksUrl)
+	m.mu.Lock()
+	m.jwksURLs[issuer] = jwksUrl
+	m.mu.Unlock()
+	return jwksUrl, nil
 }
 
 func getJWKSUrlForOpenId(ctx context.Context, issuer string) (string, error) {
@@ -201,7 +244,9 @@ func getJWKSUrlForOpenId(ctx context.Context, issuer string) (string, error) {
 }
 
 // IsAllowed implements httprc.Whitelist
-func (m Validator) IsAllowed(url string) bool {
+func (m *Validator) IsAllowed(url string) bool {
+	m.certsMu.RLock()
+	defer m.certsMu.RUnlock()
 	_, ok := m.allowedCerts[url]
 	return ok
 }
