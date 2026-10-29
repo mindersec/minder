@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -107,4 +108,17 @@ func TestGetAuthFlowsAsStrings(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+//nolint:paralleltest // Cannot run in parallel because it swaps global state
+func TestProviderRootCommand(t *testing.T) {
+	tests := []cli.CmdTestCase{
+		{
+			Name:           "provider root command shows help",
+			Args:           []string{"provider"},
+			GoldenFileName: "provider_root.help",
+		},
+	}
+
+	cli.RunCmdTests(t, tests, ProviderCmd)
 }
