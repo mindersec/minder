@@ -27,7 +27,9 @@ import (
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
+	artif "github.com/mindersec/minder/internal/providers/artifact"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -260,3 +262,93 @@ func TestGetArtifactVersions_ReturnsErrorOnNonNotFound(t *testing.T) {
 type alwaysIncludeFilter struct{}
 
 func (*alwaysIncludeFilter) IsSkippable(_ time.Time, _ []string) error { return nil }
+
+func TestGetArtifactVersions(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(registry.New(registry.Logger(log.New(io.Discard, "", 0))))
+	t.Cleanup(srv.Close)
+	host := strings.TrimPrefix(srv.URL, "http://")
+	created := time.Now().UTC().Truncate(time.Second)
+	imageAt := func(at time.Time) v1.Image {
+		t.Helper()
+		img, err := mutate.ConfigFile(empty.Image, &v1.ConfigFile{
+			Created: v1.Time{Time: at}, OS: "linux", Architecture: "amd64",
+		})
+		require.NoError(t, err)
+		return img
+	}
+	img := imageAt(created)
+	other := imageAt(created.Add(-time.Hour))
+	old := imageAt(created.AddDate(-1, 0, 0))
+	idx := mutate.AppendManifests(empty.Index, mutate.IndexAddendum{
+		Add:        img,
+		Descriptor: v1.Descriptor{Platform: &v1.Platform{OS: "linux", Architecture: "amd64"}},
+	})
+
+	for _, entry := range []struct {
+		img  v1.Image
+		tags []string
+	}{
+		{img, []string{"latest", "stable", "sha256-test.sig"}},
+		{other, []string{"beta"}},
+		{old, []string{"old", "old-stable"}},
+	} {
+		for _, tag := range entry.tags {
+			ref, err := name.NewTag(host + "/myimage:" + tag)
+			require.NoError(t, err)
+			require.NoError(t, remote.Write(ref, entry.img))
+		}
+	}
+	for _, tag := range []string{"multi-latest", "multi-stable"} {
+		ref, err := name.NewTag(host + "/myimage:" + tag)
+		require.NoError(t, err)
+		require.NoError(t, remote.WriteIndex(ref, idx))
+	}
+	imgDigest, err := img.Digest()
+	require.NoError(t, err)
+	otherDigest, err := other.Digest()
+	require.NoError(t, err)
+	idxDigest, err := idx.Digest()
+	require.NoError(t, err)
+	require.NotEqual(t, imgDigest, idxDigest)
+
+	imageVersion := &minderv1.ArtifactVersion{
+		Sha: imgDigest.String(), Tags: []string{"latest", "stable"}, CreatedAt: timestamppb.New(created),
+	}
+	otherVersion := &minderv1.ArtifactVersion{
+		Sha: otherDigest.String(), Tags: []string{"beta"}, CreatedAt: timestamppb.New(created.Add(-time.Hour)),
+	}
+	indexVersion := &minderv1.ArtifactVersion{
+		Sha: idxDigest.String(), Tags: []string{"multi-latest", "multi-stable"}, CreatedAt: timestamppb.New(created),
+	}
+	o := New(nil, host, host)
+
+	for _, tt := range []struct {
+		name  string
+		tags  []string
+		regex string
+		want  []*minderv1.ArtifactVersion
+	}{
+		{name: "all tags on one digest", tags: []string{"latest", "stable"}, want: []*minderv1.ArtifactVersion{imageVersion}},
+		{name: "tags on different digests do not match", tags: []string{"latest", "beta"}},
+		{name: "single tag returns all version tags", tags: []string{"stable"}, want: []*minderv1.ArtifactVersion{imageVersion}},
+		{name: "regex matches any version tag", regex: "^stable$", want: []*minderv1.ArtifactVersion{imageVersion}},
+		{name: "no filter returns unique versions in tag order", want: []*minderv1.ArtifactVersion{otherVersion, imageVersion, indexVersion}},
+		{name: "old images remain excluded", tags: []string{"old", "old-stable"}},
+		{name: "digest tags remain excluded", tags: []string{"sha256-test.sig"}},
+		{name: "index retains top-level digest", tags: []string{"multi-latest", "multi-stable"}, want: []*minderv1.ArtifactVersion{indexVersion}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			filter, err := artif.BuildFilter(tt.tags, tt.regex)
+			require.NoError(t, err)
+			got, err := o.GetArtifactVersions(context.Background(), &minderv1.Artifact{Name: "myimage"}, filter)
+			require.NoError(t, err)
+			require.Len(t, got, len(tt.want))
+			for i, want := range tt.want {
+				assert.Equal(t, want, got[i])
+			}
+		})
+	}
+}
