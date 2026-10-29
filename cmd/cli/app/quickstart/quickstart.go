@@ -209,7 +209,10 @@ func quickstartCommand(
 	defer cancel()
 
 	// Enroll provider
-	err = minderprov.EnrollProviderCommand(ctx, cmd, []string{}, conn)
+	ctx = cli.WithRPCClient[minderv1.ProvidersServiceClient](ctx, minderv1.NewProvidersServiceClient(conn))
+	ctx = cli.WithRPCClient[minderv1.OAuthServiceClient](ctx, minderv1.NewOAuthServiceClient(conn))
+	cmd.SetContext(ctx)
+	err = minderprov.EnrollProviderCmd(cmd, []string{})
 	if err != nil {
 		return cli.MessageAndError("Error enrolling provider", err)
 	}
