@@ -116,7 +116,7 @@ func enrollProviderWithClients(
 		}
 	}
 
-	config, err := providerConfigFromArg(cfgFlag, cmd.InOrStdin())
+	config, err := providerConfigFromArg(ctx, cfgFlag, cmd.InOrStdin())
 	if err != nil {
 		return cli.MessageAndError("Error reading provider configuration", err)
 	}
@@ -339,12 +339,12 @@ func callBackServer(ctx context.Context, cmd *cobra.Command, project string, por
 	}
 }
 
-func providerConfigFromArg(configSource string, dashReader io.Reader) (*structpb.Struct, error) {
+func providerConfigFromArg(ctx context.Context, configSource string, dashReader io.Reader) (*structpb.Struct, error) {
 	if configSource == "" {
 		return nil, nil
 	}
 
-	reader, closer, err := util.OpenFileArg(configSource, dashReader)
+	reader, closer, err := util.OpenFileArgContext(ctx, configSource, dashReader)
 	if err != nil {
 		return nil, fmt.Errorf("error opening file arg: %w", err)
 	}

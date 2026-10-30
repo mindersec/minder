@@ -25,7 +25,7 @@ func ExecOnOneProfile(ctx context.Context, t table.Table, f string, dashOpen io.
 	ctx, cancel := cli.GetAppContext(ctx, viper.GetViper())
 	defer cancel()
 
-	reader, closer, err := util.OpenFileArg(f, dashOpen)
+	reader, closer, err := util.OpenFileArgContext(ctx, f, dashOpen)
 	if err != nil {
 		return nil, fmt.Errorf("error opening file arg: %w", err)
 	}

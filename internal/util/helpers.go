@@ -5,10 +5,12 @@
 package util
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"math"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -85,30 +87,31 @@ func GetBytesFromProto(message proto.Message) ([]byte, error) {
 	return m.Marshal(message)
 }
 
-// OpenFileArg opens a file argument and returns a descriptor, closer, and error
-// If the file is "-", it will return whatever is passed in as dashOpen and a no-op closer
+// OpenFileArg opens a file argument and returns a descriptor, closer, and error.
+// If the file is "-", it will return whatever is passed in as dashOpen and a no-op closer.
 func OpenFileArg(f string, dashOpen io.Reader) (desc io.Reader, closer func(), err error) {
-	if f == "-" {
-		desc = dashOpen
-		closer = func() {}
-		return desc, closer, nil
-	}
+	return OpenFileArgContext(context.Background(), f, dashOpen)
+}
 
-	f = filepath.Clean(f)
-	ftemp, err := os.Open(f)
+// IsHTTPURL reports whether f uses the HTTP or HTTPS scheme.
+func IsHTTPURL(f string) bool {
+	parsed, err := url.Parse(f)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error opening file: %w", err)
+		return false
 	}
+	return parsed.Opaque == "" && parsed.Hostname() != "" &&
+		(parsed.Scheme == "http" || parsed.Scheme == "https")
+}
 
-	closer = func() {
-		err := ftemp.Close()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error closing file: %v\n", err)
+// FileArgExt returns the extension of a local file path or an HTTP(S) URL path.
+func FileArgExt(f string) string {
+	if IsHTTPURL(f) {
+		parsed, err := url.Parse(f)
+		if err == nil {
+			return filepath.Ext(parsed.Path)
 		}
 	}
-
-	desc = ftemp
-	return desc, closer, nil
+	return filepath.Ext(f)
 }
 
 // ExpandedFile is a struct to hold a file path and whether it was expanded
@@ -124,6 +127,13 @@ func ExpandFileArgs(files ...string) ([]ExpandedFile, error) {
 	var expandedFiles []ExpandedFile
 	for _, f := range files {
 		if f == "-" {
+			expandedFiles = append(expandedFiles, ExpandedFile{
+				Path:     f,
+				Expanded: false,
+			})
+			continue
+		}
+		if IsHTTPURL(f) {
 			expandedFiles = append(expandedFiles, ExpandedFile{
 				Path:     f,
 				Expanded: false,

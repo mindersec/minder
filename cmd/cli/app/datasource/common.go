@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 
@@ -33,7 +32,7 @@ func executeOnOneDataSource(
 	ctx, cancel := cli.GetAppContext(ctx, viper.GetViper())
 	defer cancel()
 
-	reader, closer, err := util.OpenFileArg(f, dashOpen)
+	reader, closer, err := util.OpenFileArgContext(ctx, f, dashOpen)
 	if err != nil {
 		return fmt.Errorf("error opening file arg: %w", err)
 	}
@@ -99,7 +98,7 @@ func validateFilesArg(files []string) error {
 func shouldSkipFile(f string) bool {
 	// if the file is not json or yaml, skip it
 	// Get file extension
-	ext := filepath.Ext(f)
+	ext := util.FileArgExt(f)
 	switch ext {
 	case ".yaml", ".yml", ".json":
 		return false
