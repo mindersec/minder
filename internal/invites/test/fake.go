@@ -47,6 +47,7 @@ type storedInvite struct {
 	sponsorDisplay string
 	createdAt      time.Time
 	updatedAt      time.Time
+	expiresAt      time.Time
 }
 
 // FakeInviteService is an in-memory implementation of InviteService for testing
@@ -75,6 +76,7 @@ func (f *FakeInviteService) CreateInvite(
 	targetProject uuid.UUID,
 	authzRole authz.Role,
 	inviteeEmail string,
+	expiresAt time.Time,
 ) (*minder.Invitation, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -96,6 +98,9 @@ func (f *FakeInviteService) CreateInvite(
 
 	// Create new invite
 	now := cmp.Or(f.Time, time.Now())
+	if expiresAt.IsZero() {
+		expiresAt = now.Add(7 * 24 * time.Hour)
+	}
 	invite := &storedInvite{
 		code:           invites.GenerateCode(),
 		email:          inviteeEmail,
@@ -106,6 +111,7 @@ func (f *FakeInviteService) CreateInvite(
 		sponsorDisplay: identity.Human(),
 		createdAt:      now,
 		updatedAt:      now,
+		expiresAt:      expiresAt,
 	}
 
 	f.invites[key] = invite
@@ -126,8 +132,8 @@ func (f *FakeInviteService) CreateInvite(
 		Sponsor:        invite.sponsor,
 		SponsorDisplay: invite.sponsorDisplay,
 		CreatedAt:      timestamppb.New(invite.createdAt),
-		ExpiresAt:      invites.GetExpireIn7Days(invite.updatedAt),
-		Expired:        invites.IsExpired(invite.updatedAt),
+		ExpiresAt:      timestamppb.New(invite.expiresAt),
+		Expired:        now.After(invite.expiresAt),
 	}, nil
 }
 
@@ -140,6 +146,7 @@ func (f *FakeInviteService) UpdateInvite(
 	targetProject uuid.UUID,
 	authzRole authz.Role,
 	inviteeEmail string,
+	expiresAt time.Time,
 ) (*minder.Invitation, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -163,6 +170,7 @@ func (f *FakeInviteService) UpdateInvite(
 	// Update the invite
 	invite.role = authzRole
 	invite.updatedAt = cmp.Or(f.Time, time.Now())
+	invite.expiresAt = expiresAt
 	// codes map is already correct since we're updating in place
 
 	inviteURL := ""
@@ -180,8 +188,8 @@ func (f *FakeInviteService) UpdateInvite(
 		Sponsor:        invite.sponsor,
 		SponsorDisplay: invite.sponsorDisplay,
 		CreatedAt:      timestamppb.New(invite.createdAt),
-		ExpiresAt:      invites.GetExpireIn7Days(invite.updatedAt),
-		Expired:        invites.IsExpired(invite.updatedAt),
+		ExpiresAt:      invites.GetInviteExpiration(invite.expiresAt, invite.updatedAt),
+		Expired:        invites.IsInviteExpired(invite.expiresAt, invite.updatedAt),
 		EmailSkipped:   emailSkipped,
 	}, nil
 }

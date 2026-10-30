@@ -14,15 +14,16 @@ import (
 
 const createInvitation = `-- name: CreateInvitation :one
 
-INSERT INTO user_invites (code, email, role, project, sponsor) VALUES ($1, $2, $3, $4, $5) RETURNING code, email, role, project, sponsor, created_at, updated_at
+INSERT INTO user_invites (code, email, role, project, sponsor, expires_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING code, email, role, project, sponsor, created_at, updated_at, expires_at
 `
 
 type CreateInvitationParams struct {
-	Code    string    `json:"code"`
-	Email   string    `json:"email"`
-	Role    string    `json:"role"`
-	Project uuid.UUID `json:"project"`
-	Sponsor int32     `json:"sponsor"`
+	Code      string    `json:"code"`
+	Email     string    `json:"email"`
+	Role      string    `json:"role"`
+	Project   uuid.UUID `json:"project"`
+	Sponsor   int32     `json:"sponsor"`
+	ExpiresAt time.Time `json:"expires_at"`
 }
 
 // CreateInvitation creates a new invitation. The code is a secret that is sent
@@ -37,6 +38,7 @@ func (q *Queries) CreateInvitation(ctx context.Context, arg CreateInvitationPara
 		arg.Role,
 		arg.Project,
 		arg.Sponsor,
+		arg.ExpiresAt,
 	)
 	var i UserInvite
 	err := row.Scan(
@@ -47,13 +49,14 @@ func (q *Queries) CreateInvitation(ctx context.Context, arg CreateInvitationPara
 		&i.Sponsor,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ExpiresAt,
 	)
 	return i, err
 }
 
 const deleteInvitation = `-- name: DeleteInvitation :one
 
-DELETE FROM user_invites WHERE code = $1 RETURNING code, email, role, project, sponsor, created_at, updated_at
+DELETE FROM user_invites WHERE code = $1 RETURNING code, email, role, project, sponsor, created_at, updated_at, expires_at
 `
 
 // DeleteInvitation deletes an invitation by its code. This is intended to be
@@ -70,13 +73,14 @@ func (q *Queries) DeleteInvitation(ctx context.Context, code string) (UserInvite
 		&i.Sponsor,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ExpiresAt,
 	)
 	return i, err
 }
 
 const getInvitationByCode = `-- name: GetInvitationByCode :one
 
-SELECT user_invites.code, user_invites.email, user_invites.role, user_invites.project, user_invites.sponsor, user_invites.created_at, user_invites.updated_at, users.identity_subject
+SELECT user_invites.code, user_invites.email, user_invites.role, user_invites.project, user_invites.sponsor, user_invites.created_at, user_invites.updated_at, user_invites.expires_at, users.identity_subject
 FROM user_invites
   JOIN users ON user_invites.sponsor = users.id
 WHERE code = $1
@@ -90,6 +94,7 @@ type GetInvitationByCodeRow struct {
 	Sponsor         int32     `json:"sponsor"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
+	ExpiresAt       time.Time `json:"expires_at"`
 	IdentitySubject string    `json:"identity_subject"`
 }
 
@@ -108,6 +113,7 @@ func (q *Queries) GetInvitationByCode(ctx context.Context, code string) (GetInvi
 		&i.Sponsor,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ExpiresAt,
 		&i.IdentitySubject,
 	)
 	return i, err
@@ -115,7 +121,7 @@ func (q *Queries) GetInvitationByCode(ctx context.Context, code string) (GetInvi
 
 const getInvitationsByEmail = `-- name: GetInvitationsByEmail :many
 
-SELECT user_invites.code, user_invites.email, user_invites.role, user_invites.project, user_invites.sponsor, user_invites.created_at, user_invites.updated_at, users.identity_subject
+SELECT user_invites.code, user_invites.email, user_invites.role, user_invites.project, user_invites.sponsor, user_invites.created_at, user_invites.updated_at, user_invites.expires_at, users.identity_subject
 FROM user_invites
   JOIN users ON user_invites.sponsor = users.id
 WHERE email = $1
@@ -129,6 +135,7 @@ type GetInvitationsByEmailRow struct {
 	Sponsor         int32     `json:"sponsor"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
+	ExpiresAt       time.Time `json:"expires_at"`
 	IdentitySubject string    `json:"identity_subject"`
 }
 
@@ -156,6 +163,7 @@ func (q *Queries) GetInvitationsByEmail(ctx context.Context, email string) ([]Ge
 			&i.Sponsor,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ExpiresAt,
 			&i.IdentitySubject,
 		); err != nil {
 			return nil, err
@@ -173,7 +181,7 @@ func (q *Queries) GetInvitationsByEmail(ctx context.Context, email string) ([]Ge
 
 const getInvitationsByEmailAndProject = `-- name: GetInvitationsByEmailAndProject :many
 
-SELECT user_invites.code, user_invites.email, user_invites.role, user_invites.project, user_invites.sponsor, user_invites.created_at, user_invites.updated_at, users.identity_subject
+SELECT user_invites.code, user_invites.email, user_invites.role, user_invites.project, user_invites.sponsor, user_invites.created_at, user_invites.updated_at, user_invites.expires_at, users.identity_subject
 FROM user_invites
   JOIN users ON user_invites.sponsor = users.id
 WHERE email = $1 AND project = $2
@@ -192,6 +200,7 @@ type GetInvitationsByEmailAndProjectRow struct {
 	Sponsor         int32     `json:"sponsor"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
+	ExpiresAt       time.Time `json:"expires_at"`
 	IdentitySubject string    `json:"identity_subject"`
 }
 
@@ -213,6 +222,7 @@ func (q *Queries) GetInvitationsByEmailAndProject(ctx context.Context, arg GetIn
 			&i.Sponsor,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ExpiresAt,
 			&i.IdentitySubject,
 		); err != nil {
 			return nil, err
@@ -230,7 +240,7 @@ func (q *Queries) GetInvitationsByEmailAndProject(ctx context.Context, arg GetIn
 
 const listInvitationsForProject = `-- name: ListInvitationsForProject :many
 
-SELECT user_invites.email, role, users.identity_subject, user_invites.created_at, user_invites.updated_at
+SELECT user_invites.email, role, users.identity_subject, user_invites.created_at, user_invites.updated_at, user_invites.expires_at
 FROM user_invites
   JOIN users ON user_invites.sponsor = users.id
 WHERE project = $1
@@ -242,6 +252,7 @@ type ListInvitationsForProjectRow struct {
 	IdentitySubject string    `json:"identity_subject"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
+	ExpiresAt       time.Time `json:"expires_at"`
 }
 
 // ListInvitationsForProject collects the information visible to project
@@ -263,6 +274,7 @@ func (q *Queries) ListInvitationsForProject(ctx context.Context, project uuid.UU
 			&i.IdentitySubject,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ExpiresAt,
 		); err != nil {
 			return nil, err
 		}
@@ -279,19 +291,20 @@ func (q *Queries) ListInvitationsForProject(ctx context.Context, project uuid.UU
 
 const updateInvitationRole = `-- name: UpdateInvitationRole :one
 
-UPDATE user_invites SET role = $2, updated_at = NOW() WHERE code = $1 RETURNING code, email, role, project, sponsor, created_at, updated_at
+UPDATE user_invites SET role = $2, expires_at = $3, updated_at = NOW() WHERE code = $1 RETURNING code, email, role, project, sponsor, created_at, updated_at, expires_at
 `
 
 type UpdateInvitationRoleParams struct {
-	Code string `json:"code"`
-	Role string `json:"role"`
+	Code      string    `json:"code"`
+	Role      string    `json:"role"`
+	ExpiresAt time.Time `json:"expires_at"`
 }
 
 // UpdateInvitationRole updates an invitation by its code. This is intended to be
 // called by a user who has issued an invitation and then decided to change the
-// role of the invitee.
+// role of the invitee, or to renew an existing invitation.
 func (q *Queries) UpdateInvitationRole(ctx context.Context, arg UpdateInvitationRoleParams) (UserInvite, error) {
-	row := q.db.QueryRowContext(ctx, updateInvitationRole, arg.Code, arg.Role)
+	row := q.db.QueryRowContext(ctx, updateInvitationRole, arg.Code, arg.Role, arg.ExpiresAt)
 	var i UserInvite
 	err := row.Scan(
 		&i.Code,
@@ -301,6 +314,7 @@ func (q *Queries) UpdateInvitationRole(ctx context.Context, arg UpdateInvitation
 		&i.Sponsor,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ExpiresAt,
 	)
 	return i, err
 }
