@@ -77,11 +77,35 @@ func (a *addOriginatingEntityStrategy) GetEntity(
 			RegisterWithProvider:       false, // No webhooks for child entities
 			PublishReconciliationEvent: false, // Explained above
 		})
-	if err != nil {
+	if db.ErrIsUniqueViolation(err) {
+		// The entity is already registered (e.g. a repeated webhook event or a new
+		// version of an existing package). Treat this as an update and refresh the
+		// existing entity instead of dropping the event.
+		return a.refreshExistingEntity(ctx, entMsg)
+	} else if err != nil {
 		return nil, fmt.Errorf("error creating entity: %w", err)
 	}
 
 	return childEwp, nil
+}
+
+func (a *addOriginatingEntityStrategy) refreshExistingEntity(
+	ctx context.Context, entMsg *message.HandleEntityAndDoMessage,
+) (*models.EntityWithProperties, error) {
+	ewp, err := getEntityInner(
+		ctx,
+		entMsg.Entity.Type, entMsg.Entity.GetByProps, entMsg.Hint,
+		a.propSvc,
+		nil)
+	if err != nil {
+		return nil, fmt.Errorf("error getting existing entity: %w", err)
+	}
+
+	if err := a.propSvc.RetrieveAllPropertiesForEntity(ctx, ewp, a.provMgr, nil); err != nil {
+		return nil, fmt.Errorf("error refreshing existing entity: %w", err)
+	}
+
+	return ewp, nil
 }
 
 // GetName returns the name of the strategy. Used for debugging
