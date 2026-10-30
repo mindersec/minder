@@ -4,6 +4,7 @@
 package provider
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -16,7 +17,6 @@ import (
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -49,19 +49,37 @@ var enrollCmd = &cobra.Command{
 	Long: `The minder provider enroll command allows a user to enroll a provider
 such as GitHub into the minder control plane. Once enrolled, users can perform
 actions such as adding repositories.`,
-	RunE: cli.GRPCClientWrapRunE(EnrollProviderCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		return viper.BindPFlags(cmd.Flags())
+	},
+	RunE: EnrollProviderCmd,
 }
 
-// EnrollProviderCommand is the command for enrolling a provider
-func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	oauthClient := minderv1.NewOAuthServiceClient(conn)
-	providerClient := minderv1.NewProvidersServiceClient(conn)
-
-	// TODO: get rid of provider flag, only use class
-	provider := viper.GetString("provider")
-	if provider == "" {
-		provider = viper.GetString("class")
+// EnrollProviderCmd is the cobra command function for enrolling a provider.
+func EnrollProviderCmd(cmd *cobra.Command, _ []string) error {
+	providerClient, provCleanup, err := cli.GetCLIClient(cmd, minderv1.NewProvidersServiceClient)
+	if err != nil {
+		return err
 	}
+	defer provCleanup()
+
+	oauthClient, oauthCleanup, err := cli.GetCLIClient(cmd, minderv1.NewOAuthServiceClient)
+	if err != nil {
+		return err
+	}
+	defer oauthCleanup()
+
+	return enrollProviderWithClients(cmd.Context(), cmd, providerClient, oauthClient)
+}
+
+func enrollProviderWithClients(
+	ctx context.Context,
+	cmd *cobra.Command,
+	providerClient minderv1.ProvidersServiceClient,
+	oauthClient minderv1.OAuthServiceClient,
+) error {
+	// TODO: get rid of provider flag, only use class
+	provider := cmp.Or(viper.GetString("provider"), viper.GetString("class"))
 	providerName := viper.GetString("name")
 	if providerName == "" {
 		providerName = provider
@@ -161,7 +179,7 @@ func enrollUsingToken(
 		return cli.MessageAndError("Error storing token", err)
 	}
 
-	cmd.Println("Provider enrolled successfully")
+	cmd.PrintErrln("Provider enrolled successfully")
 	return nil
 }
 
@@ -230,9 +248,9 @@ func enrollUsingOAuth2Flow(
 	success := <-done
 
 	if success {
-		cmd.Println("Provider enrolled successfully")
+		cmd.PrintErrln("Provider enrolled successfully")
 	} else {
-		cmd.Println("Failed to enroll provider")
+		cmd.PrintErrln("Failed to enroll provider")
 	}
 	return nil
 }
