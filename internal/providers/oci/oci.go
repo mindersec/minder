@@ -216,7 +216,8 @@ func (ov *OCI) GetArtifactVersions(
 		return nil, fmt.Errorf("error retrieving artifact versions: %w", err)
 	}
 
-	out := make([]*minderv1.ArtifactVersion, 0, len(tags))
+	versions := make([]*minderv1.ArtifactVersion, 0, len(tags))
+	byDigest := make(map[string]*minderv1.ArtifactVersion, len(tags))
 	for _, t := range tags {
 		img, err := ov.getImage(ctx, artifact.GetName(), t)
 		if err != nil {
@@ -240,23 +241,34 @@ func (ov *OCI) GetArtifactVersions(
 			return nil, fmt.Errorf("unable to get creation time for tag %s: %w", t, err)
 		}
 
-		if err := filter.IsSkippable(createdAt, []string{t}); err != nil {
-			zerolog.Ctx(ctx).Debug().Str("name", artifact.GetName()).Strs("tags", tags).
-				Str("reason", err.Error()).Msg("skipping artifact version")
-			continue
-		}
-
 		// TODO: Consider caching
 		digest, err := ov.GetDigest(ctx, artifact.GetName(), t)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get digest for tag %s: %w", t, err)
 		}
 
-		out = append(out, &minderv1.ArtifactVersion{
+		if version, ok := byDigest[digest]; ok {
+			version.Tags = append(version.Tags, t)
+			continue
+		}
+		version := &minderv1.ArtifactVersion{
 			Tags:      []string{t},
 			Sha:       digest,
 			CreatedAt: timestamppb.New(createdAt),
-		})
+		}
+		byDigest[digest] = version
+		versions = append(versions, version)
+	}
+
+	// A tag-list filter requires every requested tag on the same version.
+	out := make([]*minderv1.ArtifactVersion, 0, len(versions))
+	for _, version := range versions {
+		if err := filter.IsSkippable(version.CreatedAt.AsTime(), version.Tags); err != nil {
+			zerolog.Ctx(ctx).Debug().Str("name", artifact.GetName()).Strs("tags", version.Tags).
+				Str("reason", err.Error()).Msg("skipping artifact version")
+			continue
+		}
+		out = append(out, version)
 	}
 
 	return out, nil
