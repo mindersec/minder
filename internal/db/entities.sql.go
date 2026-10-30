@@ -405,6 +405,68 @@ func (q *Queries) GetEntitiesByType(ctx context.Context, arg GetEntitiesByTypePa
 	return items, nil
 }
 
+const getEntitiesByTypePaginated = `-- name: GetEntitiesByTypePaginated :many
+
+SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
+WHERE entity_instances.entity_type = $1
+    AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+         OR entity_instances.provider_id = $2)
+    AND entity_instances.project_id = ANY($3::uuid[])
+    AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+         OR entity_instances.id > $4::uuid)
+ORDER BY entity_instances.id ASC
+LIMIT $5
+`
+
+type GetEntitiesByTypePaginatedParams struct {
+	EntityType Entities    `json:"entity_type"`
+	ProviderID uuid.UUID   `json:"provider_id"`
+	Projects   []uuid.UUID `json:"projects"`
+	Cursor     uuid.UUID   `json:"cursor"`
+	PageSize   int32       `json:"page_size"`
+}
+
+// GetEntitiesByTypePaginated retrieves entities of a given type with cursor-based pagination.
+// The cursor is the UUID of the last seen entity (exclusive lower bound on id).
+// Results are ordered by id ASC for stable pagination.
+// A zero UUID cursor means start from the beginning.
+func (q *Queries) GetEntitiesByTypePaginated(ctx context.Context, arg GetEntitiesByTypePaginatedParams) ([]EntityInstance, error) {
+	rows, err := q.db.QueryContext(ctx, getEntitiesByTypePaginated,
+		arg.EntityType,
+		arg.ProviderID,
+		pq.Array(arg.Projects),
+		arg.Cursor,
+		arg.PageSize,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []EntityInstance{}
+	for rows.Next() {
+		var i EntityInstance
+		if err := rows.Scan(
+			&i.ID,
+			&i.EntityType,
+			&i.Name,
+			&i.ProjectID,
+			&i.ProviderID,
+			&i.CreatedAt,
+			&i.OriginatedFrom,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getEntitiesWithProps = `-- name: GetEntitiesWithProps :many
 
 SELECT entity_instances.id, entity_instances.entity_type, entity_instances.name, entity_instances.project_id, entity_instances.provider_id, entity_instances.created_at, entity_instances.originated_from,
