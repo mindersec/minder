@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 
@@ -31,7 +30,7 @@ func execOnOneRuleType(
 	proj string,
 	exec func(context.Context, string, *minderv1.RuleType) (*minderv1.RuleType, error),
 ) error {
-	resources, err := fileconvert.ReadFromPath(cmd.Printf, f)
+	resources, err := fileconvert.ReadFromPathContext(cmd.Context(), cmd.Printf, f)
 	if err != nil {
 		return err
 	}
@@ -97,7 +96,7 @@ func printWarnings(cmd *cobra.Command, warnings []string) {
 func shouldSkipFile(f string) bool {
 	// if the file is not json or yaml, skip it
 	// Get file extension
-	ext := filepath.Ext(f)
+	ext := util.FileArgExt(f)
 	switch ext {
 	case ".yaml", ".yml", ".json", ".rego":
 		return false

@@ -18,6 +18,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v3"
 
+	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -56,17 +57,9 @@ var knownResourceTypes = []string{
 // or nil if the file is not of the appropriate type.
 func DecoderForFile(path string) (Decoder, io.Closer) {
 	path = filepath.Clean(path)
-	ext := filepath.Ext(path)
-	var builder func(io.Reader) Decoder
-	// we return functions here so that we can early-exit without opening the file if the extension is unmatched.
-	switch ext {
-	case ".json":
-		builder = func(r io.Reader) Decoder { return json.NewDecoder(r) }
-	case ".yaml", ".yml":
-		builder = func(r io.Reader) Decoder { return yaml.NewDecoder(r) }
-	case ".rego":
-		builder = func(r io.Reader) Decoder { return &regoDecoder{filename: path, file: r} }
-	default:
+	builder := decoderBuilder(path)
+	// Return early without opening the file if the extension is unmatched.
+	if builder == nil {
 		return nil, nil
 	}
 	file, err := os.Open(path)
@@ -74,6 +67,30 @@ func DecoderForFile(path string) (Decoder, io.Closer) {
 		return nil, nil
 	}
 	return builder(file), file
+}
+
+// DecoderForReader returns a Decoder for a stream named by path, or nil if the
+// path does not have a supported extension.
+// The path extension determines decoding because GitHub raw YAML may be served as text/plain.
+func DecoderForReader(path string, input io.Reader) Decoder {
+	builder := decoderBuilder(path)
+	if builder == nil {
+		return nil
+	}
+	return builder(input)
+}
+
+func decoderBuilder(path string) func(io.Reader) Decoder {
+	switch util.FileArgExt(path) {
+	case ".json":
+		return func(r io.Reader) Decoder { return json.NewDecoder(r) }
+	case ".yaml", ".yml":
+		return func(r io.Reader) Decoder { return yaml.NewDecoder(r) }
+	case ".rego":
+		return func(r io.Reader) Decoder { return &regoDecoder{filename: path, file: r} }
+	default:
+		return nil
+	}
 }
 
 // WriteResource outputs a Minder proto resource to an existing Encoder.

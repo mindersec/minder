@@ -41,7 +41,7 @@ func applyCommand(cmd *cobra.Command, args []string) error {
 	if len(argFiles) > 0 {
 		fileNames = argFiles
 	}
-	objects, err := fileconvert.ResourcesFromPaths(cmd.Printf, fileNames...)
+	objects, err := fileconvert.ResourcesFromPathsContext(cmd.Context(), cmd.Printf, fileNames...)
 	if err != nil {
 		return cli.MessageAndError("Error reading resources", err)
 	}
@@ -124,5 +124,5 @@ func init() {
 	RootCmd.AddCommand(applyCmd)
 	// Flags
 	applyCmd.Flags().StringP("project", "j", "", "ID of the project")
-	applyCmd.Flags().StringSliceP("file", "f", []string{}, "Input file or directory")
+	applyCmd.Flags().StringSliceP("file", "f", []string{}, "Input file, directory, or HTTP(S) URL")
 }

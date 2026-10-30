@@ -16,7 +16,7 @@ minder profile apply [files] [flags]
 ### Options
 
 ```
-  -f, --file stringArray   Path to the YAML defining the profile (or - for stdin). Can be specified multiple files
+  -f, --file stringArray   Path or HTTP(S) URL to the YAML defining the profile (or - for stdin). Can be specified multiple files
   -h, --help               help for apply
 ```
 

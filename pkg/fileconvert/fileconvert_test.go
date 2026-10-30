@@ -269,6 +269,17 @@ func TestKnownResourceTypesInSync(t *testing.T) {
 	}
 }
 
+func TestDecoderForHTTPURLWithQueryString(t *testing.T) {
+	t.Parallel()
+	const path = "https://example.com/profile.yaml?raw=1"
+	input := strings.NewReader("type: profile\nversion: v1\nname: remote-profile\nrepository:\n  - type: sample-rule\n    def: {}\n")
+	decoder := DecoderForReader(path, input)
+	require.NotNil(t, decoder)
+	resource, err := ReadResourceTyped[*minderv1.Profile](decoder)
+	require.NoError(t, err)
+	assert.Equal(t, "remote-profile", resource.GetName())
+}
+
 func TestReadAll(t *testing.T) {
 	t.Parallel()
 
