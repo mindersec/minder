@@ -67,6 +67,11 @@ func (r *Runner) newTestCaseRunner(
 	tr.predeclared["body"] = starlark.NewBuiltin("body", builtinBody)
 	tr.predeclared["code"] = starlark.NewBuiltin("code", builtinCode)
 	tr.predeclared["json"] = json.Module
+	tr.predeclared["artifact"] = starlark.NewBuiltin("artifact", builtinArtifact)
+	tr.predeclared["version"] = starlark.NewBuiltin("version", builtinVersion)
+	tr.predeclared["signed"] = starlark.NewBuiltin("signed", builtinSigned)
+	tr.predeclared["unsigned"] = starlark.NewBuiltin("unsigned", builtinUnsigned)
+	tr.predeclared["verification_json"] = starlark.NewBuiltin("verification_json", builtinVerificationJSON)
 
 	for k, v := range r.assertMod {
 		tr.predeclared[k] = v
