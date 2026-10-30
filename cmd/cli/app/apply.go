@@ -35,15 +35,32 @@ var applyCmd = &cobra.Command{
 //
 //nolint:gocyclo
 func applyCommand(cmd *cobra.Command, args []string) error {
-	// Step 1: Collect inputs, by reading files or directories.  Use the "-f" flag if set, positional arguments otherwise.
+	// Step 1: Collect inputs, by reading files/directories and remote git repositories.
+	var objects []minderv1.ResourceMeta
+
+	gitURLs, _ := cmd.Flags().GetStringSlice("git")
+	for _, rawURL := range gitURLs {
+		if rawURL == "" {
+			continue
+		}
+		gitObjects, err := fileconvert.ResourcesFromGit(cmd.Context(), cmd.Printf, rawURL)
+		if err != nil {
+			return cli.MessageAndError("Error reading resources from git", err)
+		}
+		objects = append(objects, gitObjects...)
+	}
+
 	fileNames := args
 	argFiles, _ := cmd.Flags().GetStringSlice("file")
 	if len(argFiles) > 0 {
 		fileNames = argFiles
 	}
-	objects, err := fileconvert.ResourcesFromPaths(cmd.Printf, fileNames...)
-	if err != nil {
-		return cli.MessageAndError("Error reading resources", err)
+	if len(fileNames) > 0 {
+		fileObjects, err := fileconvert.ResourcesFromPaths(cmd.Printf, fileNames...)
+		if err != nil {
+			return cli.MessageAndError("Error reading resources", err)
+		}
+		objects = append(objects, fileObjects...)
 	}
 
 	if len(objects) == 0 {
@@ -125,4 +142,5 @@ func init() {
 	// Flags
 	applyCmd.Flags().StringP("project", "j", "", "ID of the project")
 	applyCmd.Flags().StringSliceP("file", "f", []string{}, "Input file or directory")
+	applyCmd.Flags().StringSlice("git", []string{}, "Remote git repository URL (e.g. https://github.com/org/repo?subdir)")
 }
