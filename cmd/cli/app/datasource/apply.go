@@ -32,7 +32,8 @@ func init() {
 	DataSourceCmd.AddCommand(applyCmd)
 	// Flags
 	applyCmd.Flags().StringArrayP("file", "f", []string{},
-		"Path or HTTP(S) URL to the YAML defining the data source (or - for stdin). Can be specified multiple times. Can be a directory.")
+		"Path or HTTP(S) URL to the YAML defining the data source (or - for stdin). "+
+			"Can be specified multiple times. Can be a directory.")
 }
 
 func applyCommand(cmd *cobra.Command, args []string) error {
