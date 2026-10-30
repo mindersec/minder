@@ -375,8 +375,7 @@ func Test_PropertyCrud(t *testing.T) {
 		getEnt, err := testQueries.GetTypedEntitiesByPropertyV1(
 			context.Background(), EntitiesRepository, "sharedkey", "sharedvalue",
 			GetTypedEntitiesOptions{
-				ProjectID:  proj.ID,
-				ProviderID: prov.ID,
+				ProjectID: proj.ID,
 			})
 		require.NoError(t, err)
 		require.Len(t, getEnt, 1)
@@ -386,8 +385,7 @@ func Test_PropertyCrud(t *testing.T) {
 		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
 			context.Background(), EntitiesArtifact, "sharedkey", "sharedvalue",
 			GetTypedEntitiesOptions{
-				ProjectID:  proj.ID,
-				ProviderID: prov.ID,
+				ProjectID: proj.ID,
 			})
 		require.NoError(t, err)
 		require.Len(t, getEnt, 1)
@@ -397,8 +395,7 @@ func Test_PropertyCrud(t *testing.T) {
 		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
 			context.Background(), EntitiesRepository, "repokey", "repovalue",
 			GetTypedEntitiesOptions{
-				ProjectID:  proj.ID,
-				ProviderID: prov.ID,
+				ProjectID: proj.ID,
 			})
 		require.NoError(t, err)
 		require.Len(t, getEnt, 1)

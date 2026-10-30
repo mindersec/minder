@@ -406,7 +406,8 @@ func (s *Server) fetchRepositoriesForProvider(
 	var registeredRepos []*models.EntityWithProperties
 	cursorID := uuid.Nil
 	for {
-		page, nextID, err := s.repos.ListRepositories(
+		var page []*models.EntityWithProperties
+		page, cursorID, err = s.repos.ListRepositories(
 			ctx,
 			projectID,
 			providerID,
@@ -414,17 +415,12 @@ func (s *Server) fetchRepositoriesForProvider(
 			repositories.RepoPageSize,
 		)
 		if err != nil {
-			zerolog.Ctx(ctx).Error().
-				Str("project_id", projectID.String()).
-				Str("provider_id", providerID.String()).
-				Err(err).Msg("cannot list registered repositories")
-			return nil, status.Errorf(codes.Internal, "cannot list registered repositories")
+			return nil, status.Errorf(codes.Internal, "cannot list registered repositories: %v", err)
 		}
 		registeredRepos = append(registeredRepos, page...)
-		if nextID == uuid.Nil {
+		if cursorID == uuid.Nil {
 			break
 		}
-		cursorID = nextID
 	}
 
 	registered := make(map[string]bool)

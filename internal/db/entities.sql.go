@@ -639,7 +639,7 @@ FROM entity_instances ei
          JOIN properties p ON ei.id = p.entity_id
 WHERE ei.entity_type = $1
   AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ei.project_id = $2)
-  AND ei.provider_id = $3
+  AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ei.provider_id = $3)
   AND p.key = $4
   AND p.value @> $5::jsonb
 `

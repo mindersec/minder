@@ -160,8 +160,9 @@ func WithSuccessfulListRepositoriesInPages(
 	pages [][]*models.EntityWithProperties,
 ) func(RepoServiceMock) {
 	return func(mock RepoServiceMock) {
-		for _, page := range pages {
-			p := page // capture loop variable
+		for i, page := range pages {
+			p := page
+			isLastPage := i == len(pages)-1
 			mock.EXPECT().
 				ListRepositories(
 					gomock.Any(),
@@ -170,7 +171,12 @@ func WithSuccessfulListRepositoriesInPages(
 					gomock.Any(),
 					gomock.Any(),
 				).
-				Return(p, uuid.Nil, nil).
+				DoAndReturn(func(_ context.Context, _, _, _ uuid.UUID, _ int) ([]*models.EntityWithProperties, uuid.UUID, error) {
+					if isLastPage || len(p) == 0 {
+						return p, uuid.Nil, nil
+					}
+					return p, p[len(p)-1].Entity.ID, nil
+				}).
 				Times(1)
 		}
 	}
