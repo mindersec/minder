@@ -390,6 +390,14 @@ func firstChildCreatedAt(ctx context.Context, idx v1.ImageIndex) (time.Time, err
 	}
 
 	for _, desc := range idxManifest.Manifests {
+		// Check child manifest annotation first
+		if strcreated, ok := desc.Annotations[imgspecv1.AnnotationCreated]; ok {
+			t, err := time.Parse(time.RFC3339, strcreated)
+			if err == nil {
+				return t, nil
+			}
+		}
+		// Fall back to child config JSON
 		img, err := idx.Image(desc.Digest)
 		if err != nil {
 			zerolog.Ctx(ctx).Warn().Str("digest", desc.Digest.String()).

@@ -667,3 +667,41 @@ func TestGetArtifactVersions_IndexNoChildHasTimestamp(t *testing.T) {
 	require.Len(t, versions, 1)
 	assert.True(t, versions[0].CreatedAt.AsTime().IsZero())
 }
+
+func TestGetArtifactVersions_IndexUsesChildManifestAnnotation(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(registry.New(registry.Logger(log.New(io.Discard, "", 0))))
+	t.Cleanup(srv.Close)
+	host := strings.TrimPrefix(srv.URL, "http://")
+
+	expectedTime := time.Date(2024, 5, 10, 0, 0, 0, 0, time.UTC)
+
+	arm64img, err := random.Image(256, 1)
+	require.NoError(t, err)
+
+	idx := mutate.AppendManifests(
+		empty.Index,
+		mutate.IndexAddendum{
+			Add: arm64img,
+			Descriptor: v1.Descriptor{
+				Platform: &v1.Platform{OS: "linux", Architecture: "arm64"},
+				Annotations: map[string]string{
+					imgspecv1.AnnotationCreated: expectedTime.UTC().Format(time.RFC3339),
+				},
+			},
+		},
+	)
+
+	ref, err := name.NewTag(fmt.Sprintf("%s/testns/myimage:latest", host))
+	require.NoError(t, err)
+	require.NoError(t, remote.WriteIndex(ref, idx))
+
+	o := New(nil, host, path.Join(host, "testns"))
+	artifact := &minderv1.Artifact{Name: "myimage"}
+
+	versions, err := o.GetArtifactVersions(context.Background(), artifact, &alwaysIncludeFilter{})
+	require.NoError(t, err)
+	require.Len(t, versions, 1)
+	assert.Equal(t, expectedTime, versions[0].CreatedAt.AsTime())
+}
