@@ -155,9 +155,12 @@ cross-entity lookup risk matters (Section 6).
 
    ![SBOM configurations: one SBOM for the index, or one SBOM per platform](./images/sbom-configurations.png)
 
-   - **A, B, and C:** Unresolved. It is not yet clear who calls the referrers
-     API under either Option A or B, and therefore who decides which
-     configuration to support. Pending walkthrough.
+   - **A, B, and C:** Leaning, not yet final: ingestion calls the referrers
+     API, driven by per-rule-type parameters (for example, only fetch
+     referrers of a given MIME type), so results can be cached and shared
+     across rules on the same entity. Lazy fetching from Rego was set aside
+     because each rule type runs in a separate Rego instance with no shared
+     cache. See Section 12 (Rule evaluation format and ingestion).
 
 ## 4. Terminology
 
@@ -549,8 +552,8 @@ These estimates should be validated through request-level measurements before be
 
 Direction: Option A, with a redefined `upstream_id`.
 
-- **Identity:** One artifact entity per tag, with `upstream_id` `repo:tag` (or
-  `repo@tag`). The current target digest is stored in `oci/digest`.
+- **Identity:** One artifact entity per tag, with `upstream_id` `repo:tag`.
+  The current target digest is stored in `oci/digest`.
 - **Tag-move history:** Tracked through the checkpoint's `Digest` field, and
   surfaced in `ListEvaluationResultsHistory` once that gap is fixed
   (Section 7).
@@ -558,15 +561,26 @@ Direction: Option A, with a redefined `upstream_id`.
 - **Option B:** Documented as an alternative considered (Section 6). It was
   set aside because of the cross-entity lookup risk.
 
-### Still open (pending walkthrough)
+### Rule evaluation format and ingestion
 
-- What rule evaluation and ingestion look like concretely under the redefined
-  Option A.
-- Retention and garbage-collection policy (Q6 in Section 13).
-- Sequencing: Repository entity first, or tag entities first. The author's
-  instinct is that tag entities can ship independently of Repository
-  discovery, but Repository-first may still make sense for
-  `oci/repository`-scoped policy selection before tag discovery exists.
+Discussed on the 2026-10-30 design call.
+
+- **Lazy fetching from Rego: set aside.** Each rule type runs in a separate
+  Rego instance with no shared cache, so deferring registry fetches (such as
+  referrers) to Rego could cause *more* registry requests, not fewer, when
+  several rules evaluate the same entity.
+- **Leaning: ingestion-time, per-rule-type parameters.** A rule type declares
+  what it needs at ingestion time, for example "only fetch referrers of a
+  given MIME type". Ingestion can then cache those results and share them
+  across all rules evaluating the same entity.
+
+Open design TODOs from the call:
+
+- (a) Add parameters to OCI ingestion so each rule type can specify which
+  referrer types to fetch.
+- (b) Possibly change the ingestion shape for OCI repositories, and consider a
+  new ingest type (for example `oci`) separate from GHCR's existing
+  `artifact` ingest type, with GHCR migrating to it over time.
 
 ## 13. Open questions
 
@@ -595,6 +609,10 @@ Direction: Option A, with a redefined `upstream_id`.
    It is unresolved how registries handle garbage collection themselves. This
    is another point in A's favour: A does not accumulate a growing set of
    Manifest entities the way B and C do.
+   **Descoped, tracked separately.** Discussed on the 2026-10-30 design call
+   and scoped out of this design. What happens to evaluation history when an
+   entity is deleted is a general problem for every entity type, not one
+   specific to OCI. Evan is filing it as a separate design issue.
 
 7. **Reconciliation:** Periodic reconciliation should be integrated into
    Reminder, which currently covers repositories only. A small follow-up issue
@@ -613,7 +631,9 @@ Direction: Option A, with a redefined `upstream_id`.
 
 10. **Event ordering:** Answered in Section 8 (Event-handling principle).
 
-11. **Sequencing:** What is the smallest useful first step: Manifest and Tag entities registered manually, or Repository entities with discovery first?
+11. **Sequencing:** Settled on the 2026-10-30 design call: start with tag
+    entities registered manually, and add Repository entities and better
+    lifecycle management later. See Section 16.
 
 ## 14. Related findings to track separately
 
@@ -653,6 +673,6 @@ been analyzed yet; that is later work.
 |---|---|
 | Entity model direction | Option A, with `upstream_id` redefined as `repo:tag`. Options B and C are recorded as alternatives considered in Section 6. |
 | New entity types, or `ENTITY_ARTIFACTS` with a `kind` property | TBD — pending walkthrough. Option A does not require a new entity type. |
-| Order of work: Repository entities first, or tag entities first | TBD — pending walkthrough (Section 12). |
+| Order of work: Repository entities first, or tag entities first | Tag entities first, registered manually. Repository entities and better lifecycle management follow later as the pieces fall into place (Evan, 2026-10-30 design call). |
 | Signature scope: top-level index, platform manifests, or both | Rule implementer's choice, not a platform decision (Q8 in Section 13). |
 | Tag-movement detection: recorded digest or property-change event | Comparison with previously persisted state (Q4 in Section 13). |
