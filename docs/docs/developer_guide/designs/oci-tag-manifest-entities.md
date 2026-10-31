@@ -161,6 +161,9 @@ cross-entity lookup risk matters (Section 6).
      across rules on the same entity. Lazy fetching from Rego was set aside
      because each rule type runs in a separate Rego instance with no shared
      cache. See Section 12 (Rule evaluation format and ingestion).
+   - **Still open:** Whether to support one SBOM for the whole multi-platform
+     index, one SBOM per platform manifest, or both. The ingestion approach
+     above does not answer this.
 
 ## 4. Terminology
 
