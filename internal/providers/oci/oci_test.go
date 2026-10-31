@@ -233,7 +233,7 @@ func TestGetArtifactVersions_SkipsDeletedTag(t *testing.T) {
 	t.Parallel()
 
 	const namespace = "testns"
-	// 404 for v2 manifests: tag still listed but getImage returns not-found.
+	// 404 for v2 manifests: tag still listed but remote.Get returns not-found.
 	host := newRegistryWithManifestOverride(t, namespace, "v2", http.StatusNotFound)
 
 	o := New(nil, host, path.Join(host, namespace))
@@ -556,4 +556,114 @@ func TestGetArtifactVersions_IndexUsesFirstValidChildTimestamp(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, versions, 1)
 	assert.Equal(t, olderTime, versions[0].CreatedAt.AsTime())
+}
+
+func TestGetArtifactVersions_IndexFirstChildSkippedIfNoTimestamp(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(registry.New(registry.Logger(log.New(io.Discard, "", 0))))
+	t.Cleanup(srv.Close)
+	host := strings.TrimPrefix(srv.URL, "http://")
+
+	// First child has zero timestamp
+	noTimeImg, err := random.Image(256, 1)
+	require.NoError(t, err)
+	noTimeImg, err = mutate.ConfigFile(noTimeImg, &v1.ConfigFile{
+		OS:           "linux",
+		Architecture: "arm64",
+	})
+	require.NoError(t, err)
+
+	// Second child has a valid timestamp
+	expectedTime := time.Date(2024, 3, 10, 0, 0, 0, 0, time.UTC)
+	validTimeImg, err := random.Image(256, 1)
+	require.NoError(t, err)
+	validTimeImg, err = mutate.ConfigFile(validTimeImg, &v1.ConfigFile{
+		Created:      v1.Time{Time: expectedTime},
+		OS:           "linux",
+		Architecture: "amd64",
+	})
+	require.NoError(t, err)
+
+	idx := mutate.AppendManifests(
+		empty.Index,
+		mutate.IndexAddendum{
+			Add: noTimeImg,
+			Descriptor: v1.Descriptor{
+				Platform: &v1.Platform{OS: "linux", Architecture: "arm64"},
+			},
+		},
+		mutate.IndexAddendum{
+			Add: validTimeImg,
+			Descriptor: v1.Descriptor{
+				Platform: &v1.Platform{OS: "linux", Architecture: "amd64"},
+			},
+		},
+	)
+
+	ref, err := name.NewTag(fmt.Sprintf("%s/testns/myimage:latest", host))
+	require.NoError(t, err)
+	require.NoError(t, remote.WriteIndex(ref, idx))
+
+	o := New(nil, host, path.Join(host, "testns"))
+	artifact := &minderv1.Artifact{Name: "myimage"}
+
+	versions, err := o.GetArtifactVersions(context.Background(), artifact, &alwaysIncludeFilter{})
+	require.NoError(t, err)
+	require.Len(t, versions, 1)
+	assert.Equal(t, expectedTime, versions[0].CreatedAt.AsTime())
+}
+
+func TestGetArtifactVersions_IndexNoChildHasTimestamp(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(registry.New(registry.Logger(log.New(io.Discard, "", 0))))
+	t.Cleanup(srv.Close)
+	host := strings.TrimPrefix(srv.URL, "http://")
+
+	// Both children have zero timestamps
+	img1, err := random.Image(256, 1)
+	require.NoError(t, err)
+	img1, err = mutate.ConfigFile(img1, &v1.ConfigFile{
+		OS:           "linux",
+		Architecture: "arm64",
+	})
+	require.NoError(t, err)
+
+	img2, err := random.Image(256, 1)
+	require.NoError(t, err)
+	img2, err = mutate.ConfigFile(img2, &v1.ConfigFile{
+		OS:           "linux",
+		Architecture: "amd64",
+	})
+	require.NoError(t, err)
+
+	idx := mutate.AppendManifests(
+		empty.Index,
+		mutate.IndexAddendum{
+			Add: img1,
+			Descriptor: v1.Descriptor{
+				Platform: &v1.Platform{OS: "linux", Architecture: "arm64"},
+			},
+		},
+		mutate.IndexAddendum{
+			Add: img2,
+			Descriptor: v1.Descriptor{
+				Platform: &v1.Platform{OS: "linux", Architecture: "amd64"},
+			},
+		},
+	)
+
+	ref, err := name.NewTag(fmt.Sprintf("%s/testns/myimage:latest", host))
+	require.NoError(t, err)
+	require.NoError(t, remote.WriteIndex(ref, idx))
+
+	o := New(nil, host, path.Join(host, "testns"))
+	artifact := &minderv1.Artifact{Name: "myimage"}
+
+	versions, err := o.GetArtifactVersions(context.Background(), artifact, &alwaysIncludeFilter{})
+	// Should not error — returns zero time gracefully
+	require.NoError(t, err)
+	require.Len(t, versions, 1)
+	assert.True(t, versions[0].CreatedAt.AsTime().IsZero())
 }

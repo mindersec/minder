@@ -246,7 +246,7 @@ func (ov *OCI) GetArtifactVersions(
 		case types.OCIImageIndex, types.DockerManifestList:
 			createdAt, err = resolveIndexCreatedAt(ctx, desc, t)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to resolve created time for index tag %s: %w", t, err)
 			}
 
 		default:
@@ -393,18 +393,18 @@ func firstChildCreatedAt(ctx context.Context, idx v1.ImageIndex) (time.Time, err
 		img, err := idx.Image(desc.Digest)
 		if err != nil {
 			zerolog.Ctx(ctx).Warn().Str("digest", desc.Digest.String()).
-				Msg("skipping child image when determining index creation time")
+				Err(err).Msg("skipping child image when determining index creation time")
 			continue
 		}
 		cfg, err := img.ConfigFile()
 		if err != nil {
 			zerolog.Ctx(ctx).Warn().Str("digest", desc.Digest.String()).
-				Msg("skipping child config when determining index creation time")
+				Err(err).Msg("skipping child config when determining index creation time")
 			continue
 		}
 		if !cfg.Created.IsZero() {
 			return cfg.Created.Time, nil
 		}
 	}
-	return time.Time{}, fmt.Errorf("unable to determine creation time from any child image in index")
+	return time.Time{}, nil
 }
