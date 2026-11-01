@@ -125,47 +125,63 @@ func (*quayImageLister) CanImplement(trait minderv1.ProviderType) bool {
 		trait == minderv1.ProviderType_PROVIDER_TYPE_OCI
 }
 
+// maxListImagesPages bounds repository listing so a misbehaving API cannot loop forever.
+const maxListImagesPages = 1000
+
 // ListImages lists the containers in the Quay namespace
 func (q *quayImageLister) ListImages(ctx context.Context) ([]string, error) {
-	req, err := http.NewRequest("GET", q.target.String(), nil)
-	if err != nil {
-		return nil, fmt.Errorf("error creating request: %w", err)
-	}
-
-	resp, err := q.cli.Do(req.WithContext(ctx))
-	if err != nil {
-		return nil, fmt.Errorf("error making request: %w", err)
-	}
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode == http.StatusUnauthorized {
-			return nil, fmt.Errorf("unauthorized: %s", resp.Status)
-		}
-		if resp.StatusCode == http.StatusNotFound {
-			return nil, errors.New("not found")
-		}
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
-
-	// parse body
-	toParse := struct {
-		Repositories []struct {
-			Name string `json:"name"`
-		} `json:"repositories"`
-	}{}
-
-	if err := json.NewDecoder(resp.Body).Decode(&toParse); err != nil {
-		return nil, fmt.Errorf("error decoding response: %w", err)
-	}
-
 	var containers []string
-	for _, r := range toParse.Repositories {
-		containers = append(containers, r.Name)
+	pageURL := *q.target
+
+	for range maxListImagesPages {
+		req, err := http.NewRequest("GET", pageURL.String(), nil)
+		if err != nil {
+			return nil, fmt.Errorf("error creating request: %w", err)
+		}
+
+		resp, err := q.cli.Do(req.WithContext(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("error making request: %w", err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			_ = resp.Body.Close()
+			if resp.StatusCode == http.StatusUnauthorized {
+				return nil, fmt.Errorf("unauthorized: %s", resp.Status)
+			}
+			if resp.StatusCode == http.StatusNotFound {
+				return nil, errors.New("not found")
+			}
+			return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		}
+
+		toParse := struct {
+			NextPage     string `json:"next_page"`
+			Repositories []struct {
+				Name string `json:"name"`
+			} `json:"repositories"`
+		}{}
+
+		if err := json.NewDecoder(resp.Body).Decode(&toParse); err != nil {
+			_ = resp.Body.Close()
+			return nil, fmt.Errorf("error decoding response: %w", err)
+		}
+		_ = resp.Body.Close()
+
+		for _, r := range toParse.Repositories {
+			containers = append(containers, r.Name)
+		}
+
+		if toParse.NextPage == "" {
+			return containers, nil
+		}
+
+		query := pageURL.Query()
+		query.Set("next_page", toParse.NextPage)
+		pageURL.RawQuery = query.Encode()
 	}
 
-	return containers, nil
+	return containers, fmt.Errorf("too many pages listing quay repositories (limit %d)", maxListImagesPages)
 }
 
 // FetchAllProperties implements the provider interface
