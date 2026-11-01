@@ -15282,9 +15282,9 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\acontext\x18\a \x01(\v2\x12.minder.v1.ContextR\acontextJ\x04\b\x05\x10\x06J\x04\b\x06\x10\aR\x0flatest_versionsR\x03tag\"\x87\x01\n" +
 	"\x17GetArtifactByIdResponse\x124\n" +
 	"\bartifact\x18\x01 \x01(\v2\x13.minder.v1.ArtifactB\x03\xe0A\x02R\bartifact\x126\n" +
-	"\bversions\x18\x02 \x03(\v2\x1a.minder.v1.ArtifactVersionR\bversions\"\xa0\x01\n" +
-	"\x18GetArtifactByNameRequest\x124\n" +
-	"\x04name\x18\x01 \x01(\tB \xe0A\x02\xbaH\x1a\xd8\x01\x01r\x15\x18\xc8\x012\x10^[-./[:word:]]*$R\x04name\x12,\n" +
+	"\bversions\x18\x02 \x03(\v2\x1a.minder.v1.ArtifactVersionR\bversions\"\xa1\x01\n" +
+	"\x18GetArtifactByNameRequest\x125\n" +
+	"\x04name\x18\x01 \x01(\tB!\xe0A\x02\xbaH\x1b\xd8\x01\x01r\x16\x18\xc8\x012\x11^[-./:[:word:]]*$R\x04name\x12,\n" +
 	"\acontext\x18\x04 \x01(\v2\x12.minder.v1.ContextR\acontextJ\x04\b\x02\x10\x03J\x04\b\x03\x10\x04R\x0flatest_versionsR\x03tag\"\x89\x01\n" +
 	"\x19GetArtifactByNameResponse\x124\n" +
 	"\bartifact\x18\x01 \x01(\v2\x13.minder.v1.ArtifactB\x03\xe0A\x02R\bartifact\x126\n" +
