@@ -193,13 +193,15 @@ func NewGitHub(
 		delegate:             delegate,
 		providerClass:        providerClass,
 		ghcrwrap:             ghcrwrap,
-		// TODO: this credential isn't used by ghcrOCI's GetDigest/GetManifest/GetRawManifest
-		// today -- see the "private GHCR images" known limitation in PR #6791. Wire it in
-		// when that gets fixed.
+		// GHCR expects Basic auth, so pass the same authenticator GetAuthenticator
+		// returns rather than relying on ghcrOCI's OAuth2 Bearer default.
 		ghcrOCI: oci.New(
 			delegate.GetCredential(),
 			container.GHCRRegistry,
 			fmt.Sprintf("%s/%s", container.GHCRRegistry, ghcrwrap.Namespace()),
+			oci.WithRegistryAuthenticator(
+				delegate.GetCredential().GetAsContainerAuthenticator(ghcrwrap.Namespace()),
+			),
 		),
 		gitConfig:        gitConfig,
 		webhookConfig:    whcfg,
