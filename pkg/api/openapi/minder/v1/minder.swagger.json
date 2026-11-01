@@ -49,6 +49,10 @@
     {
       "name": "EntityInstanceService",
       "description": "EntityInstanceService provides API endpoints for managing entity instances"
+    },
+    {
+      "name": "ExceptionService",
+      "description": "ExceptionService provides API endpoints for managing exceptions."
     }
   ],
   "consumes": [
@@ -989,6 +993,119 @@
         ],
         "tags": [
           "EntityInstanceService"
+        ]
+      }
+    },
+    "/api/v1/exception": {
+      "post": {
+        "summary": "CreateException creates or updates an exception.",
+        "operationId": "ExceptionService_CreateException",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateExceptionResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "CreateExceptionRequest specifies an exception to create.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateExceptionRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ExceptionService"
+        ]
+      }
+    },
+    "/api/v1/exception/{id}": {
+      "delete": {
+        "summary": "DeleteException deletes an exception.",
+        "operationId": "ExceptionService_DeleteException",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteExceptionResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "id is the ID of the exception to delete.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ExceptionService"
+        ]
+      }
+    },
+    "/api/v1/exceptions": {
+      "get": {
+        "summary": "ListExceptions returns active exceptions for the current project.",
+        "operationId": "ExceptionService_ListExceptions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListExceptionsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ExceptionService"
         ]
       }
     },
@@ -4204,6 +4321,43 @@
     "v1CreateEntityReconciliationTaskResponse": {
       "type": "object"
     },
+    "v1CreateExceptionRequest": {
+      "type": "object",
+      "properties": {
+        "entityId": {
+          "type": "string",
+          "description": "entity_id is the ID of the entity being excepted."
+        },
+        "ruleTypeId": {
+          "type": "string",
+          "description": "rule_type_id is the ID of the rule type being excepted."
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "expires_at is when the exception expires."
+        }
+      },
+      "description": "CreateExceptionRequest specifies an exception to create.",
+      "required": [
+        "entityId",
+        "ruleTypeId",
+        "expiresAt"
+      ]
+    },
+    "v1CreateExceptionResponse": {
+      "type": "object",
+      "properties": {
+        "exception": {
+          "$ref": "#/definitions/v1Exception",
+          "description": "exception is the created exception."
+        }
+      },
+      "description": "CreateExceptionResponse contains the created exception.",
+      "required": [
+        "exception"
+      ]
+    },
     "v1CreateProfileRequest": {
       "type": "object",
       "properties": {
@@ -4480,6 +4634,10 @@
       "required": [
         "id"
       ]
+    },
+    "v1DeleteExceptionResponse": {
+      "type": "object",
+      "description": "DeleteExceptionResponse is the response to deleting an exception."
     },
     "v1DeleteProfileResponse": {
       "type": "object"
@@ -4812,6 +4970,34 @@
         "status",
         "details"
       ]
+    },
+    "v1Exception": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "id is the unique identifier of the exception."
+        },
+        "entity": {
+          "$ref": "#/definitions/v1EntityInstance",
+          "description": "entity is the entity associated with the exception."
+        },
+        "ruleTypeId": {
+          "type": "string",
+          "description": "rule_type_id is the ID of the rule type being excepted."
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "expires_at is when the exception expires."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "created_at is when the exception was created."
+        }
+      },
+      "description": "Exception represents an exception for an entity and rule type."
     },
     "v1GetArtifactByIdResponse": {
       "type": "object",
@@ -5320,6 +5506,23 @@
       },
       "required": [
         "entities"
+      ]
+    },
+    "v1ListExceptionsResponse": {
+      "type": "object",
+      "properties": {
+        "exceptions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Exception"
+          },
+          "description": "exceptions is the list of active exceptions."
+        }
+      },
+      "description": "ListExceptionsResponse contains active exceptions.",
+      "required": [
+        "exceptions"
       ]
     },
     "v1ListInvitationsResponse": {
