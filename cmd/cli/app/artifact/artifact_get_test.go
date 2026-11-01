@@ -20,6 +20,8 @@ import (
 	mockv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1/mock"
 )
 
+const testArtifactID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+
 //nolint:paralleltest // Cannot run in parallel because it swaps global Viper/Stdout state
 func TestArtifactGetCommand(t *testing.T) {
 	setupSuccess := func(t *testing.T, ctrl *gomock.Controller) context.Context {
@@ -32,7 +34,9 @@ func TestArtifactGetCommand(t *testing.T) {
 		cli.LoadFixture(t, "mock_artifact_get.json", artifactResp)
 
 		artifactClient.EXPECT().
-			GetArtifactById(gomock.Any(), gomock.Any()).
+			GetArtifactById(gomock.Any(), gomock.Cond(func(req *minderv1.GetArtifactByIdRequest) bool {
+				return req.GetId() == testArtifactID
+			})).
 			Return(artifactResp, nil).
 			Times(1)
 
@@ -46,7 +50,9 @@ func TestArtifactGetCommand(t *testing.T) {
 		statusResp := &minderv1.GetProfileStatusByNameResponse{}
 		cli.LoadFixture(t, "mock_profile_status.json", statusResp)
 		profileClient.EXPECT().
-			GetProfileStatusByName(gomock.Any(), gomock.Any()).
+			GetProfileStatusByName(gomock.Any(), gomock.Cond(func(req *minderv1.GetProfileStatusByNameRequest) bool {
+				return req.GetEntity().GetId() == testArtifactID
+			})).
 			Return(statusResp, nil).
 			Times(1)
 
@@ -58,19 +64,19 @@ func TestArtifactGetCommand(t *testing.T) {
 	tests := []cli.CmdTestCase{
 		{
 			Name:           "get artifact - table output",
-			Args:           []string{"artifact", "get", "-i", "111", "-o", "table"},
+			Args:           []string{"artifact", "get", "-i", testArtifactID, "-o", "table"},
 			MockSetup:      setupSuccess,
 			GoldenFileName: "artifact_get.table",
 		},
 		{
 			Name:           "get artifact - yaml output",
-			Args:           []string{"artifact", "get", "-i", "111", "-o", "yaml"},
+			Args:           []string{"artifact", "get", "-i", testArtifactID, "-o", "yaml"},
 			MockSetup:      setupSuccess,
 			GoldenFileName: "artifact_get.yaml",
 		},
 		{
 			Name: "server error handling",
-			Args: []string{"artifact", "get", "-i", "111"},
+			Args: []string{"artifact", "get", "-i", testArtifactID},
 			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
 				t.Helper()
 				artifactClient := mockv1.NewMockArtifactServiceClient(ctrl)

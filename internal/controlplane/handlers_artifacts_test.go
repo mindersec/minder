@@ -258,7 +258,7 @@ func TestGetArtifactByName(t *testing.T) {
 			props.EXPECT().EntityWithPropertiesByID(gomock.Any(), artifactID, gomock.Any()).Return(makeEWP(""), nil)
 			props.EXPECT().RetrieveAllPropertiesForEntity(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			props.EXPECT().EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(&pb.Artifact{}, nil)
+				Return(&pb.Artifact{ArtifactPk: "myimage@sha256:abc"}, nil)
 		}
 	}
 
@@ -387,7 +387,7 @@ func TestGetArtifactByName(t *testing.T) {
 				props.EXPECT().EntityWithPropertiesByID(gomock.Any(), artifactID, gomock.Any()).Return(ewp, nil)
 				props.EXPECT().RetrieveAllPropertiesForEntity(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 				props.EXPECT().EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(&pb.Artifact{}, nil)
+					Return(&pb.Artifact{ArtifactPk: "12345"}, nil)
 			},
 			wantCode: codes.OK,
 		},
@@ -419,6 +419,7 @@ func TestGetArtifactByName(t *testing.T) {
 			if tt.wantCode == codes.OK {
 				require.NoError(t, err)
 				require.NotNil(t, resp)
+				require.Equal(t, artifactID.String(), resp.GetArtifact().GetArtifactPk())
 			} else {
 				require.Error(t, err)
 				st, ok := status.FromError(err)
@@ -427,6 +428,37 @@ func TestGetArtifactByName(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetArtifactById(t *testing.T) {
+	t.Parallel()
+
+	projectID := uuid.New()
+	artifactID := uuid.New()
+
+	ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+		Project: engcontext.Project{ID: projectID},
+	})
+
+	ctrl := gomock.NewController(t)
+	mockProps := mockpropssvc.NewMockPropertiesService(ctrl)
+
+	ewp := entmodels.NewEntityWithPropertiesFromInstance(
+		entmodels.EntityInstance{
+			ID:        artifactID,
+			Type:      pb.Entity_ENTITY_ARTIFACTS,
+			ProjectID: projectID,
+		}, properties.NewProperties(map[string]any{}))
+	mockProps.EXPECT().EntityWithPropertiesByID(gomock.Any(), artifactID, gomock.Any()).Return(ewp, nil)
+	mockProps.EXPECT().RetrieveAllPropertiesForEntity(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+	mockProps.EXPECT().EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(&pb.Artifact{ArtifactPk: "myimage@sha256:abc"}, nil)
+
+	server := Server{props: mockProps}
+
+	resp, err := server.GetArtifactById(ctx, &pb.GetArtifactByIdRequest{Id: artifactID.String()})
+	require.NoError(t, err)
+	require.Equal(t, artifactID.String(), resp.GetArtifact().GetArtifactPk())
 }
 
 func TestGetArtifactByNameRequestValidation(t *testing.T) {
