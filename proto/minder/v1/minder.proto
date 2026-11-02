@@ -2943,9 +2943,10 @@ message RuleType {
                 // -- minder.actions.replace_tags_with_sha - finds any github actions within a workflow
                 //                                           file and replaces the tag with the SHA
                 // -- minder.yq.evaluate - evaluates a yq expression on a file
+                // -- minder.delete - deletes files matching the specified glob patterns
                 string method = 4 [
                     (buf.validate.field).string = {
-                        in: ["minder.content", "minder.actions.replace_tags_with_sha", "minder.yq.evaluate"],
+                        in: ["minder.content", "minder.actions.replace_tags_with_sha", "minder.yq.evaluate", "minder.delete"],
                     },
                     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
                 ];

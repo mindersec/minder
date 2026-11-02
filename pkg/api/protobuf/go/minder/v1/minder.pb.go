@@ -14334,6 +14334,7 @@ type RuleType_Definition_Remediate_PullRequestRemediation struct {
 	//	file and replaces the tag with the SHA
 	//
 	// -- minder.yq.evaluate - evaluates a yq expression on a file
+	// -- minder.delete - deletes files matching the specified glob patterns
 	Method string `protobuf:"bytes,4,opt,name=method,proto3" json:"method,omitempty"`
 	// params are unstructured parameters passed to the method. These are optional
 	// and evaluated by the method.
@@ -15769,7 +15770,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\xea\xdc\x14\x06medium\x12\x18\n" +
 	"\n" +
 	"VALUE_HIGH\x10\x05\x1a\b\xea\xdc\x14\x04high\x12 \n" +
-	"\x0eVALUE_CRITICAL\x10\x06\x1a\f\xea\xdc\x14\bcritical\"\x90(\n" +
+	"\x0eVALUE_CRITICAL\x10\x06\x1a\f\xea\xdc\x14\bcritical\"\x9f(\n" +
 	"\bRuleType\x12&\n" +
 	"\aversion\x18\v \x01(\tB\f\xbaH\tr\a2\x05^v\\d$R\aversion\x12$\n" +
 	"\x04type\x18\f \x01(\tB\x10\xbaH\rr\v2\trule-typeR\x04type\x12 \n" +
@@ -15783,7 +15784,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\vdescription\x18\x05 \x01(\tB\r\xe0A\x02\xbaH\ar\x05\x10\x01\x18\xdc\vR\vdescription\x12)\n" +
 	"\bguidance\x18\x06 \x01(\tB\r\xe0A\x02\xbaH\ar\x05\x10\x01\x18\xe8\aR\bguidance\x12/\n" +
 	"\bseverity\x18\a \x01(\v2\x13.minder.v1.SeverityR\bseverity\x12D\n" +
-	"\rrelease_phase\x18\t \x01(\x0e2\x1f.minder.v1.RuleTypeReleasePhaseR\freleasePhase\x1a\x8b#\n" +
+	"\rrelease_phase\x18\t \x01(\x0e2\x1f.minder.v1.RuleTypeReleasePhaseR\freleasePhase\x1a\x9a#\n" +
 	"\n" +
 	"Definition\x12;\n" +
 	"\tin_entity\x18\x01 \x01(\tB\x1e\xbaH\x1br\x19\x10\x01\x18\xc8\x012\x12^[a-z]+(_[a-z]+)*$R\binEntity\x12'\n" +
@@ -15842,7 +15843,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\n" +
 	"_vulncheckB\t\n" +
 	"\a_trustyB\r\n" +
-	"\v_homoglyphs\x1a\xac\r\n" +
+	"\v_homoglyphs\x1a\xbb\r\n" +
 	"\tRemediate\x12c\n" +
 	"\x04type\x18\x01 \x01(\tBO\xbaHL\xd8\x01\x01rGR\x04restR\x14gh_branch_protectionR\fpull_requestR\x14pull_request_commentR\x05issueR\x04type\x12,\n" +
 	"\x04rest\x18\x02 \x01(\v2\x13.minder.v1.RestTypeH\x00R\x04rest\x88\x01\x01\x12v\n" +
@@ -15851,12 +15852,12 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x14pull_request_comment\x18\x05 \x01(\v27.minder.v1.RuleType.Definition.Alert.AlertTypePRCommentH\x03R\x12pullRequestComment\x88\x01\x01\x12T\n" +
 	"\x05issue\x18\x06 \x01(\v29.minder.v1.RuleType.Definition.Remediate.IssueRemediationH\x04R\x05issue\x88\x01\x01\x1a;\n" +
 	"\x16GhBranchProtectionType\x12!\n" +
-	"\x05patch\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xe8\aR\x05patch\x1a\xc4\x06\n" +
+	"\x05patch\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xe8\aR\x05patch\x1a\xd3\x06\n" +
 	"\x16PullRequestRemediation\x12\x1f\n" +
 	"\x05title\x18\x01 \x01(\tB\t\xbaH\x06r\x04\x10\x01\x18KR\x05title\x12\x1f\n" +
 	"\x04body\x18\x02 \x01(\tB\v\xbaH\br\x06\x10\x01\x18\x80\x80\x04R\x04body\x12c\n" +
-	"\bcontents\x18\x03 \x03(\v2G.minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ContentR\bcontents\x12j\n" +
-	"\x06method\x18\x04 \x01(\tBR\xbaHO\xd8\x01\x01rJR\x0eminder.contentR$minder.actions.replace_tags_with_shaR\x12minder.yq.evaluateR\x06method\x12/\n" +
+	"\bcontents\x18\x03 \x03(\v2G.minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ContentR\bcontents\x12y\n" +
+	"\x06method\x18\x04 \x01(\tBa\xbaH^\xd8\x01\x01rYR\x0eminder.contentR$minder.actions.replace_tags_with_shaR\x12minder.yq.evaluateR\rminder.deleteR\x06method\x12/\n" +
 	"\x06params\x18\x06 \x01(\v2\x17.google.protobuf.StructR\x06params\x12\xa0\x01\n" +
 	"\x1dactions_replace_tags_with_sha\x18\x05 \x01(\v2Y.minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithShaH\x00R\x19actionsReplaceTagsWithSha\x88\x01\x01\x1a\xa1\x01\n" +
 	"\aContent\x12\x1e\n" +

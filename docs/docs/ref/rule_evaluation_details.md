@@ -210,6 +210,15 @@ Minder supports four remediation actions:
      `{"type": "glob", "pattern": "file/path/*"}`. `glob` is currently the only
      supported pattern type. This action supports using Go templates in the
      `expression` but not in the `pattern` selection.
+   - `minder.delete`: deletes files matching the specified glob patterns. The
+     `params` field accepts a list of `patterns`, where each element is
+     represented as: `{"type": "glob", "pattern": "file/path/*"}`. `glob` is
+     currently the only supported pattern type. Files that do not exist are
+     silently ignored.
+     Note: glob patterns follow `filepath.Match` semantics; `**` is **not**
+     treated as a recursive wildcard. Use `dir/*` to match files one level
+     deep, or list explicit patterns for nested paths. Only files are deleted;
+     directories matched by a pattern are silently skipped.
 
    If the content modification produces a diff in the repository, Minder will
    open and manage a pull request against the branch used in the `git` ingest,

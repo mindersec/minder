@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
@@ -25,6 +26,7 @@ type fsEntry struct {
 	Path    string `json:"path"`
 	Content string `json:"content"`
 	Mode    string `json:"mode"`
+	Delete  bool   `json:"delete,omitempty"`
 }
 
 func (fe *fsEntry) write(fs billy.Filesystem) error {
@@ -73,6 +75,12 @@ func (fcs *fsChangeSet) writeEntries() error {
 	for i := range fcs.entries {
 		entry := fcs.entries[i]
 
+		if entry.Delete {
+			if err := fcs.fs.Remove(entry.Path); err != nil && !os.IsNotExist(err) {
+				return fmt.Errorf("cannot delete entry %s: %w", entry.Path, err)
+			}
+			continue
+		}
 		if err := entry.write(fcs.fs); err != nil {
 			return fmt.Errorf("cannot write entry %s: %w", entry.Path, err)
 		}
@@ -86,15 +94,23 @@ func (fcs *fsChangeSet) hash() (string, error) {
 		return "", fmt.Errorf("no entries")
 	}
 
-	var combinedContents string
+	var builder strings.Builder
 
 	for i := range fcs.entries {
+		if fcs.entries[i].Delete {
+			builder.WriteString("\x00delete:")
+			builder.WriteString(fcs.entries[i].Path)
+			continue
+		}
 		if len(fcs.entries[i].Content) == 0 {
 			// just making sure we call sha1() after expandContents()
 			return "", fmt.Errorf("content (index %d) is empty", i)
 		}
-		combinedContents += fcs.entries[i].Path + fcs.entries[i].Content
+		builder.WriteString(fcs.entries[i].Path)
+		builder.WriteString(fcs.entries[i].Content)
 	}
+
+	combinedContents := builder.String()
 
 	// #nosec G401 - we're not using sha1 for crypto, only to quickly compare contents
 	return fmt.Sprintf("%x", sha1.Sum([]byte(combinedContents))), nil
