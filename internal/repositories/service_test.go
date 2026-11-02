@@ -169,6 +169,17 @@ func TestRepositoryService_DeleteRepository(t *testing.T) {
 			ExpectedError: errDefault.Error(),
 		},
 		{
+			Name:          "DeleteByName fails when name matches multiple repos",
+			DeleteType:    ByName,
+			DBSetup:       newDBMock(withAmbiguousGetByName),
+			ServiceSetup:  newPropSvcMock(),
+			ProviderSetup: newProviderMock(),
+			ProviderManagerSetup: func(_ provinfv1.Provider) pf.ProviderManagerMockBuilder {
+				return pf.NewProviderManagerMock()
+			},
+			ExpectedError: repositories.ErrAmbiguousRepoName.Error(),
+		},
+		{
 			Name:          "DeleteByName fails when repo's entity cannot be retrieved",
 			DeleteType:    ByName,
 			DBSetup:       newDBMock(withSuccessfulGetByName),
@@ -353,11 +364,18 @@ func TestRepositoryService_GetRepositoryByName(t *testing.T) {
 		DBSetup       dbMockBuilder
 		ServiceSetup  propSvcMockBuilder
 		ShouldSucceed bool
+		ExpectedErr   error
 	}{
 		{
 			Name:         "Get by name fails when DB call fails",
 			DBSetup:      newDBMock(withFailedGetByName),
 			ServiceSetup: newPropSvcMock(),
+		},
+		{
+			Name:         "Get by name fails when name matches multiple repos",
+			DBSetup:      newDBMock(withAmbiguousGetByName),
+			ServiceSetup: newPropSvcMock(),
+			ExpectedErr:  repositories.ErrAmbiguousRepoName,
 		},
 		{
 			Name:    "Get by name succeeds",
@@ -385,6 +403,9 @@ func TestRepositoryService_GetRepositoryByName(t *testing.T) {
 				require.NoError(t, err)
 			} else {
 				require.Error(t, err)
+			}
+			if scenario.ExpectedErr != nil {
+				require.ErrorIs(t, err, scenario.ExpectedErr)
 			}
 		})
 	}
@@ -529,6 +550,15 @@ func withFailedGetByName(mock dbMock) {
 	mock.EXPECT().
 		GetTypedEntitiesByPropertyV1(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return([]db.EntityInstance{}, errDefault)
+}
+
+func withAmbiguousGetByName(mock dbMock) {
+	mock.EXPECT().
+		GetProviderByName(gomock.Any(), gomock.Any()).
+		Return(provider, nil)
+	mock.EXPECT().
+		GetTypedEntitiesByPropertyV1(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return([]db.EntityInstance{{ID: dbRepo.ID}, {ID: uuid.New()}}, nil)
 }
 
 func withSuccessfulGetByName(mock dbMock) {
