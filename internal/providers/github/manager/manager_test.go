@@ -46,7 +46,7 @@ func TestNewGitHubProviderClassManager(t *testing.T) {
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	t.Cleanup(ctrl.Finish)
 
 	mockCrypto := mockcrypto.NewMockEngine(ctrl)
 	mockStore := mockdb.NewMockStore(ctrl)
@@ -158,6 +158,7 @@ func TestNewOAuthConfig(t *testing.T) {
 				}
 			},
 			checkConfig: func(t *testing.T, cfg *oauth2.Config) {
+				t.Helper()
 				assert.Equal(t, "gh-client-id", cfg.ClientID)
 				assert.Equal(t, "gh-client-secret", cfg.ClientSecret)
 				assert.Equal(t, "https://example.com/oauth/callback/web", cfg.RedirectURL)
@@ -180,6 +181,7 @@ func TestNewOAuthConfig(t *testing.T) {
 				}
 			},
 			checkConfig: func(t *testing.T, cfg *oauth2.Config) {
+				t.Helper()
 				assert.Equal(t, "gh-client-id-cli", cfg.ClientID)
 				assert.Equal(t, "gh-client-secret-cli", cfg.ClientSecret)
 				assert.Equal(t, "https://example.com/oauth/callback/cli", cfg.RedirectURL)
@@ -202,6 +204,7 @@ func TestNewOAuthConfig(t *testing.T) {
 				}
 			},
 			checkConfig: func(t *testing.T, cfg *oauth2.Config) {
+				t.Helper()
 				assert.Equal(t, "gh-app-client-id", cfg.ClientID)
 				assert.Equal(t, "gh-app-client-secret", cfg.ClientSecret)
 				assert.Equal(t, "https://example.com/github-app/callback", cfg.RedirectURL)
@@ -227,6 +230,7 @@ func TestNewOAuthConfig(t *testing.T) {
 				}
 			},
 			checkConfig: func(t *testing.T, cfg *oauth2.Config) {
+				t.Helper()
 				assert.Equal(t, "https://custom-auth.example.com/token", cfg.Endpoint.TokenURL)
 			},
 		},
@@ -367,7 +371,7 @@ func TestValidateCredentials(t *testing.T) {
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	t.Cleanup(ctrl.Finish)
 
 	mockGhSvc := mockghsvc.NewMockGitHubProviderService(ctrl)
 	mgr := &githubProviderManager{
@@ -457,7 +461,7 @@ func TestGetWebhookHandler(t *testing.T) {
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	t.Cleanup(ctrl.Finish)
 
 	mockPublisher := mockinterfaces.NewMockPublisher(ctrl)
 	mgr := &githubProviderManager{
@@ -520,7 +524,7 @@ func TestBuild_OAuthAndAppFlows(t *testing.T) {
 		t.Parallel()
 
 		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Cleanup(ctrl.Finish)
 
 		mockStore := mockdb.NewMockStore(ctrl)
 		mockCrypto := mockcrypto.NewMockEngine(ctrl)
@@ -575,7 +579,7 @@ func TestBuild_OAuthAndAppFlows(t *testing.T) {
 		t.Parallel()
 
 		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Cleanup(ctrl.Finish)
 
 		mockStore := mockdb.NewMockStore(ctrl)
 
@@ -605,7 +609,7 @@ func TestBuild_OAuthAndAppFlows(t *testing.T) {
 		t.Parallel()
 
 		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Cleanup(ctrl.Finish)
 
 		mockStore := mockdb.NewMockStore(ctrl)
 		mockCrypto := mockcrypto.NewMockEngine(ctrl)
@@ -651,7 +655,7 @@ func TestBuild_OAuthAndAppFlows(t *testing.T) {
 		t.Parallel()
 
 		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Cleanup(ctrl.Finish)
 
 		mockStore := mockdb.NewMockStore(ctrl)
 		mockCrypto := mockcrypto.NewMockEngine(ctrl)
@@ -691,7 +695,7 @@ func TestBuild_OAuthAndAppFlows(t *testing.T) {
 		t.Parallel()
 
 		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Cleanup(ctrl.Finish)
 
 		mockStore := mockdb.NewMockStore(ctrl)
 
@@ -725,7 +729,7 @@ func TestBuild_OAuthAndAppFlows(t *testing.T) {
 		t.Parallel()
 
 		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Cleanup(ctrl.Finish)
 
 		mockStore := mockdb.NewMockStore(ctrl)
 		keyFile := helperCreatePrivateKeyFile(t)
@@ -772,7 +776,7 @@ func TestBuild_OAuthAndAppFlows(t *testing.T) {
 		t.Parallel()
 
 		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Cleanup(ctrl.Finish)
 
 		mockStore := mockdb.NewMockStore(ctrl)
 
@@ -812,7 +816,7 @@ func TestBuild_OAuthAndAppFlows(t *testing.T) {
 		t.Parallel()
 
 		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Cleanup(ctrl.Finish)
 
 		mockStore := mockdb.NewMockStore(ctrl)
 
@@ -850,7 +854,7 @@ func TestDelete(t *testing.T) {
 		t.Parallel()
 
 		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Cleanup(ctrl.Finish)
 
 		mockStore := mockdb.NewMockStore(ctrl)
 		mockGhSvc := mockghsvc.NewMockGitHubProviderService(ctrl)
@@ -879,7 +883,7 @@ func TestDelete(t *testing.T) {
 		t.Parallel()
 
 		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Cleanup(ctrl.Finish)
 
 		mockStore := mockdb.NewMockStore(ctrl)
 		mockGhSvc := mockghsvc.NewMockGitHubProviderService(ctrl)
@@ -911,7 +915,7 @@ func TestDelete(t *testing.T) {
 		t.Parallel()
 
 		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Cleanup(ctrl.Finish)
 
 		mockStore := mockdb.NewMockStore(ctrl)
 		mockGhSvc := mockghsvc.NewMockGitHubProviderService(ctrl)
@@ -994,7 +998,7 @@ func TestDelete(t *testing.T) {
 		t.Parallel()
 
 		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		t.Cleanup(ctrl.Finish)
 
 		mockStore := mockdb.NewMockStore(ctrl)
 		mockGhSvc := mockghsvc.NewMockGitHubProviderService(ctrl)
