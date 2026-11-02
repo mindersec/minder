@@ -12,7 +12,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -107,8 +110,28 @@ func TestApplyCommand(t *testing.T) {
 				pClient := mockv1.NewMockProfileServiceClient(ctrl)
 				mockProfileResp := &minderv1.ListProfilesResponse{}
 				cli.LoadFixture(t, "mock_profiles_response.json", mockProfileResp)
+				profileDef, err := structpb.NewStruct(map[string]any{
+					"package_ecosystem": "mock-ecosystem",
+					"schedule_interval": "weekly",
+					"apply_if_file":     "mock.mod",
+				})
+				require.NoError(t, err)
+				wantProfile := &minderv1.Profile{
+					Type:        string(minderv1.ProfileResource),
+					Version:     "v1",
+					Name:        "sample-profile",
+					DisplayName: "Sample Profile",
+					Repository: []*minderv1.Profile_Rule{
+						{Type: "branch_protection_reviews", Def: profileDef},
+						{Type: "applied_rule"},
+					},
+				}
 				pClient.EXPECT().
-					CreateProfile(gomock.Any(), gomock.Any()).
+					CreateProfile(gomock.Any(), gomock.Cond(func(req *minderv1.CreateProfileRequest) bool {
+						gotProfile := proto.Clone(req.GetProfile()).(*minderv1.Profile)
+						gotProfile.Context = nil // The apply command adds its project context after fetching.
+						return proto.Equal(gotProfile, wantProfile)
+					})).
 					Return(&minderv1.CreateProfileResponse{Profile: mockProfileResp.Profiles[0]}, nil)
 
 				ctx := context.Background()

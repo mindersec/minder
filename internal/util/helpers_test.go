@@ -4,6 +4,7 @@
 package util_test
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -122,8 +123,8 @@ owner: repoOwner
 	}
 }
 
-// TestOpenFileArg tests the OpenFileArg function
-func TestOpenFileArg(t *testing.T) {
+// TestOpenFileArgContext tests the OpenFileArgContext function.
+func TestOpenFileArgContext(t *testing.T) {
 	t.Parallel()
 
 	testDir := t.TempDir()
@@ -166,7 +167,7 @@ func TestOpenFileArg(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			desc, closer, err := util.OpenFileArg(tc.filePath, tc.dashOpen)
+			desc, closer, err := util.OpenFileArgContext(context.Background(), tc.filePath, tc.dashOpen)
 			if closer != nil {
 				defer closer()
 			}

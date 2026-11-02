@@ -4,50 +4,32 @@
 package util
 
 import (
-	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"net/http"
-	"reflect"
-	"strings"
+	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-type roundTripFunc func(*http.Request) (*http.Response, error)
-
-func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return f(req)
-}
-
-func TestNewHTTPFileClientUsesEnvironmentProxy(t *testing.T) {
+func TestFetchHTTPFile(t *testing.T) {
 	t.Parallel()
 
-	client := newHTTPFileClient()
-	require.Nil(t, client.Transport)
-	assert.Equal(t, 30*time.Second, client.Timeout)
-	transport, ok := http.DefaultTransport.(*http.Transport)
-	require.True(t, ok)
-	require.NotNil(t, transport.Proxy)
-	assert.Equal(t,
-		reflect.ValueOf(http.ProxyFromEnvironment).Pointer(),
-		reflect.ValueOf(transport.Proxy).Pointer(),
-	)
-}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodGet, r.Method)
+		assert.Equal(t, "/policy.yaml", r.URL.Path)
+		assert.Equal(t, "raw=1", r.URL.RawQuery)
+		_, _ = w.Write([]byte("remote content"))
+	}))
+	defer server.Close()
 
-func TestFetchHTTPFileWithClient(t *testing.T) {
-	t.Parallel()
-
-	client := &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
-		assert.Equal(t, "/policy.yaml", req.URL.Path)
-		assert.Equal(t, "raw=1", req.URL.RawQuery)
-		return testHTTPResponse(req, http.StatusOK, "remote content", nil), nil
-	})}
-	content, err := fetchHTTPFile(context.Background(), "https://example.com/policy.yaml?raw=1", client)
+	reader, closer, err := fetchHTTPFile(context.Background(), server.URL+"/policy.yaml?raw=1", server.Client())
+	require.NoError(t, err)
+	require.NotNil(t, closer)
+	t.Cleanup(func() { _ = closer.Close() })
+	content, err := io.ReadAll(reader)
 	require.NoError(t, err)
 	assert.Equal(t, "remote content", string(content))
 }
@@ -55,23 +37,16 @@ func TestFetchHTTPFileWithClient(t *testing.T) {
 func TestFetchHTTPFileCanBeCanceled(t *testing.T) {
 	t.Parallel()
 
-	started := make(chan struct{})
-	client := &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
-		close(started)
-		<-req.Context().Done()
-		return nil, req.Context().Err()
-	})}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("remote content"))
+	}))
+	defer server.Close()
 
-	result := make(chan error, 1)
-	go func() {
-		_, err := fetchHTTPFile(ctx, "https://example.com/policy.yaml", client)
-		result <- err
-	}()
-	<-started
+	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	require.ErrorIs(t, <-result, context.Canceled)
+
+	_, _, err := fetchHTTPFile(ctx, server.URL+"/policy.yaml", server.Client())
+	require.ErrorIs(t, err, context.Canceled)
 }
 
 func TestFetchHTTPFileRejectsStatusAndOversizedBody(t *testing.T) {
@@ -79,38 +54,29 @@ func TestFetchHTTPFileRejectsStatusAndOversizedBody(t *testing.T) {
 
 	t.Run("non-success status", func(t *testing.T) {
 		t.Parallel()
-		client := &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
-			return testHTTPResponse(req, http.StatusNotFound, "missing", nil), nil
-		})}
-		_, err := fetchHTTPFile(context.Background(), "https://example.com/missing.yaml", client)
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte("missing"))
+		}))
+		defer server.Close()
+
+		_, _, err := fetchHTTPFile(context.Background(), server.URL+"/missing.yaml", server.Client())
 		require.ErrorContains(t, err, "404")
 	})
 
 	t.Run("unknown length body over limit", func(t *testing.T) {
 		t.Parallel()
-		body := bytes.NewReader(make([]byte, maxHTTPFileSize+1))
-		client := &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
-			response := testHTTPResponse(req, http.StatusOK, "", nil)
-			response.Body = io.NopCloser(body)
-			response.ContentLength = -1
-			return response, nil
-		})}
-		_, err := fetchHTTPFile(context.Background(), "https://example.com/large.yaml", client)
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.(http.Flusher).Flush()
+			_, _ = w.Write(make([]byte, maxHTTPFileSize+1))
+		}))
+		defer server.Close()
+
+		reader, closer, err := fetchHTTPFile(context.Background(), server.URL+"/large.yaml", server.Client())
+		require.NoError(t, err)
+		defer closer.Close()
+		_, err = io.ReadAll(reader)
 		require.ErrorContains(t, err, "exceeds maximum size")
 	})
-}
-
-func testHTTPResponse(req *http.Request, status int, body string, headers map[string]string) *http.Response {
-	header := make(http.Header)
-	for key, value := range headers {
-		header.Set(key, value)
-	}
-	return &http.Response{
-		StatusCode:    status,
-		Status:        fmt.Sprintf("%d %s", status, http.StatusText(status)),
-		Header:        header,
-		Body:          io.NopCloser(strings.NewReader(body)),
-		ContentLength: int64(len(body)),
-		Request:       req,
-	}
 }

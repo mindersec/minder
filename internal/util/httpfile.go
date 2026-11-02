@@ -4,7 +4,6 @@
 package util
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -27,11 +26,15 @@ func OpenFileArgContext(ctx context.Context, f string, dashOpen io.Reader) (desc
 		return dashOpen, func() {}, nil
 	}
 	if IsHTTPURL(f) {
-		content, err := fetchHTTPFile(ctx, f, newHTTPFileClient())
+		reader, bodyCloser, err := fetchHTTPFile(ctx, f, newHTTPFileClient())
 		if err != nil {
 			return nil, nil, fmt.Errorf("error fetching URL: %w", err)
 		}
-		return bytes.NewReader(content), func() {}, nil
+		return reader, func() {
+			if err := bodyCloser.Close(); err != nil {
+				fmt.Fprintf(os.Stderr, "error closing URL response body: %v\n", err)
+			}
+		}, nil
 	}
 
 	f = filepath.Clean(f)
@@ -53,33 +56,51 @@ func newHTTPFileClient() *http.Client {
 	return &http.Client{Timeout: httpFileTimeout}
 }
 
-func fetchHTTPFile(ctx context.Context, rawURL string, client *http.Client) ([]byte, error) {
+func fetchHTTPFile(ctx context.Context, rawURL string, client *http.Client) (io.Reader, io.Closer, error) {
 	if client == nil {
-		return nil, fmt.Errorf("HTTP client is nil")
+		return nil, nil, fmt.Errorf("HTTP client is nil")
 	}
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("creating URL request: %w", err)
+		return nil, nil, fmt.Errorf("creating URL request: %w", err)
 	}
 
 	response, err := client.Do(request)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	defer response.Body.Close()
 
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
-		return nil, fmt.Errorf("unexpected HTTP status fetching URL: %s", response.Status)
+		_ = response.Body.Close()
+		return nil, nil, fmt.Errorf("unexpected HTTP status fetching URL: %s", response.Status)
 	}
 	if response.ContentLength > maxHTTPFileSize {
-		return nil, fmt.Errorf("remote file exceeds maximum size of %d bytes", maxHTTPFileSize)
+		_ = response.Body.Close()
+		return nil, nil, fmt.Errorf("remote file exceeds maximum size of %d bytes", maxHTTPFileSize)
 	}
-	content, err := io.ReadAll(io.LimitReader(response.Body, maxHTTPFileSize+1))
-	if err != nil {
-		return nil, fmt.Errorf("reading URL response: %w", err)
+
+	// Read at most one byte beyond the limit so unknown-length responses can
+	// still be rejected instead of silently accepting a truncated file.
+	reader := &maxHTTPFileReader{reader: io.LimitReader(response.Body, maxHTTPFileSize+1)}
+	return reader, response.Body, nil
+}
+
+type maxHTTPFileReader struct {
+	reader   io.Reader
+	read     int64
+	exceeded bool
+}
+
+func (r *maxHTTPFileReader) Read(p []byte) (int, error) {
+	if r.exceeded {
+		return 0, fmt.Errorf("remote file exceeds maximum size of %d bytes", maxHTTPFileSize)
 	}
-	if int64(len(content)) > maxHTTPFileSize {
-		return nil, fmt.Errorf("remote file exceeds maximum size of %d bytes", maxHTTPFileSize)
+
+	n, err := r.reader.Read(p)
+	r.read += int64(n)
+	if r.read > maxHTTPFileSize {
+		r.exceeded = true
+		return n, fmt.Errorf("remote file exceeds maximum size of %d bytes", maxHTTPFileSize)
 	}
-	return content, nil
+	return n, err
 }

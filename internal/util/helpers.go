@@ -5,10 +5,8 @@
 package util
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math"
 	"net/url"
 	"os"
@@ -85,12 +83,6 @@ func GetYamlFromProto(msg proto.Message) (string, error) {
 func GetBytesFromProto(message proto.Message) ([]byte, error) {
 	m := getProtoMarshalOptions()
 	return m.Marshal(message)
-}
-
-// OpenFileArg opens a file argument and returns a descriptor, closer, and error.
-// If the file is "-", it will return whatever is passed in as dashOpen and a no-op closer.
-func OpenFileArg(f string, dashOpen io.Reader) (desc io.Reader, closer func(), err error) {
-	return OpenFileArgContext(context.Background(), f, dashOpen)
 }
 
 // IsHTTPURL reports whether f uses the HTTP or HTTPS scheme.

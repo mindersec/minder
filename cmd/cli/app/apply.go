@@ -41,7 +41,7 @@ func applyCommand(cmd *cobra.Command, args []string) error {
 	if len(argFiles) > 0 {
 		fileNames = argFiles
 	}
-	objects, err := fileconvert.ResourcesFromPathsContext(cmd.Context(), cmd.Printf, fileNames...)
+	objects, err := fileconvert.ResourcesFromPaths(cmd.Context(), cmd.Printf, fileNames...)
 	if err != nil {
 		return cli.MessageAndError("Error reading resources", err)
 	}

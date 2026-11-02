@@ -69,17 +69,6 @@ func DecoderForFile(path string) (Decoder, io.Closer) {
 	return builder(file), file
 }
 
-// DecoderForReader returns a Decoder for a stream named by path, or nil if the
-// path does not have a supported extension.
-// The path extension determines decoding because GitHub raw YAML may be served as text/plain.
-func DecoderForReader(path string, input io.Reader) Decoder {
-	builder := decoderBuilder(path)
-	if builder == nil {
-		return nil
-	}
-	return builder(input)
-}
-
 func decoderBuilder(path string) func(io.Reader) Decoder {
 	switch util.FileArgExt(path) {
 	case ".json":
