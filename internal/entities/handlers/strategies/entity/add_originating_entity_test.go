@@ -73,6 +73,10 @@ func TestAddOriginatingEntityStrategy_AlreadyExists(t *testing.T) {
 		CreateEntity(gomock.Any(), gomock.Any(), projectID, minderv1.Entity_ENTITY_ARTIFACTS,
 			gomock.Any(), gomock.Any()).
 		Return(nil, fmt.Errorf("error creating entity: %w", &pq.Error{Code: pqerror.UniqueViolation}))
+	store.EXPECT().BeginTransaction().Return(nil, nil)
+	store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
+	store.EXPECT().Commit(gomock.Any()).Return(nil)
+	store.EXPECT().Rollback(gomock.Any()).Return(nil)
 	propSvc.EXPECT().
 		RetrieveAllPropertiesForEntity(gomock.Any(), existingEwp, provMgr, gomock.Any()).
 		Return(nil)

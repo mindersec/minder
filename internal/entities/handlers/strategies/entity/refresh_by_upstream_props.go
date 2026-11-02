@@ -38,23 +38,7 @@ func NewRefreshEntityByUpstreamPropsStrategy(
 func (r *refreshEntityByUpstreamIDStrategy) GetEntity(
 	ctx context.Context, entMsg *message.HandleEntityAndDoMessage,
 ) (*models.EntityWithProperties, error) {
-	getEnt, err := db.WithTransaction(r.store, func(t db.ExtendQuerier) (*models.EntityWithProperties, error) {
-		ewp, err := getEntityInner(
-			ctx,
-			entMsg.Entity.Type, entMsg.Entity.GetByProps, entMsg.Hint,
-			r.propSvc, propertyService.CallBuilder().WithStoreOrTransaction(t))
-		if err != nil {
-			return nil, fmt.Errorf("error getting entity: %w", err)
-		}
-
-		err = r.propSvc.RetrieveAllPropertiesForEntity(
-			ctx, ewp, r.provMgr,
-			propertyService.ReadBuilder().WithStoreOrTransaction(t))
-		if err != nil {
-			return nil, fmt.Errorf("error fetching entity: %w", err)
-		}
-		return ewp, nil
-	})
+	getEnt, err := refreshEntityByUpstreamProps(ctx, entMsg, r.propSvc, r.provMgr, r.store)
 	if err != nil {
 		return nil, fmt.Errorf("error refreshing entity: %w", err)
 	}
