@@ -4,13 +4,21 @@
 package gitlab
 
 import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 
+	"github.com/mindersec/minder/internal/providers/credentials"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/entities/properties"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 func TestFormatRepositoryUpstreamID(t *testing.T) {
@@ -259,4 +267,169 @@ func TestRepoV1FromProperties(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "error fetching is_fork property")
 	})
+}
+
+func TestGetPropertiesForRepo_HTTPInteractions(t *testing.T) {
+	t.Parallel()
+
+	t.Run("successful repo properties fetch from gitlab server", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, http.MethodGet, r.Method)
+			assert.Contains(t, r.URL.Path, "projects/12345")
+			assert.Equal(t, "true", r.URL.Query().Get("license"))
+
+			proj := &gitlab.Project{
+				ID:            12345,
+				Name:          "demo-app",
+				DefaultBranch: "main",
+				Visibility:    gitlab.PrivateVisibility,
+				Archived:      false,
+				HTTPURLToRepo: "https://gitlab.example.com/group/demo-app.git",
+				Namespace: &gitlab.ProjectNamespace{
+					Path: "group",
+				},
+				License: &gitlab.ProjectLicense{
+					Name: "BSD-3-Clause",
+				},
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_ = json.NewEncoder(w).Encode(proj)
+		}))
+		defer server.Close()
+
+		cli := newTestGitlabClientWithServer(t, server.URL)
+
+		inputProps := properties.NewProperties(map[string]any{
+			properties.PropertyUpstreamID: "12345",
+			"custom-existing-prop":        "keep-me",
+		})
+
+		mergedProps, err := cli.getPropertiesForRepo(context.Background(), inputProps)
+		require.NoError(t, err)
+		require.NotNil(t, mergedProps)
+
+		assert.Equal(t, "12345", mergedProps.GetProperty(properties.PropertyUpstreamID).GetString())
+		assert.Equal(t, "group/demo-app", mergedProps.GetProperty(properties.PropertyName).GetString())
+		assert.Equal(t, "group", mergedProps.GetProperty(RepoPropertyNamespace).GetString())
+		assert.Equal(t, "demo-app", mergedProps.GetProperty(RepoPropertyProjectName).GetString())
+		assert.Equal(t, "BSD-3-Clause", mergedProps.GetProperty(RepoPropertyLicense).GetString())
+		assert.True(t, mergedProps.GetProperty(properties.RepoPropertyIsPrivate).GetBool())
+		assert.Equal(t, "keep-me", mergedProps.GetProperty("custom-existing-prop").GetString())
+	})
+
+	t.Run("missing upstream ID in getByProps returns error", func(t *testing.T) {
+		t.Parallel()
+
+		cli := newTestGitlabClientWithServer(t, "https://example.com")
+		inputProps := properties.NewProperties(map[string]any{})
+
+		_, err := cli.getPropertiesForRepo(context.Background(), inputProps)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "upstream ID not found or invalid")
+	})
+
+	t.Run("project not found returns ErrEntityNotFound", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+		}))
+		defer server.Close()
+
+		cli := newTestGitlabClientWithServer(t, server.URL)
+
+		inputProps := properties.NewProperties(map[string]any{
+			properties.PropertyUpstreamID: "999999",
+		})
+
+		_, err := cli.getPropertiesForRepo(context.Background(), inputProps)
+		require.ErrorIs(t, err, provifv1.ErrEntityNotFound)
+	})
+
+	t.Run("server returns 500 internal server error", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer server.Close()
+
+		cli := newTestGitlabClientWithServer(t, server.URL)
+
+		inputProps := properties.NewProperties(map[string]any{
+			properties.PropertyUpstreamID: "123",
+		})
+
+		_, err := cli.getPropertiesForRepo(context.Background(), inputProps)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to get projects")
+	})
+
+	t.Run("server returns malformed JSON body", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("{invalid-json-body"))
+		}))
+		defer server.Close()
+
+		cli := newTestGitlabClientWithServer(t, server.URL)
+
+		inputProps := properties.NewProperties(map[string]any{
+			properties.PropertyUpstreamID: "123",
+		})
+
+		_, err := cli.getPropertiesForRepo(context.Background(), inputProps)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to decode response")
+	})
+
+	t.Run("server returns project without namespace triggers conversion error", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			proj := &gitlab.Project{
+				ID:        555,
+				Name:      "no-namespace",
+				Namespace: nil,
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_ = json.NewEncoder(w).Encode(proj)
+		}))
+		defer server.Close()
+
+		cli := newTestGitlabClientWithServer(t, server.URL)
+
+		inputProps := properties.NewProperties(map[string]any{
+			properties.PropertyUpstreamID: "555",
+		})
+
+		_, err := cli.getPropertiesForRepo(context.Background(), inputProps)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to convert project to properties")
+	})
+}
+
+func newTestGitlabClientWithServer(t *testing.T, serverURL string) *gitlabClient {
+	t.Helper()
+
+	cli, err := New(
+		context.Background(),
+		credentials.NewGitLabTokenCredential("glpat-test-secret-token"),
+		&minderv1.GitLabProviderConfig{
+			Endpoint: serverURL,
+		},
+		"https://example.com/webhook",
+		"webhook-secret",
+		server.GitConfig{},
+	)
+	require.NoError(t, err)
+	return cli
 }

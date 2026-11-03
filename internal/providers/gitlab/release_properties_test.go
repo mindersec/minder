@@ -4,6 +4,12 @@
 package gitlab
 
 import (
+	"context"
+	"encoding/json"
+	"maps"
+	"net/http"
+	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -289,5 +295,285 @@ func TestReleaseEntityV1FromProperties(t *testing.T) {
 		_, err := releaseEntityV1FromProperties(p)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "project name not found")
+	})
+}
+
+func TestGetCommitBranchRefs_RetryAndSuccess(t *testing.T) {
+	t.Parallel()
+
+	t.Run("succeeds after transient 500 error", func(t *testing.T) {
+		t.Parallel()
+
+		var attempts int32
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			count := atomic.AddInt32(&attempts, 1)
+
+			assert.Contains(t, r.URL.Path, "commits/c0ffee/refs")
+			assert.Equal(t, "branch", r.URL.Query().Get("type"))
+
+			if count == 1 {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			refs := []*gitlablib.CommitRef{
+				{Name: "main", Type: "branch"},
+				{Name: "release-v1.0", Type: "branch"},
+			}
+			_ = json.NewEncoder(w).Encode(refs)
+		}))
+		defer server.Close()
+
+		cli := newTestGitlabClientWithServer(t, server.URL)
+		refs, err := cli.getCommitBranchRefs(context.Background(), "123", "c0ffee")
+		require.NoError(t, err)
+		require.Len(t, refs, 2)
+		assert.Equal(t, "main", refs[0].Name)
+		assert.Equal(t, "release-v1.0", refs[1].Name)
+		assert.GreaterOrEqual(t, atomic.LoadInt32(&attempts), int32(2))
+	})
+
+	t.Run("fails after exceeding retries on server error", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer server.Close()
+
+		cli := newTestGitlabClientWithServer(t, server.URL)
+		_, err := cli.getCommitBranchRefs(context.Background(), "123", "badcommit")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to get commit refs")
+	})
+
+	t.Run("returns decode error when response is malformed", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{not valid array}`))
+		}))
+		defer server.Close()
+
+		cli := newTestGitlabClientWithServer(t, server.URL)
+		_, err := cli.getCommitBranchRefs(context.Background(), "123", "badjson")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to decode response for commit refs")
+	})
+}
+
+func TestGetPropertiesForRelease_HTTPInteractions(t *testing.T) {
+	t.Parallel()
+
+	validLookupProps := map[string]any{
+		properties.PropertyUpstreamID: "999",
+		ReleasePropertyProjectID:      "100",
+		ReleasePropertyTag:            "v2.5.0",
+	}
+
+	t.Run("successful release properties fetch", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+
+			switch r.URL.Path {
+			case "/projects/100/releases/v2.5.0":
+				release := &gitlablib.Release{
+					TagName: "v2.5.0",
+					Name:    "Release v2.5.0",
+					Commit: gitlablib.Commit{
+						ID: "sha1234567890abcdef",
+					},
+				}
+				_ = json.NewEncoder(w).Encode(release)
+			case "/projects/100":
+				proj := &gitlablib.Project{
+					ID:   100,
+					Name: "service-repo",
+					Namespace: &gitlablib.ProjectNamespace{
+						Path: "org-group",
+					},
+				}
+				_ = json.NewEncoder(w).Encode(proj)
+			case "/projects/100/repository/commits/sha1234567890abcdef/refs":
+				refs := []*gitlablib.CommitRef{
+					{Name: "main", Type: "branch"},
+				}
+				_ = json.NewEncoder(w).Encode(refs)
+			default:
+				http.NotFound(w, r)
+			}
+		}))
+		defer server.Close()
+
+		cli := newTestGitlabClientWithServer(t, server.URL)
+		res, err := cli.getPropertiesForRelease(context.Background(), properties.NewProperties(validLookupProps))
+		require.NoError(t, err)
+		require.NotNil(t, res)
+
+		assert.Equal(t, "999", res.GetProperty(properties.PropertyUpstreamID).GetString())
+		assert.Equal(t, "100", res.GetProperty(ReleasePropertyProjectID).GetString())
+		assert.Equal(t, "v2.5.0", res.GetProperty(ReleasePropertyTag).GetString())
+		assert.Equal(t, "main", res.GetProperty(ReleasePropertyBranch).GetString())
+		assert.Equal(t, "org-group", res.GetProperty(RepoPropertyNamespace).GetString())
+		assert.Equal(t, "service-repo", res.GetProperty(RepoPropertyProjectName).GetString())
+	})
+
+	t.Run("missing upstream ID in input properties returns error", func(t *testing.T) {
+		t.Parallel()
+
+		cli := newTestGitlabClientWithServer(t, "https://example.com")
+		props := maps.Clone(validLookupProps)
+		delete(props, properties.PropertyUpstreamID)
+
+		_, err := cli.getPropertiesForRelease(context.Background(), properties.NewProperties(props))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "upstream ID not found or invalid")
+	})
+
+	t.Run("missing project ID in input properties returns error", func(t *testing.T) {
+		t.Parallel()
+
+		cli := newTestGitlabClientWithServer(t, "https://example.com")
+		props := maps.Clone(validLookupProps)
+		delete(props, ReleasePropertyProjectID)
+
+		_, err := cli.getPropertiesForRelease(context.Background(), properties.NewProperties(props))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "project ID not found or invalid")
+	})
+
+	t.Run("missing tag in input properties returns error", func(t *testing.T) {
+		t.Parallel()
+
+		cli := newTestGitlabClientWithServer(t, "https://example.com")
+		props := maps.Clone(validLookupProps)
+		delete(props, ReleasePropertyTag)
+
+		_, err := cli.getPropertiesForRelease(context.Background(), properties.NewProperties(props))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "tag name not found or invalid")
+	})
+
+	t.Run("release endpoint returns 404 error", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+		}))
+		defer server.Close()
+
+		cli := newTestGitlabClientWithServer(t, server.URL)
+		_, err := cli.getPropertiesForRelease(context.Background(), properties.NewProperties(validLookupProps))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to get release using upstream ID")
+	})
+
+	t.Run("release endpoint returns malformed JSON", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{invalid-json`))
+		}))
+		defer server.Close()
+
+		cli := newTestGitlabClientWithServer(t, server.URL)
+		_, err := cli.getPropertiesForRelease(context.Background(), properties.NewProperties(validLookupProps))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to decode response for release using upstream ID")
+	})
+
+	t.Run("project fetch failure returns error", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			if r.URL.Path == "/projects/100/releases/v2.5.0" {
+				release := &gitlablib.Release{
+					TagName: "v2.5.0",
+					Commit:  gitlablib.Commit{ID: "abc"},
+				}
+				_ = json.NewEncoder(w).Encode(release)
+				return
+			}
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer server.Close()
+
+		cli := newTestGitlabClientWithServer(t, server.URL)
+		_, err := cli.getPropertiesForRelease(context.Background(), properties.NewProperties(validLookupProps))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to get project")
+	})
+
+	t.Run("commit refs fetch failure returns error", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			switch r.URL.Path {
+			case "/projects/100/releases/v2.5.0":
+				release := &gitlablib.Release{
+					TagName: "v2.5.0",
+					Commit:  gitlablib.Commit{ID: "abc"},
+				}
+				_ = json.NewEncoder(w).Encode(release)
+			case "/projects/100":
+				proj := &gitlablib.Project{
+					ID:        100,
+					Name:      "repo",
+					Namespace: &gitlablib.ProjectNamespace{Path: "ns"},
+				}
+				_ = json.NewEncoder(w).Encode(proj)
+			default:
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+		}))
+		defer server.Close()
+
+		cli := newTestGitlabClientWithServer(t, server.URL)
+		_, err := cli.getPropertiesForRelease(context.Background(), properties.NewProperties(validLookupProps))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to get commit refs")
+	})
+
+	t.Run("empty commit refs returned returns error", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			switch r.URL.Path {
+			case "/projects/100/releases/v2.5.0":
+				release := &gitlablib.Release{
+					TagName: "v2.5.0",
+					Commit:  gitlablib.Commit{ID: "sha123"},
+				}
+				_ = json.NewEncoder(w).Encode(release)
+			case "/projects/100":
+				proj := &gitlablib.Project{
+					ID:        100,
+					Name:      "repo",
+					Namespace: &gitlablib.ProjectNamespace{Path: "ns"},
+				}
+				_ = json.NewEncoder(w).Encode(proj)
+			case "/projects/100/repository/commits/sha123/refs":
+				refs := []*gitlablib.CommitRef{}
+				_ = json.NewEncoder(w).Encode(refs)
+			default:
+				http.NotFound(w, r)
+			}
+		}))
+		defer server.Close()
+
+		cli := newTestGitlabClientWithServer(t, server.URL)
+		_, err := cli.getPropertiesForRelease(context.Background(), properties.NewProperties(validLookupProps))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "no commit refs found for release")
 	})
 }
