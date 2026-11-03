@@ -7,7 +7,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
+	"io/fs"
+	"strings"
 
 	"github.com/go-git/go-billy/v5/util"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
@@ -32,7 +36,8 @@ func init() {
 type patternType string
 
 const (
-	patternTypeGlob patternType = "glob"
+	patternTypeGlob  patternType = "glob"
+	patternTypeExact patternType = "exact"
 
 	maxExpressionSize int = 3000
 )
@@ -46,8 +51,9 @@ var _ fsModifier = (*yqExecute)(nil)
 type yqExecuteConfig struct {
 	Expression string `json:"expression"`
 	Patterns   []struct {
-		Pattern string `json:"pattern"`
-		Type    string `json:"type"`
+		Pattern        string `json:"pattern"`
+		Type           string `json:"type"`
+		CreateIfNeeded bool   `json:"create_if_needed"`
 	}
 }
 
@@ -101,21 +107,32 @@ type templateParams struct {
 }
 
 func (yq *yqExecute) createFsModEntries(ctx context.Context, ent proto.Message, params interfaces.ActionsParams) error {
-	matchingFiles := make([]string, 0)
+	type target struct {
+		path   string
+		create bool
+	}
+	matchingFiles := make([]target, 0)
 	for _, pattern := range yq.config.Patterns {
-		if pattern.Type != string(patternTypeGlob) {
+		switch patternType(pattern.Type) {
+		case patternTypeExact:
+			if !fs.ValidPath(pattern.Pattern) || pattern.Pattern == "." || strings.ContainsAny(pattern.Pattern, "\\:\x00") {
+				return fmt.Errorf("invalid exact path %q: must be relative to the repository", pattern.Pattern)
+			}
+			matchingFiles = append(matchingFiles, target{path: pattern.Pattern, create: pattern.CreateIfNeeded})
+		case patternTypeGlob:
+			patternMatches, err := util.Glob(yq.fs, pattern.Pattern)
+			if err != nil {
+				return fmt.Errorf("cannot get matching files: %w", err)
+			}
+			for _, file := range patternMatches {
+				matchingFiles = append(matchingFiles, target{path: file})
+			}
+		default:
 			zerolog.Ctx(ctx).
 				Warn().
 				Str("pattern.Type", pattern.Type).
 				Msg("unsupported pattern type")
-			continue
 		}
-
-		patternMatches, err := util.Glob(yq.fs, pattern.Pattern)
-		if err != nil {
-			return fmt.Errorf("cannot get matching files: %w", err)
-		}
-		matchingFiles = append(matchingFiles, patternMatches...)
 	}
 
 	templateData := templateParams{
@@ -141,12 +158,12 @@ func (yq *yqExecute) createFsModEntries(ctx context.Context, ent proto.Message, 
 	}
 
 	for _, file := range matchingFiles {
-		newContent, err := yq.executeYq(file, expression)
+		newContent, err := yq.executeYq(file.path, expression, file.create)
 		if err != nil {
 			return fmt.Errorf("cannot execute yq: %w", err)
 		}
 		yq.entries = append(yq.entries, &fsEntry{
-			Path:    file,
+			Path:    file.path,
 			Content: newContent,
 			Mode:    filemode.Regular.String(),
 		})
@@ -163,10 +180,17 @@ func (yq *yqExecute) modifyFs() ([]*fsEntry, error) {
 	return yq.entries, nil
 }
 
-func (yq *yqExecute) executeYq(filename, expression string) (string, error) {
+func (yq *yqExecute) executeYq(filename, expression string, create bool) (string, error) {
 	file, err := yq.fs.Open(filename)
+	var input io.Reader = file
 	if err != nil {
-		return "", fmt.Errorf("cannot read file: %w", err)
+		if !create || !errors.Is(err, fs.ErrNotExist) {
+			return "", fmt.Errorf("cannot read file: %w", err)
+		}
+		// An empty stream has no documents for yq to evaluate.
+		input = strings.NewReader("null\n")
+	} else {
+		defer file.Close()
 	}
 
 	out := new(bytes.Buffer)
@@ -181,7 +205,7 @@ func (yq *yqExecute) executeYq(filename, expression string) (string, error) {
 
 	decoder := yqlib.NewYamlDecoder(yqlib.NewDefaultYamlPreferences())
 	parser := yqlib.NewStreamEvaluator()
-	_, err = parser.Evaluate(filename, file, expressionNode, printer, decoder)
+	_, err = parser.Evaluate(filename, input, expressionNode, printer, decoder)
 	if err != nil {
 		return "", fmt.Errorf("cannot evaluate expression: %w", err)
 	}
