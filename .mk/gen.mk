@@ -13,6 +13,7 @@ gen: buf sqlc mock oapi ## run code generation targets (buf, sqlc, mock)
 buf: ## generate protobuf files
 	buf generate
 	buf generate proto/ --template buf.gen.openapi.yaml
+	printf '# SPDX-FileCopyrightText: Copyright 2026 The Minder Authors\n# SPDX-License-Identifier: Apache-2.0\n\n' | cat - pkg/api/openapi/openapi.yaml > /tmp/minder-openapi.yaml && mv /tmp/minder-openapi.yaml pkg/api/openapi/openapi.yaml
 
 .PHONY: sqlc
 sqlc: ## generate sqlc files
