@@ -4492,20 +4492,24 @@ message ListExceptionsResponse {
 
 // CreateExceptionRequest specifies an exception to create.
 message CreateExceptionRequest {
+    // context identifies the project.
+    Context context = 1;
+
     // entity_id is the ID of the entity being excepted.
-    string entity_id = 1 [
+    string entity_id = 2 [
         (buf.validate.field).string = {uuid: true},
         (google.api.field_behavior) = REQUIRED
     ];
 
     // rule_type_id is the ID of the rule type being excepted.
-    string rule_type_id = 2 [
+    string rule_type_id = 3 [
         (buf.validate.field).string = {uuid: true},
         (google.api.field_behavior) = REQUIRED
     ];
 
     // expires_at is when the exception expires.
-    google.protobuf.Timestamp expires_at = 3 [
+    google.protobuf.Timestamp expires_at = 4 [
+        (buf.validate.field).timestamp.gt_now = true,
         (google.api.field_behavior) = REQUIRED
     ];
 }

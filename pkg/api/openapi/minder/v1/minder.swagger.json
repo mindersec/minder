@@ -4324,6 +4324,10 @@
     "v1CreateExceptionRequest": {
       "type": "object",
       "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context",
+          "description": "context identifies the project."
+        },
         "entityId": {
           "type": "string",
           "description": "entity_id is the ID of the entity being excepted."

@@ -12931,12 +12931,14 @@ func (x *ListExceptionsResponse) GetExceptions() []*Exception {
 // CreateExceptionRequest specifies an exception to create.
 type CreateExceptionRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// context identifies the project.
+	Context *Context `protobuf:"bytes,1,opt,name=context,proto3" json:"context,omitempty"`
 	// entity_id is the ID of the entity being excepted.
-	EntityId string `protobuf:"bytes,1,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
+	EntityId string `protobuf:"bytes,2,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
 	// rule_type_id is the ID of the rule type being excepted.
-	RuleTypeId string `protobuf:"bytes,2,opt,name=rule_type_id,json=ruleTypeId,proto3" json:"rule_type_id,omitempty"`
+	RuleTypeId string `protobuf:"bytes,3,opt,name=rule_type_id,json=ruleTypeId,proto3" json:"rule_type_id,omitempty"`
 	// expires_at is when the exception expires.
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -12969,6 +12971,13 @@ func (x *CreateExceptionRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use CreateExceptionRequest.ProtoReflect.Descriptor instead.
 func (*CreateExceptionRequest) Descriptor() ([]byte, []int) {
 	return file_minder_v1_minder_proto_rawDescGZIP(), []int{206}
+}
+
+func (x *CreateExceptionRequest) GetContext() *Context {
+	if x != nil {
+		return x.Context
+	}
+	return nil
 }
 
 func (x *CreateExceptionRequest) GetEntityId() string {
@@ -16623,13 +16632,14 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x16ListExceptionsResponse\x129\n" +
 	"\n" +
 	"exceptions\x18\x01 \x03(\v2\x14.minder.v1.ExceptionB\x03\xe0A\x02R\n" +
-	"exceptions\"\xb1\x01\n" +
-	"\x16CreateExceptionRequest\x12(\n" +
-	"\tentity_id\x18\x01 \x01(\tB\v\xe0A\x02\xbaH\x05r\x03\xb0\x01\x01R\bentityId\x12-\n" +
-	"\frule_type_id\x18\x02 \x01(\tB\v\xe0A\x02\xbaH\x05r\x03\xb0\x01\x01R\n" +
-	"ruleTypeId\x12>\n" +
+	"exceptions\"\xe7\x01\n" +
+	"\x16CreateExceptionRequest\x12,\n" +
+	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12(\n" +
+	"\tentity_id\x18\x02 \x01(\tB\v\xe0A\x02\xbaH\x05r\x03\xb0\x01\x01R\bentityId\x12-\n" +
+	"\frule_type_id\x18\x03 \x01(\tB\v\xe0A\x02\xbaH\x05r\x03\xb0\x01\x01R\n" +
+	"ruleTypeId\x12F\n" +
 	"\n" +
-	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x03\xe0A\x02R\texpiresAt\"R\n" +
+	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\v\xe0A\x02\xbaH\x05\xb2\x01\x02@\x01R\texpiresAt\"R\n" +
 	"\x17CreateExceptionResponse\x127\n" +
 	"\texception\x18\x01 \x01(\v2\x14.minder.v1.ExceptionB\x03\xe0A\x02R\texception\"c\n" +
 	"\x16DeleteExceptionRequest\x12,\n" +
@@ -17433,223 +17443,224 @@ var file_minder_v1_minder_proto_depIdxs = []int32{
 	262, // 234: minder.v1.Exception.created_at:type_name -> google.protobuf.Timestamp
 	116, // 235: minder.v1.ListExceptionsRequest.context:type_name -> minder.v1.Context
 	213, // 236: minder.v1.ListExceptionsResponse.exceptions:type_name -> minder.v1.Exception
-	262, // 237: minder.v1.CreateExceptionRequest.expires_at:type_name -> google.protobuf.Timestamp
-	213, // 238: minder.v1.CreateExceptionResponse.exception:type_name -> minder.v1.Exception
-	116, // 239: minder.v1.DeleteExceptionRequest.context:type_name -> minder.v1.Context
-	117, // 240: minder.v1.UpstreamEntityRef.context:type_name -> minder.v1.ContextV2
-	3,   // 241: minder.v1.UpstreamEntityRef.type:type_name -> minder.v1.Entity
-	263, // 242: minder.v1.UpstreamEntityRef.properties:type_name -> google.protobuf.Struct
-	117, // 243: minder.v1.DataSource.context:type_name -> minder.v1.ContextV2
-	222, // 244: minder.v1.DataSource.structured:type_name -> minder.v1.StructDataSource
-	223, // 245: minder.v1.DataSource.rest:type_name -> minder.v1.RestDataSource
-	256, // 246: minder.v1.StructDataSource.def:type_name -> minder.v1.StructDataSource.DefEntry
-	259, // 247: minder.v1.RestDataSource.def:type_name -> minder.v1.RestDataSource.DefEntry
-	106, // 248: minder.v1.AutoRegistration.EntitiesEntry.value:type_name -> minder.v1.EntityAutoRegistrationConfig
-	96,  // 249: minder.v1.ListEvaluationResultsResponse.EntityProfileEvaluationResults.profile_status:type_name -> minder.v1.ProfileStatus
-	98,  // 250: minder.v1.ListEvaluationResultsResponse.EntityProfileEvaluationResults.results:type_name -> minder.v1.RuleEvaluationStatus
-	99,  // 251: minder.v1.ListEvaluationResultsResponse.EntityEvaluationResults.entity:type_name -> minder.v1.EntityTypedId
-	228, // 252: minder.v1.ListEvaluationResultsResponse.EntityEvaluationResults.profiles:type_name -> minder.v1.ListEvaluationResultsResponse.EntityProfileEvaluationResults
-	263, // 253: minder.v1.RuleType.Definition.rule_schema:type_name -> google.protobuf.Struct
-	263, // 254: minder.v1.RuleType.Definition.param_schema:type_name -> google.protobuf.Struct
-	235, // 255: minder.v1.RuleType.Definition.ingest:type_name -> minder.v1.RuleType.Definition.Ingest
-	236, // 256: minder.v1.RuleType.Definition.eval:type_name -> minder.v1.RuleType.Definition.Eval
-	237, // 257: minder.v1.RuleType.Definition.remediate:type_name -> minder.v1.RuleType.Definition.Remediate
-	238, // 258: minder.v1.RuleType.Definition.alert:type_name -> minder.v1.RuleType.Definition.Alert
-	132, // 259: minder.v1.RuleType.Definition.Ingest.rest:type_name -> minder.v1.RestType
-	133, // 260: minder.v1.RuleType.Definition.Ingest.builtin:type_name -> minder.v1.BuiltinType
-	134, // 261: minder.v1.RuleType.Definition.Ingest.artifact:type_name -> minder.v1.ArtifactType
-	135, // 262: minder.v1.RuleType.Definition.Ingest.git:type_name -> minder.v1.GitType
-	136, // 263: minder.v1.RuleType.Definition.Ingest.diff:type_name -> minder.v1.DiffType
-	137, // 264: minder.v1.RuleType.Definition.Ingest.deps:type_name -> minder.v1.DepsType
-	239, // 265: minder.v1.RuleType.Definition.Eval.jq:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison
-	240, // 266: minder.v1.RuleType.Definition.Eval.rego:type_name -> minder.v1.RuleType.Definition.Eval.Rego
-	241, // 267: minder.v1.RuleType.Definition.Eval.vulncheck:type_name -> minder.v1.RuleType.Definition.Eval.Vulncheck
-	242, // 268: minder.v1.RuleType.Definition.Eval.trusty:type_name -> minder.v1.RuleType.Definition.Eval.Trusty
-	243, // 269: minder.v1.RuleType.Definition.Eval.homoglyphs:type_name -> minder.v1.RuleType.Definition.Eval.Homoglyphs
-	224, // 270: minder.v1.RuleType.Definition.Eval.data_sources:type_name -> minder.v1.DataSourceReference
-	132, // 271: minder.v1.RuleType.Definition.Remediate.rest:type_name -> minder.v1.RestType
-	245, // 272: minder.v1.RuleType.Definition.Remediate.gh_branch_protection:type_name -> minder.v1.RuleType.Definition.Remediate.GhBranchProtectionType
-	246, // 273: minder.v1.RuleType.Definition.Remediate.pull_request:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation
-	251, // 274: minder.v1.RuleType.Definition.Remediate.pull_request_comment:type_name -> minder.v1.RuleType.Definition.Alert.AlertTypePRComment
-	247, // 275: minder.v1.RuleType.Definition.Remediate.issue:type_name -> minder.v1.RuleType.Definition.Remediate.IssueRemediation
-	250, // 276: minder.v1.RuleType.Definition.Alert.security_advisory:type_name -> minder.v1.RuleType.Definition.Alert.AlertTypeSA
-	251, // 277: minder.v1.RuleType.Definition.Alert.pull_request_comment:type_name -> minder.v1.RuleType.Definition.Alert.AlertTypePRComment
-	244, // 278: minder.v1.RuleType.Definition.Eval.JQComparison.ingested:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison.Operator
-	244, // 279: minder.v1.RuleType.Definition.Eval.JQComparison.profile:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison.Operator
-	265, // 280: minder.v1.RuleType.Definition.Eval.JQComparison.constant:type_name -> google.protobuf.Value
-	248, // 281: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.contents:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.Content
-	263, // 282: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.params:type_name -> google.protobuf.Struct
-	249, // 283: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.actions_replace_tags_with_sha:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha
-	263, // 284: minder.v1.Profile.Rule.params:type_name -> google.protobuf.Struct
-	263, // 285: minder.v1.Profile.Rule.def:type_name -> google.protobuf.Struct
-	265, // 286: minder.v1.RegisterEntityRequest.IdentifyingPropertiesEntry.value:type_name -> google.protobuf.Value
-	257, // 287: minder.v1.StructDataSource.Def.path:type_name -> minder.v1.StructDataSource.Def.Path
-	255, // 288: minder.v1.StructDataSource.DefEntry.value:type_name -> minder.v1.StructDataSource.Def
-	260, // 289: minder.v1.RestDataSource.Def.headers:type_name -> minder.v1.RestDataSource.Def.HeadersEntry
-	263, // 290: minder.v1.RestDataSource.Def.bodyobj:type_name -> google.protobuf.Struct
-	261, // 291: minder.v1.RestDataSource.Def.fallback:type_name -> minder.v1.RestDataSource.Def.Fallback
-	263, // 292: minder.v1.RestDataSource.Def.input_schema:type_name -> google.protobuf.Struct
-	258, // 293: minder.v1.RestDataSource.DefEntry.value:type_name -> minder.v1.RestDataSource.Def
-	266, // 294: minder.v1.name:extendee -> google.protobuf.EnumValueOptions
-	267, // 295: minder.v1.rpc_options:extendee -> google.protobuf.MethodOptions
-	10,  // 296: minder.v1.rpc_options:type_name -> minder.v1.RpcOptions
-	29,  // 297: minder.v1.HealthService.CheckHealth:input_type -> minder.v1.CheckHealthRequest
-	13,  // 298: minder.v1.HealthService.GetVersion:input_type -> minder.v1.GetVersionRequest
-	15,  // 299: minder.v1.ArtifactService.ListArtifacts:input_type -> minder.v1.ListArtifactsRequest
-	19,  // 300: minder.v1.ArtifactService.GetArtifactById:input_type -> minder.v1.GetArtifactByIdRequest
-	21,  // 301: minder.v1.ArtifactService.GetArtifactByName:input_type -> minder.v1.GetArtifactByNameRequest
-	31,  // 302: minder.v1.OAuthService.GetAuthorizationURL:input_type -> minder.v1.GetAuthorizationURLRequest
-	33,  // 303: minder.v1.OAuthService.StoreProviderToken:input_type -> minder.v1.StoreProviderTokenRequest
-	56,  // 304: minder.v1.OAuthService.VerifyProviderTokenFrom:input_type -> minder.v1.VerifyProviderTokenFromRequest
-	58,  // 305: minder.v1.OAuthService.VerifyProviderCredential:input_type -> minder.v1.VerifyProviderCredentialRequest
-	41,  // 306: minder.v1.RepositoryService.RegisterRepository:input_type -> minder.v1.RegisterRepositoryRequest
-	36,  // 307: minder.v1.RepositoryService.ListRemoteRepositoriesFromProvider:input_type -> minder.v1.ListRemoteRepositoriesFromProviderRequest
-	52,  // 308: minder.v1.RepositoryService.ListRepositories:input_type -> minder.v1.ListRepositoriesRequest
-	44,  // 309: minder.v1.RepositoryService.GetRepositoryById:input_type -> minder.v1.GetRepositoryByIdRequest
-	48,  // 310: minder.v1.RepositoryService.GetRepositoryByName:input_type -> minder.v1.GetRepositoryByNameRequest
-	46,  // 311: minder.v1.RepositoryService.DeleteRepositoryById:input_type -> minder.v1.DeleteRepositoryByIdRequest
-	50,  // 312: minder.v1.RepositoryService.DeleteRepositoryByName:input_type -> minder.v1.DeleteRepositoryByNameRequest
-	60,  // 313: minder.v1.UserService.CreateUser:input_type -> minder.v1.CreateUserRequest
-	62,  // 314: minder.v1.UserService.DeleteUser:input_type -> minder.v1.DeleteUserRequest
-	66,  // 315: minder.v1.UserService.GetUser:input_type -> minder.v1.GetUserRequest
-	168, // 316: minder.v1.UserService.ListInvitations:input_type -> minder.v1.ListInvitationsRequest
-	170, // 317: minder.v1.UserService.ResolveInvitation:input_type -> minder.v1.ResolveInvitationRequest
-	82,  // 318: minder.v1.ProfileService.CreateProfile:input_type -> minder.v1.CreateProfileRequest
-	84,  // 319: minder.v1.ProfileService.UpdateProfile:input_type -> minder.v1.UpdateProfileRequest
-	86,  // 320: minder.v1.ProfileService.PatchProfile:input_type -> minder.v1.PatchProfileRequest
-	88,  // 321: minder.v1.ProfileService.DeleteProfile:input_type -> minder.v1.DeleteProfileRequest
-	90,  // 322: minder.v1.ProfileService.ListProfiles:input_type -> minder.v1.ListProfilesRequest
-	92,  // 323: minder.v1.ProfileService.GetProfileById:input_type -> minder.v1.GetProfileByIdRequest
-	94,  // 324: minder.v1.ProfileService.GetProfileByName:input_type -> minder.v1.GetProfileByNameRequest
-	100, // 325: minder.v1.ProfileService.GetProfileStatusByName:input_type -> minder.v1.GetProfileStatusByNameRequest
-	102, // 326: minder.v1.ProfileService.GetProfileStatusById:input_type -> minder.v1.GetProfileStatusByIdRequest
-	104, // 327: minder.v1.ProfileService.GetProfileStatusByProject:input_type -> minder.v1.GetProfileStatusByProjectRequest
-	68,  // 328: minder.v1.DataSourceService.CreateDataSource:input_type -> minder.v1.CreateDataSourceRequest
-	70,  // 329: minder.v1.DataSourceService.GetDataSourceById:input_type -> minder.v1.GetDataSourceByIdRequest
-	72,  // 330: minder.v1.DataSourceService.GetDataSourceByName:input_type -> minder.v1.GetDataSourceByNameRequest
-	74,  // 331: minder.v1.DataSourceService.ListDataSources:input_type -> minder.v1.ListDataSourcesRequest
-	76,  // 332: minder.v1.DataSourceService.UpdateDataSource:input_type -> minder.v1.UpdateDataSourceRequest
-	78,  // 333: minder.v1.DataSourceService.DeleteDataSourceById:input_type -> minder.v1.DeleteDataSourceByIdRequest
-	80,  // 334: minder.v1.DataSourceService.DeleteDataSourceByName:input_type -> minder.v1.DeleteDataSourceByNameRequest
-	118, // 335: minder.v1.RuleTypeService.ListRuleTypes:input_type -> minder.v1.ListRuleTypesRequest
-	120, // 336: minder.v1.RuleTypeService.GetRuleTypeByName:input_type -> minder.v1.GetRuleTypeByNameRequest
-	122, // 337: minder.v1.RuleTypeService.GetRuleTypeById:input_type -> minder.v1.GetRuleTypeByIdRequest
-	124, // 338: minder.v1.RuleTypeService.CreateRuleType:input_type -> minder.v1.CreateRuleTypeRequest
-	126, // 339: minder.v1.RuleTypeService.UpdateRuleType:input_type -> minder.v1.UpdateRuleTypeRequest
-	128, // 340: minder.v1.RuleTypeService.DeleteRuleType:input_type -> minder.v1.DeleteRuleTypeRequest
-	130, // 341: minder.v1.EvalResultsService.ListEvaluationResults:input_type -> minder.v1.ListEvaluationResultsRequest
-	193, // 342: minder.v1.EvalResultsService.ListEvaluationHistory:input_type -> minder.v1.ListEvaluationHistoryRequest
-	192, // 343: minder.v1.EvalResultsService.GetEvaluationHistory:input_type -> minder.v1.GetEvaluationHistoryRequest
-	156, // 344: minder.v1.PermissionsService.ListRoles:input_type -> minder.v1.ListRolesRequest
-	158, // 345: minder.v1.PermissionsService.ListRoleAssignments:input_type -> minder.v1.ListRoleAssignmentsRequest
-	160, // 346: minder.v1.PermissionsService.AssignRole:input_type -> minder.v1.AssignRoleRequest
-	162, // 347: minder.v1.PermissionsService.UpdateRole:input_type -> minder.v1.UpdateRoleRequest
-	164, // 348: minder.v1.PermissionsService.RemoveRole:input_type -> minder.v1.RemoveRoleRequest
-	141, // 349: minder.v1.ProjectsService.ListProjects:input_type -> minder.v1.ListProjectsRequest
-	143, // 350: minder.v1.ProjectsService.CreateProject:input_type -> minder.v1.CreateProjectRequest
-	152, // 351: minder.v1.ProjectsService.ListChildProjects:input_type -> minder.v1.ListChildProjectsRequest
-	145, // 352: minder.v1.ProjectsService.DeleteProject:input_type -> minder.v1.DeleteProjectRequest
-	147, // 353: minder.v1.ProjectsService.UpdateProject:input_type -> minder.v1.UpdateProjectRequest
-	150, // 354: minder.v1.ProjectsService.PatchProject:input_type -> minder.v1.PatchProjectRequest
-	154, // 355: minder.v1.ProjectsService.CreateEntityReconciliationTask:input_type -> minder.v1.CreateEntityReconciliationTaskRequest
-	186, // 356: minder.v1.ProvidersService.PatchProvider:input_type -> minder.v1.PatchProviderRequest
-	173, // 357: minder.v1.ProvidersService.GetProvider:input_type -> minder.v1.GetProviderRequest
-	175, // 358: minder.v1.ProvidersService.ListProviders:input_type -> minder.v1.ListProvidersRequest
-	177, // 359: minder.v1.ProvidersService.CreateProvider:input_type -> minder.v1.CreateProviderRequest
-	179, // 360: minder.v1.ProvidersService.DeleteProvider:input_type -> minder.v1.DeleteProviderRequest
-	181, // 361: minder.v1.ProvidersService.DeleteProviderByID:input_type -> minder.v1.DeleteProviderByIDRequest
-	183, // 362: minder.v1.ProvidersService.ListProviderClasses:input_type -> minder.v1.ListProviderClassesRequest
-	54,  // 363: minder.v1.ProvidersService.ReconcileEntityRegistration:input_type -> minder.v1.ReconcileEntityRegistrationRequest
-	27,  // 364: minder.v1.InviteService.GetInviteDetails:input_type -> minder.v1.GetInviteDetailsRequest
-	203, // 365: minder.v1.EntityInstanceService.ListEntities:input_type -> minder.v1.ListEntitiesRequest
-	205, // 366: minder.v1.EntityInstanceService.GetEntityById:input_type -> minder.v1.GetEntityByIdRequest
-	207, // 367: minder.v1.EntityInstanceService.GetEntityByName:input_type -> minder.v1.GetEntityByNameRequest
-	209, // 368: minder.v1.EntityInstanceService.DeleteEntityById:input_type -> minder.v1.DeleteEntityByIdRequest
-	211, // 369: minder.v1.EntityInstanceService.RegisterEntity:input_type -> minder.v1.RegisterEntityRequest
-	214, // 370: minder.v1.ExceptionService.ListExceptions:input_type -> minder.v1.ListExceptionsRequest
-	216, // 371: minder.v1.ExceptionService.CreateException:input_type -> minder.v1.CreateExceptionRequest
-	218, // 372: minder.v1.ExceptionService.DeleteException:input_type -> minder.v1.DeleteExceptionRequest
-	30,  // 373: minder.v1.HealthService.CheckHealth:output_type -> minder.v1.CheckHealthResponse
-	14,  // 374: minder.v1.HealthService.GetVersion:output_type -> minder.v1.GetVersionResponse
-	16,  // 375: minder.v1.ArtifactService.ListArtifacts:output_type -> minder.v1.ListArtifactsResponse
-	20,  // 376: minder.v1.ArtifactService.GetArtifactById:output_type -> minder.v1.GetArtifactByIdResponse
-	22,  // 377: minder.v1.ArtifactService.GetArtifactByName:output_type -> minder.v1.GetArtifactByNameResponse
-	32,  // 378: minder.v1.OAuthService.GetAuthorizationURL:output_type -> minder.v1.GetAuthorizationURLResponse
-	34,  // 379: minder.v1.OAuthService.StoreProviderToken:output_type -> minder.v1.StoreProviderTokenResponse
-	57,  // 380: minder.v1.OAuthService.VerifyProviderTokenFrom:output_type -> minder.v1.VerifyProviderTokenFromResponse
-	59,  // 381: minder.v1.OAuthService.VerifyProviderCredential:output_type -> minder.v1.VerifyProviderCredentialResponse
-	43,  // 382: minder.v1.RepositoryService.RegisterRepository:output_type -> minder.v1.RegisterRepositoryResponse
-	37,  // 383: minder.v1.RepositoryService.ListRemoteRepositoriesFromProvider:output_type -> minder.v1.ListRemoteRepositoriesFromProviderResponse
-	53,  // 384: minder.v1.RepositoryService.ListRepositories:output_type -> minder.v1.ListRepositoriesResponse
-	45,  // 385: minder.v1.RepositoryService.GetRepositoryById:output_type -> minder.v1.GetRepositoryByIdResponse
-	49,  // 386: minder.v1.RepositoryService.GetRepositoryByName:output_type -> minder.v1.GetRepositoryByNameResponse
-	47,  // 387: minder.v1.RepositoryService.DeleteRepositoryById:output_type -> minder.v1.DeleteRepositoryByIdResponse
-	51,  // 388: minder.v1.RepositoryService.DeleteRepositoryByName:output_type -> minder.v1.DeleteRepositoryByNameResponse
-	61,  // 389: minder.v1.UserService.CreateUser:output_type -> minder.v1.CreateUserResponse
-	63,  // 390: minder.v1.UserService.DeleteUser:output_type -> minder.v1.DeleteUserResponse
-	67,  // 391: minder.v1.UserService.GetUser:output_type -> minder.v1.GetUserResponse
-	169, // 392: minder.v1.UserService.ListInvitations:output_type -> minder.v1.ListInvitationsResponse
-	171, // 393: minder.v1.UserService.ResolveInvitation:output_type -> minder.v1.ResolveInvitationResponse
-	83,  // 394: minder.v1.ProfileService.CreateProfile:output_type -> minder.v1.CreateProfileResponse
-	85,  // 395: minder.v1.ProfileService.UpdateProfile:output_type -> minder.v1.UpdateProfileResponse
-	87,  // 396: minder.v1.ProfileService.PatchProfile:output_type -> minder.v1.PatchProfileResponse
-	89,  // 397: minder.v1.ProfileService.DeleteProfile:output_type -> minder.v1.DeleteProfileResponse
-	91,  // 398: minder.v1.ProfileService.ListProfiles:output_type -> minder.v1.ListProfilesResponse
-	93,  // 399: minder.v1.ProfileService.GetProfileById:output_type -> minder.v1.GetProfileByIdResponse
-	95,  // 400: minder.v1.ProfileService.GetProfileByName:output_type -> minder.v1.GetProfileByNameResponse
-	101, // 401: minder.v1.ProfileService.GetProfileStatusByName:output_type -> minder.v1.GetProfileStatusByNameResponse
-	103, // 402: minder.v1.ProfileService.GetProfileStatusById:output_type -> minder.v1.GetProfileStatusByIdResponse
-	105, // 403: minder.v1.ProfileService.GetProfileStatusByProject:output_type -> minder.v1.GetProfileStatusByProjectResponse
-	69,  // 404: minder.v1.DataSourceService.CreateDataSource:output_type -> minder.v1.CreateDataSourceResponse
-	71,  // 405: minder.v1.DataSourceService.GetDataSourceById:output_type -> minder.v1.GetDataSourceByIdResponse
-	73,  // 406: minder.v1.DataSourceService.GetDataSourceByName:output_type -> minder.v1.GetDataSourceByNameResponse
-	75,  // 407: minder.v1.DataSourceService.ListDataSources:output_type -> minder.v1.ListDataSourcesResponse
-	77,  // 408: minder.v1.DataSourceService.UpdateDataSource:output_type -> minder.v1.UpdateDataSourceResponse
-	79,  // 409: minder.v1.DataSourceService.DeleteDataSourceById:output_type -> minder.v1.DeleteDataSourceByIdResponse
-	81,  // 410: minder.v1.DataSourceService.DeleteDataSourceByName:output_type -> minder.v1.DeleteDataSourceByNameResponse
-	119, // 411: minder.v1.RuleTypeService.ListRuleTypes:output_type -> minder.v1.ListRuleTypesResponse
-	121, // 412: minder.v1.RuleTypeService.GetRuleTypeByName:output_type -> minder.v1.GetRuleTypeByNameResponse
-	123, // 413: minder.v1.RuleTypeService.GetRuleTypeById:output_type -> minder.v1.GetRuleTypeByIdResponse
-	125, // 414: minder.v1.RuleTypeService.CreateRuleType:output_type -> minder.v1.CreateRuleTypeResponse
-	127, // 415: minder.v1.RuleTypeService.UpdateRuleType:output_type -> minder.v1.UpdateRuleTypeResponse
-	129, // 416: minder.v1.RuleTypeService.DeleteRuleType:output_type -> minder.v1.DeleteRuleTypeResponse
-	131, // 417: minder.v1.EvalResultsService.ListEvaluationResults:output_type -> minder.v1.ListEvaluationResultsResponse
-	195, // 418: minder.v1.EvalResultsService.ListEvaluationHistory:output_type -> minder.v1.ListEvaluationHistoryResponse
-	194, // 419: minder.v1.EvalResultsService.GetEvaluationHistory:output_type -> minder.v1.GetEvaluationHistoryResponse
-	157, // 420: minder.v1.PermissionsService.ListRoles:output_type -> minder.v1.ListRolesResponse
-	159, // 421: minder.v1.PermissionsService.ListRoleAssignments:output_type -> minder.v1.ListRoleAssignmentsResponse
-	161, // 422: minder.v1.PermissionsService.AssignRole:output_type -> minder.v1.AssignRoleResponse
-	163, // 423: minder.v1.PermissionsService.UpdateRole:output_type -> minder.v1.UpdateRoleResponse
-	165, // 424: minder.v1.PermissionsService.RemoveRole:output_type -> minder.v1.RemoveRoleResponse
-	142, // 425: minder.v1.ProjectsService.ListProjects:output_type -> minder.v1.ListProjectsResponse
-	144, // 426: minder.v1.ProjectsService.CreateProject:output_type -> minder.v1.CreateProjectResponse
-	153, // 427: minder.v1.ProjectsService.ListChildProjects:output_type -> minder.v1.ListChildProjectsResponse
-	146, // 428: minder.v1.ProjectsService.DeleteProject:output_type -> minder.v1.DeleteProjectResponse
-	148, // 429: minder.v1.ProjectsService.UpdateProject:output_type -> minder.v1.UpdateProjectResponse
-	151, // 430: minder.v1.ProjectsService.PatchProject:output_type -> minder.v1.PatchProjectResponse
-	155, // 431: minder.v1.ProjectsService.CreateEntityReconciliationTask:output_type -> minder.v1.CreateEntityReconciliationTaskResponse
-	187, // 432: minder.v1.ProvidersService.PatchProvider:output_type -> minder.v1.PatchProviderResponse
-	174, // 433: minder.v1.ProvidersService.GetProvider:output_type -> minder.v1.GetProviderResponse
-	176, // 434: minder.v1.ProvidersService.ListProviders:output_type -> minder.v1.ListProvidersResponse
-	178, // 435: minder.v1.ProvidersService.CreateProvider:output_type -> minder.v1.CreateProviderResponse
-	180, // 436: minder.v1.ProvidersService.DeleteProvider:output_type -> minder.v1.DeleteProviderResponse
-	182, // 437: minder.v1.ProvidersService.DeleteProviderByID:output_type -> minder.v1.DeleteProviderByIDResponse
-	185, // 438: minder.v1.ProvidersService.ListProviderClasses:output_type -> minder.v1.ListProviderClassesResponse
-	55,  // 439: minder.v1.ProvidersService.ReconcileEntityRegistration:output_type -> minder.v1.ReconcileEntityRegistrationResponse
-	28,  // 440: minder.v1.InviteService.GetInviteDetails:output_type -> minder.v1.GetInviteDetailsResponse
-	204, // 441: minder.v1.EntityInstanceService.ListEntities:output_type -> minder.v1.ListEntitiesResponse
-	206, // 442: minder.v1.EntityInstanceService.GetEntityById:output_type -> minder.v1.GetEntityByIdResponse
-	208, // 443: minder.v1.EntityInstanceService.GetEntityByName:output_type -> minder.v1.GetEntityByNameResponse
-	210, // 444: minder.v1.EntityInstanceService.DeleteEntityById:output_type -> minder.v1.DeleteEntityByIdResponse
-	212, // 445: minder.v1.EntityInstanceService.RegisterEntity:output_type -> minder.v1.RegisterEntityResponse
-	215, // 446: minder.v1.ExceptionService.ListExceptions:output_type -> minder.v1.ListExceptionsResponse
-	217, // 447: minder.v1.ExceptionService.CreateException:output_type -> minder.v1.CreateExceptionResponse
-	219, // 448: minder.v1.ExceptionService.DeleteException:output_type -> minder.v1.DeleteExceptionResponse
-	373, // [373:449] is the sub-list for method output_type
-	297, // [297:373] is the sub-list for method input_type
-	296, // [296:297] is the sub-list for extension type_name
-	294, // [294:296] is the sub-list for extension extendee
-	0,   // [0:294] is the sub-list for field type_name
+	116, // 237: minder.v1.CreateExceptionRequest.context:type_name -> minder.v1.Context
+	262, // 238: minder.v1.CreateExceptionRequest.expires_at:type_name -> google.protobuf.Timestamp
+	213, // 239: minder.v1.CreateExceptionResponse.exception:type_name -> minder.v1.Exception
+	116, // 240: minder.v1.DeleteExceptionRequest.context:type_name -> minder.v1.Context
+	117, // 241: minder.v1.UpstreamEntityRef.context:type_name -> minder.v1.ContextV2
+	3,   // 242: minder.v1.UpstreamEntityRef.type:type_name -> minder.v1.Entity
+	263, // 243: minder.v1.UpstreamEntityRef.properties:type_name -> google.protobuf.Struct
+	117, // 244: minder.v1.DataSource.context:type_name -> minder.v1.ContextV2
+	222, // 245: minder.v1.DataSource.structured:type_name -> minder.v1.StructDataSource
+	223, // 246: minder.v1.DataSource.rest:type_name -> minder.v1.RestDataSource
+	256, // 247: minder.v1.StructDataSource.def:type_name -> minder.v1.StructDataSource.DefEntry
+	259, // 248: minder.v1.RestDataSource.def:type_name -> minder.v1.RestDataSource.DefEntry
+	106, // 249: minder.v1.AutoRegistration.EntitiesEntry.value:type_name -> minder.v1.EntityAutoRegistrationConfig
+	96,  // 250: minder.v1.ListEvaluationResultsResponse.EntityProfileEvaluationResults.profile_status:type_name -> minder.v1.ProfileStatus
+	98,  // 251: minder.v1.ListEvaluationResultsResponse.EntityProfileEvaluationResults.results:type_name -> minder.v1.RuleEvaluationStatus
+	99,  // 252: minder.v1.ListEvaluationResultsResponse.EntityEvaluationResults.entity:type_name -> minder.v1.EntityTypedId
+	228, // 253: minder.v1.ListEvaluationResultsResponse.EntityEvaluationResults.profiles:type_name -> minder.v1.ListEvaluationResultsResponse.EntityProfileEvaluationResults
+	263, // 254: minder.v1.RuleType.Definition.rule_schema:type_name -> google.protobuf.Struct
+	263, // 255: minder.v1.RuleType.Definition.param_schema:type_name -> google.protobuf.Struct
+	235, // 256: minder.v1.RuleType.Definition.ingest:type_name -> minder.v1.RuleType.Definition.Ingest
+	236, // 257: minder.v1.RuleType.Definition.eval:type_name -> minder.v1.RuleType.Definition.Eval
+	237, // 258: minder.v1.RuleType.Definition.remediate:type_name -> minder.v1.RuleType.Definition.Remediate
+	238, // 259: minder.v1.RuleType.Definition.alert:type_name -> minder.v1.RuleType.Definition.Alert
+	132, // 260: minder.v1.RuleType.Definition.Ingest.rest:type_name -> minder.v1.RestType
+	133, // 261: minder.v1.RuleType.Definition.Ingest.builtin:type_name -> minder.v1.BuiltinType
+	134, // 262: minder.v1.RuleType.Definition.Ingest.artifact:type_name -> minder.v1.ArtifactType
+	135, // 263: minder.v1.RuleType.Definition.Ingest.git:type_name -> minder.v1.GitType
+	136, // 264: minder.v1.RuleType.Definition.Ingest.diff:type_name -> minder.v1.DiffType
+	137, // 265: minder.v1.RuleType.Definition.Ingest.deps:type_name -> minder.v1.DepsType
+	239, // 266: minder.v1.RuleType.Definition.Eval.jq:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison
+	240, // 267: minder.v1.RuleType.Definition.Eval.rego:type_name -> minder.v1.RuleType.Definition.Eval.Rego
+	241, // 268: minder.v1.RuleType.Definition.Eval.vulncheck:type_name -> minder.v1.RuleType.Definition.Eval.Vulncheck
+	242, // 269: minder.v1.RuleType.Definition.Eval.trusty:type_name -> minder.v1.RuleType.Definition.Eval.Trusty
+	243, // 270: minder.v1.RuleType.Definition.Eval.homoglyphs:type_name -> minder.v1.RuleType.Definition.Eval.Homoglyphs
+	224, // 271: minder.v1.RuleType.Definition.Eval.data_sources:type_name -> minder.v1.DataSourceReference
+	132, // 272: minder.v1.RuleType.Definition.Remediate.rest:type_name -> minder.v1.RestType
+	245, // 273: minder.v1.RuleType.Definition.Remediate.gh_branch_protection:type_name -> minder.v1.RuleType.Definition.Remediate.GhBranchProtectionType
+	246, // 274: minder.v1.RuleType.Definition.Remediate.pull_request:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation
+	251, // 275: minder.v1.RuleType.Definition.Remediate.pull_request_comment:type_name -> minder.v1.RuleType.Definition.Alert.AlertTypePRComment
+	247, // 276: minder.v1.RuleType.Definition.Remediate.issue:type_name -> minder.v1.RuleType.Definition.Remediate.IssueRemediation
+	250, // 277: minder.v1.RuleType.Definition.Alert.security_advisory:type_name -> minder.v1.RuleType.Definition.Alert.AlertTypeSA
+	251, // 278: minder.v1.RuleType.Definition.Alert.pull_request_comment:type_name -> minder.v1.RuleType.Definition.Alert.AlertTypePRComment
+	244, // 279: minder.v1.RuleType.Definition.Eval.JQComparison.ingested:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison.Operator
+	244, // 280: minder.v1.RuleType.Definition.Eval.JQComparison.profile:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison.Operator
+	265, // 281: minder.v1.RuleType.Definition.Eval.JQComparison.constant:type_name -> google.protobuf.Value
+	248, // 282: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.contents:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.Content
+	263, // 283: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.params:type_name -> google.protobuf.Struct
+	249, // 284: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.actions_replace_tags_with_sha:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha
+	263, // 285: minder.v1.Profile.Rule.params:type_name -> google.protobuf.Struct
+	263, // 286: minder.v1.Profile.Rule.def:type_name -> google.protobuf.Struct
+	265, // 287: minder.v1.RegisterEntityRequest.IdentifyingPropertiesEntry.value:type_name -> google.protobuf.Value
+	257, // 288: minder.v1.StructDataSource.Def.path:type_name -> minder.v1.StructDataSource.Def.Path
+	255, // 289: minder.v1.StructDataSource.DefEntry.value:type_name -> minder.v1.StructDataSource.Def
+	260, // 290: minder.v1.RestDataSource.Def.headers:type_name -> minder.v1.RestDataSource.Def.HeadersEntry
+	263, // 291: minder.v1.RestDataSource.Def.bodyobj:type_name -> google.protobuf.Struct
+	261, // 292: minder.v1.RestDataSource.Def.fallback:type_name -> minder.v1.RestDataSource.Def.Fallback
+	263, // 293: minder.v1.RestDataSource.Def.input_schema:type_name -> google.protobuf.Struct
+	258, // 294: minder.v1.RestDataSource.DefEntry.value:type_name -> minder.v1.RestDataSource.Def
+	266, // 295: minder.v1.name:extendee -> google.protobuf.EnumValueOptions
+	267, // 296: minder.v1.rpc_options:extendee -> google.protobuf.MethodOptions
+	10,  // 297: minder.v1.rpc_options:type_name -> minder.v1.RpcOptions
+	29,  // 298: minder.v1.HealthService.CheckHealth:input_type -> minder.v1.CheckHealthRequest
+	13,  // 299: minder.v1.HealthService.GetVersion:input_type -> minder.v1.GetVersionRequest
+	15,  // 300: minder.v1.ArtifactService.ListArtifacts:input_type -> minder.v1.ListArtifactsRequest
+	19,  // 301: minder.v1.ArtifactService.GetArtifactById:input_type -> minder.v1.GetArtifactByIdRequest
+	21,  // 302: minder.v1.ArtifactService.GetArtifactByName:input_type -> minder.v1.GetArtifactByNameRequest
+	31,  // 303: minder.v1.OAuthService.GetAuthorizationURL:input_type -> minder.v1.GetAuthorizationURLRequest
+	33,  // 304: minder.v1.OAuthService.StoreProviderToken:input_type -> minder.v1.StoreProviderTokenRequest
+	56,  // 305: minder.v1.OAuthService.VerifyProviderTokenFrom:input_type -> minder.v1.VerifyProviderTokenFromRequest
+	58,  // 306: minder.v1.OAuthService.VerifyProviderCredential:input_type -> minder.v1.VerifyProviderCredentialRequest
+	41,  // 307: minder.v1.RepositoryService.RegisterRepository:input_type -> minder.v1.RegisterRepositoryRequest
+	36,  // 308: minder.v1.RepositoryService.ListRemoteRepositoriesFromProvider:input_type -> minder.v1.ListRemoteRepositoriesFromProviderRequest
+	52,  // 309: minder.v1.RepositoryService.ListRepositories:input_type -> minder.v1.ListRepositoriesRequest
+	44,  // 310: minder.v1.RepositoryService.GetRepositoryById:input_type -> minder.v1.GetRepositoryByIdRequest
+	48,  // 311: minder.v1.RepositoryService.GetRepositoryByName:input_type -> minder.v1.GetRepositoryByNameRequest
+	46,  // 312: minder.v1.RepositoryService.DeleteRepositoryById:input_type -> minder.v1.DeleteRepositoryByIdRequest
+	50,  // 313: minder.v1.RepositoryService.DeleteRepositoryByName:input_type -> minder.v1.DeleteRepositoryByNameRequest
+	60,  // 314: minder.v1.UserService.CreateUser:input_type -> minder.v1.CreateUserRequest
+	62,  // 315: minder.v1.UserService.DeleteUser:input_type -> minder.v1.DeleteUserRequest
+	66,  // 316: minder.v1.UserService.GetUser:input_type -> minder.v1.GetUserRequest
+	168, // 317: minder.v1.UserService.ListInvitations:input_type -> minder.v1.ListInvitationsRequest
+	170, // 318: minder.v1.UserService.ResolveInvitation:input_type -> minder.v1.ResolveInvitationRequest
+	82,  // 319: minder.v1.ProfileService.CreateProfile:input_type -> minder.v1.CreateProfileRequest
+	84,  // 320: minder.v1.ProfileService.UpdateProfile:input_type -> minder.v1.UpdateProfileRequest
+	86,  // 321: minder.v1.ProfileService.PatchProfile:input_type -> minder.v1.PatchProfileRequest
+	88,  // 322: minder.v1.ProfileService.DeleteProfile:input_type -> minder.v1.DeleteProfileRequest
+	90,  // 323: minder.v1.ProfileService.ListProfiles:input_type -> minder.v1.ListProfilesRequest
+	92,  // 324: minder.v1.ProfileService.GetProfileById:input_type -> minder.v1.GetProfileByIdRequest
+	94,  // 325: minder.v1.ProfileService.GetProfileByName:input_type -> minder.v1.GetProfileByNameRequest
+	100, // 326: minder.v1.ProfileService.GetProfileStatusByName:input_type -> minder.v1.GetProfileStatusByNameRequest
+	102, // 327: minder.v1.ProfileService.GetProfileStatusById:input_type -> minder.v1.GetProfileStatusByIdRequest
+	104, // 328: minder.v1.ProfileService.GetProfileStatusByProject:input_type -> minder.v1.GetProfileStatusByProjectRequest
+	68,  // 329: minder.v1.DataSourceService.CreateDataSource:input_type -> minder.v1.CreateDataSourceRequest
+	70,  // 330: minder.v1.DataSourceService.GetDataSourceById:input_type -> minder.v1.GetDataSourceByIdRequest
+	72,  // 331: minder.v1.DataSourceService.GetDataSourceByName:input_type -> minder.v1.GetDataSourceByNameRequest
+	74,  // 332: minder.v1.DataSourceService.ListDataSources:input_type -> minder.v1.ListDataSourcesRequest
+	76,  // 333: minder.v1.DataSourceService.UpdateDataSource:input_type -> minder.v1.UpdateDataSourceRequest
+	78,  // 334: minder.v1.DataSourceService.DeleteDataSourceById:input_type -> minder.v1.DeleteDataSourceByIdRequest
+	80,  // 335: minder.v1.DataSourceService.DeleteDataSourceByName:input_type -> minder.v1.DeleteDataSourceByNameRequest
+	118, // 336: minder.v1.RuleTypeService.ListRuleTypes:input_type -> minder.v1.ListRuleTypesRequest
+	120, // 337: minder.v1.RuleTypeService.GetRuleTypeByName:input_type -> minder.v1.GetRuleTypeByNameRequest
+	122, // 338: minder.v1.RuleTypeService.GetRuleTypeById:input_type -> minder.v1.GetRuleTypeByIdRequest
+	124, // 339: minder.v1.RuleTypeService.CreateRuleType:input_type -> minder.v1.CreateRuleTypeRequest
+	126, // 340: minder.v1.RuleTypeService.UpdateRuleType:input_type -> minder.v1.UpdateRuleTypeRequest
+	128, // 341: minder.v1.RuleTypeService.DeleteRuleType:input_type -> minder.v1.DeleteRuleTypeRequest
+	130, // 342: minder.v1.EvalResultsService.ListEvaluationResults:input_type -> minder.v1.ListEvaluationResultsRequest
+	193, // 343: minder.v1.EvalResultsService.ListEvaluationHistory:input_type -> minder.v1.ListEvaluationHistoryRequest
+	192, // 344: minder.v1.EvalResultsService.GetEvaluationHistory:input_type -> minder.v1.GetEvaluationHistoryRequest
+	156, // 345: minder.v1.PermissionsService.ListRoles:input_type -> minder.v1.ListRolesRequest
+	158, // 346: minder.v1.PermissionsService.ListRoleAssignments:input_type -> minder.v1.ListRoleAssignmentsRequest
+	160, // 347: minder.v1.PermissionsService.AssignRole:input_type -> minder.v1.AssignRoleRequest
+	162, // 348: minder.v1.PermissionsService.UpdateRole:input_type -> minder.v1.UpdateRoleRequest
+	164, // 349: minder.v1.PermissionsService.RemoveRole:input_type -> minder.v1.RemoveRoleRequest
+	141, // 350: minder.v1.ProjectsService.ListProjects:input_type -> minder.v1.ListProjectsRequest
+	143, // 351: minder.v1.ProjectsService.CreateProject:input_type -> minder.v1.CreateProjectRequest
+	152, // 352: minder.v1.ProjectsService.ListChildProjects:input_type -> minder.v1.ListChildProjectsRequest
+	145, // 353: minder.v1.ProjectsService.DeleteProject:input_type -> minder.v1.DeleteProjectRequest
+	147, // 354: minder.v1.ProjectsService.UpdateProject:input_type -> minder.v1.UpdateProjectRequest
+	150, // 355: minder.v1.ProjectsService.PatchProject:input_type -> minder.v1.PatchProjectRequest
+	154, // 356: minder.v1.ProjectsService.CreateEntityReconciliationTask:input_type -> minder.v1.CreateEntityReconciliationTaskRequest
+	186, // 357: minder.v1.ProvidersService.PatchProvider:input_type -> minder.v1.PatchProviderRequest
+	173, // 358: minder.v1.ProvidersService.GetProvider:input_type -> minder.v1.GetProviderRequest
+	175, // 359: minder.v1.ProvidersService.ListProviders:input_type -> minder.v1.ListProvidersRequest
+	177, // 360: minder.v1.ProvidersService.CreateProvider:input_type -> minder.v1.CreateProviderRequest
+	179, // 361: minder.v1.ProvidersService.DeleteProvider:input_type -> minder.v1.DeleteProviderRequest
+	181, // 362: minder.v1.ProvidersService.DeleteProviderByID:input_type -> minder.v1.DeleteProviderByIDRequest
+	183, // 363: minder.v1.ProvidersService.ListProviderClasses:input_type -> minder.v1.ListProviderClassesRequest
+	54,  // 364: minder.v1.ProvidersService.ReconcileEntityRegistration:input_type -> minder.v1.ReconcileEntityRegistrationRequest
+	27,  // 365: minder.v1.InviteService.GetInviteDetails:input_type -> minder.v1.GetInviteDetailsRequest
+	203, // 366: minder.v1.EntityInstanceService.ListEntities:input_type -> minder.v1.ListEntitiesRequest
+	205, // 367: minder.v1.EntityInstanceService.GetEntityById:input_type -> minder.v1.GetEntityByIdRequest
+	207, // 368: minder.v1.EntityInstanceService.GetEntityByName:input_type -> minder.v1.GetEntityByNameRequest
+	209, // 369: minder.v1.EntityInstanceService.DeleteEntityById:input_type -> minder.v1.DeleteEntityByIdRequest
+	211, // 370: minder.v1.EntityInstanceService.RegisterEntity:input_type -> minder.v1.RegisterEntityRequest
+	214, // 371: minder.v1.ExceptionService.ListExceptions:input_type -> minder.v1.ListExceptionsRequest
+	216, // 372: minder.v1.ExceptionService.CreateException:input_type -> minder.v1.CreateExceptionRequest
+	218, // 373: minder.v1.ExceptionService.DeleteException:input_type -> minder.v1.DeleteExceptionRequest
+	30,  // 374: minder.v1.HealthService.CheckHealth:output_type -> minder.v1.CheckHealthResponse
+	14,  // 375: minder.v1.HealthService.GetVersion:output_type -> minder.v1.GetVersionResponse
+	16,  // 376: minder.v1.ArtifactService.ListArtifacts:output_type -> minder.v1.ListArtifactsResponse
+	20,  // 377: minder.v1.ArtifactService.GetArtifactById:output_type -> minder.v1.GetArtifactByIdResponse
+	22,  // 378: minder.v1.ArtifactService.GetArtifactByName:output_type -> minder.v1.GetArtifactByNameResponse
+	32,  // 379: minder.v1.OAuthService.GetAuthorizationURL:output_type -> minder.v1.GetAuthorizationURLResponse
+	34,  // 380: minder.v1.OAuthService.StoreProviderToken:output_type -> minder.v1.StoreProviderTokenResponse
+	57,  // 381: minder.v1.OAuthService.VerifyProviderTokenFrom:output_type -> minder.v1.VerifyProviderTokenFromResponse
+	59,  // 382: minder.v1.OAuthService.VerifyProviderCredential:output_type -> minder.v1.VerifyProviderCredentialResponse
+	43,  // 383: minder.v1.RepositoryService.RegisterRepository:output_type -> minder.v1.RegisterRepositoryResponse
+	37,  // 384: minder.v1.RepositoryService.ListRemoteRepositoriesFromProvider:output_type -> minder.v1.ListRemoteRepositoriesFromProviderResponse
+	53,  // 385: minder.v1.RepositoryService.ListRepositories:output_type -> minder.v1.ListRepositoriesResponse
+	45,  // 386: minder.v1.RepositoryService.GetRepositoryById:output_type -> minder.v1.GetRepositoryByIdResponse
+	49,  // 387: minder.v1.RepositoryService.GetRepositoryByName:output_type -> minder.v1.GetRepositoryByNameResponse
+	47,  // 388: minder.v1.RepositoryService.DeleteRepositoryById:output_type -> minder.v1.DeleteRepositoryByIdResponse
+	51,  // 389: minder.v1.RepositoryService.DeleteRepositoryByName:output_type -> minder.v1.DeleteRepositoryByNameResponse
+	61,  // 390: minder.v1.UserService.CreateUser:output_type -> minder.v1.CreateUserResponse
+	63,  // 391: minder.v1.UserService.DeleteUser:output_type -> minder.v1.DeleteUserResponse
+	67,  // 392: minder.v1.UserService.GetUser:output_type -> minder.v1.GetUserResponse
+	169, // 393: minder.v1.UserService.ListInvitations:output_type -> minder.v1.ListInvitationsResponse
+	171, // 394: minder.v1.UserService.ResolveInvitation:output_type -> minder.v1.ResolveInvitationResponse
+	83,  // 395: minder.v1.ProfileService.CreateProfile:output_type -> minder.v1.CreateProfileResponse
+	85,  // 396: minder.v1.ProfileService.UpdateProfile:output_type -> minder.v1.UpdateProfileResponse
+	87,  // 397: minder.v1.ProfileService.PatchProfile:output_type -> minder.v1.PatchProfileResponse
+	89,  // 398: minder.v1.ProfileService.DeleteProfile:output_type -> minder.v1.DeleteProfileResponse
+	91,  // 399: minder.v1.ProfileService.ListProfiles:output_type -> minder.v1.ListProfilesResponse
+	93,  // 400: minder.v1.ProfileService.GetProfileById:output_type -> minder.v1.GetProfileByIdResponse
+	95,  // 401: minder.v1.ProfileService.GetProfileByName:output_type -> minder.v1.GetProfileByNameResponse
+	101, // 402: minder.v1.ProfileService.GetProfileStatusByName:output_type -> minder.v1.GetProfileStatusByNameResponse
+	103, // 403: minder.v1.ProfileService.GetProfileStatusById:output_type -> minder.v1.GetProfileStatusByIdResponse
+	105, // 404: minder.v1.ProfileService.GetProfileStatusByProject:output_type -> minder.v1.GetProfileStatusByProjectResponse
+	69,  // 405: minder.v1.DataSourceService.CreateDataSource:output_type -> minder.v1.CreateDataSourceResponse
+	71,  // 406: minder.v1.DataSourceService.GetDataSourceById:output_type -> minder.v1.GetDataSourceByIdResponse
+	73,  // 407: minder.v1.DataSourceService.GetDataSourceByName:output_type -> minder.v1.GetDataSourceByNameResponse
+	75,  // 408: minder.v1.DataSourceService.ListDataSources:output_type -> minder.v1.ListDataSourcesResponse
+	77,  // 409: minder.v1.DataSourceService.UpdateDataSource:output_type -> minder.v1.UpdateDataSourceResponse
+	79,  // 410: minder.v1.DataSourceService.DeleteDataSourceById:output_type -> minder.v1.DeleteDataSourceByIdResponse
+	81,  // 411: minder.v1.DataSourceService.DeleteDataSourceByName:output_type -> minder.v1.DeleteDataSourceByNameResponse
+	119, // 412: minder.v1.RuleTypeService.ListRuleTypes:output_type -> minder.v1.ListRuleTypesResponse
+	121, // 413: minder.v1.RuleTypeService.GetRuleTypeByName:output_type -> minder.v1.GetRuleTypeByNameResponse
+	123, // 414: minder.v1.RuleTypeService.GetRuleTypeById:output_type -> minder.v1.GetRuleTypeByIdResponse
+	125, // 415: minder.v1.RuleTypeService.CreateRuleType:output_type -> minder.v1.CreateRuleTypeResponse
+	127, // 416: minder.v1.RuleTypeService.UpdateRuleType:output_type -> minder.v1.UpdateRuleTypeResponse
+	129, // 417: minder.v1.RuleTypeService.DeleteRuleType:output_type -> minder.v1.DeleteRuleTypeResponse
+	131, // 418: minder.v1.EvalResultsService.ListEvaluationResults:output_type -> minder.v1.ListEvaluationResultsResponse
+	195, // 419: minder.v1.EvalResultsService.ListEvaluationHistory:output_type -> minder.v1.ListEvaluationHistoryResponse
+	194, // 420: minder.v1.EvalResultsService.GetEvaluationHistory:output_type -> minder.v1.GetEvaluationHistoryResponse
+	157, // 421: minder.v1.PermissionsService.ListRoles:output_type -> minder.v1.ListRolesResponse
+	159, // 422: minder.v1.PermissionsService.ListRoleAssignments:output_type -> minder.v1.ListRoleAssignmentsResponse
+	161, // 423: minder.v1.PermissionsService.AssignRole:output_type -> minder.v1.AssignRoleResponse
+	163, // 424: minder.v1.PermissionsService.UpdateRole:output_type -> minder.v1.UpdateRoleResponse
+	165, // 425: minder.v1.PermissionsService.RemoveRole:output_type -> minder.v1.RemoveRoleResponse
+	142, // 426: minder.v1.ProjectsService.ListProjects:output_type -> minder.v1.ListProjectsResponse
+	144, // 427: minder.v1.ProjectsService.CreateProject:output_type -> minder.v1.CreateProjectResponse
+	153, // 428: minder.v1.ProjectsService.ListChildProjects:output_type -> minder.v1.ListChildProjectsResponse
+	146, // 429: minder.v1.ProjectsService.DeleteProject:output_type -> minder.v1.DeleteProjectResponse
+	148, // 430: minder.v1.ProjectsService.UpdateProject:output_type -> minder.v1.UpdateProjectResponse
+	151, // 431: minder.v1.ProjectsService.PatchProject:output_type -> minder.v1.PatchProjectResponse
+	155, // 432: minder.v1.ProjectsService.CreateEntityReconciliationTask:output_type -> minder.v1.CreateEntityReconciliationTaskResponse
+	187, // 433: minder.v1.ProvidersService.PatchProvider:output_type -> minder.v1.PatchProviderResponse
+	174, // 434: minder.v1.ProvidersService.GetProvider:output_type -> minder.v1.GetProviderResponse
+	176, // 435: minder.v1.ProvidersService.ListProviders:output_type -> minder.v1.ListProvidersResponse
+	178, // 436: minder.v1.ProvidersService.CreateProvider:output_type -> minder.v1.CreateProviderResponse
+	180, // 437: minder.v1.ProvidersService.DeleteProvider:output_type -> minder.v1.DeleteProviderResponse
+	182, // 438: minder.v1.ProvidersService.DeleteProviderByID:output_type -> minder.v1.DeleteProviderByIDResponse
+	185, // 439: minder.v1.ProvidersService.ListProviderClasses:output_type -> minder.v1.ListProviderClassesResponse
+	55,  // 440: minder.v1.ProvidersService.ReconcileEntityRegistration:output_type -> minder.v1.ReconcileEntityRegistrationResponse
+	28,  // 441: minder.v1.InviteService.GetInviteDetails:output_type -> minder.v1.GetInviteDetailsResponse
+	204, // 442: minder.v1.EntityInstanceService.ListEntities:output_type -> minder.v1.ListEntitiesResponse
+	206, // 443: minder.v1.EntityInstanceService.GetEntityById:output_type -> minder.v1.GetEntityByIdResponse
+	208, // 444: minder.v1.EntityInstanceService.GetEntityByName:output_type -> minder.v1.GetEntityByNameResponse
+	210, // 445: minder.v1.EntityInstanceService.DeleteEntityById:output_type -> minder.v1.DeleteEntityByIdResponse
+	212, // 446: minder.v1.EntityInstanceService.RegisterEntity:output_type -> minder.v1.RegisterEntityResponse
+	215, // 447: minder.v1.ExceptionService.ListExceptions:output_type -> minder.v1.ListExceptionsResponse
+	217, // 448: minder.v1.ExceptionService.CreateException:output_type -> minder.v1.CreateExceptionResponse
+	219, // 449: minder.v1.ExceptionService.DeleteException:output_type -> minder.v1.DeleteExceptionResponse
+	374, // [374:450] is the sub-list for method output_type
+	298, // [298:374] is the sub-list for method input_type
+	297, // [297:298] is the sub-list for extension type_name
+	295, // [295:297] is the sub-list for extension extendee
+	0,   // [0:295] is the sub-list for field type_name
 }
 
 func init() { file_minder_v1_minder_proto_init() }
