@@ -12,8 +12,27 @@ it handles the way Minder authenticates to the external service.
 
 ## Authorization methods
 
-Minder authorizes the Docker Hub provider using an access token you supply,
-similar to the Personal Access Token (PAT) method for GitLab.
+Minder authorizes the Docker Hub provider using an access token you supply.
+Enroll the provider with:
+
+```bash
+minder provider enroll --class dockerhub --token <TOKEN> --provider-config dockerhub-config.json
+```
+
+See [Enrolling a provider](#enrolling-a-provider) for the namespace
+configuration file.
+
+There is no separate username field — only the token is collected and stored.
+The token's shape isn't validated against Docker Hub at enrollment time; Minder
+only checks that it's a non-empty string in the expected format.
+
+Minder sends this token when it lists the repositories in your namespace
+through the Docker Hub API (`hub.docker.com`). It does not send the token when
+it calls the Docker Hub registry (`registry-1.docker.io`) to list tags, resolve
+a tag to a digest, or fetch a manifest — those calls are made anonymously,
+regardless of what you've configured. Because registering an image resolves its
+digest this way, private Docker Hub repositories are not currently supported by
+this provider.
 
 ## Prerequisites
 

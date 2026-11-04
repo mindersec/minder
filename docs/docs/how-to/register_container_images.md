@@ -38,7 +38,8 @@ enrolled with the `library` namespace, this registers
 minder entity register --provider dockerhub-library --type artifact --property name=alpine:latest
 ```
 
-Always include the tag. Each registered artifact is one tag of an image, so to
+A tag is required. Minder rejects a name without a tag, such as `alpine`; use
+`alpine:latest` instead. Each registered artifact is one tag of an image, so to
 register more than one tag, run the command once for each tag.
 
 When registration succeeds, Minder prints the ID of the new entity:
