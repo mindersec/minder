@@ -16,3 +16,6 @@ vulnerabilities:
 
   - id: GHSA-52f5-9888-hmc6
     reason: Only present in development/test dependencies
+
+  - id: CVE-2026-78661
+    reason: Upstream golang.org/x/net vulnerability pending general dependency bump
