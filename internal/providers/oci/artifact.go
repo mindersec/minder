@@ -26,6 +26,8 @@ const (
 	ArtifactPropertyNamespace = "oci/namespace"
 	// ArtifactPropertyRegistry is the registry host serving the artifact (e.g. "docker.io").
 	ArtifactPropertyRegistry = "oci/registry"
+	// ArtifactPropertyDigest is the digest the artifact's tag currently points to.
+	ArtifactPropertyDigest = "oci/digest"
 )
 
 // ParseImageRef splits a namespace-relative "repo[:tag]" reference, defaulting the tag to DefaultTag.
@@ -38,6 +40,12 @@ func ParseImageRef(ref string) (repo, tag string, err error) {
 		return "", "", fmt.Errorf("invalid image reference %q: empty tag", ref)
 	}
 	return repo, cmp.Or(tag, DefaultTag), nil
+}
+
+// HasExplicitTag reports whether a "repo[:tag]" reference names its tag.
+func HasExplicitTag(ref string) bool {
+	_, _, hasTag := strings.Cut(ref, ":")
+	return hasTag
 }
 
 // ArtifactNameFromProperties returns the non-empty artifact name from props.
@@ -54,19 +62,20 @@ func ArtifactNameFromProperties(props *properties.Properties) (string, error) {
 
 // NewArtifactProperties builds the properties for a container artifact entity. name is the
 // namespace-relative "repo[:tag]" reference; the repository is derived from it.
-func NewArtifactProperties(name, namespace, registry, upstreamID string) (*properties.Properties, error) {
-	repo, _, err := ParseImageRef(name)
+func NewArtifactProperties(name, namespace, registry, digest string) (*properties.Properties, error) {
+	repo, tag, err := ParseImageRef(name)
 	if err != nil {
 		return nil, err
 	}
 
 	return properties.NewProperties(map[string]any{
 		properties.PropertyName:         name,
-		properties.PropertyUpstreamID:   upstreamID,
+		properties.PropertyUpstreamID:   repo + ":" + tag,
 		properties.ArtifactPropertyType: string(verifyif.ArtifactTypeContainer),
 		ArtifactPropertyRepository:      path.Join(namespace, repo),
 		ArtifactPropertyNamespace:       namespace,
 		ArtifactPropertyRegistry:        registry,
+		ArtifactPropertyDigest:          digest,
 	}), nil
 }
 

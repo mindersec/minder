@@ -71,6 +71,15 @@ func TestParseImageRef(t *testing.T) {
 	}
 }
 
+func TestHasExplicitTag(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, HasExplicitTag("alpine:latest"))
+	assert.True(t, HasExplicitTag("myorg/alpine:v1.2"))
+	assert.False(t, HasExplicitTag("alpine"))
+	assert.False(t, HasExplicitTag("myorg/alpine"))
+}
+
 func TestArtifactNameFromProperties(t *testing.T) {
 	t.Parallel()
 
@@ -125,6 +134,7 @@ func TestNewArtifactProperties(t *testing.T) {
 		namespace    string
 		registry     string
 		wantRepo     string
+		wantUpstream string
 		wantErr      string
 	}{
 		{
@@ -133,13 +143,15 @@ func TestNewArtifactProperties(t *testing.T) {
 			namespace:    "library",
 			registry:     "docker.io",
 			wantRepo:     "library/alpine",
+			wantUpstream: "alpine:latest",
 		},
 		{
-			name:         "untagged image",
+			name:         "untagged image gets the default tag",
 			artifactName: "alpine",
 			namespace:    "library",
 			registry:     "docker.io",
 			wantRepo:     "library/alpine",
+			wantUpstream: "alpine:latest",
 		},
 		{
 			name:         "Quay image",
@@ -147,6 +159,7 @@ func TestNewArtifactProperties(t *testing.T) {
 			namespace:    "myorg",
 			registry:     "quay.io",
 			wantRepo:     "myorg/envoy",
+			wantUpstream: "envoy:v1.30",
 		},
 		{
 			name:         "missing repository",
@@ -168,7 +181,7 @@ func TestNewArtifactProperties(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			props, err := NewArtifactProperties(tt.artifactName, tt.namespace, tt.registry, "upstream-id")
+			props, err := NewArtifactProperties(tt.artifactName, tt.namespace, tt.registry, "sha256:abc")
 			if tt.wantErr != "" {
 				require.ErrorContains(t, err, tt.wantErr)
 				assert.Nil(t, props)
@@ -177,11 +190,12 @@ func TestNewArtifactProperties(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, tt.artifactName, props.GetProperty(properties.PropertyName).GetString())
-			assert.Equal(t, "upstream-id", props.GetProperty(properties.PropertyUpstreamID).GetString())
+			assert.Equal(t, tt.wantUpstream, props.GetProperty(properties.PropertyUpstreamID).GetString())
 			assert.Equal(t, "container", props.GetProperty(properties.ArtifactPropertyType).GetString())
 			assert.Equal(t, tt.wantRepo, props.GetProperty(ArtifactPropertyRepository).GetString())
 			assert.Equal(t, tt.namespace, props.GetProperty(ArtifactPropertyNamespace).GetString())
 			assert.Equal(t, tt.registry, props.GetProperty(ArtifactPropertyRegistry).GetString())
+			assert.Equal(t, "sha256:abc", props.GetProperty(ArtifactPropertyDigest).GetString())
 		})
 	}
 }
@@ -194,6 +208,7 @@ func TestArtifactV1FromProperties(t *testing.T) {
 		props     *properties.Properties
 		namespace string
 		wantName  string
+		wantPk    string
 		wantErr   string
 	}{
 		{
@@ -201,12 +216,14 @@ func TestArtifactV1FromProperties(t *testing.T) {
 			props:     mustArtifactProperties(t, "myimage:v1.2"),
 			namespace: "testns",
 			wantName:  "myimage",
+			wantPk:    "myimage:v1.2",
 		},
 		{
 			name:      "untagged name is unchanged",
 			props:     mustArtifactProperties(t, "myimage"),
 			namespace: "testns",
 			wantName:  "myimage",
+			wantPk:    "myimage:latest",
 		},
 		{
 			name:      "missing name",
@@ -241,7 +258,7 @@ func TestArtifactV1FromProperties(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, "myimage@sha256:abc", got.GetArtifactPk())
+			assert.Equal(t, tt.wantPk, got.GetArtifactPk())
 			assert.Equal(t, tt.namespace, got.GetOwner())
 			assert.Equal(t, tt.wantName, got.GetName())
 			assert.Equal(t, "container", got.GetType())
@@ -251,7 +268,7 @@ func TestArtifactV1FromProperties(t *testing.T) {
 
 func mustArtifactProperties(t *testing.T, name string) *properties.Properties {
 	t.Helper()
-	props, err := NewArtifactProperties(name, "testns", "docker.io", "myimage@sha256:abc")
+	props, err := NewArtifactProperties(name, "testns", "docker.io", "sha256:abc")
 	require.NoError(t, err)
 	return props
 }

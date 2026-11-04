@@ -127,5 +127,5 @@ func init() {
 	ruleTypeCmd.AddCommand(applyCmd)
 	// Flags
 	applyCmd.Flags().StringArrayP("file", "f", []string{},
-		"Path to the YAML defining the rule type (or - for stdin). Can be specified multiple times. Can be a directory.")
+		"Path or HTTP(S) URL to the YAML defining the rule type (or - for stdin). Can be specified multiple times. Can be a directory.")
 }
