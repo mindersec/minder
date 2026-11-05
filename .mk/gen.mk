@@ -3,7 +3,7 @@
 
 .PHONY: clean-gen
 clean-gen: ## clean generated files
-	rm -rf $(shell find pkg/api -iname "*.go") & rm -rf $(shell find pkg/api -iname "*.swagger.json") & rm -rf pkg/api/protodocs
+	rm -rf $(shell find pkg/api -iname "*.go") & rm -rf $(shell find pkg/api -iname "*.swagger.json") & rm -rf pkg/api/openapi/openapi.yaml & rm -rf pkg/api/protodocs
 
 .PHONY: gen
 gen: buf sqlc mock oapi ## run code generation targets (buf, sqlc, mock)
@@ -12,6 +12,8 @@ gen: buf sqlc mock oapi ## run code generation targets (buf, sqlc, mock)
 .PHONY: buf
 buf: ## generate protobuf files
 	buf generate
+	buf generate proto/ --template buf.gen.openapi.yaml
+	printf '# SPDX-FileCopyrightText: Copyright 2026 The Minder Authors\n# SPDX-License-Identifier: Apache-2.0\n\n' | cat - pkg/api/openapi/openapi.yaml > /tmp/minder-openapi.yaml && mv /tmp/minder-openapi.yaml pkg/api/openapi/openapi.yaml
 
 .PHONY: sqlc
 sqlc: ## generate sqlc files

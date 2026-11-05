@@ -19,7 +19,7 @@ const redocusaurus = [
     specs: [
       {
         id: 'minder-api',
-        spec: '../pkg/api/openapi/minder/v1/minder.swagger.json',
+        spec: '../pkg/api/openapi/openapi.yaml',
       },
     ],
     theme: {

@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
+# Separate template for OpenAPI v3 generation via protoc-gen-openapi (google/gnostic).
+# Run against proto/ only to avoid duplicate output from internal/proto.
+# See buf.gen.yaml for the main code generation template.
+
+version: v1
+plugins:
+  - name: openapi
+    out: pkg/api/openapi
+    opt:
+      - version=v3
