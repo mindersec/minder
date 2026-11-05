@@ -46,6 +46,7 @@ func (mr modificationRegistry) registerBuiltIn() {
 	mr.register(minderContentModification, newContentModification)
 	mr.register(minderFrizbeeTagResolve, newFrizbeeTagResolveModification)
 	mr.register(minderYQEvaluate, newYqExecute)
+	mr.register(minderDeleteModification, newDeleteModification)
 }
 
 func (mr modificationRegistry) getModification(

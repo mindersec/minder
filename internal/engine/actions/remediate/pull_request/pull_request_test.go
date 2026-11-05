@@ -116,6 +116,32 @@ func frizbeePrRemWithExcludes(e []string) *pb.RuleType_Definition_Remediate_Pull
 	}
 }
 
+func deletePrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation {
+	return &pb.RuleType_Definition_Remediate_PullRequestRemediation{
+		Method: "minder.delete",
+		Title:  "Delete workflow files",
+		Body:   "This PR deletes workflow files",
+		Params: &structpb.Struct{
+			Fields: map[string]*structpb.Value{
+				"patterns": {
+					Kind: &structpb.Value_ListValue{
+						ListValue: &structpb.ListValue{
+							Values: []*structpb.Value{
+								structpb.NewStructValue(&structpb.Struct{
+									Fields: map[string]*structpb.Value{
+										"pattern": structpb.NewStringValue(".github/workflows/*.yml"),
+										"type":    structpb.NewStringValue("glob"),
+									},
+								}),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func yqPrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation {
 	return &pb.RuleType_Definition_Remediate_PullRequestRemediation{
 		Method: "minder.yq.evaluate",
@@ -626,6 +652,30 @@ func TestPullRequestRemediate(t *testing.T) {
 			remArgs:          createTestRemArgs(),
 			expectedErr:      errors.ErrActionPending,
 			expectedMetadata: json.RawMessage(`{"pr_number":45}`),
+		},
+		{
+			name: "delete files using minder.delete",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      deletePrRem(),
+				actionType: TestActionTypeValid,
+			},
+			remArgs:   createTestRemArgs(),
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(t *testing.T, mockGitHub *mockghclient.MockGitHub) {
+				t.Helper()
+
+				happyPathMockSetup(mockGitHub)
+
+				mockGitHub.EXPECT().
+					CreatePullRequest(
+						gomock.Any(),
+						repoOwner, repoName,
+						"Delete workflow files", "This PR deletes workflow files",
+						refFromBranch(branchBaseName("Delete workflow files", "")), dflBranchTo).
+					Return(&github.PullRequest{Number: github.Int(47)}, nil)
+			},
+			expectedErr:      errors.ErrActionPending,
+			expectedMetadata: json.RawMessage(`{"pr_number":47}`),
 		},
 		{
 			name: "open a PR with a rule name",
