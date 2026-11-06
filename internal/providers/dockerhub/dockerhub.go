@@ -123,47 +123,60 @@ func (*dockerHubImageLister) CanImplement(trait minderv1.ProviderType) bool {
 		trait == minderv1.ProviderType_PROVIDER_TYPE_OCI
 }
 
+// maxListImagesPages bounds repository listing so a misbehaving API cannot loop forever.
+const maxListImagesPages = 1000
+
 // ListImages lists the containers in the Docker Hub
 func (d *dockerHubImageLister) ListImages(ctx context.Context) ([]string, error) {
-	req, err := http.NewRequest("GET", d.target.String(), nil)
-	if err != nil {
-		return nil, fmt.Errorf("error creating request: %w", err)
-	}
-
-	resp, err := d.cli.Do(req.WithContext(ctx))
-	if err != nil {
-		return nil, fmt.Errorf("error making request: %w", err)
-	}
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode == http.StatusUnauthorized {
-			return nil, fmt.Errorf("unauthorized: %s", resp.Status)
-		}
-		if resp.StatusCode == http.StatusNotFound {
-			return nil, errors.New("not found")
-		}
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
-
-	// parse body
-	toParse := struct {
-		Results []struct {
-			Name string `json:"name"`
-		} `json:"results"`
-	}{}
-
-	if err := json.NewDecoder(resp.Body).Decode(&toParse); err != nil {
-		return nil, fmt.Errorf("error decoding response: %w", err)
-	}
-
 	var containers []string
-	for _, r := range toParse.Results {
-		containers = append(containers, r.Name)
+	nextURL := d.target.String()
+
+	for range maxListImagesPages {
+		req, err := http.NewRequest("GET", nextURL, nil)
+		if err != nil {
+			return nil, fmt.Errorf("error creating request: %w", err)
+		}
+
+		resp, err := d.cli.Do(req.WithContext(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("error making request: %w", err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			_ = resp.Body.Close()
+			if resp.StatusCode == http.StatusUnauthorized {
+				return nil, fmt.Errorf("unauthorized: %s", resp.Status)
+			}
+			if resp.StatusCode == http.StatusNotFound {
+				return nil, errors.New("not found")
+			}
+			return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		}
+
+		toParse := struct {
+			Next    *string `json:"next"`
+			Results []struct {
+				Name string `json:"name"`
+			} `json:"results"`
+		}{}
+
+		if err := json.NewDecoder(resp.Body).Decode(&toParse); err != nil {
+			_ = resp.Body.Close()
+			return nil, fmt.Errorf("error decoding response: %w", err)
+		}
+		_ = resp.Body.Close()
+
+		for _, r := range toParse.Results {
+			containers = append(containers, r.Name)
+		}
+
+		if toParse.Next == nil || *toParse.Next == "" {
+			return containers, nil
+		}
+		nextURL = *toParse.Next
 	}
 
-	return containers, nil
+	return containers, fmt.Errorf("too many pages listing docker hub repositories (limit %d)", maxListImagesPages)
 }
 
 // FetchAllProperties implements the provider interface
