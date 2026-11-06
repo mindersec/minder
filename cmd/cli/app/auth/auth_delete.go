@@ -22,6 +22,7 @@ var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Permanently delete account",
 	Long:  `Permanently delete account. All associated user data will be permanently removed.`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		return viper.BindPFlags(cmd.Flags())
 	},
