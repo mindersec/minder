@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/grpc/codes"
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/entities/models"
@@ -21,6 +22,7 @@ import (
 	"github.com/mindersec/minder/internal/entities/service/validators"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/providers/manager"
+	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
@@ -90,11 +92,15 @@ var (
 	// ErrArchivedRepoForbidden is returned when creation fails due to an
 	// attempt to register an archived repo
 	ErrArchivedRepoForbidden = validators.ErrArchivedRepoForbidden
-	// ErrAmbiguousRepoName is returned when a lookup by name matches more
-	// than one repository, e.g. when no provider is specified and the same
-	// repository name is registered with multiple providers in the project
-	ErrAmbiguousRepoName = errors.New("repository name matches more than one repository")
 )
+
+// ambiguousRepoNameError is returned when a lookup by name matches more than
+// one repository, e.g. when no provider is specified and the same repository
+// name is registered with multiple providers in the project.
+func ambiguousRepoNameError(fullName string) error {
+	return util.UserVisibleError(codes.InvalidArgument,
+		"repository %q matches more than one registered repository; please specify a provider", fullName)
+}
 
 type repositoryService struct {
 	store           db.Store
@@ -295,7 +301,7 @@ func (r *repositoryService) GetRepositoryByName(
 		return nil, sql.ErrNoRows
 	}
 	if len(entities) > 1 {
-		return nil, fmt.Errorf("%w: %s", ErrAmbiguousRepoName, fullName)
+		return nil, ambiguousRepoNameError(fullName)
 	}
 
 	ewp, err := r.propSvc.EntityWithPropertiesByID(ctx, entities[0].ID, nil)
@@ -385,7 +391,7 @@ func (r *repositoryService) DeleteByName(
 		return fmt.Errorf("error retrieving repository %s/%s in project %s: %w", repoOwner, repoName, projectID, sql.ErrNoRows)
 	}
 	if len(entities) > 1 {
-		return fmt.Errorf("%w: %s", ErrAmbiguousRepoName, fullName)
+		return ambiguousRepoNameError(fullName)
 	}
 
 	// Fetch the entity with properties

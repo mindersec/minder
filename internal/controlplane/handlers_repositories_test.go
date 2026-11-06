@@ -17,6 +17,8 @@ import (
 	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -34,6 +36,7 @@ import (
 	reposvc "github.com/mindersec/minder/internal/repositories"
 	mockrepo "github.com/mindersec/minder/internal/repositories/mock"
 	rf "github.com/mindersec/minder/internal/repositories/mock/fixtures"
+	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/config/server"
@@ -416,6 +419,7 @@ func TestServer_DeleteRepository(t *testing.T) {
 		RepoServiceSetup repoMockBuilder
 		ProviderFails    bool
 		ExpectedError    string
+		ExpectedCode     codes.Code
 	}{
 		{
 			Name:          "delete by name fails when name is malformed",
@@ -449,9 +453,10 @@ func TestServer_DeleteRepository(t *testing.T) {
 			Name:     "deletion fails when name matches repos in multiple providers",
 			RepoName: repoOwnerAndName,
 			RepoServiceSetup: rf.NewRepoService(
-				rf.WithFailedDeleteByName(fmt.Errorf("%w: %s", reposvc.ErrAmbiguousRepoName, repoOwnerAndName)),
+				rf.WithFailedDeleteByName(util.UserVisibleError(codes.InvalidArgument, "please specify a provider")),
 			),
 			ExpectedError: "please specify a provider",
+			ExpectedCode:  codes.InvalidArgument,
 		},
 		{
 			Name:             "delete by ID fails when repo is not found",
@@ -519,6 +524,9 @@ func TestServer_DeleteRepository(t *testing.T) {
 			} else {
 				require.Empty(t, result)
 				require.ErrorContains(t, resultError, scenario.ExpectedError)
+				if scenario.ExpectedCode != codes.OK {
+					require.Equal(t, scenario.ExpectedCode, status.Code(resultError))
+				}
 			}
 		})
 	}
