@@ -13,6 +13,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	mockdb "github.com/mindersec/minder/database/mock"
 	"github.com/mindersec/minder/internal/db"
@@ -177,7 +179,7 @@ func TestRepositoryService_DeleteRepository(t *testing.T) {
 			ProviderManagerSetup: func(_ provinfv1.Provider) pf.ProviderManagerMockBuilder {
 				return pf.NewProviderManagerMock()
 			},
-			ExpectedError: repositories.ErrAmbiguousRepoName.Error(),
+			ExpectedError: "please specify a provider",
 		},
 		{
 			Name:          "DeleteByName fails when repo's entity cannot be retrieved",
@@ -364,7 +366,7 @@ func TestRepositoryService_GetRepositoryByName(t *testing.T) {
 		DBSetup       dbMockBuilder
 		ServiceSetup  propSvcMockBuilder
 		ShouldSucceed bool
-		ExpectedErr   error
+		ExpectedCode  codes.Code
 	}{
 		{
 			Name:         "Get by name fails when DB call fails",
@@ -375,7 +377,7 @@ func TestRepositoryService_GetRepositoryByName(t *testing.T) {
 			Name:         "Get by name fails when name matches multiple repos",
 			DBSetup:      newDBMock(withAmbiguousGetByName),
 			ServiceSetup: newPropSvcMock(),
-			ExpectedErr:  repositories.ErrAmbiguousRepoName,
+			ExpectedCode: codes.InvalidArgument,
 		},
 		{
 			Name:    "Get by name succeeds",
@@ -404,8 +406,8 @@ func TestRepositoryService_GetRepositoryByName(t *testing.T) {
 			} else {
 				require.Error(t, err)
 			}
-			if scenario.ExpectedErr != nil {
-				require.ErrorIs(t, err, scenario.ExpectedErr)
+			if scenario.ExpectedCode != codes.OK {
+				require.Equal(t, scenario.ExpectedCode, status.Code(err))
 			}
 		})
 	}

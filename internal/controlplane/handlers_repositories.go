@@ -259,8 +259,6 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 	repo, err := s.repos.GetRepositoryByName(ctx, fragments[0], fragments[1], projectID, providerName)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
-	} else if errors.Is(err, repositories.ErrAmbiguousRepoName) {
-		return nil, ambiguousRepoNameError(in.Name)
 	} else if err != nil {
 		return nil, err
 	}
@@ -317,9 +315,13 @@ func (s *Server) DeleteRepositoryByName(
 	err := s.repos.DeleteByName(ctx, fragments[0], fragments[1], projectID, providerName)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
-	} else if errors.Is(err, repositories.ErrAmbiguousRepoName) {
-		return nil, ambiguousRepoNameError(in.Name)
 	} else if err != nil {
+		// If the error is already a UserVisibleError, pass it through directly
+		// rather than hiding it behind an Internal status.
+		var userErr *util.NiceStatus
+		if errors.As(err, &userErr) {
+			return nil, err
+		}
 		return nil, status.Errorf(codes.Internal, "unexpected error deleting repo: %v", err)
 	}
 
@@ -327,11 +329,6 @@ func (s *Server) DeleteRepositoryByName(
 	return &pb.DeleteRepositoryByNameResponse{
 		Name: in.Name,
 	}, nil
-}
-
-func ambiguousRepoNameError(name string) error {
-	return util.UserVisibleError(codes.InvalidArgument,
-		"repository %q is registered with more than one provider, please specify a provider", name)
 }
 
 // ListRemoteRepositoriesFromProvider returns a list of repositories from a provider
