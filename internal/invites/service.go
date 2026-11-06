@@ -34,11 +34,13 @@ type InviteService interface {
 	// CreateInvite creates a new user invite
 	CreateInvite(ctx context.Context, qtx db.Querier, eventsPub interfaces.Publisher,
 		emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
+		expiresAt time.Time,
 	) (*minder.Invitation, error)
 
 	// UpdateInvite updates the invite status
 	UpdateInvite(ctx context.Context, qtx db.Querier, eventsPub interfaces.Publisher,
 		emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
+		expiresAt time.Time,
 	) (*minder.Invitation, error)
 
 	// RemoveInvite removes the user invite
@@ -71,6 +73,7 @@ func NewInviteService() InviteService {
 
 func (*inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, eventsPub interfaces.Publisher,
 	emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
+	expiresAt time.Time,
 ) (*minder.Invitation, error) {
 	var userInvite db.UserInvite
 	// Get the sponsor's user information (current user)
@@ -100,8 +103,9 @@ func (*inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, eventsPu
 	// or just bump the expiration date.
 	// In both cases, we can use the same query.
 	userInvite, err = qtx.UpdateInvitationRole(ctx, db.UpdateInvitationRoleParams{
-		Code: existingInvites[0].Code,
-		Role: authzRole.String(),
+		Code:      existingInvites[0].Code,
+		Role:      authzRole.String(),
+		ExpiresAt: expiresAt,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error updating invitation: %v", err)
@@ -165,8 +169,8 @@ func (*inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, eventsPu
 		Sponsor:        identity.String(),
 		SponsorDisplay: identity.Human(),
 		CreatedAt:      timestamppb.New(userInvite.CreatedAt),
-		ExpiresAt:      GetExpireIn7Days(userInvite.UpdatedAt),
-		Expired:        IsExpired(userInvite.UpdatedAt),
+		ExpiresAt:      GetInviteExpiration(userInvite.ExpiresAt, userInvite.UpdatedAt),
+		Expired:        IsInviteExpired(userInvite.ExpiresAt, userInvite.UpdatedAt),
 		EmailSkipped:   emailSkipped,
 	}, nil
 
@@ -183,6 +187,7 @@ func (*inviteService) RemoveInvite(ctx context.Context, qtx db.Querier, code str
 
 func (*inviteService) CreateInvite(ctx context.Context, qtx db.Querier, eventsPub interfaces.Publisher,
 	emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
+	expiresAt time.Time,
 ) (*minder.Invitation, error) {
 	identity := auth.IdentityFromContext(ctx)
 	// Slight hack -- only the null/default provider has String == UserID
@@ -225,13 +230,18 @@ func (*inviteService) CreateInvite(ctx context.Context, qtx db.Querier, eventsPu
 		return nil, status.Errorf(codes.Internal, "error parsing project metadata: %v", err)
 	}
 
+	if expiresAt.IsZero() {
+		expiresAt = time.Now().Add(expireIn7Days)
+	}
+
 	// Create the invitation
 	userInvite, err := qtx.CreateInvitation(ctx, db.CreateInvitationParams{
-		Code:    GenerateCode(),
-		Email:   inviteeEmail,
-		Role:    authzRole.String(),
-		Project: targetProject,
-		Sponsor: currentUser.ID,
+		Code:      GenerateCode(),
+		Email:     inviteeEmail,
+		Role:      authzRole.String(),
+		Project:   targetProject,
+		Sponsor:   currentUser.ID,
+		ExpiresAt: expiresAt,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error creating invitation: %v", err)
@@ -276,8 +286,8 @@ func (*inviteService) CreateInvite(ctx context.Context, qtx db.Querier, eventsPu
 		Sponsor:        identity.String(),
 		SponsorDisplay: identity.Human(),
 		CreatedAt:      timestamppb.New(userInvite.CreatedAt),
-		ExpiresAt:      GetExpireIn7Days(userInvite.UpdatedAt),
-		Expired:        IsExpired(userInvite.UpdatedAt),
+		ExpiresAt:      GetInviteExpiration(userInvite.ExpiresAt, userInvite.UpdatedAt),
+		Expired:        IsInviteExpired(userInvite.ExpiresAt, userInvite.UpdatedAt),
 	}, nil
 }
 
@@ -323,8 +333,8 @@ func (*inviteService) GetInvitesForSelf(ctx context.Context, qtx db.Querier, idC
 			Project:        i.Project.String(),
 			ProjectDisplay: meta.Public.DisplayName,
 			CreatedAt:      timestamppb.New(i.CreatedAt),
-			ExpiresAt:      GetExpireIn7Days(i.UpdatedAt),
-			Expired:        IsExpired(i.UpdatedAt),
+			ExpiresAt:      GetInviteExpiration(i.ExpiresAt, i.UpdatedAt),
+			Expired:        IsInviteExpired(i.ExpiresAt, i.UpdatedAt),
 			Sponsor:        identity.String(),
 			SponsorDisplay: identity.Human(),
 		})
@@ -361,7 +371,7 @@ func (*inviteService) GetInvite(ctx context.Context, qtx db.Querier, code string
 		}
 	}
 
-	if IsExpired(userInvite.UpdatedAt) {
+	if IsInviteExpired(userInvite.ExpiresAt, userInvite.UpdatedAt) {
 		return nil, util.UserVisibleError(codes.PermissionDenied, "invitation expired")
 	}
 
@@ -371,7 +381,7 @@ func (*inviteService) GetInvite(ctx context.Context, qtx db.Querier, code string
 		Project:        userInvite.Project.String(),
 		Code:           code,
 		CreatedAt:      timestamppb.New(userInvite.CreatedAt),
-		ExpiresAt:      GetExpireIn7Days(userInvite.UpdatedAt),
+		ExpiresAt:      GetInviteExpiration(userInvite.ExpiresAt, userInvite.UpdatedAt),
 		Expired:        false,
 		Sponsor:        userInvite.IdentitySubject,
 		SponsorDisplay: "", // Not set, would require an extra DB round-trip
@@ -401,8 +411,8 @@ func (*inviteService) GetInvitesForEmail(ctx context.Context, qtx db.Querier, ta
 			Project:        i.Project.String(),
 			Code:           i.Code,
 			CreatedAt:      timestamppb.New(i.CreatedAt),
-			ExpiresAt:      GetExpireIn7Days(i.UpdatedAt),
-			Expired:        IsExpired(i.UpdatedAt),
+			ExpiresAt:      GetInviteExpiration(i.ExpiresAt, i.UpdatedAt),
+			Expired:        IsInviteExpired(i.ExpiresAt, i.UpdatedAt),
 			Sponsor:        i.IdentitySubject,
 			SponsorDisplay: "", // Not set, would require an extra DB round-trip
 			ProjectDisplay: "", // Not set, would require an extra DB round-trip
@@ -428,8 +438,8 @@ func (*inviteService) ListInvitationsForProject(ctx context.Context, qtx db.Quer
 			Email:     i.Email,
 			Project:   targetProject.String(),
 			CreatedAt: timestamppb.New(i.CreatedAt),
-			ExpiresAt: GetExpireIn7Days(i.UpdatedAt),
-			Expired:   IsExpired(i.UpdatedAt),
+			ExpiresAt: GetInviteExpiration(i.ExpiresAt, i.UpdatedAt),
+			Expired:   IsInviteExpired(i.ExpiresAt, i.UpdatedAt),
 			Sponsor:   i.IdentitySubject,
 			// SponsorDisplay is left empty; the caller fills it in.
 			// Code is explicitly not returned here.

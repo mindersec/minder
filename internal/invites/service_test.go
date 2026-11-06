@@ -146,7 +146,7 @@ func TestCreateInvite(t *testing.T) {
 			}
 
 			service := NewInviteService()
-			invite, err := service.CreateInvite(ctx, scenario.dBSetup(ctrl), publisher, emailConfig, projectId, userRole, userEmail)
+			invite, err := service.CreateInvite(ctx, scenario.dBSetup(ctrl), publisher, emailConfig, projectId, userRole, userEmail, time.Time{})
 
 			if scenario.expectedError != "" {
 				require.ErrorContains(t, err, scenario.expectedError)
@@ -239,6 +239,34 @@ func TestUpdateInvite(t *testing.T) {
 			),
 			expectedError: "contains HTML injection",
 		},
+		{
+			name: "updating expired invite renews expiration",
+			dBSetup: dbf.NewDBMock(
+				withExistingInvites(db.GetInvitationsByEmailAndProjectRow{
+					Code:      inviteCode,
+					Email:     userEmail,
+					Project:   projectId,
+					Role:      authz.RoleViewer.String(),
+					UpdatedAt: time.Now().Add(-10 * 24 * time.Hour),
+				}),
+				withInviteRoleUpdate(db.UserInvite{
+					Code:      inviteCode,
+					Project:   projectId,
+					Role:      userRole.String(),
+					UpdatedAt: time.Now(),
+					ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
+				}),
+				withProject(nil),
+			),
+			publisherSetup: func(_ *testing.T, pub *mockevents.MockPublisher) {
+				pub.EXPECT().Publish(email.TopicQueueInviteEmail, gomock.Any())
+			},
+			expectedResult: &minder.Invitation{
+				Project:   projectId.String(),
+				Role:      userRole.String(),
+				InviteUrl: fmt.Sprintf("%s/join/%s", baseUrl, inviteCode),
+			},
+		},
 	}
 
 	for _, scenario := range scenarios {
@@ -267,7 +295,8 @@ func TestUpdateInvite(t *testing.T) {
 			}
 
 			service := NewInviteService()
-			invite, err := service.UpdateInvite(ctx, scenario.dBSetup(ctrl), publisher, emailConfig, projectId, userRole, userEmail)
+			expiresAt := time.Now().Add(7 * 24 * time.Hour)
+			invite, err := service.UpdateInvite(ctx, scenario.dBSetup(ctrl), publisher, emailConfig, projectId, userRole, userEmail, expiresAt)
 
 			if scenario.expectedError != "" {
 				require.ErrorContains(t, err, scenario.expectedError)
@@ -279,6 +308,9 @@ func TestUpdateInvite(t *testing.T) {
 				require.Equal(t, scenario.expectedResult.Role, invite.Role)
 				require.Equal(t, scenario.expectedResult.Project, invite.Project)
 				require.Equal(t, scenario.expectedResult.InviteUrl, invite.InviteUrl)
+				require.False(t, invite.Expired)
+				require.False(t, invite.ExpiresAt.AsTime().IsZero())
+				require.True(t, invite.ExpiresAt.AsTime().After(time.Now()))
 			}
 		})
 	}
@@ -700,6 +732,7 @@ var (
 		Project:   projectId,
 		Role:      userRole.String(),
 		UpdatedAt: time.Now().Add(-time.Minute),
+		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
 	}
 )
 
@@ -722,10 +755,10 @@ func withExistingInvites(result ...db.GetInvitationsByEmailAndProjectRow) func(d
 func withInviteRoleUpdate(result db.UserInvite) func(dbf.DBMock) {
 	return func(mock dbf.DBMock) {
 		mock.EXPECT().
-			UpdateInvitationRole(gomock.Any(), db.UpdateInvitationRoleParams{
-				Code: inviteCode,
-				Role: userRole.String(),
-			}).
+			UpdateInvitationRole(gomock.Any(), gomock.Cond(func(x any) bool {
+				params, ok := x.(db.UpdateInvitationRoleParams)
+				return ok && params.Code == inviteCode && params.Role == userRole.String() && !params.ExpiresAt.IsZero()
+			})).
 			Return(result, nil)
 	}
 }

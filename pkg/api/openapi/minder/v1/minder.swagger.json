@@ -4078,6 +4078,10 @@
         "roleAssignment": {
           "$ref": "#/definitions/v1RoleAssignment",
           "description": "role_assignment is the role assignment to be created."
+        },
+        "invitationExpiration": {
+          "type": "string",
+          "description": "invitation_expiration is an optional requested validity duration for the invitation.\nIf not set, or if it exceeds the server-configured maximum, the server-configured\nmaximum will be used."
         }
       },
       "required": [

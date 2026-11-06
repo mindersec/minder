@@ -38,6 +38,7 @@ type Config struct {
 	Crypto          CryptoConfig          `mapstructure:"crypto"`
 	Email           EmailConfig           `mapstructure:"email"`
 	DataSources     DataSourceConfig      `mapstructure:"data_sources"`
+	Invitations     InvitationsConfig     `mapstructure:"invitations"`
 }
 
 // DefaultConfigForTest returns a configuration with all the struct defaults set,
