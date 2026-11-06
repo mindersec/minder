@@ -8,9 +8,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/entities/handlers/message"
 	"github.com/mindersec/minder/internal/entities/models"
 	propertyService "github.com/mindersec/minder/internal/entities/properties/service"
+	"github.com/mindersec/minder/internal/providers/manager"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
 )
@@ -51,4 +53,32 @@ func getEntityInner(
 	}
 
 	return ewp, nil
+}
+
+// refreshEntityByUpstreamProps looks up an entity by the upstream properties in the
+// message and refreshes its properties from the provider within a transaction.
+func refreshEntityByUpstreamProps(
+	ctx context.Context,
+	entMsg *message.HandleEntityAndDoMessage,
+	propSvc propertyService.PropertiesService,
+	provMgr manager.ProviderManager,
+	store db.Store,
+) (*models.EntityWithProperties, error) {
+	return db.WithTransaction(store, func(t db.ExtendQuerier) (*models.EntityWithProperties, error) {
+		ewp, err := getEntityInner(
+			ctx,
+			entMsg.Entity.Type, entMsg.Entity.GetByProps, entMsg.Hint,
+			propSvc, propertyService.CallBuilder().WithStoreOrTransaction(t))
+		if err != nil {
+			return nil, fmt.Errorf("error getting entity: %w", err)
+		}
+
+		err = propSvc.RetrieveAllPropertiesForEntity(
+			ctx, ewp, provMgr,
+			propertyService.ReadBuilder().WithStoreOrTransaction(t))
+		if err != nil {
+			return nil, fmt.Errorf("error fetching entity: %w", err)
+		}
+		return ewp, nil
+	})
 }

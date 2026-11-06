@@ -77,7 +77,16 @@ func (a *addOriginatingEntityStrategy) GetEntity(
 			RegisterWithProvider:       false, // No webhooks for child entities
 			PublishReconciliationEvent: false, // Explained above
 		})
-	if err != nil {
+	if db.ErrIsUniqueViolation(err) {
+		// The entity is already registered (e.g. a repeated webhook event or a new
+		// version of an existing package). Treat this as an update and refresh the
+		// existing entity instead of dropping the event.
+		existingEwp, err := refreshEntityByUpstreamProps(ctx, entMsg, a.propSvc, a.provMgr, a.store)
+		if err != nil {
+			return nil, fmt.Errorf("error refreshing existing entity: %w", err)
+		}
+		return existingEwp, nil
+	} else if err != nil {
 		return nil, fmt.Errorf("error creating entity: %w", err)
 	}
 
