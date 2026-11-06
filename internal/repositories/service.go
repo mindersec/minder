@@ -95,6 +95,10 @@ var (
 	// ErrArchivedRepoForbidden is returned when creation fails due to an
 	// attempt to register an archived repo
 	ErrArchivedRepoForbidden = validators.ErrArchivedRepoForbidden
+	// ErrAmbiguousRepoName is returned when a lookup by name matches more
+	// than one repository, e.g. when no provider is specified and the same
+	// repository name is registered with multiple providers in the project
+	ErrAmbiguousRepoName = errors.New("repository name matches more than one repository")
 )
 
 type repositoryService struct {
@@ -315,8 +319,10 @@ func (r *repositoryService) GetRepositoryByName(
 	if len(entities) == 0 {
 		return nil, sql.ErrNoRows
 	}
+	if len(entities) > 1 {
+		return nil, fmt.Errorf("%w: %s", ErrAmbiguousRepoName, fullName)
+	}
 
-	// Use the first matching entity
 	ewp, err := r.propSvc.EntityWithPropertiesByID(ctx, entities[0].ID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching repository: %w", err)
@@ -402,6 +408,9 @@ func (r *repositoryService) DeleteByName(
 
 	if len(entities) == 0 {
 		return fmt.Errorf("error retrieving repository %s/%s in project %s: %w", repoOwner, repoName, projectID, sql.ErrNoRows)
+	}
+	if len(entities) > 1 {
+		return fmt.Errorf("%w: %s", ErrAmbiguousRepoName, fullName)
 	}
 
 	// Fetch the entity with properties

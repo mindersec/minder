@@ -447,6 +447,14 @@ func TestServer_DeleteRepository(t *testing.T) {
 			ExpectedError:    "repository not found",
 		},
 		{
+			Name:     "deletion fails when name matches repos in multiple providers",
+			RepoName: repoOwnerAndName,
+			RepoServiceSetup: rf.NewRepoService(
+				rf.WithFailedDeleteByName(fmt.Errorf("%w: %s", reposvc.ErrAmbiguousRepoName, repoOwnerAndName)),
+			),
+			ExpectedError: "please specify a provider",
+		},
+		{
 			Name:             "delete by ID fails when repo is not found",
 			RepoID:           repoID,
 			RepoServiceSetup: rf.NewRepoService(rf.WithFailedDeleteByID(sql.ErrNoRows)),
