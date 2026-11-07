@@ -115,7 +115,9 @@ func (o *OCI) GetReferrer(ctx context.Context, contname, tag, artifactType strin
 		return "", fmt.Errorf("failed to get digest: %w", err)
 	}
 
-	digname, err := name.NewDigest(fmt.Sprintf("%s@%s", ref.Context().RepositoryStr(), dig))
+	// Name() keeps the registry host; RepositoryStr() drops it, which made
+	// name.NewDigest default to Docker Hub regardless of the configured registry.
+	digname, err := name.NewDigest(fmt.Sprintf("%s@%s", ref.Context().Name(), dig))
 	if err != nil {
 		return "", fmt.Errorf("failed to get digest name: %w", err)
 	}
