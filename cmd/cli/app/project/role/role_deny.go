@@ -67,7 +67,7 @@ func DenyCommand(cmd *cobra.Command, _ []string) error {
 		return cli.MessageAndError(failMsg, err)
 	}
 
-	cmd.Println(successMsg)
+	cmd.PrintErrln(successMsg)
 	return nil
 }
 

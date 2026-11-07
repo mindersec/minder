@@ -1,17 +1,15 @@
 // SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// Package offline_token provides the auth offline_token command for the minder CLI.\
+// Package offline_token provides the auth offline_token command for the minder CLI.
 package offline_token
 
 import (
-	"context"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/pkg/config"
@@ -28,12 +26,17 @@ for the minder control plane.
 Offline tokens are used to authenticate to the minder control plane without
 requiring the user's presence. This is useful for long-running processes
 that need to authenticate to the control plane.`,
-
-	RunE: cli.GRPCClientWrapRunE(offlineGetCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return err
+		}
+		return viper.BindPFlag("offline.get.skip-browser", cmd.Flags().Lookup("skip-browser"))
+	},
+	RunE: offlineGetCommand,
 }
 
 // offlineGetCommand is the offline-token get subcommand
-func offlineGetCommand(ctx context.Context, cmd *cobra.Command, _ []string, _ *grpc.ClientConn) error {
+func offlineGetCommand(cmd *cobra.Command, _ []string) error {
 	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
 	if err != nil {
 		return fmt.Errorf("error reading config: %w", err)
@@ -47,7 +50,7 @@ func offlineGetCommand(ctx context.Context, cmd *cobra.Command, _ []string, _ *g
 	cmd.SilenceUsage = true
 
 	// wait for the token to be received
-	token, err := cli.Login(ctx, cmd, clientConfig, []string{"offline_access"}, skipBrowser)
+	token, err := cli.Login(cmd.Context(), cmd, clientConfig, []string{"offline_access"}, skipBrowser)
 	if err != nil {
 		return err
 	}
@@ -66,13 +69,5 @@ func init() {
 	offlineTokenCmd.AddCommand(offlineTokenGetCmd)
 
 	offlineTokenGetCmd.Flags().StringP("file", "f", "offline.token", "The file to write the offline token to")
-
-	if err := viper.BindPFlag("file", offlineTokenGetCmd.Flag("file")); err != nil {
-		panic(err)
-	}
-
 	offlineTokenGetCmd.Flags().BoolP("skip-browser", "", false, "Skip opening the browser for OAuth flow")
-	if err := viper.BindPFlag("offline.get.skip-browser", offlineTokenGetCmd.Flag("skip-browser")); err != nil {
-		panic(err)
-	}
 }

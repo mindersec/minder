@@ -78,7 +78,7 @@ func applyCommand(cmd *cobra.Command, args []string) error {
 		})
 
 		if err == nil {
-			cmd.Printf("Successfully created new profile named: %s\n", p.GetName())
+			cmd.PrintErrf("Successfully created new profile named: %s\n", p.GetName())
 			return resp.GetProfile(), nil
 		}
 
@@ -100,7 +100,7 @@ func applyCommand(cmd *cobra.Command, args []string) error {
 			return nil, err
 		}
 
-		cmd.Printf("Successfully updated existing profile named: %s\n", p.GetName())
+		cmd.PrintErrf("Successfully updated existing profile named: %s\n", p.GetName())
 		return updateResp.GetProfile(), nil
 	}
 
@@ -140,5 +140,5 @@ func init() {
 	ProfileCmd.AddCommand(applyCmd)
 	// Flags
 	applyCmd.Flags().StringArrayP("file", "f", []string{},
-		"Path to the YAML defining the profile (or - for stdin). Can be specified multiple files")
+		"Path or HTTP(S) URL to the YAML defining the profile (or - for stdin). Can be specified multiple files")
 }

@@ -209,7 +209,10 @@ func quickstartCommand(
 	defer cancel()
 
 	// Enroll provider
-	err = minderprov.EnrollProviderCommand(ctx, cmd, []string{}, conn)
+	ctx = cli.WithRPCClient[minderv1.ProvidersServiceClient](ctx, minderv1.NewProvidersServiceClient(conn))
+	ctx = cli.WithRPCClient[minderv1.OAuthServiceClient](ctx, minderv1.NewOAuthServiceClient(conn))
+	cmd.SetContext(ctx)
+	err = minderprov.EnrollProviderCmd(cmd, []string{})
 	if err != nil {
 		return cli.MessageAndError("Error enrolling provider", err)
 	}
@@ -240,17 +243,25 @@ func quickstartCommand(
 	defer cancel()
 
 	// Get the list of all registered repositories
-	listResp, err := repoClient.ListRepositories(ctx, &minderv1.ListRepositoriesRequest{
-		Context: &minderv1.Context{Provider: &provider, Project: &project},
-	})
-	if err != nil {
-		return cli.MessageAndError("Error getting list of repos", err)
-	}
-
 	var registeredRepos []string
-	for _, result := range listResp.Results {
-		r := fmt.Sprintf("%s/%s", result.Owner, result.Name)
-		registeredRepos = append(registeredRepos, r)
+	var cursor string
+	// Do not fetch more than 100 pages
+	for range 100 {
+		listResp, err := repoClient.ListRepositories(ctx, &minderv1.ListRepositoriesRequest{
+			Context: &minderv1.Context{Provider: &provider, Project: &project},
+			Cursor:  cursor,
+		})
+		if err != nil {
+			return cli.MessageAndError("Error getting list of repos", err)
+		}
+		for _, result := range listResp.Results {
+			r := fmt.Sprintf("%s/%s", result.Owner, result.Name)
+			registeredRepos = append(registeredRepos, r)
+		}
+		cursor = listResp.Cursor
+		if cursor == "" {
+			break
+		}
 	}
 
 	return loadCatalog(cmd, ruleClient, profileClient, provider, project, registeredRepos)
@@ -279,7 +290,7 @@ func loadCatalog(
 	}
 
 	// Creating the rule type
-	cmd.Println("Creating rule type...")
+	cmd.PrintErrln("Creating rule type...")
 
 	// Load the rule type from the embedded file system
 	reader, err := content.Open("embed/secret_scanning.yaml")
@@ -315,7 +326,7 @@ func loadCatalog(
 			if st.Code() != codes.AlreadyExists {
 				return fmt.Errorf("error creating rule type from: %w", err)
 			}
-			cmd.Println("Rule type secret_scanning already exists")
+			cmd.PrintErrln("Rule type secret_scanning already exists")
 		} else {
 			return cli.MessageAndError("error creating rule type", err)
 		}
@@ -332,7 +343,7 @@ func loadCatalog(
 	}
 
 	// Creating the profile
-	cmd.Println("Creating profile...")
+	cmd.PrintErrln("Creating profile...")
 	reader, err = content.Open("embed/profile.yaml")
 	if err != nil {
 		return cli.MessageAndError("error opening profile", err)
@@ -376,12 +387,12 @@ func loadCatalog(
 	// Finish - Confirm profile creation
 	if alreadyExists {
 		// Print the "profile already exists" message
-		cmd.Println(cli.WarningBanner.Render(stepPromptMsgFinishExisting + stepPromptMsgFinishBase))
+		cmd.PrintErrln(cli.WarningBanner.Render(stepPromptMsgFinishExisting + stepPromptMsgFinishBase))
 	} else {
 		// Print the "profile created" message
-		cmd.Println(cli.WarningBanner.Render(stepPromptMsgFinishOK + stepPromptMsgFinishBase))
+		cmd.PrintErrln(cli.WarningBanner.Render(stepPromptMsgFinishOK + stepPromptMsgFinishBase))
 		// Print the profile create result table
-		cmd.Println("Profile details (minder profile list):")
+		cmd.PrintErrln("Profile details (minder profile list):")
 		table := profile.NewProfileRulesTable(cmd.OutOrStdout())
 		profile.RenderProfileRulesTable(resp.GetProfile(), table)
 		table.Render()
@@ -399,11 +410,11 @@ func init() {
 	cmd.Flags().StringP("owner", "o", "", "Owner to filter on for provider resources")
 	// Bind flags
 	if err := viper.BindPFlag("token", cmd.Flags().Lookup("token")); err != nil {
-		cmd.Printf("error: %s", err)
+		cmd.PrintErrf("error: %s", err)
 		os.Exit(1)
 	}
 	if err := viper.BindPFlag("owner", cmd.Flags().Lookup("owner")); err != nil {
-		cmd.Printf("error: %s", err)
+		cmd.PrintErrf("error: %s", err)
 		os.Exit(1)
 	}
 }
@@ -446,7 +457,7 @@ func loginPromptErrWrapper(
 			if _, err := userClient.CreateUser(quickstartCtx, &minderv1.CreateUserRequest{}); err != nil {
 				return cli.MessageAndError("Error registering user", err)
 			}
-			cmnd.Println(cli.SuccessBanner.Render("You have been successfully registered. Welcome!"))
+			cmnd.PrintErrln(cli.SuccessBanner.Render("You have been successfully registered. Welcome!"))
 			return nil
 		}
 	}

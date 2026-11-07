@@ -62,13 +62,18 @@ type RepositoryService interface {
 		providerName string,
 	) error
 
-	// ListRepositories retrieves all repositories for the
-	// specific provider and project.
+	// ListRepositories retrieves a page of repositories for the
+	// specific provider and project, with cursor-based pagination.
+	// cursor is the UUID of the last seen entity (uuid.Nil = first page).
+	// limit defaults to RepoPageSize when 0 and is capped at RepoPageSize.
+	// Returns the entities and the cursor to pass for the next page (uuid.Nil = last page).
 	ListRepositories(
 		ctx context.Context,
 		projectID uuid.UUID,
 		providerID uuid.UUID,
-	) ([]*models.EntityWithProperties, error)
+		cursor uuid.UUID,
+		limit int,
+	) ([]*models.EntityWithProperties, uuid.UUID, error)
 
 	// GetRepositoryById retrieves a repository by its ID and project.
 	GetRepositoryById(ctx context.Context, repositoryID uuid.UUID, projectID uuid.UUID) (*pb.Repository, error)
@@ -156,14 +161,25 @@ func (r *repositoryService) CreateRepository(
 	return pbRepo, nil
 }
 
+// RepoPageSize is the default and maximum page size for listing repositories.
+const RepoPageSize = 100
+
 func (r *repositoryService) ListRepositories(
 	ctx context.Context,
 	projectID uuid.UUID,
 	providerID uuid.UUID,
-) (ents []*models.EntityWithProperties, outErr error) {
+	cursor uuid.UUID,
+	limit int,
+) (ents []*models.EntityWithProperties, nextCursor uuid.UUID, outErr error) {
+	if limit <= 0 {
+		limit = RepoPageSize
+	}
+	if limit > RepoPageSize {
+		limit = RepoPageSize
+	}
 	tx, err := r.store.BeginTransaction()
 	if err != nil {
-		return nil, fmt.Errorf("error starting transaction: %w", err)
+		return nil, uuid.Nil, fmt.Errorf("error starting transaction: %w", err)
 	}
 
 	defer func() {
@@ -176,13 +192,17 @@ func (r *repositoryService) ListRepositories(
 
 	qtx := r.store.GetQuerierWithTransaction(tx)
 
-	repoEnts, err := qtx.GetEntitiesByType(ctx, db.GetEntitiesByTypeParams{
+	// Fetch limit+1 rows to detect whether a next page exists
+	// without returning an empty final page.
+	repoEnts, err := qtx.GetEntitiesByTypePaginated(ctx, db.GetEntitiesByTypePaginatedParams{
 		EntityType: db.EntitiesRepository,
 		ProviderID: providerID,
 		Projects:   []uuid.UUID{projectID},
+		Cursor:     cursor,
+		PageSize:   int32(limit + 1),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error fetching repositories: %w", err)
+		return nil, uuid.Nil, fmt.Errorf("error fetching repositories: %w", err)
 	}
 
 	ents = make([]*models.EntityWithProperties, 0, len(repoEnts))
@@ -190,12 +210,12 @@ func (r *repositoryService) ListRepositories(
 		ewp, err := r.propSvc.EntityWithPropertiesByID(ctx, ent.ID,
 			service.CallBuilder().WithStoreOrTransaction(qtx))
 		if err != nil {
-			return nil, fmt.Errorf("error fetching properties for repository: %w", err)
+			return nil, uuid.Nil, fmt.Errorf("error fetching properties for repository: %w", err)
 		}
 
 		if err := r.propSvc.RetrieveAllPropertiesForEntity(ctx, ewp, r.providerManager,
 			service.ReadBuilder().WithStoreOrTransaction(qtx).TolerateStaleData()); err != nil {
-			return nil, fmt.Errorf("error fetching properties for repository: %w", err)
+			return nil, uuid.Nil, fmt.Errorf("error fetching properties for repository: %w", err)
 		}
 
 		ents = append(ents, ewp)
@@ -204,10 +224,15 @@ func (r *repositoryService) ListRepositories(
 	// We care about commiting the transaction since the `RetrieveAllPropertiesForEntity`
 	// call above may have modified the properties of the entities
 	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("error committing transaction: %w", err)
+		return nil, uuid.Nil, fmt.Errorf("error committing transaction: %w", err)
 	}
 
-	return ents, nil
+	// If we got limit+1 results, there is a next page. Trim the extra row.
+	if len(ents) > limit {
+		ents = ents[:limit]
+		nextCursor = ents[len(ents)-1].Entity.ID
+	}
+	return ents, nextCursor, nil
 }
 
 func (r *repositoryService) GetRepositoryById(

@@ -21,7 +21,10 @@ var grantCmd = &cobra.Command{
 	Use:   "grant",
 	Short: "Grant a role to a subject on a project within the minder control plane",
 	Long: `The minder project role grant command allows one to grant a role
-to a user (subject) on a particular project.`,
+to a user (subject) on a particular project, or send an invitation to an email address.
+
+Note: Invitation codes are one-time bearer tokens. Anyone with access to the code
+or URL can use it to join the project. Share invitation codes only over trusted channels.`,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)
@@ -80,7 +83,9 @@ func GrantCommand(cmd *cobra.Command, _ []string) error {
 
 	switch format {
 	case app.JSON, app.YAML:
-		return cli.PrintProto(cmd, format, resp)
+		if err := cli.PrintProto(cmd, format, resp); err != nil {
+			return err
+		}
 	case app.Table:
 		fmt.Fprintln(cmd.OutOrStdout(), successMsg)
 		if resp.Invitation != nil && resp.Invitation.Code != "" {
@@ -97,6 +102,10 @@ func GrantCommand(cmd *cobra.Command, _ []string) error {
 				fmt.Fprintf(cmd.OutOrStdout(), "\nOr by visiting: %s\n", resp.Invitation.InviteUrl)
 			}
 		}
+	}
+
+	if resp.GetInvitation().GetCode() != "" {
+		cmd.PrintErrf("\n%s\n", inviteBearerWarning)
 	}
 	return nil
 }

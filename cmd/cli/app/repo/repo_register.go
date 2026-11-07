@@ -59,7 +59,7 @@ func RegisterCmd(cmd *cobra.Command, _ []string) error {
 
 	if registerAll {
 		if len(inputRepoList) > 0 {
-			cmd.Println("Cannot use --all and --name together")
+			cmd.PrintErrln("Cannot use --all and --name together")
 			return nil
 		}
 
@@ -71,19 +71,19 @@ func RegisterCmd(cmd *cobra.Command, _ []string) error {
 
 		ret, err := enableAutoRegistration(cmd.Context(), providerClient, project, providerName)
 		if err != nil {
-			cmd.Println("Enabling auto registration failed for one or more providers.")
+			cmd.PrintErrln("Enabling auto registration failed for one or more providers.")
 		} else {
-			cmd.Println("Enabling auto registration succeeded.")
+			cmd.PrintErrln("Enabling auto registration succeeded.")
 		}
 		if len(ret.alreadyEnabled) > 0 {
-			cmd.Println(fmt.Sprintf("Auto registration is already enabled for: %v", ret.alreadyEnabled))
+			cmd.PrintErrln(fmt.Sprintf("Auto registration is already enabled for: %v", ret.alreadyEnabled))
 		}
 		if len(ret.failedProviders) > 0 {
-			cmd.Println(fmt.Sprintf("Failed to enable: %v", ret.failedProviders))
+			cmd.PrintErrln(fmt.Sprintf("Failed to enable: %v", ret.failedProviders))
 		}
 		if len(ret.updatedProviders) > 0 {
-			cmd.Println(fmt.Sprintf("Successfully enabled: %v", ret.updatedProviders))
-			cmd.Println("Use `minder repo list` to check the list of registered repositories.")
+			cmd.PrintErrln(fmt.Sprintf("Successfully enabled: %v", ret.updatedProviders))
+			cmd.PrintErrln("Use `minder repo list` to check the list of registered repositories.")
 		}
 		return nil
 	}
@@ -120,7 +120,7 @@ func RegisterCmd(cmd *cobra.Command, _ []string) error {
 
 	// No repos left to register, exit cleanly
 	if len(unregisteredRepos) == 0 {
-		cmd.Println("No repos left to register")
+		cmd.PrintErrln("No repos left to register")
 		return nil
 	}
 
@@ -131,7 +131,7 @@ func RegisterCmd(cmd *cobra.Command, _ []string) error {
 			// Repo was already registered, report it to
 			// user and move on
 			if registeredRepos[repo] != nil {
-				cmd.Printf("Repository %s is already registered\n", repo)
+				cmd.PrintErrf("Repository %s is already registered\n", repo)
 			}
 
 			// Repo was not already registered, add it to
@@ -141,7 +141,7 @@ func RegisterCmd(cmd *cobra.Command, _ []string) error {
 			}
 		}
 	} else {
-		cmd.Printf(
+		cmd.PrintErrf(
 			"Found %d remote repositories: %d registered and %d unregistered.\n",
 			len(registeredRepos)+len(unregisteredRepos),
 			len(registeredRepos),
@@ -213,7 +213,7 @@ func selectReposInteractively(
 	}
 
 	if len(effectiveRepos) == 0 {
-		cmd.Println("No repositories selected")
+		cmd.PrintErrln("No repositories selected")
 	}
 
 	return effectiveRepos, nil
@@ -252,7 +252,7 @@ func registerRepos(
 func printRepoRegistrationStatus(cmd *cobra.Command, results []*minderv1.RegisterRepoResult) {
 	// If there were no results, print a message and return
 	if len(results) == 0 {
-		cmd.Println("No repositories registered")
+		cmd.PrintErrln("No repositories registered")
 		return
 	}
 
@@ -260,7 +260,7 @@ func printRepoRegistrationStatus(cmd *cobra.Command, results []*minderv1.Registe
 	for _, result := range results {
 		// in the case of a malformed response, skip over it to avoid segfaulting
 		if result.Repository == nil {
-			cmd.Printf("Skipping malformed response: %v", result)
+			cmd.PrintErrf("Skipping malformed response: %v", result)
 		}
 		row := []string{cli.GetRepositoryName(result.Repository.Owner, result.Repository.Name)}
 		if result.Status.Success {
@@ -420,7 +420,7 @@ func enableAutoRegistrationForProvider(
 
 func printWarnings(cmd *cobra.Command, warnings []string) {
 	for _, warning := range warnings {
-		cmd.Println(warning)
+		cmd.PrintErrln(warning)
 	}
 }
 
