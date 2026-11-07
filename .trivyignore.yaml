@@ -16,3 +16,7 @@ vulnerabilities:
 
   - id: GHSA-52f5-9888-hmc6
     reason: Only present in development/test dependencies
+
+  # Upstream golang.org/x/net vulnerability pending project-wide dependency bump
+  - id: CVE-2026-78661
+    reason: Denial of Service via crafted HTML input in golang.org/x/net/html
