@@ -36,15 +36,6 @@ type ColoredColumn struct {
 	Color  Color
 }
 
-// RowsFromColoredColumns returns the rows of the colored columns
-func RowsFromColoredColumns(c []ColoredColumn) []string {
-	var columns []string
-	for _, col := range c {
-		columns = append(columns, col.Column)
-	}
-	return columns
-}
-
 // RedColumn returns a red colored column
 func RedColumn(column string) ColoredColumn {
 	return ColoredColumn{
