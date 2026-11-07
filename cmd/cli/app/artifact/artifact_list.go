@@ -22,6 +22,7 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List artifacts from a provider",
 	Long:  `The artifact list subcommand will list artifacts from a provider.`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)

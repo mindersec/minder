@@ -96,6 +96,11 @@ func TestListCommand(t *testing.T) {
 			},
 			ExpectedError: "internal server error",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"repo", "list", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder repo list"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, RepoCmd)
