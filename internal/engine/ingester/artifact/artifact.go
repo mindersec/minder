@@ -244,40 +244,49 @@ func (i *Ingest) getVerificationResult(
 				zerolog.Ctx(ctx).Debug().Str("name", artifactName).Msg("failed to find or verify signature information")
 			}
 
-			// Begin building the verification result
-			verResult := &verification{
-				IsSigned:   res.IsSigned,
-				IsVerified: res.IsVerified,
-			}
-
-			// If we got verified provenance info for the artifact version, populate the rest of the verification result
-			if res.IsVerified {
-				siIdentity, err := signerIdentityFromCertificate(res.Signature.Certificate)
-				if err != nil {
-					zerolog.Ctx(ctx).Err(err).Msg("error parsing signer identity")
-				}
-
-				verResult.Repository = res.Signature.Certificate.SourceRepositoryURI
-				verResult.Branch = branchFromRef(res.Signature.Certificate.SourceRepositoryRef)
-				verResult.SignerIdentity = siIdentity
-				verResult.RunnerEnvironment = res.Signature.Certificate.RunnerEnvironment
-				verResult.CertIssuer = res.Signature.Certificate.Issuer
-			}
-
-			if res.Statement != nil {
-				verResult.Attestation = &verifiedAttestation{
-					PredicateType: res.Statement.PredicateType,
-					Predicate:     res.Statement.Predicate,
-				}
-			}
 			results = append(results, imageInfo{
 				Identity:     identity,
-				Verification: *verResult,
+				Verification: buildVerification(ctx, version.Sha, res),
 				Manifest:     manifest,
 			})
 		}
 	}
 	return results, nil
+}
+
+// buildVerification converts a verifier result into the ingested
+// verification. Signer fields are only filled in for a verified result.
+func buildVerification(ctx context.Context, digest string, res verifyif.Result) verification {
+	verResult := verification{
+		IsSigned:   res.IsSigned,
+		IsVerified: res.IsVerified,
+	}
+
+	// A verified result should always carry a certificate, but don't
+	// trust that: a misbehaving verifier must not crash the evaluation.
+	if res.IsVerified && (res.Signature == nil || res.Signature.Certificate == nil) {
+		zerolog.Ctx(ctx).Warn().Str("digest", digest).
+			Msg("verified result has no signing certificate, leaving signer fields empty")
+	} else if res.IsVerified {
+		siIdentity, err := signerIdentityFromCertificate(res.Signature.Certificate)
+		if err != nil {
+			zerolog.Ctx(ctx).Err(err).Msg("error parsing signer identity")
+		}
+
+		verResult.Repository = res.Signature.Certificate.SourceRepositoryURI
+		verResult.Branch = branchFromRef(res.Signature.Certificate.SourceRepositoryRef)
+		verResult.SignerIdentity = siIdentity
+		verResult.RunnerEnvironment = res.Signature.Certificate.RunnerEnvironment
+		verResult.CertIssuer = res.Signature.Certificate.Issuer
+	}
+
+	if res.Statement != nil {
+		verResult.Attestation = &verifiedAttestation{
+			PredicateType: res.Statement.PredicateType,
+			Predicate:     res.Statement.Predicate,
+		}
+	}
+	return verResult
 }
 
 // getRegistryForProvider returns the registry hostname. OCI providers
@@ -306,6 +315,12 @@ func buildRepository(artifact *pb.Artifact) string {
 func getVerifier(i *Ingest, cfg *ingesterConfig) (verifyif.ArtifactVerifier, error) {
 	if i.artifactVerifier != nil {
 		return i.artifactVerifier, nil
+	}
+
+	if vp, err := interfaces.As[verifyif.ArtifactVerifierProvider](i.prov); err == nil {
+		if v, ok := vp.ArtifactVerifier(); ok {
+			return v, nil
+		}
 	}
 
 	verifieropts := []container.AuthMethod{}
