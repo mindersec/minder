@@ -85,6 +85,11 @@ func TestDeleteCommand(t *testing.T) {
 			},
 			ExpectedError: "repository not found",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"repo", "delete", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder repo delete"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, RepoCmd)

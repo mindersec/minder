@@ -17,6 +17,7 @@ var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete a given provider available in a specific project",
 	Long:  `The minder provider delete command deletes a given provider available in a specific project.`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)
