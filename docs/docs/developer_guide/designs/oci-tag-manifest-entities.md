@@ -178,15 +178,15 @@ The entity model needs to support the following policies:
 ## Design: one entity per tag, identified by `repo:tag`
 
 Each artifact entity represents a repository and a tag. Today its
-`upstream_id` is `repo@digest`; this design redefines it as `repo:tag` (or
-`repo@tag`). When compared with the alternatives considered, this design is
+`upstream_id` is `repo@digest`; this design redefines it as `repo:tag`.
+When compared with the alternatives considered, this design is
 referred to as Option A.
 
 <img width="230" alt="Option A: two artifact entities, alpine:latest and alpine:3.20, with the same upstream digest" src="https://github.com/user-attachments/assets/57071d9c-be21-4d30-8102-f965631a0deb" />
 
 Both entities can point to the same digest, but each is evaluated independently.
 
-A "moved" tag is a delete-and-recreate at the registry level, so the tag name
+A tag move is a manifest PUT that overwrites the tag pointer, so the tag name
 itself is the stable identity. The digest the tag currently resolves to
 becomes a property (`oci/digest`) rather than part of the identity. This
 resolves the mutable `upstream_id` described in the problem statement. DockerHub and
@@ -511,7 +511,7 @@ registration, probably the OCI repository.
 
 ### GHCR entities as tags
 
-**GHCR identity:** Should a GHCR Manifest use the package version ID or `repo@digest` as its `upstream_id`? Does GHCR expose platform manifests as separate untagged versions? This remains unverified; see #6829.
+Does GHCR expose platform manifests as separate untagged versions? This remains unverified; see #6829.
 GHCR also has quirks that may justify a custom implementation track rather
 than assuming full convergence on the same timeline as DockerHub and Quay:
 GitHub App tokens do not work for GHCR authentication, and GHCR likely
@@ -837,6 +837,9 @@ Open design TODOs from the call:
 - (b) Possibly change the ingestion shape for OCI repositories, and consider a
   new ingest type (for example `oci`) separate from GHCR's existing
   `artifact` ingest type, with GHCR migrating to it over time.
+
+Both are done: (a) is the `referrer_types` argument and (b) is the new `oci`
+ingest type, both described in The `oci` ingest type.
 
 ### Earlier cost notes
 
