@@ -22,17 +22,17 @@ minder provider enroll --class dockerhub --token <TOKEN> --provider-config docke
 See [Enrolling a provider](#enrolling-a-provider) for the namespace
 configuration file.
 
-There is no separate username field — only the token is collected and stored.
-The token's shape isn't validated against Docker Hub at enrollment time; Minder
-only checks that it's a non-empty string in the expected format.
+Minder logs in to the Docker Hub registry with a username and this token. By
+default the username is the provider's namespace; set `username` in the provider
+configuration when they differ. The token's shape isn't validated against Docker
+Hub at enrollment time; Minder only checks that it's a non-empty string in the
+expected format.
 
-Minder sends this token when it lists the repositories in your namespace
-through the Docker Hub API (`hub.docker.com`). It does not send the token when
-it calls the Docker Hub registry (`registry-1.docker.io`) to list tags, resolve
-a tag to a digest, or fetch a manifest — those calls are made anonymously,
-regardless of what you've configured. Because registering an image resolves its
-digest this way, private Docker Hub repositories are not currently supported by
-this provider.
+Minder sends this token when it lists repositories through the Docker Hub API
+(`hub.docker.com`), and when it looks up image signatures in the Docker Hub
+registry. Listing tags, resolving a tag to a digest and fetching manifests are
+still anonymous, so private Docker Hub repositories are not currently supported
+by this provider.
 
 ## Prerequisites
 
@@ -42,7 +42,10 @@ Before enrolling Docker Hub as a provider, you will need:
   [Using feature flags](../../developer_guide/feature_flags)).
 - The Docker Hub **namespace** whose images you want Minder to monitor. This is
   the organization or user name that appears before the image name, such as
-  `library` in `library/alpine`.
+  `library` in `library/alpine`. If you use a personal access token for an
+  organization's namespace, such as `library`, set `username` to your Docker ID.
+  With an organization access token, the organization name is the username, so
+  the namespace works as-is.
 - A Docker Hub access token with read access to that namespace. See the
   [Docker Hub access tokens documentation](https://docs.docker.com/security/access-tokens/)
   for how to create one.
@@ -55,10 +58,14 @@ configuration file, for example `dockerhub-config.json`, with your namespace:
 ```json
 {
   "dockerhub": {
-    "namespace": "<namespace>"
+    "namespace": "<namespace>",
+    "username": "<username>"
   }
 }
 ```
+
+`username` is optional. If you leave it out, Minder uses the namespace, which
+works when the namespace is the account that owns the token.
 
 Then enroll the provider, passing your access token with `--token` and the
 configuration file with `--provider-config`:
