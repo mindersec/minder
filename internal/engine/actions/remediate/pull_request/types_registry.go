@@ -17,7 +17,6 @@ import (
 )
 
 type fsModifier interface {
-	hash() (string, error)
 	writeSummary(out io.Writer) error
 	createFsModEntries(ctx context.Context, ent proto.Message, params interfaces.ActionsParams) error
 	modifyFs() ([]*fsEntry, error)

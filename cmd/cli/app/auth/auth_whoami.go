@@ -22,6 +22,7 @@ var whoamiCmd = &cobra.Command{
 	Use:   "whoami",
 	Short: "whoami for current user",
 	Long:  `whoami gets information about the current user from the minder server`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)
