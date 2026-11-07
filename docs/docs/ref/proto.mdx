@@ -104,6 +104,18 @@ EntityInstanceService provides API endpoints for managing entity instances
 
 
 
+<Service id="minder-v1-ExceptionService">ExceptionService</Service>
+
+ExceptionService provides API endpoints for managing exceptions.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListExceptions | [ListExceptionsRequest](#minder-v1-ListExceptionsRequest) | [ListExceptionsResponse](#minder-v1-ListExceptionsResponse) | ListExceptions returns active exceptions for the current project. |
+| CreateException | [CreateExceptionRequest](#minder-v1-CreateExceptionRequest) | [CreateExceptionResponse](#minder-v1-CreateExceptionResponse) | CreateException creates or updates an exception. |
+| DeleteException | [DeleteExceptionRequest](#minder-v1-DeleteExceptionRequest) | [DeleteExceptionResponse](#minder-v1-DeleteExceptionResponse) | DeleteException deletes an exception. |
+
+
+
 <Service id="minder-v1-HealthService">HealthService</Service>
 
 Simple Health Check Service
@@ -455,6 +467,31 @@ DataSource service
 
 
 
+<Message id="minder-v1-CreateExceptionRequest">CreateExceptionRequest</Message>
+
+CreateExceptionRequest specifies an exception to create.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context identifies the project. |
+| entity_id | <TypeLink type="string">string</TypeLink> |  | entity_id is the ID of the entity being excepted. |
+| rule_type_id | <TypeLink type="string">string</TypeLink> |  | rule_type_id is the ID of the rule type being excepted. |
+| expires_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | expires_at is when the exception expires. |
+
+
+
+<Message id="minder-v1-CreateExceptionResponse">CreateExceptionResponse</Message>
+
+CreateExceptionResponse contains the created exception.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| exception | <TypeLink type="minder-v1-Exception">Exception</TypeLink> |  | exception is the created exception. |
+
+
+
 <Message id="minder-v1-CreateProfileRequest">CreateProfileRequest</Message>
 
 Profile service
@@ -701,6 +738,24 @@ DeleteEntityByIdResponse is the response message for the DeleteEntityById method
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | <TypeLink type="string">string</TypeLink> |  | id is the ID of the entity that was deleted |
+
+
+
+<Message id="minder-v1-DeleteExceptionRequest">DeleteExceptionRequest</Message>
+
+DeleteExceptionRequest specifies the exception to delete.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context identifies the project. |
+| id | <TypeLink type="string">string</TypeLink> |  | id is the ID of the exception to delete. |
+
+
+
+<Message id="minder-v1-DeleteExceptionResponse">DeleteExceptionResponse</Message>
+
+DeleteExceptionResponse is the response to deleting an exception.
 
 
 
@@ -1075,6 +1130,21 @@ This is only used in responses.
 | status | <TypeLink type="string">string</TypeLink> |  | status is one of (success, error, failure, skipped) not using enums to mirror the behaviour of the existing API contracts. |
 | details | <TypeLink type="string">string</TypeLink> |  | details contains optional details about the evaluation. the structure and contents are rule type specific, and are subject to change. |
 | output | <TypeLink type="google-protobuf-Value">google.protobuf.Value</TypeLink> |  | output optionally contains the structured rule evaluation output. Because output may be multiple KB, it is only returned if include_outputs is set. Historical evaluations may discard structured output sooner than status results. |
+
+
+
+<Message id="minder-v1-Exception">Exception</Message>
+
+Exception represents an exception for an entity and rule type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | <TypeLink type="string">string</TypeLink> |  | id is the unique identifier of the exception. |
+| entity | <TypeLink type="minder-v1-EntityInstance">EntityInstance</TypeLink> |  | entity is the entity associated with the exception. |
+| rule_type_id | <TypeLink type="string">string</TypeLink> |  | rule_type_id is the ID of the rule type being excepted. |
+| expires_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | expires_at is when the exception expires. |
+| created_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | created_at is when the exception was created. |
 
 
 
@@ -1867,6 +1937,28 @@ The default is to return all user-created profiles; the string "*" can be used t
 | ----- | ---- | ----- | ----------- |
 | profile_status | <TypeLink type="minder-v1-ProfileStatus">ProfileStatus</TypeLink> |  | profile_status is the status of the profile - id, name, status, last_updated |
 | results | <TypeLink type="minder-v1-RuleEvaluationStatus">RuleEvaluationStatus</TypeLink> | repeated | Note that some fields like profile_id and entity might be empty Eventually we might replace this type with another one that fits the API better |
+
+
+
+<Message id="minder-v1-ListExceptionsRequest">ListExceptionsRequest</Message>
+
+ListExceptionsRequest requests active exceptions for a project.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context identifies the project. |
+
+
+
+<Message id="minder-v1-ListExceptionsResponse">ListExceptionsResponse</Message>
+
+ListExceptionsResponse contains active exceptions.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| exceptions | <TypeLink type="minder-v1-Exception">Exception</TypeLink> | repeated | exceptions is the list of active exceptions. |
 
 
 
@@ -3469,6 +3561,9 @@ existing ones.
 | RELATION_ENTITY_REGISTER | 43 |  |
 | RELATION_ENTITY_UPDATE | 44 |  |
 | RELATION_ENTITY_DELETE | 45 |  |
+| RELATION_EXCEPTION_GET | 46 |  |
+| RELATION_EXCEPTION_CREATE | 47 |  |
+| RELATION_EXCEPTION_DELETE | 48 |  |
 
 
 

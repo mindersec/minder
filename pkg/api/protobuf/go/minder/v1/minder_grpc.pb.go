@@ -3755,3 +3755,191 @@ var EntityInstanceService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "minder/v1/minder.proto",
 }
+
+const (
+	ExceptionService_ListExceptions_FullMethodName  = "/minder.v1.ExceptionService/ListExceptions"
+	ExceptionService_CreateException_FullMethodName = "/minder.v1.ExceptionService/CreateException"
+	ExceptionService_DeleteException_FullMethodName = "/minder.v1.ExceptionService/DeleteException"
+)
+
+// ExceptionServiceClient is the client API for ExceptionService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// ExceptionService provides API endpoints for managing exceptions.
+type ExceptionServiceClient interface {
+	// ListExceptions returns active exceptions for the current project.
+	ListExceptions(ctx context.Context, in *ListExceptionsRequest, opts ...grpc.CallOption) (*ListExceptionsResponse, error)
+	// CreateException creates or updates an exception.
+	CreateException(ctx context.Context, in *CreateExceptionRequest, opts ...grpc.CallOption) (*CreateExceptionResponse, error)
+	// DeleteException deletes an exception.
+	DeleteException(ctx context.Context, in *DeleteExceptionRequest, opts ...grpc.CallOption) (*DeleteExceptionResponse, error)
+}
+
+type exceptionServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewExceptionServiceClient(cc grpc.ClientConnInterface) ExceptionServiceClient {
+	return &exceptionServiceClient{cc}
+}
+
+func (c *exceptionServiceClient) ListExceptions(ctx context.Context, in *ListExceptionsRequest, opts ...grpc.CallOption) (*ListExceptionsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListExceptionsResponse)
+	err := c.cc.Invoke(ctx, ExceptionService_ListExceptions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *exceptionServiceClient) CreateException(ctx context.Context, in *CreateExceptionRequest, opts ...grpc.CallOption) (*CreateExceptionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateExceptionResponse)
+	err := c.cc.Invoke(ctx, ExceptionService_CreateException_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *exceptionServiceClient) DeleteException(ctx context.Context, in *DeleteExceptionRequest, opts ...grpc.CallOption) (*DeleteExceptionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteExceptionResponse)
+	err := c.cc.Invoke(ctx, ExceptionService_DeleteException_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ExceptionServiceServer is the server API for ExceptionService service.
+// All implementations must embed UnimplementedExceptionServiceServer
+// for forward compatibility.
+//
+// ExceptionService provides API endpoints for managing exceptions.
+type ExceptionServiceServer interface {
+	// ListExceptions returns active exceptions for the current project.
+	ListExceptions(context.Context, *ListExceptionsRequest) (*ListExceptionsResponse, error)
+	// CreateException creates or updates an exception.
+	CreateException(context.Context, *CreateExceptionRequest) (*CreateExceptionResponse, error)
+	// DeleteException deletes an exception.
+	DeleteException(context.Context, *DeleteExceptionRequest) (*DeleteExceptionResponse, error)
+	mustEmbedUnimplementedExceptionServiceServer()
+}
+
+// UnimplementedExceptionServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedExceptionServiceServer struct{}
+
+func (UnimplementedExceptionServiceServer) ListExceptions(context.Context, *ListExceptionsRequest) (*ListExceptionsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListExceptions not implemented")
+}
+func (UnimplementedExceptionServiceServer) CreateException(context.Context, *CreateExceptionRequest) (*CreateExceptionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateException not implemented")
+}
+func (UnimplementedExceptionServiceServer) DeleteException(context.Context, *DeleteExceptionRequest) (*DeleteExceptionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteException not implemented")
+}
+func (UnimplementedExceptionServiceServer) mustEmbedUnimplementedExceptionServiceServer() {}
+func (UnimplementedExceptionServiceServer) testEmbeddedByValue()                          {}
+
+// UnsafeExceptionServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ExceptionServiceServer will
+// result in compilation errors.
+type UnsafeExceptionServiceServer interface {
+	mustEmbedUnimplementedExceptionServiceServer()
+}
+
+func RegisterExceptionServiceServer(s grpc.ServiceRegistrar, srv ExceptionServiceServer) {
+	// If the following call panics, it indicates UnimplementedExceptionServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&ExceptionService_ServiceDesc, srv)
+}
+
+func _ExceptionService_ListExceptions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListExceptionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExceptionServiceServer).ListExceptions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExceptionService_ListExceptions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExceptionServiceServer).ListExceptions(ctx, req.(*ListExceptionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExceptionService_CreateException_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateExceptionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExceptionServiceServer).CreateException(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExceptionService_CreateException_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExceptionServiceServer).CreateException(ctx, req.(*CreateExceptionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExceptionService_DeleteException_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteExceptionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExceptionServiceServer).DeleteException(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExceptionService_DeleteException_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExceptionServiceServer).DeleteException(ctx, req.(*DeleteExceptionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// ExceptionService_ServiceDesc is the grpc.ServiceDesc for ExceptionService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ExceptionService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "minder.v1.ExceptionService",
+	HandlerType: (*ExceptionServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListExceptions",
+			Handler:    _ExceptionService_ListExceptions_Handler,
+		},
+		{
+			MethodName: "CreateException",
+			Handler:    _ExceptionService_CreateException_Handler,
+		},
+		{
+			MethodName: "DeleteException",
+			Handler:    _ExceptionService_DeleteException_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "minder/v1/minder.proto",
+}
