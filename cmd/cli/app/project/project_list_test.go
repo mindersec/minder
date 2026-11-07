@@ -101,6 +101,11 @@ func TestProjectListCommand(t *testing.T) {
 			},
 			ExpectedError: "server error",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"project", "list", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder project list"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, ProjectCmd)
