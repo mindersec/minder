@@ -6614,10 +6614,15 @@ func (x *GitLabProviderConfig) GetGroup() string {
 // DockerHubProviderConfig contains the configuration for the DockerHub provider.
 //
 // Namespace: is the namespace for the DockerHub provider.
+//
+// Username: is the Docker Hub username used to log in to the registry.
 type DockerHubProviderConfig struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// namespace is the namespace for the DockerHub provider.
-	Namespace     *string `protobuf:"bytes,1,opt,name=namespace,proto3,oneof" json:"namespace,omitempty"`
+	Namespace *string `protobuf:"bytes,1,opt,name=namespace,proto3,oneof" json:"namespace,omitempty"`
+	// username is the Docker Hub username used to log in to the registry.
+	// If unset, the namespace is used as the username.
+	Username      *string `protobuf:"bytes,2,opt,name=username,proto3,oneof" json:"username,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6655,6 +6660,13 @@ func (*DockerHubProviderConfig) Descriptor() ([]byte, []int) {
 func (x *DockerHubProviderConfig) GetNamespace() string {
 	if x != nil && x.Namespace != nil {
 		return *x.Namespace
+	}
+	return ""
+}
+
+func (x *DockerHubProviderConfig) GetUsername() string {
+	if x != nil && x.Username != nil {
+		return *x.Username
 	}
 	return ""
 }
@@ -15652,11 +15664,13 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\t_endpointJ\x04\b\x02\x10\x03J\x04\b\x03\x10\x04J\x04\b\x04\x10\x05R\bapp_nameR\x06app_idR\auser_id\"H\n" +
 	"\x14GitLabProviderConfig\x12\x1a\n" +
 	"\bendpoint\x18\x01 \x01(\tR\bendpoint\x12\x14\n" +
-	"\x05group\x18\x02 \x01(\tR\x05group\"J\n" +
+	"\x05group\x18\x02 \x01(\tR\x05group\"x\n" +
 	"\x17DockerHubProviderConfig\x12!\n" +
-	"\tnamespace\x18\x01 \x01(\tH\x00R\tnamespace\x88\x01\x01B\f\n" +
+	"\tnamespace\x18\x01 \x01(\tH\x00R\tnamespace\x88\x01\x01\x12\x1f\n" +
+	"\busername\x18\x02 \x01(\tH\x01R\busername\x88\x01\x01B\f\n" +
 	"\n" +
-	"_namespace\"E\n" +
+	"_namespaceB\v\n" +
+	"\t_username\"E\n" +
 	"\x12GHCRProviderConfig\x12!\n" +
 	"\tnamespace\x18\x01 \x01(\tH\x00R\tnamespace\x88\x01\x01B\f\n" +
 	"\n" +

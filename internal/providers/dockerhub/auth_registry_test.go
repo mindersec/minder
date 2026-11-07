@@ -125,3 +125,31 @@ func TestGetAuthenticatorNilCredential(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, authn.Anonymous, auth)
 }
+
+func TestGetAuthenticatorUsername(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		username *string
+		want     string
+	}{
+		{name: "unset username falls back to namespace", want: testNamespace},
+		{name: "empty username falls back to namespace", username: proto.String(""), want: testNamespace},
+		{name: "explicit username overrides namespace", username: proto.String("acme-bot"), want: "acme-bot"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			lister, err := New(credentials.NewOAuth2TokenCredential(testPAT),
+				&minderv1.DockerHubProviderConfig{Namespace: proto.String(testNamespace), Username: tt.username})
+			require.NoError(t, err)
+
+			auth, err := lister.GetAuthenticator()
+			require.NoError(t, err)
+			assert.Equal(t, &authn.Basic{Username: tt.want, Password: testPAT}, auth)
+		})
+	}
+}
