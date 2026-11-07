@@ -55,7 +55,7 @@ design below) have several problems and limitations:
 | A `repo:tag` entity evaluates every tag in the repository rather than only the tag named by the entity. The ingester receives an artifact whose name is the repository without the tag, lists every tag in that repository, and applies the rule's filters only afterwards. The entity's `oci/digest` property is not passed to the ingester, and artifact ingestion uses a no-op ingest cache, so nothing is shared between rules. | [`oci.go`](https://github.com/mindersec/minder/blob/900dae34d72c69bdc1fd9f86ace9aeeef03a9d65/internal/providers/oci/oci.go#L211); [`oci/artifact.go`](https://github.com/mindersec/minder/blob/223d576bcc0bc31dc757af1122901edf0aae456c/internal/providers/oci/artifact.go#L91-L111); [`oci.go`](https://github.com/mindersec/minder/blob/223d576bcc0bc31dc757af1122901edf0aae456c/internal/providers/oci/oci.go#L215) and [`oci.go`](https://github.com/mindersec/minder/blob/223d576bcc0bc31dc757af1122901edf0aae456c/internal/providers/oci/oci.go#L287-L295); [`executor.go`](https://github.com/mindersec/minder/blob/223d576bcc0bc31dc757af1122901edf0aae456c/internal/engine/executor.go#L108-L112). **Verified.** Tracked in [#7089](https://github.com/mindersec/minder/issues/7089). |
 | On DockerHub and Quay, each tag pointing at a digest is evaluated independently. This is sometimes desired (different policies can legitimately apply per tag, even on the same digest) and sometimes duplicate work, depending on the rule. | [`oci.go`](https://github.com/mindersec/minder/blob/900dae34d72c69bdc1fd9f86ace9aeeef03a9d65/internal/providers/oci/oci.go#L248-L249); #6775 review. **Verified.** |
 | One digest with three tags: three registered entities may each evaluate the same digest. Estimated: three status rows and nine verifications, depending on the evaluation path. | **Inferred.** |
-| Untagged manifests are not discovered on DockerHub and Quay, or are filtered out on GitHub. This is a limitation worth naming rather than a problem specific to one option: no option discovers them without registry support for enumerating untagged content. | [`versionsfilter.go`](https://github.com/mindersec/minder/blob/900dae34d72c69bdc1fd9f86ace9aeeef03a9d65/internal/providers/artifact/versionsfilter.go#L71-L74). **Verified.** |
+| Untagged manifests are not discovered on DockerHub and Quay, or are filtered out on GitHub. The OCI distribution spec has no way to enumerate untagged digests, so this can't be supported generically. **Unverified.** | [`versionsfilter.go`](https://github.com/mindersec/minder/blob/900dae34d72c69bdc1fd9f86ace9aeeef03a9d65/internal/providers/artifact/versionsfilter.go#L71-L74). **Verified.** |
 | An image pushed by digest without a tag is not discovered by the current tag-based model. | |
 | Evaluation history does not record the digest that was evaluated, making it difficult to identify the exact content associated with a historical result. | [`artifact.go`](https://github.com/mindersec/minder/blob/900dae34d72c69bdc1fd9f86ace9aeeef03a9d65/internal/engine/ingester/artifact/artifact.go#L125-L132). **Verified.** |
 | DockerHub and Quay artifacts are only registered manually. There are no artifact push webhooks, and the reminder service currently covers repositories rather than artifacts. | [`dockerhub.go`](https://github.com/mindersec/minder/blob/900dae34d72c69bdc1fd9f86ace9aeeef03a9d65/internal/providers/dockerhub/dockerhub.go#L237-L242); [`reminder.go`](https://github.com/mindersec/minder/blob/900dae34d72c69bdc1fd9f86ace9aeeef03a9d65/internal/reminder/reminder.go#L206-L207). **Verified.** |
@@ -225,10 +225,9 @@ Future work).
 - Each tag is evaluated independently. This is sometimes desired (different
   policies can legitimately apply per tag, even on the same digest) and
   sometimes duplicate work, depending on the rule.
-- Untagged manifests are not discovered. This is a limitation worth naming
-  rather than a problem specific to this design: the alternatives considered
-  do not solve it either without registry support for enumerating untagged
-  content.
+- Untagged manifests are not discovered. The OCI distribution spec has no
+  way to enumerate untagged digests, so this can't be supported generically.
+  **Unverified.**
 - Tag movement is recorded through `oci/digest` and evaluation history
   rather than as an explicit entity transition.
 - Content-level policies remain dependent on tag-based discovery.
@@ -465,8 +464,13 @@ The main identity question is what remains stable when a tag changes its target.
 | Stable: `repo:tag` (redefined; see Design). Today it is `repo@digest`, which follows the tag's current target. | The entity, its `upstream_id`, and its history row stay the same; only `oci/digest` changes. Today, the `upstream_id` is updated during a subsequent non-stale refresh, such as a profile change or `GetArtifactById` call. See [`refresh_by_id.go`](https://github.com/mindersec/minder/blob/900dae34d72c69bdc1fd9f86ace9aeeef03a9d65/internal/entities/handlers/strategies/entity/refresh_by_id.go#L55-L57). Historical results do not identify the digest that was evaluated. |
 
 Tracking the history of tag → digest resolution is useful under this design.
+For example, asserting something like 'v4 has been signed for the last year'
+even as v4 moves across different manifests over that time.
 
 ### TOFU storage for policy 3
+
+Without a way for rule types to read previous evaluation state,
+policy 3 (immutable tags) can't be implemented today.
 
 Tag movement is detected through comparison with previously persisted state;
 neither a property-change trigger nor persisted state exists today.
@@ -501,6 +505,10 @@ registry: ECR requires a repository to exist before it is pushed to, while
 other registries create it automatically. This is one more thing Minder can
 observe but not enforce.
 
+If tags are registered automatically in the future, their
+`originated_from` would point at the entity that caused the
+registration, probably the OCI repository.
+
 ### GHCR entities as tags
 
 **GHCR identity:** Should a GHCR Manifest use the package version ID or `repo@digest` as its `upstream_id`? Does GHCR expose platform manifests as separate untagged versions? This remains unverified; see #6829.
@@ -519,7 +527,9 @@ Recording the evaluated digest in the checkpoint's existing `Digest` field could
   not only a storage change.
 - **Extend `EvaluationHistory`.** Once the checkpoint gap above is addressed,
   consider extending the `EvaluationHistory` message to carry the evaluated
-  digest or tag target directly.
+  digest or tag target directly. This would record the evaluated digest and
+  a timestamp, not the full property set, since properties can drift after
+  the evaluation.
 
 ## Alternatives considered
 
@@ -567,6 +577,11 @@ A direction.
 - Requires a mechanism to detect changes to a Tag's target digest.
 - Reusing Manifest evaluation results from Tag rules requires additional cross-entity lookup or equivalent functionality.
 - B2 introduces relationships that the current `originated_from` model cannot represent.
+
+If a Tag's policy depends on a Manifest's result, evaluation order between
+the two would matter, and Minder has no mechanism for event ordering today
+(see Design > Event-handling principle), so correctness would depend on
+re-checking state rather than trusting arrival order.
 
 `originated_from` is `ON DELETE CASCADE` and models lifecycle ownership: when
 a parent is deleted, the entities that originated from it are cleaned up.
