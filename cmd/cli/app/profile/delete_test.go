@@ -125,6 +125,11 @@ func TestDeleteCommand(t *testing.T) {
 			MockSetup:     func(_ *testing.T, _ *gomock.Controller) context.Context { return context.Background() },
 			ExpectedError: "at least one of the flags in the group [id name] is required",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"profile", "delete", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder profile delete"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, ProfileCmd)

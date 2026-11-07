@@ -132,6 +132,11 @@ func TestDeleteProviderCommand(t *testing.T) {
 			Args:          []string{"provider", "delete", "-n", "github-app", "-i", "test-id"},
 			ExpectedError: `none of the others can be`,
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"provider", "delete", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder provider delete"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, ProviderCmd)
