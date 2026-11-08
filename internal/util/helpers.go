@@ -8,13 +8,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"math"
 	"net/url"
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/rs/zerolog"
@@ -218,23 +216,6 @@ func expandFromOS(f string) ([]ExpandedFile, error) {
 		return nil, fmt.Errorf("error walking directory: %w", err)
 	}
 	return results, nil
-}
-
-// Int32FromString converts a string to an int32
-func Int32FromString(v string) (int32, error) {
-	if v == "" {
-		return 0, fmt.Errorf("cannot convert empty string to int")
-	}
-
-	// convert string to int
-	asInt32, err := strconv.ParseInt(v, 10, 32)
-	if err != nil {
-		return 0, fmt.Errorf("error converting string to int: %w", err)
-	}
-	if asInt32 > math.MaxInt32 || asInt32 < math.MinInt32 {
-		return 0, fmt.Errorf("integer %d cannot fit into int32", asInt32)
-	}
-	return int32(asInt32), nil
 }
 
 // ViperLogLevelToZerologLevel converts a viper log level to a zerolog log level
