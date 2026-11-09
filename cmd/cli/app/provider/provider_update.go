@@ -4,7 +4,6 @@
 package provider
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -14,7 +13,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -29,7 +27,13 @@ var updateCmd = &cobra.Command{
 	Short: "Updates a provider's configuration",
 	Long: `The minder provider update command allows a user to update a provider's
 configuration after enrollement.`,
-	RunE: cli.GRPCClientWrapRunE(UpdateProviderCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+		return nil
+	},
+	RunE: updateProviderCommand,
 }
 
 type parser func(string) (*reflect.Value, error)
@@ -94,16 +98,13 @@ var (
 	}
 )
 
-// UpdateProviderCommand is the command for enrolling a provider
+// updateProviderCommand is the command for updating a provider's configuration
 //
 //nolint:gocyclo
-func UpdateProviderCommand(
-	ctx context.Context,
+func updateProviderCommand(
 	cmd *cobra.Command,
 	_ []string,
-	conn *grpc.ClientConn,
 ) error {
-	// TODO: get rid of provider flag, only use class
 	providerName := viper.GetString("name")
 	if providerName == "" {
 		return cli.MessageAndError(
@@ -111,14 +112,22 @@ func UpdateProviderCommand(
 			errMissingProviderName,
 		)
 	}
+
+	cmd.SilenceUsage = true
+
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewProvidersServiceClient)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	ctx := cmd.Context()
 	project := viper.GetString("project")
 
 	fields := make(map[string]any)
 
 	setAttrs := viper.GetStringSlice("set-attribute")
 	unsetAttrs := viper.GetStringSlice("unset-attribute")
-
-	client := minderv1.NewProvidersServiceClient(conn)
 
 	serde, err := cli.GetProviderConfig(ctx, client, project, providerName)
 	if err != nil {
@@ -182,7 +191,7 @@ func UpdateProviderCommand(
 		return cli.MessageAndError("failed to update provider", err)
 	}
 
-	cmd.Println("Provider updated successfully")
+	cmd.PrintErrln("Provider updated successfully")
 	return nil
 }
 

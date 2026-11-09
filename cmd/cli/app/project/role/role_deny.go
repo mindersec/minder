@@ -4,12 +4,10 @@
 package role
 
 import (
-	"context"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -20,13 +18,14 @@ var denyCmd = &cobra.Command{
 	Short: "Deny a role to a subject on a project within the minder control plane",
 	Long: `The minder project role deny command removes a user from a role grant
 on a particular project.`,
-	RunE: cli.GRPCClientWrapRunE(DenyCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		return viper.BindPFlags(cmd.Flags())
+	},
+	RunE: DenyCommand,
 }
 
 // DenyCommand is the command for removing a role assignment from a project
-func DenyCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewPermissionsServiceClient(conn)
-
+func DenyCommand(cmd *cobra.Command, _ []string) error {
 	sub := viper.GetString("sub")
 	r := viper.GetString("role")
 	project := viper.GetString("project")
@@ -35,6 +34,12 @@ func DenyCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
+
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewPermissionsServiceClient)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
 
 	roleAssignment := &minderv1.RoleAssignment{
 		Role:    r,
@@ -52,7 +57,7 @@ func DenyCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		successMsg = "Invite deleted successfully."
 	}
 
-	_, err := client.RemoveRole(ctx, &minderv1.RemoveRoleRequest{
+	_, err = client.RemoveRole(cmd.Context(), &minderv1.RemoveRoleRequest{
 		Context: &minderv1.Context{
 			Project: &project,
 		},
@@ -62,7 +67,7 @@ func DenyCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		return cli.MessageAndError(failMsg, err)
 	}
 
-	cmd.Println(successMsg)
+	cmd.PrintErrln(successMsg)
 	return nil
 }
 

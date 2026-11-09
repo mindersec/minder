@@ -1,0 +1,16 @@
+{
+  "roles": [
+    {
+      "name": "admin",
+      "description": "Administrator with full access to project resources"
+    },
+    {
+      "name": "editor",
+      "description": "Editor with read and write access to profiles and rule types"
+    },
+    {
+      "name": "viewer",
+      "description": "Viewer with read-only access to project resources"
+    }
+  ]
+}

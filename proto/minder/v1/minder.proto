@@ -289,7 +289,7 @@ message GetArtifactByIdResponse {
 message GetArtifactByNameRequest {
     string name = 1 [
         (buf.validate.field).string = {
-            pattern: "^[-./[:word:]]*$",
+            pattern: "^[-./:[:word:]]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,

@@ -66,7 +66,7 @@ func deleteCommand(cmd *cobra.Command, _ []string) error {
 		return cli.MessageAndError("Error deleting profile", err)
 	}
 
-	cmd.Println("Successfully deleted profile with id:", id)
+	cmd.PrintErrln("Successfully deleted profile with id:", id)
 
 	return nil
 }

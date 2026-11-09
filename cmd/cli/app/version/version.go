@@ -5,6 +5,8 @@
 package version
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/mindersec/minder/cmd/cli/app"
@@ -18,8 +20,8 @@ var VersionCmd = &cobra.Command{
 	Short: "Print minder CLI version",
 	Long:  `The minder version command prints the version of the minder CLI.`,
 	Run: func(cmd *cobra.Command, _ []string) {
-		cmd.Println(constants.VerboseCLIVersion)
-		cmd.Printf("User Agent: %s\n", useragent.GetUserAgent())
+		fmt.Fprintln(cmd.OutOrStdout(), constants.VerboseCLIVersion)
+		fmt.Fprintf(cmd.OutOrStdout(), "User Agent: %s\n", useragent.GetUserAgent())
 	},
 }
 

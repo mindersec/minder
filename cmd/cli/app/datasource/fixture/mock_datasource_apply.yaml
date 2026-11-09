@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
+---
+version: v1
+type: data-source
+name: mock-github-rest
+rest:
+  def:
+    get_repo:
+      endpoint: 'https://api.github.com/repos/{owner}/{repo}'
+      parse: json
+      input_schema:
+        required:
+          - owner
+          - repo
+        properties:
+          owner:
+            type: string
+            description: The repository owner
+          repo:
+            type: string
+            description: The repository name

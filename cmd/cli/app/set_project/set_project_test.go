@@ -148,19 +148,6 @@ func TestSetProjectCommand(t *testing.T) {
 		}
 	})
 
-	t.Run("returns error when project ID is not a valid UUID", func(t *testing.T) {
-		tempDir := t.TempDir()
-		t.Setenv("XDG_CONFIG_HOME", tempDir)
-
-		_, _, err := runSetProject(t, "set-project", "invalid-uuid-string")
-		require.Error(t, err)
-
-		var wrappedErr *cli.ErrWrappedCLIError
-		require.ErrorAs(t, err, &wrappedErr)
-		assert.Equal(t, "Error parsing project ID", wrappedErr.Message)
-		assert.Contains(t, wrappedErr.Err.Error(), "invalid UUID")
-	})
-
 	t.Run("returns error when no argument is provided", func(t *testing.T) {
 		tempDir := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", tempDir)

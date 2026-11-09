@@ -6,6 +6,7 @@
 package fileconvert
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -20,8 +21,9 @@ import (
 // Printer provides an interface for passing a printf-like function.
 type Printer func(string, ...any)
 
-// ResourcesFromPaths collects
-func ResourcesFromPaths(printer Printer, paths ...string) ([]minderv1.ResourceMeta, error) {
+// ResourcesFromPaths collects resources from paths, canceling any remote
+// file requests when ctx is canceled.
+func ResourcesFromPaths(ctx context.Context, printer Printer, paths ...string) ([]minderv1.ResourceMeta, error) {
 	files, err := util.ExpandFileArgs(paths...)
 	if err != nil {
 		return nil, fmt.Errorf("error expanding args: %w", err)
@@ -29,7 +31,7 @@ func ResourcesFromPaths(printer Printer, paths ...string) ([]minderv1.ResourceMe
 
 	objects := make([]minderv1.ResourceMeta, 0, len(files))
 	for _, file := range files {
-		resources, err := ReadFromPath(printer, file)
+		resources, err := ReadFromPath(ctx, printer, file)
 		if err != nil && !errors.Is(err, minderv1.ErrNotAResource) {
 			return nil, err
 		}
@@ -39,17 +41,27 @@ func ResourcesFromPaths(printer Printer, paths ...string) ([]minderv1.ResourceMe
 	return objects, nil
 }
 
-// ReadFromPath reads a _single_ file (possibly expanded) and returns a set of Minder
-// resources (often 1, but YAML files may include multiple documents) decoded by file
-// type.  If "-" is passed as the filename, stdin will be read as a YAML document.
-//
-// TODO: do we want to return minderv1.ErrNotAResource or minderv1.ErrInvalidResource
-// on parse erros?  Right now, we simply skip them (from ResourcesFromPaths' behavior).
-func ReadFromPath(printer Printer, file util.ExpandedFile) ([]minderv1.ResourceMeta, error) {
+// ReadFromPath reads one file and cancels remote requests when ctx is canceled.
+// If "-" is passed as the filename, stdin will be read as a YAML document.
+func ReadFromPath(ctx context.Context, printer Printer, file util.ExpandedFile) ([]minderv1.ResourceMeta, error) {
 	objects := []minderv1.ResourceMeta{}
 	var input Decoder
 	if file.Path == "-" {
 		input = yaml.NewDecoder(os.Stdin)
+	} else if util.IsHTTPURL(file.Path) {
+		builder := decoderBuilder(file.Path)
+		if builder == nil {
+			return nil, fmt.Errorf(
+				"unsupported file extension %q for URL %q; supported extensions are .json, .yaml, .yml, and .rego",
+				util.FileArgExt(file.Path), file.Path,
+			)
+		}
+		reader, closer, err := util.OpenFileArgContext(ctx, file.Path, nil)
+		if err != nil {
+			return nil, fmt.Errorf("error opening file %s: %w", file.Path, err)
+		}
+		defer closer()
+		input = builder(reader)
 	} else {
 		var closer io.Closer
 		input, closer = DecoderForFile(file.Path)

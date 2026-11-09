@@ -4,13 +4,11 @@
 package role
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util/cli"
@@ -21,27 +19,39 @@ var updateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "update a role to a subject on a project",
 	Long: `The minder project role update command allows one to update a role
-to a user (subject) on a particular project.`,
-	RunE: cli.GRPCClientWrapRunE(UpdateCommand),
+to a user (subject) on a particular project, or update an existing invitation.
+
+Note: Invitation codes are one-time bearer tokens. Anyone with access to the code
+or URL can use it to join the project. Share invitation codes only over trusted channels.`,
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+
+		format := viper.GetString("output")
+
+		return app.IsOutputFormatSupported(format)
+	},
+	RunE: UpdateCommand,
 }
 
 // UpdateCommand is the command for granting roles
-func UpdateCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewPermissionsServiceClient(conn)
-
+func UpdateCommand(cmd *cobra.Command, _ []string) error {
 	role := viper.GetString("role")
 	project := viper.GetString("project")
 	sub := viper.GetString("sub")
 	email := viper.GetString("email")
 	format := viper.GetString("output")
 
-	if err := app.IsOutputFormatSupported(format); err != nil {
-		return err
-	}
-
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
+
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewPermissionsServiceClient)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
 
 	req := &minderv1.UpdateRoleRequest{
 		Context: &minderv1.Context{
@@ -58,14 +68,16 @@ func UpdateCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 		successMsg = "Invite updated successfully."
 	}
 
-	resp, err := client.UpdateRole(ctx, req)
+	resp, err := client.UpdateRole(cmd.Context(), req)
 	if err != nil {
 		return cli.MessageAndError(failMsg, err)
 	}
 
 	switch format {
 	case app.JSON, app.YAML:
-		return cli.PrintProto(cmd, format, resp)
+		if err := cli.PrintProto(cmd, format, resp); err != nil {
+			return err
+		}
 	case app.Table:
 		fmt.Fprintln(cmd.OutOrStdout(), successMsg)
 		// If it was an invitation, print the invite details
@@ -81,14 +93,18 @@ func UpdateCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 					fmt.Fprintf(cmd.OutOrStdout(), "\nOr by visiting: %s\n", r.InviteUrl)
 				}
 			}
-			return nil
+		} else {
+			// Otherwise, print the role assignments if it was about updating a role
+			t := initializeTableForGrantListRoleAssignments(cmd.OutOrStdout())
+			for _, r := range resp.RoleAssignments {
+				t.AddRow(fmt.Sprintf("%s / %s", r.DisplayName, r.Subject), r.Role, *r.Project)
+			}
+			t.Render()
 		}
-		// Otherwise, print the role assignments if it was about updating a role
-		t := initializeTableForGrantListRoleAssignments(cmd.OutOrStdout())
-		for _, r := range resp.RoleAssignments {
-			t.AddRow(fmt.Sprintf("%s / %s", r.DisplayName, r.Subject), r.Role, *r.Project)
-		}
-		t.Render()
+	}
+
+	if len(resp.Invitations) != 0 {
+		cmd.PrintErrf("\n%s\n", inviteBearerWarning)
 	}
 	return nil
 }

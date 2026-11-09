@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -252,7 +253,14 @@ type hookFunc func(*git.Repository) error
 func mockUpstreamSetup(t *testing.T, postSetupHooks ...hookFunc) (*git.Repository, error) {
 	t.Helper()
 
-	tmpdir := t.TempDir()
+	// On macOS (and other platforms where /var or /tmp is a symlink to /private/var),
+	// git resolves symlinks when cloning via file:// URLs. We evaluate symlinks here so
+	// the path matches what git computes and Billy's bound OS filesystem (WithBoundOS)
+	// does not reject it as escaping the base directory.
+	tmpdir, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		return nil, err
+	}
 	fsStorer := filesystem.NewStorage(osfs.New(tmpdir), nil)
 	// we create an OS filesystem with a bound OS so that the git repo can be
 	// references as an upstream remote using file:// URL
@@ -283,6 +291,10 @@ func mockUpstreamSetup(t *testing.T, postSetupHooks ...hookFunc) (*git.Repositor
 
 	_, err = wt.Add(".gitignore")
 	if err != nil {
+		return nil, err
+	}
+
+	if err := wt.Filesystem.MkdirAll(".github/workflows", 0755); err != nil {
 		return nil, err
 	}
 

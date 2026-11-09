@@ -27,13 +27,11 @@ All email templates have access to the following variables:
 | `{{.InvitationURL}}` | Full URL to accept the invitation | "https://minder.example.com/invite/abc123" |
 | `{{.RecipientEmail}}` | Email address of the invitee | "user@example.com" |
 | `{{.MinderURL}}` | Base URL of your Minder instance | "https://minder.example.com" |
-| `{{.TermsURL}}` | Terms of Service URL | "https://example.com/terms" |
-| `{{.PrivacyURL}}` | Privacy Policy URL | "https://example.com/privacy" |
 | `{{.SignInURL}}` | Sign-in URL for Minder | "https://minder.example.com/login" |
 | `{{.RoleName}}` | Role being assigned | "admin", "editor", "viewer" |
 | `{{.RoleVerb}}` | Action the role can perform | "manage", "contribute to", "view" |
 
-> **Note**: We recommend hardcoding parameters that don't need to vary between environments, such as your domain name. For example, instead of using `{{.InvitationURL}}` or `{{.SignInURL}}`, you construct these URLs explicitly in your template using your known domain and the `{{.InvitationCode}}` directly (e.g., `https://minder.your-domain.com/invite/{{.InvitationCode}}`). This is especially important for `{{.TermsURL}}` and `{{.PrivacyURL}}`, which currently default to Stacklok's URLs in the application code.
+> **Note**: We recommend hardcoding parameters that don't need to vary between environments, such as your domain name. For example, instead of using `{{.InvitationURL}}` or `{{.SignInURL}}`, you can construct these URLs explicitly in your template using your known domain and the `{{.InvitationCode}}` directly (e.g., `https://minder.your-domain.com/invite/{{.InvitationCode}}`).
 
 This guide outlines two distinct ways to override these templates when running Minder on Kubernetes.
 

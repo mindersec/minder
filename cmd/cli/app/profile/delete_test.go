@@ -36,7 +36,8 @@ func TestDeleteCommand(t *testing.T) {
 
 				return cli.WithRPCClient[minderv1.ProfileServiceClient](context.Background(), client)
 			},
-			GoldenFileName: "delete_success.txt",
+			ExpectEmptyStdout: true,
+			ExpectedStderr:    "Successfully deleted profile with id: " + testID + "\n",
 		},
 		{
 			Name: "delete failure not found",
@@ -79,7 +80,8 @@ func TestDeleteCommand(t *testing.T) {
 
 				return cli.WithRPCClient[minderv1.ProfileServiceClient](context.Background(), client)
 			},
-			GoldenFileName: "delete_success.txt",
+			ExpectEmptyStdout: true,
+			ExpectedStderr:    "Successfully deleted profile with id: " + testID + "\n",
 		},
 		{
 			Name: "delete by name returns nil profile",

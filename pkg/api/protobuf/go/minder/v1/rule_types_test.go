@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -233,6 +234,89 @@ func TestRuleTypeState_UnmarshalJSON(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, tt.want, s, "expected %v, got %v", tt.want, s)
+		})
+	}
+}
+
+func TestRuleTypeReleasePhase_EnsureDefault(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		phase *minderv1.RuleTypeReleasePhase
+		want  minderv1.RuleTypeReleasePhase
+	}{
+		{
+			name:  "nil phase defaults to GA",
+			phase: nil,
+			want:  minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_GA,
+		},
+		{
+			name:  "unspecified phase defaults to GA",
+			phase: new(minderv1.RuleTypeReleasePhase),
+			want:  minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_GA,
+		},
+		{
+			name: "explicit beta phase remains unchanged",
+			phase: func() *minderv1.RuleTypeReleasePhase {
+				p := minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_BETA
+				return &p
+			}(),
+			want: minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_BETA,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := tt.phase.EnsureDefault()
+			require.NotNil(t, got)
+			assert.Equal(t, tt.want, *got)
+		})
+	}
+}
+
+func TestRuleTypeReleasePhase_InitializedStringValue(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		phase   *minderv1.RuleTypeReleasePhase
+		want    string
+		wantErr bool
+	}{
+		{
+			name:  "nil phase returns ga without panic",
+			phase: nil,
+			want:  "ga",
+		},
+		{
+			name:  "unspecified phase returns ga",
+			phase: new(minderv1.RuleTypeReleasePhase),
+			want:  "ga",
+		},
+		{
+			name: "beta phase returns beta",
+			phase: func() *minderv1.RuleTypeReleasePhase {
+				p := minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_BETA
+				return &p
+			}(),
+			want: "beta",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := tt.phase.InitializedStringValue()
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

@@ -53,7 +53,7 @@ func deleteCommand(cmd *cobra.Command, _ []string) error {
 		return cli.MessageAndError("Error deleting entity", err)
 	}
 
-	cmd.Printf("Successfully deleted entity with ID: %s\n", resp.GetId())
+	cmd.PrintErrf("Successfully deleted entity with ID: %s\n", resp.GetId())
 	return nil
 }
 

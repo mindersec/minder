@@ -5,6 +5,7 @@ package project
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"go.uber.org/mock/gomock"
@@ -37,10 +38,11 @@ func TestProjectDeleteCommand(t *testing.T) {
 
 	tests := []cli.CmdTestCase{
 		{
-			Name:           "delete sub-project - success",
-			Args:           []string{"project", "delete", "-j", testProjectID},
-			MockSetup:      setupSuccess,
-			GoldenFileName: "project_delete.output",
+			Name:              "delete sub-project - success",
+			Args:              []string{"project", "delete", "-j", testProjectID},
+			MockSetup:         setupSuccess,
+			ExpectEmptyStdout: true,
+			ExpectedStderr:    fmt.Sprintf("Successfully deleted project with id: %s\n", testProjectID),
 		},
 		{
 			Name:          "fails when project flag is missing",

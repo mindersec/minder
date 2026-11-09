@@ -11,7 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/erikgeiser/promptkit/confirmation"
@@ -36,8 +35,8 @@ func (e *ErrWrappedCLIError) Error() string {
 
 // PrintYesNoPrompt prints a yes/no prompt to the user and returns false if the user did not respond with yes or y
 func PrintYesNoPrompt(cmd *cobra.Command, promptMsg, confirmMsg, fallbackMsg string, defaultYes bool) bool {
-	// Print the warning banner with the prompt message
-	cmd.Println(WarningBanner.Render(promptMsg))
+	// Print the warning banner with the prompt message to stderr
+	cmd.PrintErrln(WarningBanner.Render(promptMsg))
 
 	// Determine the default confirmation value
 	defConf := confirmation.No
@@ -49,13 +48,13 @@ func PrintYesNoPrompt(cmd *cobra.Command, promptMsg, confirmMsg, fallbackMsg str
 	input := confirmation.New(confirmMsg, defConf)
 	ok, err := input.RunPrompt()
 	if err != nil {
-		cmd.Println(WarningBanner.Render(fmt.Sprintf("Error reading input: %v", err)))
+		cmd.PrintErrln(WarningBanner.Render(fmt.Sprintf("Error reading input: %v", err)))
 		ok = false
 	}
 
 	// If the user did not confirm, print the fallback message
 	if !ok {
-		cmd.Println(Header.Render(fallbackMsg))
+		cmd.PrintErrln(Header.Render(fallbackMsg))
 	}
 	return ok
 }
@@ -161,45 +160,6 @@ func ValidateRepositoryName(repository string) error {
 		return fmt.Errorf("invalid repository name: %s", repository)
 	}
 	return nil
-}
-
-// GetNameAndOwnerFromRepository returns the owner and name from a repository name in the format owner/name
-func GetNameAndOwnerFromRepository(repository string) (string, string) {
-	first, second, found := strings.Cut(repository, "/")
-	if !found {
-		return "", first
-	}
-
-	return first, second
-}
-
-// ConcatenateAndWrap takes a string and a maximum line length (maxLen),
-// then outputs the string as a multiline string where each line does not exceed maxLen characters.
-func ConcatenateAndWrap(input string, maxLen int) string {
-	if maxLen <= 0 {
-		return input
-	}
-
-	var result string
-	var lineLength int
-
-	for _, runeValue := range input {
-		// If the line length equals the len, append a newline and reset lineLength
-		if lineLength == maxLen {
-			if result[len(result)-1] != ' ' {
-				// We trim at a word
-				result += "-\n"
-			} else {
-				// We trim at a space, no need to add "-"
-				result += "\n"
-			}
-			lineLength = 0
-		}
-		result += string(runeValue)
-		lineLength++
-	}
-
-	return result
 }
 
 // GetConfigDirPath returns the path to the config directory

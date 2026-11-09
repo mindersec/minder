@@ -40,7 +40,7 @@ func inviteAcceptCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return cli.MessageAndError("Error resolving invitation", err)
 	}
-	cmd.Printf("Invitation %s for %s to become %s of project %s was accepted!\n", code, res.Email, res.Role, res.ProjectDisplay)
+	cmd.PrintErrf("Invitation %s for %s to become %s of project %s was accepted!\n", code, res.Email, res.Role, res.ProjectDisplay)
 	return nil
 }
 

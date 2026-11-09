@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// Package apply provides the apply command for the minder CLI
-package apply
+// Package docs provides the docs command for generating client documentation
+package docs
 
 import (
 	"fmt"
@@ -48,6 +48,7 @@ var DocsCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("unable to open file for config docs: %w", err)
 		}
+		defer configHelpFile.Close()
 		if _, err := configHelpFile.WriteString("---\ntitle: minder config\n---\n"); err != nil {
 			return fmt.Errorf("unable to write docs header: %w", err)
 		}

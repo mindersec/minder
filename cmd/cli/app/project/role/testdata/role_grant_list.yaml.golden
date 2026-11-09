@@ -1,0 +1,19 @@
+invitations:
+  - code: test-invite-code-123
+    createdAt: "2024-01-01T00:00:00Z"
+    email: charlie@example.com
+    expiresAt: "2024-01-15T00:00:00Z"
+    project: 00000000-0000-0000-0000-000000000001
+    role: viewer
+    sponsor: sponsor-user-id
+    sponsorDisplay: Alice Admin
+roleAssignments:
+  - displayName: Alice Admin
+    project: 00000000-0000-0000-0000-000000000001
+    role: admin
+    subject: sub-12345
+  - displayName: Bob Editor
+    project: 00000000-0000-0000-0000-000000000001
+    role: editor
+    subject: sub-67890
+
