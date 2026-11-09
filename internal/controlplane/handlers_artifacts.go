@@ -122,6 +122,7 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 	if !ok {
 		return nil, fmt.Errorf("unexpected type: %T", somePB)
 	}
+	pbArtifact.ArtifactPk = ewp.Entity.ID.String()
 
 	// Telemetry logging
 	logger.BusinessRecord(ctx).ProviderID = ewp.Entity.ProviderID
@@ -212,6 +213,7 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 	if !ok {
 		return nil, fmt.Errorf("unexpected type: %T", somePB)
 	}
+	pbArtifact.ArtifactPk = ewp.Entity.ID.String()
 
 	// Telemetry logging
 	logger.BusinessRecord(ctx).ProviderID = ewp.Entity.ProviderID

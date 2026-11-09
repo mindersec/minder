@@ -17,16 +17,6 @@ var (
 	defaultProvider = "github"
 )
 
-func compareProfiles(t *testing.T, a *minderv1.Profile, b *minderv1.Profile) {
-	t.Helper()
-
-	require.Equal(t, a.Name, b.Name, "profile names should match")
-	require.Equal(t, a.Context, b.Context, "profile contexts should match")
-	compareEntityRules(t, a.Repository, b.Repository)
-	compareEntityRules(t, a.BuildEnvironment, b.BuildEnvironment)
-	compareEntityRules(t, a.Artifact, b.Artifact)
-}
-
 func compareEntityRules(t *testing.T, a []*minderv1.Profile_Rule, b []*minderv1.Profile_Rule) {
 	t.Helper()
 

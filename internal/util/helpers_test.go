@@ -4,6 +4,7 @@
 package util_test
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -122,8 +123,8 @@ owner: repoOwner
 	}
 }
 
-// TestOpenFileArg tests the OpenFileArg function
-func TestOpenFileArg(t *testing.T) {
+// TestOpenFileArgContext tests the OpenFileArgContext function.
+func TestOpenFileArgContext(t *testing.T) {
 	t.Parallel()
 
 	testDir := t.TempDir()
@@ -166,7 +167,7 @@ func TestOpenFileArg(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			desc, closer, err := util.OpenFileArg(tc.filePath, tc.dashOpen)
+			desc, closer, err := util.OpenFileArgContext(context.Background(), tc.filePath, tc.dashOpen)
 			if closer != nil {
 				defer closer()
 			}
@@ -183,6 +184,25 @@ func TestOpenFileArg(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestExpandFileArgsHTTPURL(t *testing.T) {
+	t.Parallel()
+	const input = "https://example.com/policy.yaml?raw=1"
+
+	got, err := util.ExpandFileArgs(input)
+	require.NoError(t, err)
+	assert.Equal(t, []util.ExpandedFile{{Path: input, Expanded: false}}, got)
+	assert.Equal(t, ".yaml", util.FileArgExt(input))
+}
+
+func TestIsHTTPURLValidatesHTTPURLs(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, util.IsHTTPURL("https://example.com/policy.yaml"))
+	assert.True(t, util.IsHTTPURL("HTTPS://example.com/policy.yaml"))
+	assert.False(t, util.IsHTTPURL("http:policy.yaml"))
+	assert.False(t, util.IsHTTPURL("https:/policy.yaml"))
 }
 
 // TestExpandFileArgs tests the ExpandFileArgs function.
