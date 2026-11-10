@@ -932,10 +932,13 @@ DockerHubProviderConfig contains the configuration for the DockerHub provider.
 
 Namespace: is the namespace for the DockerHub provider.
 
+Username: is the Docker Hub username used to log in to the registry.
+
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | namespace | <TypeLink type="string">string</TypeLink> | optional | namespace is the namespace for the DockerHub provider. |
+| username | <TypeLink type="string">string</TypeLink> | optional | username is the Docker Hub username used to log in to the registry. If unset, the namespace is used as the username. |
 
 
 

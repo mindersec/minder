@@ -2117,9 +2117,14 @@ message GitLabProviderConfig {
 //
 // Namespace: is the namespace for the DockerHub provider.
 //
+// Username: is the Docker Hub username used to log in to the registry.
+//
 message DockerHubProviderConfig {
     // namespace is the namespace for the DockerHub provider.
     optional string namespace = 1;
+    // username is the Docker Hub username used to log in to the registry.
+    // If unset, the namespace is used as the username.
+    optional string username = 2;
 }
 
 // GHCRProviderConfig contains the configuration for the GHCR provider.
