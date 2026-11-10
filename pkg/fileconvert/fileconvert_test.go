@@ -176,19 +176,19 @@ version: v1
 func TestReadResourceTyped(t *testing.T) {
 	t.Parallel()
 
-	profileDecoder, profileCloser := DecoderForFile("testdata/directory/profile.json")
+	profileDecoder, profileCloser := DecoderForFile(nil, "testdata/directory/profile.json")
 	require.NotNil(t, profileDecoder, "Expected non-nil decoder for profile")
 	t.Cleanup(func() { _ = profileCloser.Close() })
 	_, err := ReadResourceTyped[*minderv1.Profile](profileDecoder)
 	require.NoError(t, err, "Expected no error reading profile")
 
-	dataSourceDecoder, dataSourceCloser := DecoderForFile("testdata/directory/datasource.yaml")
+	dataSourceDecoder, dataSourceCloser := DecoderForFile(nil, "testdata/directory/datasource.yaml")
 	require.NotNil(t, dataSourceDecoder, "Expected non-nil decoder for profile")
 	t.Cleanup(func() { _ = dataSourceCloser.Close() })
 	_, err = ReadResourceTyped[*minderv1.DataSource](dataSourceDecoder)
 	require.NoError(t, err, "Expected no error reading profile")
 
-	ruleTypeDecoder, ruleTypeCloser := DecoderForFile("testdata/directory/ruletype.yaml")
+	ruleTypeDecoder, ruleTypeCloser := DecoderForFile(nil, "testdata/directory/ruletype.yaml")
 	require.NotNil(t, ruleTypeDecoder, "Expected non-nil decoder for profile")
 	t.Cleanup(func() { _ = ruleTypeCloser.Close() })
 	_, err = ReadResourceTyped[*minderv1.RuleType](ruleTypeDecoder)
@@ -273,10 +273,10 @@ func TestKnownResourceTypesInSync(t *testing.T) {
 func TestReadAll(t *testing.T) {
 	t.Parallel()
 
-	dirResources, err := ResourcesFromPaths(context.Background(), t.Logf, "testdata/directory")
+	dirResources, err := ResourcesFromPaths(context.Background(), nil, t.Logf, "testdata/directory")
 	require.NoError(t, err)
 
-	collectedInput, closer := DecoderForFile("testdata/resources.yaml")
+	collectedInput, closer := DecoderForFile(nil, "testdata/resources.yaml")
 	require.NotNil(t, collectedInput, "Expected non-nil decoder for profile")
 	t.Cleanup(func() { _ = closer.Close() })
 	collected := make([]proto.Message, 0, 4)
@@ -301,7 +301,7 @@ func TestReadAll(t *testing.T) {
 func TestReadWriteRoundTrip(t *testing.T) {
 	t.Parallel()
 
-	dirResources, err := ResourcesFromPaths(context.Background(), t.Logf, "testdata/directory")
+	dirResources, err := ResourcesFromPaths(context.Background(), nil, t.Logf, "testdata/directory")
 	require.NoError(t, err)
 
 	tempFile := filepath.Clean(filepath.Join(t.TempDir(), "collected.yaml"))
@@ -472,7 +472,7 @@ default allow := true
 			name: "fixture with title and custom block",
 			decoder: func(t *testing.T) Decoder {
 				t.Helper()
-				decoder, closer := DecoderForFile("testdata/directory/ruletype.rego")
+				decoder, closer := DecoderForFile(nil, "testdata/directory/ruletype.rego")
 				require.NotNil(t, decoder, "Expected non-nil decoder for rego rule type")
 				t.Cleanup(func() { _ = closer.Close() })
 				return decoder
