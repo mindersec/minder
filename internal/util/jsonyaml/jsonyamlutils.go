@@ -43,18 +43,6 @@ func TranscodeJSONToYAML(r io.Reader, w io.Writer) error {
 	return transcode(json.NewDecoder(r), enc)
 }
 
-// ConvertYamlToJson converts yaml to json
-func ConvertYamlToJson(content string) (json.RawMessage, error) {
-	r := strings.NewReader(content)
-	w := bytes.NewBuffer(nil)
-
-	if err := TranscodeYAMLToJSON(r, w); err != nil {
-		return nil, err
-	}
-
-	return w.Bytes(), nil
-}
-
 // ConvertJsonToYaml converts json to yaml
 func ConvertJsonToYaml(content json.RawMessage) (string, error) {
 	r := bytes.NewReader(content)
