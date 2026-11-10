@@ -26,7 +26,7 @@ func TestProviderConfigFromArg(t *testing.T) {
 	t.Run("returns nil for empty config source", func(t *testing.T) {
 		t.Parallel()
 
-		cfg, err := providerConfigFromArg("", nil)
+		cfg, err := providerConfigFromArg(context.Background(), "", nil)
 		require.NoError(t, err)
 		assert.Nil(t, cfg)
 	})
@@ -37,7 +37,7 @@ func TestProviderConfigFromArg(t *testing.T) {
 		jsonInput := `{"endpoint": "https://gitlab.example.com/api/v4", "name": "my-gitlab"}`
 		reader := strings.NewReader(jsonInput)
 
-		cfg, err := providerConfigFromArg("-", reader)
+		cfg, err := providerConfigFromArg(context.Background(), "-", reader)
 		require.NoError(t, err)
 		require.NotNil(t, cfg)
 
@@ -52,7 +52,7 @@ func TestProviderConfigFromArg(t *testing.T) {
 		malformedJSON := `{"endpoint": "incomplete`
 		reader := strings.NewReader(malformedJSON)
 
-		_, err := providerConfigFromArg("-", reader)
+		_, err := providerConfigFromArg(context.Background(), "-", reader)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "error parsing provider configuration")
 	})
@@ -60,7 +60,7 @@ func TestProviderConfigFromArg(t *testing.T) {
 	t.Run("fails when file does not exist", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := providerConfigFromArg("non_existent_provider_config.json", nil)
+		_, err := providerConfigFromArg(context.Background(), "non_existent_provider_config.json", nil)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "error opening file arg")
 	})

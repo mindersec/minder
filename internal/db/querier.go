@@ -121,6 +121,11 @@ type Querier interface {
 	// GetEntitiesByType retrieves all entities of a given type for a project or hierarchy of projects.
 	// this is how one would get all repositories, artifacts, etc.
 	GetEntitiesByType(ctx context.Context, arg GetEntitiesByTypeParams) ([]EntityInstance, error)
+	// GetEntitiesByTypePaginated retrieves entities of a given type with cursor-based pagination.
+	// The cursor is the UUID of the last seen entity (exclusive lower bound on id).
+	// Results are ordered by id ASC for stable pagination.
+	// A zero UUID cursor means start from the beginning.
+	GetEntitiesByTypePaginated(ctx context.Context, arg GetEntitiesByTypePaginatedParams) ([]EntityInstance, error)
 	// GetEntitiesWithProps retrieves all entities of a given type with their properties for a project or hierarchy of projects.
 	GetEntitiesWithProps(ctx context.Context, arg GetEntitiesWithPropsParams) ([]GetEntitiesWithPropsRow, error)
 	GetEntitlementFeaturesByProjectID(ctx context.Context, projectID uuid.UUID) ([]string, error)

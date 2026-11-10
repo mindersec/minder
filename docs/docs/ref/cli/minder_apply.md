@@ -16,7 +16,7 @@ minder apply [flags]
 ### Options
 
 ```
-  -f, --file strings     Input file or directory
+  -f, --file strings     Input file, directory, or HTTP(S) URL
   -h, --help             help for apply
   -j, --project string   ID of the project
 ```
