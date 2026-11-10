@@ -22,11 +22,11 @@ minder provider enroll --class dockerhub --token <TOKEN> --provider-config docke
 See [Enrolling a provider](#enrolling-a-provider) for the namespace
 configuration file.
 
-Minder logs in to the Docker Hub registry with a username and this token. By
-default the username is the provider's namespace; set `username` in the provider
-configuration when they differ. The token's shape isn't validated against Docker
-Hub at enrollment time; Minder only checks that it's a non-empty string in the
-expected format.
+When Minder authenticates to the Docker Hub registry, it logs in with a username
+and this token. By default the username is the provider's namespace; set
+`username` in the provider configuration when they differ. The token's shape
+isn't validated against Docker Hub at enrollment time; Minder only checks that
+it's a non-empty string in the expected format.
 
 Minder sends this token when it lists repositories through the Docker Hub API
 (`hub.docker.com`), and when it looks up image signatures in the Docker Hub
@@ -43,9 +43,9 @@ Before enrolling Docker Hub as a provider, you will need:
 - The Docker Hub **namespace** whose images you want Minder to monitor. This is
   the organization or user name that appears before the image name, such as
   `library` in `library/alpine`. If you use a personal access token for an
-  organization's namespace, such as `library`, set `username` to your Docker ID.
-  With an organization access token, the organization name is the username, so
-  the namespace works as-is.
+  organization's namespace (for example `<your-org>`), set `username` to your
+  Docker ID. With an organization access token, the organization name is the
+  username, so the namespace works as-is.
 - A Docker Hub access token with read access to that namespace. See the
   [Docker Hub access tokens documentation](https://docs.docker.com/security/access-tokens/)
   for how to create one.
