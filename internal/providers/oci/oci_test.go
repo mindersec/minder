@@ -759,29 +759,27 @@ func TestGetReferrer_UsesRefHost(t *testing.T) {
 
 	const artifactType = "application/vnd.dev.sigstore.bundle.v0.3+json"
 
-	ghcrHost, ghcrHits, ghcrReferrer := newReferrerRegistry(t, "myorg", artifactType)
-	hubHost, hubHits, hubReferrer := newReferrerRegistry(t, "library", artifactType)
-	require.NotEqual(t, ghcrHost, hubHost)
-	require.NotEqual(t, ghcrReferrer, hubReferrer)
-
-	// Subtests share the hit counters, so they run sequentially.
+	// Each subtest builds its own registries, so hit counters are not shared
+	// and the subtests can run in parallel.
 	for _, tt := range []struct {
-		name         string
-		host         string
-		namespace    string
-		wantReferrer v1.Hash
-		ownHits      *atomic.Int32
-		otherHits    *atomic.Int32
+		name           string
+		namespace      string
+		otherNamespace string
 	}{
-		{name: "GHCR-style repo name", host: ghcrHost, namespace: "myorg",
-			wantReferrer: ghcrReferrer, ownHits: ghcrHits, otherHits: hubHits},
-		{name: "Docker-Hub-style repo name", host: hubHost, namespace: "library",
-			wantReferrer: hubReferrer, ownHits: hubHits, otherHits: ghcrHits},
+		{name: "GHCR-style repo name", namespace: "myorg", otherNamespace: "library"},
+		{name: "Docker-Hub-style repo name", namespace: "library", otherNamespace: "myorg"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			ownBefore, otherBefore := tt.ownHits.Load(), tt.otherHits.Load()
+			t.Parallel()
 
-			o := New(nil, tt.host, path.Join(tt.host, tt.namespace))
+			host, ownHits, wantReferrer := newReferrerRegistry(t, tt.namespace, artifactType)
+			otherHost, otherHits, otherReferrer := newReferrerRegistry(t, tt.otherNamespace, artifactType)
+			require.NotEqual(t, host, otherHost)
+			require.NotEqual(t, wantReferrer, otherReferrer)
+			// Setup itself makes referrers requests, so compare against a baseline.
+			ownBefore, otherBefore := ownHits.Load(), otherHits.Load()
+
+			o := New(nil, host, path.Join(host, tt.namespace))
 			got, err := o.GetReferrer(context.Background(), "myimage", "latest", artifactType)
 			require.NoError(t, err)
 
@@ -790,10 +788,10 @@ func TestGetReferrer_UsesRefHost(t *testing.T) {
 			man, err := idx.IndexManifest()
 			require.NoError(t, err)
 			require.Len(t, man.Manifests, 1)
-			assert.Equal(t, tt.wantReferrer, man.Manifests[0].Digest)
+			assert.Equal(t, wantReferrer, man.Manifests[0].Digest)
 
-			assert.Greater(t, tt.ownHits.Load(), ownBefore, "referrers request should reach %s", tt.host)
-			assert.Equal(t, otherBefore, tt.otherHits.Load(), "referrers request should not reach the other registry")
+			assert.Greater(t, ownHits.Load(), ownBefore, "referrers request should reach %s", host)
+			assert.Equal(t, otherBefore, otherHits.Load(), "referrers request should not reach the other registry")
 		})
 	}
 }
