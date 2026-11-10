@@ -138,6 +138,11 @@ func TestListCommand(t *testing.T) {
 			},
 			ExpectedError: "request timed out",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"entity", "list", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder entity list"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, EntityCmd)
