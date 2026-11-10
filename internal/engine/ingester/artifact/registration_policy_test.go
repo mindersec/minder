@@ -63,7 +63,7 @@ func TestRegisteredDockerHubArtifactEvaluation(t *testing.T) {
 	t.Parallel()
 
 	const namespace = "testns"
-	ctx := context.Background()
+	ctx := t.Context()
 
 	srv := httptest.NewServer(registry.New(registry.Logger(log.New(io.Discard, "", 0))))
 	t.Cleanup(srv.Close)
@@ -148,6 +148,7 @@ func TestRegisteredDockerHubArtifactEvaluation(t *testing.T) {
 			require.NoError(t, err)
 			ing.artifactVerifier = verifier
 
+			// TODO(#7089): drop tags once ingest uses the entity's own tag.
 			ingested, err := ing.Ingest(ctx, ent, map[string]any{"name": "myimage", "tags": []any{tt.tag}})
 			require.NoError(t, err)
 			versions, ok := ingested.Object.([]imageInfo)
