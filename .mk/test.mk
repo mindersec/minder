@@ -35,7 +35,7 @@ test-cover-silent: clean init-examples  ## Run test coverage in a silent mode (e
 	go tool cover -func=coverage.out
 
 .PHONY: lint
-lint: lint-go lint-buf ## lint
+lint: lint-go lint-buf lint-deadcode ## lint
 
 .PHONY: lint-go
 lint-go:
@@ -44,3 +44,11 @@ lint-go:
 .PHONY: lint-buf
 lint-buf:
 	buf lint
+
+.PHONY: lint-deadcode
+lint-deadcode: ## analyze unreachable functions across command entrypoints
+	@OUT=$$(go run -modfile=tools/go.mod golang.org/x/tools/cmd/deadcode -test -filter="github.com/mindersec/minder/cmd/..." ./cmd/...); \
+	if [ -n "$$OUT" ]; then \
+		echo "$$OUT"; \
+		exit 1; \
+	fi
