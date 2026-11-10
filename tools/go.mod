@@ -7,6 +7,7 @@ require (
 	github.com/daixiang0/gci v0.14.0
 	github.com/go-critic/go-critic v0.14.4
 	github.com/golangci/golangci-lint/v2 v2.13.1
+	github.com/google/gnostic v0.7.1
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.30.0
 	github.com/mikefarah/yq/v4 v4.53.6
@@ -177,6 +178,7 @@ require (
 	github.com/golangci/swaggoswag v0.0.0-20250504205917-77f2aca3143e // indirect
 	github.com/golangci/unconvert v0.0.0-20250410112200-a129a6e6413e // indirect
 	github.com/google/cel-go v0.29.2 // indirect
+	github.com/google/gnostic-models v0.7.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-containerregistry v0.21.7 // indirect
 	github.com/google/uuid v1.6.0 // indirect
