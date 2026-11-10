@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"path"
 
+	"github.com/google/go-containerregistry/pkg/authn"
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
@@ -115,6 +116,26 @@ func MarshalV1Config(rawCfg json.RawMessage) (json.RawMessage, error) {
 
 func (d *dockerHubImageLister) GetNamespaceURL() string {
 	return d.target.String()
+}
+
+// GetAuthenticator returns a Basic authenticator for the Docker Hub registry.
+// It uses the configured username, or the namespace when no username is set.
+func (d *dockerHubImageLister) GetAuthenticator() (authn.Authenticator, error) {
+	if d.cred == nil {
+		return authn.Anonymous, nil
+	}
+
+	tok, err := d.cred.GetAsOAuth2TokenSource().Token()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get token: %w", err)
+	}
+
+	username := d.cfg.GetUsername()
+	if username == "" {
+		username = d.namespace
+	}
+
+	return &authn.Basic{Username: username, Password: tok.AccessToken}, nil
 }
 
 // CanImplement returns true if the provider can implement the specified trait
