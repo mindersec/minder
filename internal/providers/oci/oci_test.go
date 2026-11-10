@@ -705,3 +705,93 @@ func TestGetArtifactVersions_IndexUsesChildManifestAnnotation(t *testing.T) {
 	require.Len(t, versions, 1)
 	assert.Equal(t, expectedTime, versions[0].CreatedAt.AsTime())
 }
+
+// newReferrerRegistry starts a test registry holding namespace/myimage:latest
+// and one referrer of artifactType attached to it. It returns the registry
+// host, a counter of referrers API requests it served, and the digest of the
+// referrer, so a test can tell which registry answered.
+func newReferrerRegistry(t *testing.T, namespace, artifactType string) (string, *atomic.Int32, v1.Hash) {
+	t.Helper()
+	reg := registry.New(registry.Logger(log.New(io.Discard, "", 0)), registry.WithReferrersSupport(true))
+	hits := &atomic.Int32{}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.Path, "/referrers/") {
+			hits.Add(1)
+		}
+		reg.ServeHTTP(w, r)
+	}))
+	t.Cleanup(srv.Close)
+	host := strings.TrimPrefix(srv.URL, "http://")
+	repo := fmt.Sprintf("%s/%s/myimage", host, namespace)
+
+	img, err := random.Image(256, 1)
+	require.NoError(t, err)
+	tagRef, err := name.NewTag(repo + ":latest")
+	require.NoError(t, err)
+	require.NoError(t, remote.Write(tagRef, img))
+
+	imgDigest, err := img.Digest()
+	require.NoError(t, err)
+	imgSize, err := img.Size()
+	require.NoError(t, err)
+	imgMediaType, err := img.MediaType()
+	require.NoError(t, err)
+
+	base := mutate.ConfigMediaType(mutate.MediaType(empty.Image, types.OCIManifestSchema1), types.MediaType(artifactType))
+	referrer, ok := mutate.Subject(base, v1.Descriptor{
+		MediaType: imgMediaType, Digest: imgDigest, Size: imgSize,
+	}).(v1.Image)
+	require.True(t, ok)
+	referrerDigest, err := referrer.Digest()
+	require.NoError(t, err)
+	referrerRef, err := name.NewDigest(fmt.Sprintf("%s@%s", repo, referrerDigest))
+	require.NoError(t, err)
+	require.NoError(t, remote.Write(referrerRef, referrer))
+
+	return host, hits, referrerDigest
+}
+
+// TestGetReferrer_UsesRefHost checks that GetReferrer queries the registry the
+// reference points at, and not docker.io, for both GHCR-style and
+// Docker-Hub-style repository names.
+func TestGetReferrer_UsesRefHost(t *testing.T) {
+	t.Parallel()
+
+	const artifactType = "application/vnd.dev.sigstore.bundle.v0.3+json"
+
+	// Each subtest builds its own registries, so hit counters are not shared
+	// and the subtests can run in parallel.
+	for _, tt := range []struct {
+		name           string
+		namespace      string
+		otherNamespace string
+	}{
+		{name: "GHCR-style repo name", namespace: "myorg", otherNamespace: "library"},
+		{name: "Docker-Hub-style repo name", namespace: "library", otherNamespace: "myorg"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			host, ownHits, wantReferrer := newReferrerRegistry(t, tt.namespace, artifactType)
+			otherHost, otherHits, otherReferrer := newReferrerRegistry(t, tt.otherNamespace, artifactType)
+			require.NotEqual(t, host, otherHost)
+			require.NotEqual(t, wantReferrer, otherReferrer)
+			// Setup itself makes referrers requests, so compare against a baseline.
+			ownBefore, otherBefore := ownHits.Load(), otherHits.Load()
+
+			o := New(nil, host, path.Join(host, tt.namespace))
+			got, err := o.GetReferrer(context.Background(), "myimage", "latest", artifactType)
+			require.NoError(t, err)
+
+			idx, ok := got.(v1.ImageIndex)
+			require.True(t, ok, "GetReferrer returned %T, want v1.ImageIndex", got)
+			man, err := idx.IndexManifest()
+			require.NoError(t, err)
+			require.Len(t, man.Manifests, 1)
+			assert.Equal(t, wantReferrer, man.Manifests[0].Digest)
+
+			assert.Greater(t, ownHits.Load(), ownBefore, "referrers request should reach %s", host)
+			assert.Equal(t, otherBefore, otherHits.Load(), "referrers request should not reach the other registry")
+		})
+	}
+}
