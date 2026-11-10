@@ -47,8 +47,9 @@ lint-buf:
 
 .PHONY: lint-deadcode
 lint-deadcode: ## analyze unreachable functions across command entrypoints
-	@OUT=$$(go run -modfile=tools/go.mod golang.org/x/tools/cmd/deadcode -test -filter="github.com/mindersec/minder/cmd/..." ./cmd/...); \
+	@OUT=$$(deadcode -test -filter="github.com/mindersec/minder/cmd/..." ./cmd/...); \
 	if [ -n "$$OUT" ]; then \
+		echo "Unreachable code detected:"; \
 		echo "$$OUT"; \
 		exit 1; \
 	fi

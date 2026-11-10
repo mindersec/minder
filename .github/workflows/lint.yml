@@ -81,13 +81,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: 'go.mod'
+          go-version-file: 'tools/go.mod'
           cache: false
-      - name: Run deadcode check
+      - name: Run make bootstrap to download the tool dependencies
         run: |
-          OUT=$(go run -modfile=tools/go.mod golang.org/x/tools/cmd/deadcode -test -filter="github.com/mindersec/minder/cmd/..." ./cmd/...)
-          if [ -n "$OUT" ]; then
-            echo "Unreachable code detected:"
-            echo "$OUT"
-            exit 1
-          fi
+          make bootstrap
+      - name: Run deadcode check
+        run: make lint-deadcode
