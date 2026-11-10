@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.10.2">
 <title data-rh="true">Docker Hub provider | Minder docs</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://docs.mindersec.dev/img/Minder_darkMode.png"><meta data-rh="true" name="twitter:image" content="https://docs.mindersec.dev/img/Minder_darkMode.png"><meta data-rh="true" property="og:url" content="https://docs.mindersec.dev/integrations/provider_integrations/dockerhub"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Docker Hub provider | Minder docs"><meta data-rh="true" name="description" content="A provider connects Minder to your software supply chain. It lets Minder know"><meta data-rh="true" property="og:description" content="A provider connects Minder to your software supply chain. It lets Minder know"><link data-rh="true" rel="icon" href="/img/favicon.png"><link data-rh="true" rel="canonical" href="https://docs.mindersec.dev/integrations/provider_integrations/dockerhub"><link data-rh="true" rel="alternate" href="https://docs.mindersec.dev/integrations/provider_integrations/dockerhub" hreflang="en"><link data-rh="true" rel="alternate" href="https://docs.mindersec.dev/integrations/provider_integrations/dockerhub" hreflang="x-default"><link data-rh="true" rel="preconnect" href="https://F7OP01WFHV-dsn.algolia.net" crossorigin="anonymous"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Docker Hub","item":"https://docs.mindersec.dev/integrations/provider_integrations/dockerhub"}]}</script><link rel="search" type="application/opensearchdescription+xml" title="Minder docs" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.bdfa33c7.css">
-<script src="/assets/js/runtime~main.fc6b1cea.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.c3efd28a.js" defer="defer"></script>
 <script src="/assets/js/main.c9921eb4.js" defer="defer"></script>
 </head>
 <body>
@@ -22,16 +22,16 @@ Enroll the provider with:</p>
 <div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#F8F8F2"><span class="token plain">minder provider enroll --class dockerhub --token &lt;TOKEN&gt; --provider-config dockerhub-config.json</span><br></div></code></pre></div></div>
 <p>See <a href="#enrolling-a-provider" class="">Enrolling a provider</a> for the namespace
 configuration file.</p>
-<p>There is no separate username field — only the token is collected and stored.
-The token&#x27;s shape isn&#x27;t validated against Docker Hub at enrollment time; Minder
-only checks that it&#x27;s a non-empty string in the expected format.</p>
-<p>Minder sends this token when it lists the repositories in your namespace
-through the Docker Hub API (<code>hub.docker.com</code>). It does not send the token when
-it calls the Docker Hub registry (<code>registry-1.docker.io</code>) to list tags, resolve
-a tag to a digest, or fetch a manifest — those calls are made anonymously,
-regardless of what you&#x27;ve configured. Because registering an image resolves its
-digest this way, private Docker Hub repositories are not currently supported by
-this provider.</p>
+<p>When Minder authenticates to the Docker Hub registry, it logs in with a username
+and this token. By default the username is the provider&#x27;s namespace; set
+<code>username</code> in the provider configuration when they differ. The token&#x27;s shape
+isn&#x27;t validated against Docker Hub at enrollment time; Minder only checks that
+it&#x27;s a non-empty string in the expected format.</p>
+<p>Minder sends this token when it lists repositories through the Docker Hub API
+(<code>hub.docker.com</code>), and when it looks up image signatures in the Docker Hub
+registry. Listing tags, resolving a tag to a digest and fetching manifests are
+still anonymous, so private Docker Hub repositories are not currently supported
+by this provider.</p>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="prerequisites">Prerequisites<a href="#prerequisites" class="hash-link" aria-label="Direct link to Prerequisites" title="Direct link to Prerequisites" translate="no">​</a></h2>
 <p>Before enrolling Docker Hub as a provider, you will need:</p>
 <ul>
@@ -39,7 +39,10 @@ this provider.</p>
 <a class="" href="/developer_guide/feature_flags">Using feature flags</a>).</li>
 <li class="">The Docker Hub <strong>namespace</strong> whose images you want Minder to monitor. This is
 the organization or user name that appears before the image name, such as
-<code>library</code> in <code>library/alpine</code>.</li>
+<code>library</code> in <code>library/alpine</code>. If you use a personal access token for an
+organization&#x27;s namespace (for example <code>&lt;your-org&gt;</code>), set <code>username</code> to your
+Docker ID. With an organization access token, the organization name is the
+username, so the namespace works as-is.</li>
 <li class="">A Docker Hub access token with read access to that namespace. See the
 <a href="https://docs.docker.com/security/access-tokens/" target="_blank" rel="noopener noreferrer" class="">Docker Hub access tokens documentation</a>
 for how to create one.</li>
@@ -47,7 +50,9 @@ for how to create one.</li>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="enrolling-a-provider">Enrolling a provider<a href="#enrolling-a-provider" class="hash-link" aria-label="Direct link to Enrolling a provider" title="Direct link to Enrolling a provider" translate="no">​</a></h2>
 <p>The Docker Hub provider needs to know which namespace to use. Create a provider
 configuration file, for example <code>dockerhub-config.json</code>, with your namespace:</p>
-<div class="language-json codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-json codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#F8F8F2"><span class="token punctuation" style="color:rgb(248, 248, 242)">{</span><span class="token plain"></span><br></div><div class="token-line" style="color:#F8F8F2"><span class="token plain">  </span><span class="token property">&quot;dockerhub&quot;</span><span class="token operator">:</span><span class="token plain"> </span><span class="token punctuation" style="color:rgb(248, 248, 242)">{</span><span class="token plain"></span><br></div><div class="token-line" style="color:#F8F8F2"><span class="token plain">    </span><span class="token property">&quot;namespace&quot;</span><span class="token operator">:</span><span class="token plain"> </span><span class="token string" style="color:rgb(255, 121, 198)">&quot;&lt;namespace&gt;&quot;</span><span class="token plain"></span><br></div><div class="token-line" style="color:#F8F8F2"><span class="token plain">  </span><span class="token punctuation" style="color:rgb(248, 248, 242)">}</span><span class="token plain"></span><br></div><div class="token-line" style="color:#F8F8F2"><span class="token plain"></span><span class="token punctuation" style="color:rgb(248, 248, 242)">}</span><br></div></code></pre></div></div>
+<div class="language-json codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-json codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#F8F8F2"><span class="token punctuation" style="color:rgb(248, 248, 242)">{</span><span class="token plain"></span><br></div><div class="token-line" style="color:#F8F8F2"><span class="token plain">  </span><span class="token property">&quot;dockerhub&quot;</span><span class="token operator">:</span><span class="token plain"> </span><span class="token punctuation" style="color:rgb(248, 248, 242)">{</span><span class="token plain"></span><br></div><div class="token-line" style="color:#F8F8F2"><span class="token plain">    </span><span class="token property">&quot;namespace&quot;</span><span class="token operator">:</span><span class="token plain"> </span><span class="token string" style="color:rgb(255, 121, 198)">&quot;&lt;namespace&gt;&quot;</span><span class="token punctuation" style="color:rgb(248, 248, 242)">,</span><span class="token plain"></span><br></div><div class="token-line" style="color:#F8F8F2"><span class="token plain">    </span><span class="token property">&quot;username&quot;</span><span class="token operator">:</span><span class="token plain"> </span><span class="token string" style="color:rgb(255, 121, 198)">&quot;&lt;username&gt;&quot;</span><span class="token plain"></span><br></div><div class="token-line" style="color:#F8F8F2"><span class="token plain">  </span><span class="token punctuation" style="color:rgb(248, 248, 242)">}</span><span class="token plain"></span><br></div><div class="token-line" style="color:#F8F8F2"><span class="token plain"></span><span class="token punctuation" style="color:rgb(248, 248, 242)">}</span><br></div></code></pre></div></div>
+<p><code>username</code> is optional. If you leave it out, Minder uses the namespace, which
+works when the namespace is the account that owns the token.</p>
 <p>Then enroll the provider, passing your access token with <code>--token</code> and the
 configuration file with <code>--provider-config</code>:</p>
 <div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#F8F8F2"><span class="token plain">minder provider enroll --class dockerhub --token &lt;access-token&gt; --provider-config dockerhub-config.json</span><br></div></code></pre></div></div>
