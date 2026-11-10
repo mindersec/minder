@@ -10,8 +10,6 @@ package fixtures
 
 import (
 	"github.com/google/uuid"
-	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	"github.com/mindersec/minder/pkg/entities/properties"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
@@ -107,48 +105,10 @@ func WithFailedEntityWithPropertiesAsProto(
 	}
 }
 
-func WithSuccessfulRetrieveAllProperties(
-	expProject uuid.UUID,
-	expProvider uuid.UUID,
-	expEntityType minder.Entity,
-	retProps *properties.Properties,
-) MockPropertyServiceOption {
-	return func(mockPropSvc *mockSvc.MockPropertiesService) {
-		mockPropSvc.EXPECT().
-			RetrieveAllProperties(
-				gomock.Any(), gomock.Any(),
-				expProject, expProvider,
-				gomock.Any(),
-				expEntityType,
-				gomock.Any()).
-			Return(retProps, nil)
-	}
-}
-
-func WithFailedGetEntityWithPropertiesByID(
-	err error,
-) MockPropertyServiceOption {
-	return func(mockPropSvc *mockSvc.MockPropertiesService) {
-		mockPropSvc.EXPECT().
-			EntityWithPropertiesByID(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(nil, err)
-	}
-}
-
 func WithSuccessfulSaveAllProperties() MockPropertyServiceOption {
 	return func(mockPropSvc *mockSvc.MockPropertiesService) {
 		mockPropSvc.EXPECT().
 			SaveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(nil)
-	}
-}
-
-func WithFailedSaveAllProperties(
-	err error,
-) MockPropertyServiceOption {
-	return func(mockPropSvc *mockSvc.MockPropertiesService) {
-		mockPropSvc.EXPECT().
-			SaveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(err)
 	}
 }
