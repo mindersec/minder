@@ -4,6 +4,7 @@
 package provider
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -16,7 +17,6 @@ import (
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -49,19 +49,37 @@ var enrollCmd = &cobra.Command{
 	Long: `The minder provider enroll command allows a user to enroll a provider
 such as GitHub into the minder control plane. Once enrolled, users can perform
 actions such as adding repositories.`,
-	RunE: cli.GRPCClientWrapRunE(EnrollProviderCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		return viper.BindPFlags(cmd.Flags())
+	},
+	RunE: EnrollProviderCmd,
 }
 
-// EnrollProviderCommand is the command for enrolling a provider
-func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	oauthClient := minderv1.NewOAuthServiceClient(conn)
-	providerClient := minderv1.NewProvidersServiceClient(conn)
-
-	// TODO: get rid of provider flag, only use class
-	provider := viper.GetString("provider")
-	if provider == "" {
-		provider = viper.GetString("class")
+// EnrollProviderCmd is the cobra command function for enrolling a provider.
+func EnrollProviderCmd(cmd *cobra.Command, _ []string) error {
+	providerClient, provCleanup, err := cli.GetCLIClient(cmd, minderv1.NewProvidersServiceClient)
+	if err != nil {
+		return err
 	}
+	defer provCleanup()
+
+	oauthClient, oauthCleanup, err := cli.GetCLIClient(cmd, minderv1.NewOAuthServiceClient)
+	if err != nil {
+		return err
+	}
+	defer oauthCleanup()
+
+	return enrollProviderWithClients(cmd.Context(), cmd, providerClient, oauthClient)
+}
+
+func enrollProviderWithClients(
+	ctx context.Context,
+	cmd *cobra.Command,
+	providerClient minderv1.ProvidersServiceClient,
+	oauthClient minderv1.OAuthServiceClient,
+) error {
+	// TODO: get rid of provider flag, only use class
+	provider := cmp.Or(viper.GetString("provider"), viper.GetString("class"))
 	providerName := viper.GetString("name")
 	if providerName == "" {
 		providerName = provider
@@ -98,7 +116,7 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, 
 		}
 	}
 
-	config, err := providerConfigFromArg(cfgFlag, cmd.InOrStdin())
+	config, err := providerConfigFromArg(ctx, cfgFlag, cmd.InOrStdin())
 	if err != nil {
 		return cli.MessageAndError("Error reading provider configuration", err)
 	}
@@ -161,7 +179,7 @@ func enrollUsingToken(
 		return cli.MessageAndError("Error storing token", err)
 	}
 
-	cmd.Println("Provider enrolled successfully")
+	cmd.PrintErrln("Provider enrolled successfully")
 	return nil
 }
 
@@ -209,16 +227,16 @@ func enrollUsingOAuth2Flow(
 		return cli.MessageAndError("error getting authorization URL", err)
 	}
 
-	cmd.Printf("Your browser will now be opened to: %s\n", resp.GetUrl())
-	cmd.Println("Please follow the instructions on the page to complete the enrollment flow.")
-	cmd.Println("Once the flow is complete, the CLI will close")
-	cmd.Println("If this is a headless environment, please copy and paste the URL into a browser on a different machine.")
-	cmd.Printf("Enrollment will time out after %.1f minutes.\n", MAX_WAIT.Minutes())
+	cmd.PrintErrf("Your browser will now be opened to: %s\n", resp.GetUrl())
+	cmd.PrintErrln("Please follow the instructions on the page to complete the enrollment flow.")
+	cmd.PrintErrln("Once the flow is complete, the CLI will close")
+	cmd.PrintErrln("If this is a headless environment, please copy and paste the URL into a browser on a different machine.")
+	cmd.PrintErrf("Enrollment will time out after %.1f minutes.\n", MAX_WAIT.Minutes())
 
 	if !skipBrowser {
 		if err := browser.OpenURL(resp.GetUrl()); err != nil {
 			fmt.Fprintf(os.Stderr, "Error opening browser: %s\n", err)
-			cmd.Println("Please copy and paste the URL into a browser.")
+			cmd.PrintErrln("Please copy and paste the URL into a browser.")
 		}
 	}
 	openTime := time.Now()
@@ -230,9 +248,9 @@ func enrollUsingOAuth2Flow(
 	success := <-done
 
 	if success {
-		cmd.Println("Provider enrolled successfully")
+		cmd.PrintErrln("Provider enrolled successfully")
 	} else {
-		cmd.Println("Failed to enroll provider")
+		cmd.PrintErrln("Failed to enroll provider")
 	}
 	return nil
 }
@@ -278,7 +296,7 @@ func callBackServer(ctx context.Context, cmd *cobra.Command, project string, por
 	}
 
 	// Start the server in a goroutine
-	cmd.Println("Listening for enrollment flow to complete on port", port)
+	cmd.PrintErrln("Listening for enrollment flow to complete on port", port)
 	go func() {
 		_ = server.ListenAndServe()
 	}()
@@ -287,7 +305,7 @@ func callBackServer(ctx context.Context, cmd *cobra.Command, project string, por
 	defer func() {
 		if err := server.Close(); err != nil {
 			// Handle the error appropriately, such as logging or returning an error message.
-			cmd.Printf("Error closing server: %s", err)
+			cmd.PrintErrf("Error closing server: %s", err)
 		}
 		close(done)
 	}()
@@ -309,24 +327,24 @@ func callBackServer(ctx context.Context, cmd *cobra.Command, project string, por
 			return
 		}
 		if err != nil || res.Created {
-			cmd.Printf("Error calling server: %s\n", err)
+			cmd.PrintErrf("Error calling server: %s\n", err)
 			done <- false
 			break
 		}
 		if time.Now().After(openTime.Add(MAX_WAIT)) {
-			cmd.Printf("Timeout waiting for enrollment flow to complete...\n")
+			cmd.PrintErrf("Timeout waiting for enrollment flow to complete...\n")
 			done <- false
 			break
 		}
 	}
 }
 
-func providerConfigFromArg(configSource string, dashReader io.Reader) (*structpb.Struct, error) {
+func providerConfigFromArg(ctx context.Context, configSource string, dashReader io.Reader) (*structpb.Struct, error) {
 	if configSource == "" {
 		return nil, nil
 	}
 
-	reader, closer, err := util.OpenFileArg(configSource, dashReader)
+	reader, closer, err := util.OpenFileArgContext(ctx, configSource, dashReader)
 	if err != nil {
 		return nil, fmt.Errorf("error opening file arg: %w", err)
 	}

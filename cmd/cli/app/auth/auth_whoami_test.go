@@ -74,6 +74,11 @@ func TestWhoamiCommand(t *testing.T) {
 			Args:          []string{"auth", "whoami", "-o", "csv"},
 			ExpectedError: "invalid argument",
 		},
+		{
+			Name:          "unexpected positional argument returns error",
+			Args:          []string{"auth", "whoami", "extra-arg"},
+			ExpectedError: `unknown command "extra-arg" for "minder auth whoami"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, AuthCmd)

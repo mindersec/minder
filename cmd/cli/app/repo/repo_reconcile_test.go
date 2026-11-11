@@ -41,7 +41,8 @@ func TestReconcileCommand(t *testing.T) {
 
 				return cli.WithRPCClient[minderv1.ProjectsServiceClient](context.Background(), client)
 			},
-			GoldenFileName: "reconcile_success.txt",
+			ExpectEmptyStdout: true,
+			ExpectedStderr:    "Reconciliation task created\n",
 		},
 		{
 			Name: "reconcile by id",
@@ -60,7 +61,8 @@ func TestReconcileCommand(t *testing.T) {
 
 				return cli.WithRPCClient[minderv1.ProjectsServiceClient](context.Background(), client)
 			},
-			GoldenFileName: "reconcile_id_success.txt",
+			ExpectEmptyStdout: true,
+			ExpectedStderr:    "Reconciliation task created\n",
 		},
 		{
 			Name:          "fails when missing both name and id",

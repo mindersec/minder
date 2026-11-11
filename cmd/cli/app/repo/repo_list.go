@@ -23,6 +23,7 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List repositories",
 	Long:  `The repo list subcommand is used to list registered repositories within Minder.`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)
@@ -50,11 +51,21 @@ func listCommand(cmd *cobra.Command, _ []string) error {
 	}
 	defer cleanup()
 
-	resp, err := client.ListRepositories(cmd.Context(), &minderv1.ListRepositoriesRequest{
-		Context: &minderv1.Context{Provider: &provider, Project: &project},
-	})
-	if err != nil {
-		return cli.MessageAndError("Error listing repositories", err)
+	var allRepos []*minderv1.Repository
+	var cursor string
+	for range 100 {
+		resp, err := client.ListRepositories(cmd.Context(), &minderv1.ListRepositoriesRequest{
+			Context: &minderv1.Context{Provider: &provider, Project: &project},
+			Cursor:  cursor,
+		})
+		if err != nil {
+			return cli.MessageAndError("Error listing repositories", err)
+		}
+		allRepos = append(allRepos, resp.Results...)
+		cursor = resp.Cursor
+		if cursor == "" {
+			break
+		}
 	}
 
 	switch format {
@@ -63,14 +74,14 @@ func listCommand(cmd *cobra.Command, _ []string) error {
 			[]string{"Owner", "Name", "Provider", "Upstream ID"}).
 			SetAutoMerge(true)
 
-		slices.SortFunc(resp.Results, func(a, b *minderv1.Repository) int {
+		slices.SortFunc(allRepos, func(a, b *minderv1.Repository) int {
 			return cmp.Or(
 				strings.Compare(a.GetOwner(), b.GetOwner()),
 				strings.Compare(a.GetContext().GetProvider(), b.GetContext().GetProvider()),
 			)
 		})
 
-		for _, v := range resp.Results {
+		for _, v := range allRepos {
 			t.AddRow(
 				v.GetOwner(),
 				v.GetName(),
@@ -80,7 +91,7 @@ func listCommand(cmd *cobra.Command, _ []string) error {
 		}
 		t.Render()
 	case app.JSON, app.YAML:
-		return cli.PrintProto(cmd, format, resp)
+		return cli.PrintProto(cmd, format, &minderv1.ListRepositoriesResponse{Results: allRepos})
 	}
 	return nil
 }

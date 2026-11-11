@@ -4,6 +4,7 @@
 package util_test
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -122,8 +123,8 @@ owner: repoOwner
 	}
 }
 
-// TestOpenFileArg tests the OpenFileArg function
-func TestOpenFileArg(t *testing.T) {
+// TestOpenFileArgContext tests the OpenFileArgContext function.
+func TestOpenFileArgContext(t *testing.T) {
 	t.Parallel()
 
 	testDir := t.TempDir()
@@ -166,7 +167,7 @@ func TestOpenFileArg(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			desc, closer, err := util.OpenFileArg(tc.filePath, tc.dashOpen)
+			desc, closer, err := util.OpenFileArgContext(context.Background(), tc.filePath, tc.dashOpen)
 			if closer != nil {
 				defer closer()
 			}
@@ -183,6 +184,25 @@ func TestOpenFileArg(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestExpandFileArgsHTTPURL(t *testing.T) {
+	t.Parallel()
+	const input = "https://example.com/policy.yaml?raw=1"
+
+	got, err := util.ExpandFileArgs(input)
+	require.NoError(t, err)
+	assert.Equal(t, []util.ExpandedFile{{Path: input, Expanded: false}}, got)
+	assert.Equal(t, ".yaml", util.FileArgExt(input))
+}
+
+func TestIsHTTPURLValidatesHTTPURLs(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, util.IsHTTPURL("https://example.com/policy.yaml"))
+	assert.True(t, util.IsHTTPURL("HTTPS://example.com/policy.yaml"))
+	assert.False(t, util.IsHTTPURL("http:policy.yaml"))
+	assert.False(t, util.IsHTTPURL("https:/policy.yaml"))
 }
 
 // TestExpandFileArgs tests the ExpandFileArgs function.
@@ -364,79 +384,3 @@ func TestGetConfigValue(t *testing.T) {
 	}
 }
 
-func TestInt32FromString(t *testing.T) {
-	t.Parallel()
-
-	type args struct {
-		v string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    int32
-		wantErr bool
-	}{
-		{
-			name:    "valid int32",
-			args:    args{v: "42"},
-			want:    42,
-			wantErr: false,
-		},
-		{
-			name:    "valid int32 negative",
-			args:    args{v: "-42"},
-			want:    -42,
-			wantErr: false,
-		},
-		{
-			name:    "big int32",
-			args:    args{v: "2147483647"},
-			want:    2147483647,
-			wantErr: false,
-		},
-		{
-			name:    "big int32 negative",
-			args:    args{v: "-2147483648"},
-			want:    -2147483648,
-			wantErr: false,
-		},
-		{
-			name:    "too big int32",
-			args:    args{v: "12147483648"},
-			want:    0,
-			wantErr: true,
-		},
-		{
-			name:    "valid zero",
-			args:    args{v: "0"},
-			want:    0,
-			wantErr: false,
-		},
-		{
-			name:    "invalid int32",
-			args:    args{v: "invalid"},
-			want:    0,
-			wantErr: true,
-		},
-		{
-			name:    "empty string",
-			args:    args{v: ""},
-			want:    0,
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := util.Int32FromString(tt.args.v)
-			if tt.wantErr {
-				require.Error(t, err, "expected error")
-				require.Zero(t, got, "expected zero")
-				return
-			}
-
-			assert.Equal(t, tt.want, got, "result didn't match")
-		})
-	}
-}

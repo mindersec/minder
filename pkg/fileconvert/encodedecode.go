@@ -10,14 +10,18 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v3"
 
+	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -55,25 +59,45 @@ var knownResourceTypes = []string{
 // DecoderForFile returns a Decoder for the file at the specified path,
 // or nil if the file is not of the appropriate type.
 func DecoderForFile(path string) (Decoder, io.Closer) {
-	path = filepath.Clean(path)
-	ext := filepath.Ext(path)
-	var builder func(io.Reader) Decoder
-	// we return functions here so that we can early-exit without opening the file if the extension is unmatched.
-	switch ext {
-	case ".json":
-		builder = func(r io.Reader) Decoder { return json.NewDecoder(r) }
-	case ".yaml", ".yml":
-		builder = func(r io.Reader) Decoder { return yaml.NewDecoder(r) }
-	case ".rego":
-		builder = func(r io.Reader) Decoder { return &regoDecoder{filename: path, file: r} }
-	default:
+	return DecoderForFSFile(nil, path)
+}
+
+// DecoderForFSFile returns a Decoder for the file at the specified path in sysFS,
+// or nil if the file is not of the appropriate type. When sysFS is nil, the local
+// operating system filesystem is used.
+func DecoderForFSFile(sysFS fs.FS, filePath string) (Decoder, io.Closer) {
+	builder := decoderBuilder(filePath)
+	// Return early without opening the file if the extension is unmatched.
+	if builder == nil {
 		return nil, nil
 	}
-	file, err := os.Open(path)
+	if sysFS != nil {
+		clean := path.Clean(filepath.ToSlash(filePath))
+		clean = strings.TrimPrefix(clean, "/")
+		file, err := sysFS.Open(clean)
+		if err != nil {
+			return nil, nil
+		}
+		return builder(file), file
+	}
+	file, err := os.Open(filepath.Clean(filePath)) // #nosec G304 - intentional file loading via CLI args
 	if err != nil {
 		return nil, nil
 	}
 	return builder(file), file
+}
+
+func decoderBuilder(path string) func(io.Reader) Decoder {
+	switch util.FileArgExt(path) {
+	case ".json":
+		return func(r io.Reader) Decoder { return json.NewDecoder(r) }
+	case ".yaml", ".yml":
+		return func(r io.Reader) Decoder { return yaml.NewDecoder(r) }
+	case ".rego":
+		return func(r io.Reader) Decoder { return &regoDecoder{filename: path, file: r} }
+	default:
+		return nil
+	}
 }
 
 // WriteResource outputs a Minder proto resource to an existing Encoder.

@@ -217,31 +217,33 @@ def test_valid_case():
     # 1. Define the input entity
     entity = {
         "name": "minder",
-        "owner": "mindersec"
+        "owner": "mindersec",
+        "default_branch": "main"
     }
 
     # 2. Mock external HTTP calls
     def mock_http():
         return {
-            "/repos/mindersec/minder/branches/main/protection": body({
+            "/repos/mindersec/minder/branches/main/protection": body(json.encode({
                 "enforce_admins": {"enabled": True}
-            })
+            }))
         }
 
     # 3. Call the `eval` builtin to run the rule
     result = eval(
         rule="branch_protection_enforce_admins",
         entity=entity,
+        profile={"enforce_admins": True},
         mock_http=mock_http()
     )
 
     # 4. Assert the result
-    assert result["status"] == "pass", "Expected rule to pass"
-
-def test_failure_case():
-    result = eval(...)
-    assert result["status"] == "fail", "Expected rule to fail"
+    assert.eq(result["status"], "pass")
 ```
+
+A failing case looks the same, with `"enabled": False` in the mock and `assert.eq(result["status"], "fail")`.
+
+Starlark has no `assert` statement; use the predeclared `assert` module (`assert.eq`, `assert.true`, `assert.fails`, and others). See [Writing Assertions](./testing-rules.md#writing-assertions).
 
 The `eval` builtin takes the following arguments:
 
@@ -255,10 +257,12 @@ The `eval` builtin takes the following arguments:
 - `mock_http`: A dictionary mapping endpoint paths to mock HTTP responses created via `body()` or `code()`
 - `mock_fs`: A dictionary mocking git filesystem contents for `git` ingest rules
 - `data_sources`: A list of datasource YAML paths required by the rule
+- `provider_traits_present`: A list of provider traits available to the test provider (defaults to all)
 
 The return value of `eval` is a dictionary containing:
 - `status`: `"pass"`, `"fail"`, `"skip"`, or `"error"`
 - `message`: Detailed error or failure message (if any)
+- `details`: Additional detail about the failure or error (if any)
 - `output`: Evaluation output value (if any)
 
 ### JUnit Output

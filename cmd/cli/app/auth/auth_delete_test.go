@@ -180,4 +180,18 @@ func TestDeleteCommand(t *testing.T) {
 
 		cli.RunCmdTests(t, tests, AuthCmd)
 	})
+
+	t.Run("fails when unexpected positional arguments are provided", func(t *testing.T) {
+		setupDeleteTestCredentials(t, validOpenIDJWT)
+
+		tests := []cli.CmdTestCase{
+			{
+				Name:          "rejects unexpected positional argument",
+				Args:          []string{"auth", "delete", "extra-arg"},
+				ExpectedError: `unknown command "extra-arg" for "minder auth delete"`,
+			},
+		}
+
+		cli.RunCmdTests(t, tests, AuthCmd)
+	})
 }

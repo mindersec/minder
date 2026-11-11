@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -111,6 +112,36 @@ func frizbeePrRemWithExcludes(e []string) *pb.RuleType_Definition_Remediate_Pull
 		Body:   "This PR replaces tags with sha",
 		ActionsReplaceTagsWithSha: &pb.RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha{
 			Exclude: e,
+		},
+	}
+}
+
+func deletePrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation {
+	return deletePrRemWithPattern(".github/workflows/*.yml")
+}
+
+func deletePrRemWithPattern(pattern string) *pb.RuleType_Definition_Remediate_PullRequestRemediation {
+	return &pb.RuleType_Definition_Remediate_PullRequestRemediation{
+		Method: "minder.delete",
+		Title:  "Delete workflow files",
+		Body:   "This PR deletes workflow files",
+		Params: &structpb.Struct{
+			Fields: map[string]*structpb.Value{
+				"patterns": {
+					Kind: &structpb.Value_ListValue{
+						ListValue: &structpb.ListValue{
+							Values: []*structpb.Value{
+								structpb.NewStructValue(&structpb.Struct{
+									Fields: map[string]*structpb.Value{
+										"pattern": structpb.NewStringValue(pattern),
+										"type":    structpb.NewStringValue("glob"),
+									},
+								}),
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -252,7 +283,14 @@ type hookFunc func(*git.Repository) error
 func mockUpstreamSetup(t *testing.T, postSetupHooks ...hookFunc) (*git.Repository, error) {
 	t.Helper()
 
-	tmpdir := t.TempDir()
+	// On macOS (and other platforms where /var or /tmp is a symlink to /private/var),
+	// git resolves symlinks when cloning via file:// URLs. We evaluate symlinks here so
+	// the path matches what git computes and Billy's bound OS filesystem (WithBoundOS)
+	// does not reject it as escaping the base directory.
+	tmpdir, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		return nil, err
+	}
 	fsStorer := filesystem.NewStorage(osfs.New(tmpdir), nil)
 	// we create an OS filesystem with a bound OS so that the git repo can be
 	// references as an upstream remote using file:// URL
@@ -283,6 +321,10 @@ func mockUpstreamSetup(t *testing.T, postSetupHooks ...hookFunc) (*git.Repositor
 
 	_, err = wt.Add(".gitignore")
 	if err != nil {
+		return nil, err
+	}
+
+	if err := wt.Filesystem.MkdirAll(".github/workflows", 0755); err != nil {
 		return nil, err
 	}
 
@@ -614,6 +656,49 @@ func TestPullRequestRemediate(t *testing.T) {
 			remArgs:          createTestRemArgs(),
 			expectedErr:      errors.ErrActionPending,
 			expectedMetadata: json.RawMessage(`{"pr_number":45}`),
+		},
+		{
+			name: "delete files using minder.delete",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      deletePrRem(),
+				actionType: TestActionTypeValid,
+			},
+			remArgs:   createTestRemArgs(),
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(t *testing.T, mockGitHub *mockghclient.MockGitHub) {
+				t.Helper()
+
+				happyPathMockSetup(mockGitHub)
+
+				mockGitHub.EXPECT().
+					CreatePullRequest(
+						gomock.Any(),
+						repoOwner, repoName,
+						"Delete workflow files", "This PR deletes workflow files",
+						refFromBranch(branchBaseName("Delete workflow files", "")), dflBranchTo).
+					Return(&github.PullRequest{Number: github.Int(47)}, nil)
+			},
+			expectedErr:      errors.ErrActionPending,
+			expectedMetadata: json.RawMessage(`{"pr_number":47}`),
+		},
+		{
+			name: "delete with no matching files fails on empty commit",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      deletePrRemWithPattern(".github/workflows/*.yaml"),
+				actionType: TestActionTypeValid,
+			},
+			remArgs:   createTestRemArgs(),
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(t *testing.T, mockGitHub *mockghclient.MockGitHub) {
+				t.Helper()
+
+				mockGitHub.EXPECT().
+					GetName(gomock.Any()).Return("stacklok-bot", nil)
+				mockGitHub.EXPECT().
+					GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
+			},
+			expectedErr:      git.ErrEmptyCommit,
+			expectedMetadata: json.RawMessage(nil),
 		},
 		{
 			name: "open a PR with a rule name",

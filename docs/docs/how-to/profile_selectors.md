@@ -121,6 +121,7 @@ while the properties are provider-specific and prefixed with the provider name.
 | `oci/repository` | The full repository path without the registry or tag, e.g. `library/alpine` for `alpine:latest` | string |
 | `oci/namespace`  | The provider namespace the artifact belongs to, e.g. `library`                                  | string |
 | `oci/registry`   | The registry host serving the artifact, e.g. `docker.io` or `quay.io`                           | string |
+| `oci/digest`     | The digest the tag currently points to; for a multi-platform image, the index digest            | string |
 
 For example, this profile applies only to `envoy` images, in any namespace:
 

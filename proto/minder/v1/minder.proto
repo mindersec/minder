@@ -289,7 +289,7 @@ message GetArtifactByIdResponse {
 message GetArtifactByNameRequest {
     string name = 1 [
         (buf.validate.field).string = {
-            pattern: "^[-./[:word:]]*$",
+            pattern: "^[-./:[:word:]]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
@@ -2117,9 +2117,14 @@ message GitLabProviderConfig {
 //
 // Namespace: is the namespace for the DockerHub provider.
 //
+// Username: is the Docker Hub username used to log in to the registry.
+//
 message DockerHubProviderConfig {
     // namespace is the namespace for the DockerHub provider.
     optional string namespace = 1;
+    // username is the Docker Hub username used to log in to the registry.
+    // If unset, the namespace is used as the username.
+    optional string username = 2;
 }
 
 // GHCRProviderConfig contains the configuration for the GHCR provider.
@@ -2943,9 +2948,10 @@ message RuleType {
                 // -- minder.actions.replace_tags_with_sha - finds any github actions within a workflow
                 //                                           file and replaces the tag with the SHA
                 // -- minder.yq.evaluate - evaluates a yq expression on a file
+                // -- minder.delete - deletes files matching the specified glob patterns
                 string method = 4 [
                     (buf.validate.field).string = {
-                        in: ["minder.content", "minder.actions.replace_tags_with_sha", "minder.yq.evaluate"],
+                        in: ["minder.content", "minder.actions.replace_tags_with_sha", "minder.yq.evaluate", "minder.delete"],
                     },
                     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
                 ];

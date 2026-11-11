@@ -9,6 +9,8 @@
 package fixtures
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	"go.uber.org/mock/gomock"
 
@@ -122,8 +124,18 @@ func WithSuccessfulListRepositories(
 				gomock.Any(),
 				gomock.Any(),
 				gomock.Any(),
+				gomock.Any(),
+				gomock.Any(),
 			).
-			Return(repositories, nil).AnyTimes()
+			DoAndReturn(func(_ context.Context, _, _, _ uuid.UUID, limit int) ([]*models.EntityWithProperties, uuid.UUID, error) {
+				// Return the last entity ID as cursor when a full page is returned,
+				// matching real service behaviour used by the handler for next-page detection.
+				var nextCursor uuid.UUID
+				if len(repositories) == limit {
+					nextCursor = repositories[len(repositories)-1].Entity.ID
+				}
+				return repositories, nextCursor, nil
+			}).AnyTimes()
 	}
 }
 
@@ -134,7 +146,11 @@ func WithFailedListRepositories(err error) func(RepoServiceMock) {
 				gomock.Any(),
 				gomock.Any(),
 				gomock.Any(),
+				gomock.Any(),
+				gomock.Any(),
 			).
-			Return(nil, err).AnyTimes()
+			Return(nil, uuid.Nil, err).AnyTimes()
 	}
 }
+
+
