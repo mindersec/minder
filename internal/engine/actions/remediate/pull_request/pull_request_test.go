@@ -183,12 +183,36 @@ func yqPrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation {
 	}
 }
 
+func yqEvalOutputPrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation {
+	return &pb.RuleType_Definition_Remediate_PullRequestRemediation{
+		Method: "minder.yq.evaluate",
+		Title:  "Patch workflows selected by evaluation output",
+		Body:   "This PR patches workflows selected by evaluation output",
+		Params: &structpb.Struct{
+			Fields: map[string]*structpb.Value{
+				"expression": structpb.NewStringValue(`.on = "workflow_dispatch"`),
+				"patterns": structpb.NewListValue(&structpb.ListValue{
+					Values: []*structpb.Value{
+						structpb.NewStructValue(&structpb.Struct{
+							Fields: map[string]*structpb.Value{
+								"pattern": structpb.NewStringValue(`{{ toJson .EvalResultOutput.files }}`),
+								"type":    structpb.NewStringValue("eval_output"),
+							},
+						}),
+					},
+				}),
+			},
+		},
+	}
+}
+
 type remediateArgs struct {
-	remAction models.ActionOpt
-	ent       protoreflect.ProtoMessage
-	pol       map[string]any
-	params    map[string]any
-	ruleName  string
+	remAction  models.ActionOpt
+	ent        protoreflect.ProtoMessage
+	pol        map[string]any
+	params     map[string]any
+	ruleName   string
+	evalOutput any
 }
 
 func createTestRemArgs() *remediateArgs {
@@ -658,6 +682,37 @@ func TestPullRequestRemediate(t *testing.T) {
 			expectedMetadata: json.RawMessage(`{"pr_number":45}`),
 		},
 		{
+			name: "patch YQ targets from evaluation output",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      yqEvalOutputPrRem(),
+				actionType: TestActionTypeValid,
+			},
+			remArgs: func() *remediateArgs {
+				args := createTestRemArgs()
+				args.evalOutput = map[string]any{
+					"files": []any{".github/workflows/build.yml"},
+				}
+				return args
+			}(),
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(t *testing.T, mockGitHub *mockghclient.MockGitHub) {
+				t.Helper()
+
+				happyPathMockSetup(mockGitHub)
+
+				mockGitHub.EXPECT().
+					CreatePullRequest(
+						gomock.Any(),
+						repoOwner, repoName,
+						"Patch workflows selected by evaluation output",
+						"This PR patches workflows selected by evaluation output",
+						refFromBranch(branchBaseName("Patch workflows selected by evaluation output", "")), dflBranchTo).
+					Return(&github.PullRequest{Number: github.Int(48)}, nil)
+			},
+			expectedErr:      errors.ErrActionPending,
+			expectedMetadata: json.RawMessage(`{"pr_number":48}`),
+		},
+		{
 			name: "delete files using minder.delete",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      deletePrRem(),
@@ -773,8 +828,12 @@ func TestPullRequestRemediate(t *testing.T) {
 					Fs:     testWt.Filesystem,
 					Storer: testrepo.Storer,
 				})
+			evalOutput := any(struct{ ViolationMsg string }{ViolationMsg: "gomod"})
+			if tt.remArgs.evalOutput != nil {
+				evalOutput = tt.remArgs.evalOutput
+			}
 			evalParams.SetEvalResult(&interfaces2.EvaluationResult{
-				Output: struct{ ViolationMsg string }{ViolationMsg: "gomod"},
+				Output: evalOutput,
 			})
 			retMeta, err := engine.Do(context.Background(),
 				interfaces.ActionCmdOn,
