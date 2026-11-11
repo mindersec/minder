@@ -181,6 +181,19 @@ Remediation actions have access to:
 - For pull request and REST call remediations, output from the rule evaluation
   is available in `EvalResultOutput`.
 
+### Template helpers
+
+In addition to the standard Go template functions, remediation templates can
+use the following helpers:
+
+- `asMap`: converts a protobuf struct (for example, `.Params`) into a value
+  whose fields can be accessed in the template.
+- `mapGet`: returns the value associated with a key in a map or protobuf
+  struct.
+- `toJson`: serializes a value as JSON. This is useful for passing structured
+  evaluation output to actions that expect JSON, such as the `eval_output`
+  pattern in `minder.yq.evaluate`.
+
 ### Remediation Types
 
 Minder supports four remediation actions:
@@ -189,7 +202,9 @@ Minder supports four remediation actions:
 
    The Pull Request remediation type creates or updates GitHub pull requests to
    implement fixes automatically. The pull requests are authored by the Minder
-   bot, and will need to be reviewed and merged by the project maintainers.
+   bot, and will need to be reviewed and merged by the project maintainers. If
+   the remediation selects no files to change, Minder reports that there is
+   nothing to change instead of creating an empty commit.
 
    Pull requests support the following content modification types:
 

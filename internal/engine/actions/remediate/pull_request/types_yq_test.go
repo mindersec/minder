@@ -185,6 +185,95 @@ func evalOutputPattern(pattern string) map[string]any {
 	}
 }
 
+func TestNewYqExecuteValidatesConfig(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		params  *modificationConstructorParams
+		wantErr string
+	}{
+		{
+			name: "valid glob",
+			params: newModificationParams(withParams(map[string]any{
+				"patterns": []any{
+					map[string]any{
+						"pattern": ".github/workflows/*.yml",
+						"type":    "glob",
+					},
+				},
+			})),
+		},
+		{
+			name:   "valid eval_output",
+			params: newModificationParams(withParams(evalOutputPattern(`{{ toJson .EvalResultOutput.files }}`))),
+		},
+		{
+			name:   "no patterns is allowed",
+			params: newModificationParams(withParams(map[string]any{})),
+		},
+		{
+			name: "unsupported type",
+			params: newModificationParams(withParams(map[string]any{
+				"patterns": []any{
+					map[string]any{
+						"pattern": ".github/workflows/*.yml",
+						"type":    "eval_ouput",
+					},
+				},
+			})),
+			wantErr: `patterns[0] unsupported type "eval_ouput" (supported: "glob", "eval_output")`,
+		},
+		{
+			name: "missing type",
+			params: newModificationParams(withParams(map[string]any{
+				"patterns": []any{
+					map[string]any{
+						"pattern": ".github/workflows/*.yml",
+					},
+				},
+			})),
+			wantErr: "patterns[0] missing required field: type",
+		},
+		{
+			name: "missing pattern",
+			params: newModificationParams(withParams(map[string]any{
+				"patterns": []any{
+					map[string]any{
+						"type": "glob",
+					},
+				},
+			})),
+			wantErr: "patterns[0] missing required field: pattern",
+		},
+		{
+			name: "invalid eval_output template",
+			params: newModificationParams(withParams(map[string]any{
+				"patterns": []any{
+					map[string]any{
+						"pattern": "{{ toJson .EvalResultOutput.files",
+						"type":    "eval_output",
+					},
+				},
+			})),
+			wantErr: "patterns[0] invalid eval_output template",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := newYqExecute(tt.params)
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.ErrorContains(t, err, tt.wantErr)
+		})
+	}
+}
+
 func TestYQExecute(t *testing.T) {
 	t.Parallel()
 
@@ -613,23 +702,6 @@ updates:
 				t.Helper()
 				require.Len(t, entries, 0)
 			},
-		},
-		{
-			name: "EvalOutputTemplateParseError",
-			yqParams: func(t *testing.T) *modificationConstructorParams {
-				t.Helper()
-				return newModificationParams(withParams(evalOutputPattern(`{{ .EvalResultOutput.files`)))
-			},
-			evalOutput: map[string]any{
-				"files": []any{workflowPullRequestTargetObjectFileName},
-			},
-			testFiles: testFileMap{},
-			fs:        testFSFromFiles,
-			checkEntries: func(t *testing.T, _ testFileMap, entries []*fsEntry) {
-				t.Helper()
-				require.Len(t, entries, 0)
-			},
-			createErr: "cannot parse eval_output pattern template",
 		},
 		{
 			name: "EvalOutputTemplateExpansionError",
