@@ -207,9 +207,33 @@ Minder supports four remediation actions:
    - `minder.yq.evaluate`: applies a
      [yq `expression`](https://mikefarah.gitbook.io/yq/) to files selected by a
      list of `patterns`. Each element in the `patterns` list is represented as:
-     `{"type": "glob", "pattern": "file/path/*"}`. `glob` is currently the only
-     supported pattern type. This action supports using Go templates in the
-     `expression` but not in the `pattern` selection.
+     `{"type": "glob", "pattern": "file/path/*"}` or
+     `{"type": "eval_output", "pattern": "{{ toJson .EvalResultOutput.files }}"}`.
+
+     `glob` selects files from the ingested repository. `eval_output` renders
+     `pattern` as a Go template using the same data available to `expression`
+     (`Entity`, `Profile`, `Params`, and `EvalResultOutput`) and parses the
+     result as a JSON array of repository-relative file paths. The `toJson`
+     template helper is available to serialize evaluation output. Paths
+     selected with `eval_output` are treated as literal paths, not globs.
+     Targets from all selectors are merged and deduplicated, so each file is
+     patched once.
+
+     For example, a Rego rule can return the exact files that need patching
+     with `output := {"files": files_to_patch}`, where `files_to_patch` was
+     computed with `file.ls_glob`, `file.ls`, or `file.walk`. The remediation
+     then selects those files:
+
+     ```yaml
+     params:
+       expression: '.permissions = "read-all"'
+       patterns:
+         - type: eval_output
+           pattern: '{{ toJson .EvalResultOutput.files }}'
+     ```
+
+     This action supports using Go templates in `expression` and in
+     `eval_output` patterns, but not in `glob` patterns.
    - `minder.delete`: deletes files matching the specified glob patterns. The
      `params` field accepts a list of `patterns`, where each element is
      represented as: `{"type": "glob", "pattern": "file/path/*"}`. `glob` is
