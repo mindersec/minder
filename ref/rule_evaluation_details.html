@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.10.2">
 <title data-rh="true">Rule Evaluation in Depth | Minder docs</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://docs.mindersec.dev/img/Minder_darkMode.png"><meta data-rh="true" name="twitter:image" content="https://docs.mindersec.dev/img/Minder_darkMode.png"><meta data-rh="true" property="og:url" content="https://docs.mindersec.dev/ref/rule_evaluation_details"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Rule Evaluation in Depth | Minder docs"><meta data-rh="true" name="description" content="When evaluating a rule,"><meta data-rh="true" property="og:description" content="When evaluating a rule,"><link data-rh="true" rel="icon" href="/img/favicon.png"><link data-rh="true" rel="canonical" href="https://docs.mindersec.dev/ref/rule_evaluation_details"><link data-rh="true" rel="alternate" href="https://docs.mindersec.dev/ref/rule_evaluation_details" hreflang="en"><link data-rh="true" rel="alternate" href="https://docs.mindersec.dev/ref/rule_evaluation_details" hreflang="x-default"><link data-rh="true" rel="preconnect" href="https://F7OP01WFHV-dsn.algolia.net" crossorigin="anonymous"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Rule Evaluation in Depth","item":"https://docs.mindersec.dev/ref/rule_evaluation_details"}]}</script><link rel="search" type="application/opensearchdescription+xml" title="Minder docs" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.bdfa33c7.css">
-<script src="/assets/js/runtime~main.667c31b1.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.a1203ba9.js" defer="defer"></script>
 <script src="/assets/js/main.aa383438.js" defer="defer"></script>
 </head>
 <body>
@@ -186,24 +186,45 @@ implement fixes automatically. The pull requests are authored by the Minder
 bot, and will need to be reviewed and merged by the project maintainers.</p>
 <p>Pull requests support the following content modification types:</p>
 <ul>
-<li class=""><code>minder.content</code>:
+<li class="">
+<p><code>minder.content</code>:
 <a href="https://mindersec.github.io/ref/proto#minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content" target="_blank" rel="noopener noreferrer" class="">define a list of file <code>path</code>s and <code>content</code>s</a>
 which should be updated. Currently only supports the <code>replace</code> action on
 files. Both <code>path</code> and <code>content</code> may use Go templates to parameterize their
-outputs</li>
-<li class=""><code>minder.actions.replace_tags_with_sha</code>: uses
+outputs</p>
+</li>
+<li class="">
+<p><code>minder.actions.replace_tags_with_sha</code>: uses
 <a href="https://github.com/Stacklok/frizbee" target="_blank" rel="noopener noreferrer" class="">the Stacklok/frizbee library</a> to
 resolve Git and OCI tag references to SHA digests where detected in the
 repository. The only parameter to this action is a list of resources which
 should not be resolved to digests (implicitly trusting the release process
-for the resource)</li>
-<li class=""><code>minder.yq.evaluate</code>: applies a
+for the resource)</p>
+</li>
+<li class="">
+<p><code>minder.yq.evaluate</code>: applies a
 <a href="https://mikefarah.gitbook.io/yq/" target="_blank" rel="noopener noreferrer" class="">yq <code>expression</code></a> to files selected by a
 list of <code>patterns</code>. Each element in the <code>patterns</code> list is represented as:
-<code>{&quot;type&quot;: &quot;glob&quot;, &quot;pattern&quot;: &quot;file/path/*&quot;}</code>. <code>glob</code> is currently the only
-supported pattern type. This action supports using Go templates in the
-<code>expression</code> but not in the <code>pattern</code> selection.</li>
-<li class=""><code>minder.delete</code>: deletes files matching the specified glob patterns. The
+<code>{&quot;type&quot;: &quot;glob&quot;, &quot;pattern&quot;: &quot;file/path/*&quot;}</code> or
+<code>{&quot;type&quot;: &quot;eval_output&quot;, &quot;pattern&quot;: &quot;{{ toJson .EvalResultOutput.files }}&quot;}</code>.</p>
+<p><code>glob</code> selects files from the ingested repository. <code>eval_output</code> renders
+<code>pattern</code> as a Go template using the same data available to <code>expression</code>
+(<code>Entity</code>, <code>Profile</code>, <code>Params</code>, and <code>EvalResultOutput</code>) and parses the
+result as a JSON array of repository-relative file paths. The <code>toJson</code>
+template helper is available to serialize evaluation output. Paths
+selected with <code>eval_output</code> are treated as literal paths, not globs.
+Targets from all selectors are merged and deduplicated, so each file is
+patched once.</p>
+<p>For example, a Rego rule can return the exact files that need patching
+with <code>output := {&quot;files&quot;: files_to_patch}</code>, where <code>files_to_patch</code> was
+computed with <code>file.ls_glob</code>, <code>file.ls</code>, or <code>file.walk</code>. The remediation
+then selects those files:</p>
+<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#F8F8F2"><span class="token key atrule">params</span><span class="token punctuation" style="color:rgb(248, 248, 242)">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#F8F8F2"><span class="token plain">  </span><span class="token key atrule">expression</span><span class="token punctuation" style="color:rgb(248, 248, 242)">:</span><span class="token plain"> </span><span class="token string" style="color:rgb(255, 121, 198)">&#x27;.permissions = &quot;read-all&quot;&#x27;</span><span class="token plain"></span><br></div><div class="token-line" style="color:#F8F8F2"><span class="token plain">  </span><span class="token key atrule">patterns</span><span class="token punctuation" style="color:rgb(248, 248, 242)">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#F8F8F2"><span class="token plain">    </span><span class="token punctuation" style="color:rgb(248, 248, 242)">-</span><span class="token plain"> </span><span class="token key atrule">type</span><span class="token punctuation" style="color:rgb(248, 248, 242)">:</span><span class="token plain"> eval_output</span><br></div><div class="token-line" style="color:#F8F8F2"><span class="token plain">      </span><span class="token key atrule">pattern</span><span class="token punctuation" style="color:rgb(248, 248, 242)">:</span><span class="token plain"> </span><span class="token string" style="color:rgb(255, 121, 198)">&#x27;{{ toJson .EvalResultOutput.files }}&#x27;</span><br></div></code></pre></div></div>
+<p>This action supports using Go templates in <code>expression</code> and in
+<code>eval_output</code> patterns, but not in <code>glob</code> patterns.</p>
+</li>
+<li class="">
+<p><code>minder.delete</code>: deletes files matching the specified glob patterns. The
 <code>params</code> field accepts a list of <code>patterns</code>, where each element is
 represented as: <code>{&quot;type&quot;: &quot;glob&quot;, &quot;pattern&quot;: &quot;file/path/*&quot;}</code>. <code>glob</code> is
 currently the only supported pattern type. Files that do not exist are
@@ -211,7 +232,8 @@ silently ignored.
 Note: glob patterns follow <code>filepath.Match</code> semantics; <code>**</code> is <strong>not</strong>
 treated as a recursive wildcard. Use <code>dir/*</code> to match files one level
 deep, or list explicit patterns for nested paths. Only files are deleted;
-directories matched by a pattern are silently skipped.</li>
+directories matched by a pattern are silently skipped.</p>
+</li>
 </ul>
 <p>If the content modification produces a diff in the repository, Minder will
 open and manage a pull request against the branch used in the <code>git</code> ingest,
