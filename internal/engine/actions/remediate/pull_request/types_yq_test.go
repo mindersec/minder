@@ -6,7 +6,9 @@ package pull_request
 import (
 	"context"
 	"fmt"
+	"io"
 	"maps"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -69,6 +71,139 @@ const (
 type testFileContents struct {
 	origContents     string
 	modifiedContents string
+}
+
+func TestYQExactPattern(t *testing.T) {
+	t.Parallel()
+
+	const filename = ".github/config/settings.yaml"
+	const expression = `.enabled = true`
+	for _, tt := range []struct {
+		name       string
+		pattern    string
+		typeName   string
+		create     bool
+		original   string
+		expression string
+		readErr    error
+		want       string
+		wantErr    string
+	}{
+		{name: "create nested file", pattern: filename, create: true, want: "enabled: true\n"},
+		{name: "preserve comments", pattern: filename, create: true,
+			original: "# configuration\nenabled: false # keep this\nother: value\n",
+			want:     "# configuration\nenabled: true # keep this\nother: value\n"},
+		{name: "update without creation", pattern: filename, original: "enabled: false\n", want: "enabled: true\n"},
+		{name: "missing without creation", pattern: filename, wantErr: "cannot read file"},
+		{name: "permission error", pattern: filename, create: true, readErr: os.ErrPermission,
+			wantErr: "cannot read file"},
+		{name: "wrapped not exist", pattern: filename, create: true,
+			readErr: fmt.Errorf("open: %w", os.ErrNotExist), want: "enabled: true\n"},
+		{name: "literal metacharacters", pattern: "config/[settings].yaml", create: true, want: "enabled: true\n"},
+		{name: "glob does not create", pattern: ".github/config/*.yaml", typeName: "glob", create: true},
+		{name: "invalid expression does not create", pattern: filename, create: true,
+			expression: ".enabled = [", wantErr: "cannot parse expression"},
+		{name: "invalid YAML is not overwritten", pattern: filename, create: true,
+			original: "enabled: [", wantErr: "cannot evaluate expression"},
+		{name: "empty path", create: true, wantErr: "invalid exact path"},
+		{name: "root path", pattern: ".", create: true, wantErr: "invalid exact path"},
+		{name: "absolute path", pattern: "/settings.yaml", create: true, wantErr: "invalid exact path"},
+		{name: "parent path", pattern: "../settings.yaml", create: true, wantErr: "invalid exact path"},
+		{name: "nested parent", pattern: "config/../settings.yaml", create: true, wantErr: "invalid exact path"},
+		{name: "trailing slash", pattern: "config/", create: true, wantErr: "invalid exact path"},
+		{name: "windows path", pattern: `C:\settings.yaml`, create: true, wantErr: "invalid exact path"},
+		{name: "windows slash path", pattern: "C:/settings.yaml", create: true, wantErr: "invalid exact path"},
+		{name: "backslash parent", pattern: `..\settings.yaml`, create: true, wantErr: "invalid exact path"},
+		{name: "NUL path", pattern: "settings\x00.yaml", create: true, wantErr: "invalid exact path"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			fs := newTestFS(t)
+			if tt.original != "" {
+				withFile(tt.pattern, tt.original)(t, fs)
+			}
+			typeName := tt.typeName
+			if typeName == "" {
+				typeName = "exact"
+			}
+			expr := tt.expression
+			if expr == "" {
+				expr = expression
+			}
+			pattern := map[string]any{"type": typeName, "pattern": tt.pattern}
+			if tt.create {
+				pattern["create_if_needed"] = true
+			}
+			params := newModificationParams(withParams(map[string]any{
+				"expression": expr,
+				"patterns":   []any{pattern},
+			}))
+			params.bfs = fs
+			if tt.readErr != nil {
+				params.bfs = &yqReadErrorFS{Filesystem: fs, err: tt.readErr}
+			}
+			modifier, err := newYqExecute(params)
+			require.NoError(t, err)
+			actionParams := &interfaces.EvalStatusParams{Rule: &models.RuleInstance{}}
+			err = modifier.createFsModEntries(context.Background(), nil, actionParams)
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+				if tt.readErr != nil {
+					require.ErrorIs(t, err, tt.readErr)
+				}
+			} else {
+				require.NoError(t, err)
+			}
+			// Preparing entries (including failures) must not change the ingest filesystem.
+			files, err := fs.ReadDir(".")
+			require.NoError(t, err)
+			if tt.original == "" {
+				require.Empty(t, files)
+			} else {
+				require.Equal(t, tt.original, readYQTestFile(t, fs, tt.pattern))
+			}
+			if tt.wantErr != "" {
+				return
+			}
+			entries, err := modifier.modifyFs()
+			require.NoError(t, err)
+			if tt.want == "" {
+				require.Empty(t, entries)
+				return
+			}
+			require.Len(t, entries, 1)
+			require.Equal(t, tt.pattern, entries[0].Path)
+			require.Equal(t, tt.want, readYQTestFile(t, fs, tt.pattern))
+
+			// A fresh application to the resulting file must preserve the same bytes.
+			params.bfs = fs
+			modifier, err = newYqExecute(params)
+			require.NoError(t, err)
+			require.NoError(t, modifier.createFsModEntries(context.Background(), nil, actionParams))
+			_, err = modifier.modifyFs()
+			require.NoError(t, err)
+			require.Equal(t, tt.want, readYQTestFile(t, fs, tt.pattern))
+		})
+	}
+}
+
+type yqReadErrorFS struct {
+	billy.Filesystem
+	err error
+}
+
+func (fs *yqReadErrorFS) Open(string) (billy.File, error) {
+	return nil, fs.err
+}
+
+func readYQTestFile(t *testing.T, fs billy.Filesystem, path string) string {
+	t.Helper()
+	file, err := fs.Open(path)
+	require.NoError(t, err)
+	defer file.Close()
+	content, err := io.ReadAll(file)
+	require.NoError(t, err)
+	return string(content)
 }
 
 type testFileMap map[string]testFileContents

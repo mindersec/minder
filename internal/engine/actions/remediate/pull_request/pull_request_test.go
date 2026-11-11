@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -711,6 +712,67 @@ func TestPullRequestRemediate(t *testing.T) {
 
 			require.ErrorIs(t, err, tt.expectedErr, "expected error")
 			require.Equal(t, tt.expectedMetadata, retMeta)
+		})
+	}
+}
+
+func TestYQRemediationCreateFile(t *testing.T) {
+	t.Parallel()
+
+	const filename = ".github/config/settings.yaml"
+	for _, setting := range []models.ActionOpt{models.ActionOptOn, models.ActionOptDryRun} {
+		t.Run(setting.String(), func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			client := mockghclient.NewMockGitHub(ctrl)
+			if setting == models.ActionOptOn {
+				happyPathMockSetup(client)
+				client.EXPECT().CreatePullRequest(gomock.Any(), repoOwner, repoName, yqCommitTitle, yqPrBody,
+					refFromBranch(branchBaseName(yqCommitTitle, "")), dflBranchTo).
+					Return(&github.PullRequest{Number: github.Int(46)}, nil)
+			}
+
+			config := yqPrRem()
+			var err error
+			config.Params, err = structpb.NewStruct(map[string]any{
+				"expression": `.enabled = true`,
+				"patterns": []any{map[string]any{
+					"type": "exact", "pattern": filename, "create_if_needed": true,
+				}},
+			})
+			require.NoError(t, err)
+			engine, err := NewPullRequestRemediate(TestActionTypeValid, config, client, setting)
+			require.NoError(t, err)
+			repo, err := defaultMockRepoSetup(t)
+			require.NoError(t, err)
+			wt, err := repo.Worktree()
+			require.NoError(t, err)
+			params := &interfaces.EvalStatusParams{Rule: &models.RuleInstance{}}
+			params.SetIngestResult(&interfaces2.Ingested{Fs: wt.Filesystem, Storer: repo.Storer})
+			metadata, err := engine.Do(context.Background(), interfaces.ActionCmdOn,
+				&pb.Repository{Owner: repoOwner, Name: repoName}, params, nil)
+			if setting == models.ActionOptOn {
+				require.ErrorIs(t, err, errors.ErrActionPending)
+				require.JSONEq(t, `{"pr_number":46}`, string(metadata))
+				ref, err := repo.Reference(plumbing.NewBranchReferenceName(branchBaseName(yqCommitTitle, "")), true)
+				require.NoError(t, err)
+				commit, err := repo.CommitObject(ref.Hash())
+				require.NoError(t, err)
+				file, err := commit.File(filename)
+				require.NoError(t, err)
+				content, err := file.Contents()
+				require.NoError(t, err)
+				require.Equal(t, "enabled: true\n", content)
+			} else {
+				require.NoError(t, err)
+				require.Nil(t, metadata)
+			}
+			// Dry run never writes; real remediation restores the ingested main branch.
+			_, err = wt.Filesystem.Stat(filename)
+			require.ErrorIs(t, err, os.ErrNotExist)
+			head, err := repo.Head()
+			require.NoError(t, err)
+			require.Equal(t, plumbing.NewBranchReferenceName(dflBranchTo), head.Name())
 		})
 	}
 }

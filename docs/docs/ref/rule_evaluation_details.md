@@ -207,9 +207,20 @@ Minder supports four remediation actions:
    - `minder.yq.evaluate`: applies a
      [yq `expression`](https://mikefarah.gitbook.io/yq/) to files selected by a
      list of `patterns`. Each element in the `patterns` list is represented as:
-     `{"type": "glob", "pattern": "file/path/*"}`. `glob` is currently the only
-     supported pattern type. This action supports using Go templates in the
-     `expression` but not in the `pattern` selection.
+     `{"type": "glob", "pattern": "file/path/*"}` to update existing matching
+     files, or `{"type": "exact", "pattern": ".github/dependabot.yaml",
+     "create_if_needed": true}` to select a literal file path. Exact paths must
+     be relative to the repository, use `/` separators, and contain no empty,
+     `.` or `..` path components, backslashes, colons, or NUL bytes. Glob
+     metacharacters in an exact path are treated literally. With
+     `create_if_needed: true`, a
+     missing exact file is evaluated as an empty YAML document, and the file and
+     its parent directories are created when the remediation is applied.
+     Creation defaults to `false`: a missing exact file then returns an error.
+     Existing files retain their YAML comments; other read errors are returned.
+     The creation option has no effect on glob patterns, which continue to
+     select only existing matches. This action supports using Go templates in
+     the `expression` but not in the `pattern` selection.
 
    If the content modification produces a diff in the repository, Minder will
    open and manage a pull request against the branch used in the `git` ingest,
