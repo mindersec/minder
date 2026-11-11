@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.10.2">
 <title data-rh="true">Rule Evaluation in Depth | Minder docs</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://docs.mindersec.dev/img/Minder_darkMode.png"><meta data-rh="true" name="twitter:image" content="https://docs.mindersec.dev/img/Minder_darkMode.png"><meta data-rh="true" property="og:url" content="https://docs.mindersec.dev/ref/rule_evaluation_details"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Rule Evaluation in Depth | Minder docs"><meta data-rh="true" name="description" content="When evaluating a rule,"><meta data-rh="true" property="og:description" content="When evaluating a rule,"><link data-rh="true" rel="icon" href="/img/favicon.png"><link data-rh="true" rel="canonical" href="https://docs.mindersec.dev/ref/rule_evaluation_details"><link data-rh="true" rel="alternate" href="https://docs.mindersec.dev/ref/rule_evaluation_details" hreflang="en"><link data-rh="true" rel="alternate" href="https://docs.mindersec.dev/ref/rule_evaluation_details" hreflang="x-default"><link data-rh="true" rel="preconnect" href="https://F7OP01WFHV-dsn.algolia.net" crossorigin="anonymous"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Rule Evaluation in Depth","item":"https://docs.mindersec.dev/ref/rule_evaluation_details"}]}</script><link rel="search" type="application/opensearchdescription+xml" title="Minder docs" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.bdfa33c7.css">
-<script src="/assets/js/runtime~main.ffcfe69a.js" defer="defer"></script>
-<script src="/assets/js/main.1b11972c.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.667c31b1.js" defer="defer"></script>
+<script src="/assets/js/main.aa383438.js" defer="defer"></script>
 </head>
 <body>
 <svg style="display: none;"><defs>
@@ -203,6 +203,15 @@ list of <code>patterns</code>. Each element in the <code>patterns</code> list is
 <code>{&quot;type&quot;: &quot;glob&quot;, &quot;pattern&quot;: &quot;file/path/*&quot;}</code>. <code>glob</code> is currently the only
 supported pattern type. This action supports using Go templates in the
 <code>expression</code> but not in the <code>pattern</code> selection.</li>
+<li class=""><code>minder.delete</code>: deletes files matching the specified glob patterns. The
+<code>params</code> field accepts a list of <code>patterns</code>, where each element is
+represented as: <code>{&quot;type&quot;: &quot;glob&quot;, &quot;pattern&quot;: &quot;file/path/*&quot;}</code>. <code>glob</code> is
+currently the only supported pattern type. Files that do not exist are
+silently ignored.
+Note: glob patterns follow <code>filepath.Match</code> semantics; <code>**</code> is <strong>not</strong>
+treated as a recursive wildcard. Use <code>dir/*</code> to match files one level
+deep, or list explicit patterns for nested paths. Only files are deleted;
+directories matched by a pattern are silently skipped.</li>
 </ul>
 <p>If the content modification produces a diff in the repository, Minder will
 open and manage a pull request against the branch used in the <code>git</code> ingest,

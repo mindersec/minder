@@ -3660,6 +3660,8 @@ definitions:
           within a workflow
                                                     file and replaces the tag with the SHA
           -- minder.yq.evaluate - evaluates a yq expression on a file
+
+          -- minder.delete - deletes files matching the specified glob patterns
       params:
         type: object
         description: >-
