@@ -24,6 +24,7 @@ type fsEntry struct {
 	Path    string `json:"path"`
 	Content string `json:"content"`
 	Mode    string `json:"mode"`
+	Delete  bool   `json:"delete,omitempty"`
 }
 
 func (fe *fsEntry) write(fs billy.Filesystem) error {
@@ -72,6 +73,12 @@ func (fcs *fsChangeSet) writeEntries() error {
 	for i := range fcs.entries {
 		entry := fcs.entries[i]
 
+		if entry.Delete {
+			if err := fcs.fs.Remove(entry.Path); err != nil && !os.IsNotExist(err) {
+				return fmt.Errorf("cannot delete entry %s: %w", entry.Path, err)
+			}
+			continue
+		}
 		if err := entry.write(fcs.fs); err != nil {
 			return fmt.Errorf("cannot write entry %s: %w", entry.Path, err)
 		}

@@ -116,6 +116,36 @@ func frizbeePrRemWithExcludes(e []string) *pb.RuleType_Definition_Remediate_Pull
 	}
 }
 
+func deletePrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation {
+	return deletePrRemWithPattern(".github/workflows/*.yml")
+}
+
+func deletePrRemWithPattern(pattern string) *pb.RuleType_Definition_Remediate_PullRequestRemediation {
+	return &pb.RuleType_Definition_Remediate_PullRequestRemediation{
+		Method: "minder.delete",
+		Title:  "Delete workflow files",
+		Body:   "This PR deletes workflow files",
+		Params: &structpb.Struct{
+			Fields: map[string]*structpb.Value{
+				"patterns": {
+					Kind: &structpb.Value_ListValue{
+						ListValue: &structpb.ListValue{
+							Values: []*structpb.Value{
+								structpb.NewStructValue(&structpb.Struct{
+									Fields: map[string]*structpb.Value{
+										"pattern": structpb.NewStringValue(pattern),
+										"type":    structpb.NewStringValue("glob"),
+									},
+								}),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func yqPrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation {
 	return &pb.RuleType_Definition_Remediate_PullRequestRemediation{
 		Method: "minder.yq.evaluate",
@@ -626,6 +656,49 @@ func TestPullRequestRemediate(t *testing.T) {
 			remArgs:          createTestRemArgs(),
 			expectedErr:      errors.ErrActionPending,
 			expectedMetadata: json.RawMessage(`{"pr_number":45}`),
+		},
+		{
+			name: "delete files using minder.delete",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      deletePrRem(),
+				actionType: TestActionTypeValid,
+			},
+			remArgs:   createTestRemArgs(),
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(t *testing.T, mockGitHub *mockghclient.MockGitHub) {
+				t.Helper()
+
+				happyPathMockSetup(mockGitHub)
+
+				mockGitHub.EXPECT().
+					CreatePullRequest(
+						gomock.Any(),
+						repoOwner, repoName,
+						"Delete workflow files", "This PR deletes workflow files",
+						refFromBranch(branchBaseName("Delete workflow files", "")), dflBranchTo).
+					Return(&github.PullRequest{Number: github.Int(47)}, nil)
+			},
+			expectedErr:      errors.ErrActionPending,
+			expectedMetadata: json.RawMessage(`{"pr_number":47}`),
+		},
+		{
+			name: "delete with no matching files fails on empty commit",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      deletePrRemWithPattern(".github/workflows/*.yaml"),
+				actionType: TestActionTypeValid,
+			},
+			remArgs:   createTestRemArgs(),
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(t *testing.T, mockGitHub *mockghclient.MockGitHub) {
+				t.Helper()
+
+				mockGitHub.EXPECT().
+					GetName(gomock.Any()).Return("stacklok-bot", nil)
+				mockGitHub.EXPECT().
+					GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
+			},
+			expectedErr:      git.ErrEmptyCommit,
+			expectedMetadata: json.RawMessage(nil),
 		},
 		{
 			name: "open a PR with a rule name",
