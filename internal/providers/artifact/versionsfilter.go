@@ -58,7 +58,7 @@ func BuildFilter(tags []string, tagRegex string) (*filter, error) {
 
 // ErrTagsDoNotMatch is returned by IsSkippable when the artifact's tags do not
 // satisfy the configured tags or tag_regex.
-var ErrTagsDoNotMatch = errors.New("artifact tags does not match")
+var ErrTagsDoNotMatch = errors.New("artifact tags do not match")
 
 type filter struct {
 	tagMatcher

@@ -224,7 +224,7 @@ func (ov *OCI) GetArtifactVersions(
 	for _, t := range tags {
 		tagVersion, err := ov.getTagVersion(ctx, artifact.GetName(), t)
 		if err != nil {
-			if isNotFound(err) {
+			if errors.Is(err, provifv1.ErrArtifactTagNotFound) {
 				zerolog.Ctx(ctx).Info().
 					Str("name", artifact.GetName()).
 					Str("tag", t).
@@ -257,8 +257,8 @@ func (ov *OCI) GetArtifactVersions(
 
 // GetArtifactVersion returns the version a single tag currently points to,
 // resolved from the registry at call time. The version carries only that tag,
-// even when other tags share its digest. A deleted tag returns an error for
-// which IsNotFound is true.
+// even when other tags share its digest. A deleted tag returns an error
+// wrapping provifv1.ErrArtifactTagNotFound.
 func (ov *OCI) GetArtifactVersion(ctx context.Context, contname, tag string) (*minderv1.ArtifactVersion, error) {
 	return ov.getTagVersion(ctx, contname, tag)
 }
@@ -276,6 +276,9 @@ func (ov *OCI) getTagVersion(ctx context.Context, contname, tag string) (*minder
 		remote.WithUserAgent(constants.ServerUserAgent),
 	)
 	if err != nil {
+		if isNotFound(err) {
+			return nil, fmt.Errorf("failed to get descriptor for tag %s: %w: %w", tag, provifv1.ErrArtifactTagNotFound, err)
+		}
 		return nil, fmt.Errorf("failed to get descriptor for tag %s: %w", tag, err)
 	}
 
@@ -333,12 +336,6 @@ func resolveCreatedAt(man *v1.Manifest, configFile func() (*v1.ConfigFile, error
 	}
 
 	return cfg.Created.Time, nil
-}
-
-// IsNotFound reports whether err is a registry 404 / MANIFEST_UNKNOWN,
-// meaning the tag no longer exists.
-func IsNotFound(err error) bool {
-	return isNotFound(err)
 }
 
 // isNotFound returns true when err is a registry 404 / MANIFEST_UNKNOWN,

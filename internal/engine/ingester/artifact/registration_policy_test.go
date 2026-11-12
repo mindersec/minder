@@ -148,8 +148,7 @@ func TestRegisteredDockerHubArtifactEvaluation(t *testing.T) {
 			require.NoError(t, err)
 			ing.artifactVerifier = verifier
 
-			// TODO(#7089): drop tags once ingest uses the entity's own tag.
-			ingested, err := ing.Ingest(ctx, ent, map[string]any{"name": "myimage", "tags": []any{tt.tag}})
+			ingested, err := ing.Ingest(ctx, ent, map[string]any{"name": "myimage"})
 			require.NoError(t, err)
 			versions, ok := ingested.Object.([]imageInfo)
 			require.True(t, ok)

@@ -32,6 +32,7 @@ import (
 
 	artif "github.com/mindersec/minder/internal/providers/artifact"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 func TestResolveCreatedAt(t *testing.T) {
@@ -852,7 +853,7 @@ func TestGetArtifactVersion(t *testing.T) {
 		t.Parallel()
 		_, err := o.GetArtifactVersion(context.Background(), "myimage", "nope")
 		require.Error(t, err)
-		assert.True(t, IsNotFound(err), "want not-found error, got %v", err)
+		assert.ErrorIs(t, err, provifv1.ErrArtifactTagNotFound)
 	})
 }
 

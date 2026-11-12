@@ -16,7 +16,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	artif "github.com/mindersec/minder/internal/providers/artifact"
-	"github.com/mindersec/minder/internal/providers/oci"
 	"github.com/mindersec/minder/internal/verifier"
 	"github.com/mindersec/minder/internal/verifier/sigstore/container"
 	"github.com/mindersec/minder/internal/verifier/verifyif"
@@ -150,8 +149,13 @@ func (i *Ingest) getApplicableArtifactVersions(
 
 	var versions []*pb.ArtifactVersion
 	tagProv, isTagProv := i.prov.(provifv1.OCITagVersionProvider)
-	tag, hasTag := entityTag(artifact)
-	if isTagProv && hasTag {
+	var tag string
+	var hasTag bool
+	if isTagProv {
+		// The provider owns its artifact identity format, so it extracts the tag.
+		tag, hasTag = tagProv.ArtifactTag(artifact)
+	}
+	if hasTag {
 		// The entity is one repo:tag, so evaluate only the version that tag points to now.
 		version, err := getOwnTagVersion(ctx, cfg, tagProv, artifact, tag)
 		if err != nil {
@@ -184,22 +188,6 @@ func (i *Ingest) getApplicableArtifactVersions(
 	return result, digest, nil
 }
 
-// entityTag returns the tag of a repo:tag artifact entity. DockerHub and Quay
-// set ArtifactPk to "<name>:<tag>". It returns false for any other form, such
-// as an entity registered before the repo:tag identity ("<name>@<digest>"),
-// which keeps using the repository-wide path until it is refreshed.
-func entityTag(artifact *pb.Artifact) (string, bool) {
-	name := artifact.GetName()
-	if name == "" {
-		return "", false
-	}
-	tag, ok := strings.CutPrefix(artifact.GetArtifactPk(), name+":")
-	if !ok || tag == "" || strings.ContainsAny(tag, ":@/") {
-		return "", false
-	}
-	return tag, true
-}
-
 // getOwnTagVersion resolves the entity's own tag to its current version and
 // checks it against the rule's filters. A tag that does not match the rule's
 // tags or tag_regex skips the rule silently, since the rule targets other tags.
@@ -209,7 +197,8 @@ func entityTag(artifact *pb.Artifact) (string, bool) {
 // Known limitation: the version carries only the entity's own tag, even when
 // other tags point to the same digest. A rule listing several tags
 // (tags: [a, b]) needs all of them on one version, so it never matches a
-// repo:tag entity and is always skipped.
+// repo:tag entity and is always skipped. That skip is logged at info level so
+// the lost coverage is discoverable; tag_regex can match several tags instead.
 func getOwnTagVersion(
 	ctx context.Context,
 	cfg *ingesterConfig,
@@ -224,7 +213,12 @@ func getOwnTagVersion(
 
 	version, err := prov.GetArtifactVersion(ctx, artifact.GetName(), tag)
 	if err != nil {
-		if oci.IsNotFound(err) {
+		// Intentionally a failure, unlike the repository-wide path, which just
+		// drops a deleted tag from its listing: here the deleted tag is the
+		// entity itself, so it fails every evaluation until the entity is
+		// removed. Reconciling registered tags against the registry is the
+		// follow-up in #7090 (Reminder coverage for artifact entities).
+		if errors.Is(err, provifv1.ErrArtifactTagNotFound) {
 			return nil, evalerrors.NewErrEvaluationFailed("artifact tag %s:%s no longer exists", artifact.GetName(), tag)
 		}
 		return nil, fmt.Errorf("error retrieving artifact version for tag %s: %w", tag, err)
@@ -232,6 +226,13 @@ func getOwnTagVersion(
 
 	if err := filter.IsSkippable(version.GetCreatedAt().AsTime(), version.GetTags()); err != nil {
 		if errors.Is(err, artif.ErrTagsDoNotMatch) {
+			if len(cfg.Tags) > 1 {
+				zerolog.Ctx(ctx).Info().
+					Str("artifact", artifact.GetName()).
+					Str("tag", tag).
+					Strs("rule_tags", cfg.Tags).
+					Msg("skipping artifact rule: a multi-tag rule can't match a single-tag entity; use tag_regex instead")
+			}
 			return nil, evalerrors.NewErrEvaluationSkipSilently("artifact tag %s does not match the rule's tags", tag)
 		}
 		return nil, evalerrors.NewErrEvaluationFailed("artifact version not applicable: %s", err)

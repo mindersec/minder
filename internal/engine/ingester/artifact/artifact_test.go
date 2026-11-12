@@ -4,13 +4,14 @@
 package artifact
 
 import (
+	"bytes"
 	"context"
 	"errors"
-	"net/http"
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
+	"github.com/rs/zerolog"
 	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -358,6 +359,8 @@ func TestArtifactIngestDockerHub(t *testing.T) {
 	mockVerifier := mockverify.NewMockArtifactVerifier(ctrl)
 
 	mockOCI.EXPECT().GetRegistry().Return(dh.GetRegistry()).AnyTimes()
+	// Use the provider's real tag extraction for the artifact it built.
+	mockOCI.EXPECT().ArtifactTag(art).DoAndReturn(dh.ArtifactTag)
 	mockOCI.EXPECT().
 		GetArtifactVersion(gomock.Any(), "myimage", "v1.2").
 		Return(&pb.ArtifactVersion{Sha: digest, Tags: []string{"v1.2"}, CreatedAt: timestamppb.New(time.Now())}, nil)
@@ -416,6 +419,8 @@ func TestArtifactIngestOwnTagFilters(t *testing.T) {
 		getErr   error
 		wantErr  error
 		wantPass bool
+		// wantLog is a substring of the info-level log the skip must emit.
+		wantLog string
 	}{
 		{name: "matching tag passes", tag: "v1",
 			params:   map[string]any{"name": "myimage", "tags": []any{"v1"}},
@@ -434,10 +439,11 @@ func TestArtifactIngestOwnTagFilters(t *testing.T) {
 			version: &pb.ArtifactVersion{Sha: "sha256:aaa", Tags: []string{"dev"}, CreatedAt: recent},
 			wantErr: evalerrors.ErrEvaluationSkipSilently},
 		// Known limitation: a multi-tag rule never matches one repo:tag entity.
-		{name: "multi-tag rule skips silently", tag: "a",
+		{name: "multi-tag rule skips silently and logs it", tag: "a",
 			params:  map[string]any{"name": "myimage", "tags": []any{"a", "b"}},
 			version: &pb.ArtifactVersion{Sha: "sha256:aaa", Tags: []string{"a"}, CreatedAt: recent},
-			wantErr: evalerrors.ErrEvaluationSkipSilently},
+			wantErr: evalerrors.ErrEvaluationSkipSilently,
+			wantLog: "use tag_regex instead"},
 		{name: "expired image fails", tag: "v1",
 			params:  map[string]any{"name": "myimage"},
 			version: &pb.ArtifactVersion{Sha: "sha256:aaa", Tags: []string{"v1"}, CreatedAt: expired},
@@ -448,7 +454,7 @@ func TestArtifactIngestOwnTagFilters(t *testing.T) {
 			wantErr: interfaces.ErrEvaluationFailed},
 		{name: "deleted tag fails", tag: "v1",
 			params:  map[string]any{"name": "myimage"},
-			getErr:  &transport.Error{StatusCode: http.StatusNotFound},
+			getErr:  fmt.Errorf("failed to get descriptor for tag v1: %w", provinfv1.ErrArtifactTagNotFound),
 			wantErr: interfaces.ErrEvaluationFailed},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -459,6 +465,7 @@ func TestArtifactIngestOwnTagFilters(t *testing.T) {
 			mockVerifier := mockverify.NewMockArtifactVerifier(ctrl)
 
 			mockOCI.EXPECT().GetRegistry().Return("docker.io").AnyTimes()
+			mockOCI.EXPECT().ArtifactTag(gomock.Any()).DoAndReturn((&oci.OCI{}).ArtifactTag)
 			mockOCI.EXPECT().GetArtifactVersion(gomock.Any(), "myimage", tt.tag).Return(tt.version, tt.getErr)
 			mockOCI.EXPECT().GetArtifactVersions(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 			if tt.wantPass {
@@ -472,8 +479,17 @@ func TestArtifactIngestOwnTagFilters(t *testing.T) {
 			require.NoError(t, err)
 			ing.artifactVerifier = mockVerifier
 
+			var logs bytes.Buffer
+			ctx := zerolog.New(&logs).Level(zerolog.InfoLevel).WithContext(context.Background())
+
 			art := &pb.Artifact{ArtifactPk: "myimage:" + tt.tag, Owner: "testns", Name: "myimage", Type: "container"}
-			got, err := ing.Ingest(context.Background(), art, tt.params)
+			got, err := ing.Ingest(ctx, art, tt.params)
+			if tt.wantLog != "" {
+				require.Contains(t, logs.String(), tt.wantLog)
+			} else {
+				require.NotContains(t, logs.String(), "use tag_regex instead",
+					"only a multi-tag rule should log its skip")
+			}
 			if !tt.wantPass {
 				require.ErrorIs(t, err, tt.wantErr)
 				require.Nil(t, got)
@@ -500,6 +516,7 @@ func TestArtifactIngestLegacyDigestIdentity(t *testing.T) {
 	art := &pb.Artifact{ArtifactPk: "myimage@" + digest, Owner: "testns", Name: "myimage", Type: "container"}
 
 	mockOCI.EXPECT().GetRegistry().Return("docker.io").AnyTimes()
+	mockOCI.EXPECT().ArtifactTag(art).DoAndReturn((&oci.OCI{}).ArtifactTag)
 	mockOCI.EXPECT().GetArtifactVersion(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 	mockOCI.EXPECT().GetArtifactVersions(gomock.Any(), art, gomock.Any()).
 		Return([]*pb.ArtifactVersion{{Sha: digest, Tags: []string{"v1"}, CreatedAt: timestamppb.New(time.Now())}}, nil)
@@ -514,33 +531,6 @@ func TestArtifactIngestLegacyDigestIdentity(t *testing.T) {
 	got, err := ing.Ingest(context.Background(), art, map[string]any{"name": "myimage"})
 	require.NoError(t, err)
 	require.Nil(t, got.Checkpoint.Checkpoint.Digest)
-}
-
-func TestEntityTag(t *testing.T) {
-	t.Parallel()
-
-	for _, tt := range []struct {
-		name    string
-		art     *pb.Artifact
-		wantTag string
-		wantOK  bool
-	}{
-		{name: "repo:tag", art: &pb.Artifact{Name: "myimage", ArtifactPk: "myimage:v1.2"}, wantTag: "v1.2", wantOK: true},
-		{name: "nested repo", art: &pb.Artifact{Name: "team/app", ArtifactPk: "team/app:latest"},
-			wantTag: "latest", wantOK: true},
-		{name: "legacy repo@digest", art: &pb.Artifact{Name: "myimage", ArtifactPk: "myimage@sha256:abc"}},
-		{name: "pk for another repo", art: &pb.Artifact{Name: "myimage", ArtifactPk: "other:v1"}},
-		{name: "empty tag", art: &pb.Artifact{Name: "myimage", ArtifactPk: "myimage:"}},
-		{name: "GHCR numeric pk", art: &pb.Artifact{Name: "myimage", ArtifactPk: "12345"}},
-		{name: "empty name", art: &pb.Artifact{ArtifactPk: ":v1"}},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			tag, ok := entityTag(tt.art)
-			require.Equal(t, tt.wantOK, ok)
-			require.Equal(t, tt.wantTag, tag)
-		})
-	}
 }
 
 func TestGetRegistryForProvider(t *testing.T) {

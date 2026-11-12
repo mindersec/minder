@@ -2948,6 +2948,21 @@ func (m *MockOCITagVersionProvider) EXPECT() *MockOCITagVersionProviderMockRecor
 	return m.recorder
 }
 
+// ArtifactTag mocks base method.
+func (m *MockOCITagVersionProvider) ArtifactTag(artifact *v10.Artifact) (string, bool) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ArtifactTag", artifact)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(bool)
+	return ret0, ret1
+}
+
+// ArtifactTag indicates an expected call of ArtifactTag.
+func (mr *MockOCITagVersionProviderMockRecorder) ArtifactTag(artifact any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArtifactTag", reflect.TypeOf((*MockOCITagVersionProvider)(nil).ArtifactTag), artifact)
+}
+
 // CanImplement mocks base method.
 func (m *MockOCITagVersionProvider) CanImplement(trait v10.ProviderType) bool {
 	m.ctrl.T.Helper()

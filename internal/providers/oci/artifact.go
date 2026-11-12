@@ -70,13 +70,37 @@ func NewArtifactProperties(name, namespace, registry, digest string) (*propertie
 
 	return properties.NewProperties(map[string]any{
 		properties.PropertyName:         name,
-		properties.PropertyUpstreamID:   repo + ":" + tag,
+		properties.PropertyUpstreamID:   upstreamID(repo, tag),
 		properties.ArtifactPropertyType: string(verifyif.ArtifactTypeContainer),
 		ArtifactPropertyRepository:      path.Join(namespace, repo),
 		ArtifactPropertyNamespace:       namespace,
 		ArtifactPropertyRegistry:        registry,
 		ArtifactPropertyDigest:          digest,
 	}), nil
+}
+
+// upstreamID returns the upstream ID of a container artifact entity, "repo:tag".
+// ArtifactTag parses it back, so the two must change together.
+func upstreamID(repo, tag string) string {
+	return repo + ":" + tag
+}
+
+// ArtifactTag returns the tag of a repo:tag artifact entity, read from the
+// "<name>:<tag>" ArtifactPk that NewArtifactProperties and
+// ArtifactV1FromProperties produce. It returns false for any other form, such
+// as an entity registered before the repo:tag identity ("<name>@<digest>"),
+// so the caller can fall back to the repository-wide path until the entity is
+// refreshed.
+func (*OCI) ArtifactTag(artifact *minderv1.Artifact) (string, bool) {
+	name := artifact.GetName()
+	if name == "" {
+		return "", false
+	}
+	tag, ok := strings.CutPrefix(artifact.GetArtifactPk(), upstreamID(name, ""))
+	if !ok || tag == "" || strings.ContainsAny(tag, ":@/") {
+		return "", false
+	}
+	return tag, true
 }
 
 // ArtifactV1FromProperties converts container artifact properties to a minder v1 Artifact.
