@@ -63,6 +63,12 @@ func New(cred provifv1.Credential, registry, baseURL string, opts ...Option) *OC
 	return o
 }
 
+// RegistryAuthenticator returns the authenticator set with
+// WithRegistryAuthenticator, or nil when registry calls are anonymous.
+func (o *OCI) RegistryAuthenticator() authn.Authenticator {
+	return o.registryAuth
+}
+
 // remoteOptions returns the options shared by every registry call.
 func (o *OCI) remoteOptions(ctx context.Context, extra ...remote.Option) []remote.Option {
 	auth := o.registryAuth

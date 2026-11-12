@@ -252,6 +252,10 @@ type GitHub interface {
 	ArtifactProvider
 
 	GetCredential() GitHubCredential
+	// GetContainerAuthenticator returns the authenticator for GHCR requests
+	// made on behalf of owner. It is anonymous when the provider's credential
+	// can't authenticate to GHCR (e.g. a GitHub App installation token).
+	GetContainerAuthenticator(owner string) authn.Authenticator
 	GetRepository(context.Context, string, string) (*github.Repository, error)
 	GetBranchProtection(context.Context, string, string, string) (*github.Protection, error)
 	UpdateBranchProtection(context.Context, string, string, string, *github.ProtectionRequest) error

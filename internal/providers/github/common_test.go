@@ -23,7 +23,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/providers/github/ghcr"
 	mock_github "github.com/mindersec/minder/internal/providers/github/mock"
 	"github.com/mindersec/minder/internal/providers/oci"
 	mock_ratecache "github.com/mindersec/minder/internal/providers/ratecache/mock"
@@ -1678,16 +1677,55 @@ func TestGetRegistry(t *testing.T) {
 	assert.Equal(t, container.GHCRRegistry, th.gh.GetRegistry())
 }
 
-func TestGetAuthenticator(t *testing.T) {
+// TestGHCRAuthByProviderClass checks that only an OAuth/PAT-backed provider
+// (class "github") sends its token to GHCR. GHCR doesn't accept GitHub App
+// installation tokens, so an App-backed provider stays anonymous on every path:
+// registry calls, GetAuthenticator, and the verifier's GetContainerAuthenticator.
+func TestGHCRAuthByProviderClass(t *testing.T) {
 	t.Parallel()
 
-	th := setupTest(t)
-	th.gh.ghcrwrap = ghcr.FromGitHubClient(th.client, "test-owner")
-	th.delegate.EXPECT().GetCredential().Return(&mockCredential{})
+	for _, tt := range []struct {
+		name         string
+		class        db.ProviderClass
+		wantRegistry authn.Authenticator
+		wantAuth     authn.Authenticator
+		wantVerifier authn.Authenticator
+	}{
+		{
+			name:         "OAuth/PAT provider sends its token",
+			class:        db.ProviderClassGithub,
+			wantRegistry: &authn.Basic{Username: "test-owner", Password: "mock-token"},
+			wantAuth:     &authn.Basic{Username: "test-owner", Password: "mock-token"},
+			wantVerifier: &authn.Basic{Username: "image-owner", Password: "mock-token"},
+		},
+		{
+			name:         "App provider stays anonymous",
+			class:        db.ProviderClassGithubApp,
+			wantRegistry: nil,
+			wantAuth:     authn.Anonymous,
+			wantVerifier: authn.Anonymous,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	authenticator, err := th.gh.GetAuthenticator()
-	require.NoError(t, err)
-	assert.Equal(t, &authn.Basic{Username: "test-owner", Password: "mock-token"}, authenticator)
+			ctrl := gomock.NewController(t)
+			delegate := mock_github.NewMockDelegate(ctrl)
+			delegate.EXPECT().GetOwner().Return("test-owner").AnyTimes()
+			delegate.EXPECT().GetCredential().Return(&mockCredential{}).AnyTimes()
+
+			client := github.NewClient(nil)
+			gh := NewGitHub(client, client, nil, delegate, tt.class, nil, nil, nil)
+
+			assert.Equal(t, tt.wantRegistry, gh.ghcrOCI.RegistryAuthenticator(), "registry calls")
+
+			auth, err := gh.GetAuthenticator()
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantAuth, auth, "GetAuthenticator")
+
+			assert.Equal(t, tt.wantVerifier, gh.GetContainerAuthenticator("image-owner"), "GetContainerAuthenticator")
+		})
+	}
 }
 
 func TestOCIDelegation(t *testing.T) {
