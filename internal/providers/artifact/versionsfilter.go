@@ -5,6 +5,7 @@
 package artifact
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"time"
@@ -55,6 +56,10 @@ func BuildFilter(tags []string, tagRegex string) (*filter, error) {
 	}, nil
 }
 
+// ErrTagsDoNotMatch is returned by IsSkippable when the artifact's tags do not
+// satisfy the configured tags or tag_regex.
+var ErrTagsDoNotMatch = errors.New("artifact tags does not match")
+
 type filter struct {
 	tagMatcher
 	retentionPeriod time.Time
@@ -84,7 +89,7 @@ func (f *filter) IsSkippable(createdAt time.Time, tags []string) error {
 	}
 	// if the artifact tags don't match the tag matcher, skip it
 	if !f.MatchTag(tags...) {
-		return fmt.Errorf("artifact tags does not match")
+		return ErrTagsDoNotMatch
 	}
 	return nil
 }

@@ -358,6 +358,18 @@ type OCI interface {
 	GetRawManifest(ctx context.Context, name, digest string) (*RawManifest, error)
 }
 
+// OCITagVersionProvider is an OCI provider whose artifact entities are a
+// single repo:tag (DockerHub, Quay). It can resolve one tag to its current
+// version without listing the whole repository.
+type OCITagVersionProvider interface {
+	OCI
+
+	// GetArtifactVersion returns the version the given tag currently points
+	// to, with its digest and creation time resolved from the registry at
+	// call time. The returned version carries only the given tag.
+	GetArtifactVersion(ctx context.Context, name, tag string) (*minderv1.ArtifactVersion, error)
+}
+
 // ParseAndValidate parses the given provider configuration and validates it.
 func ParseAndValidate(rawConfig json.RawMessage, to any) error {
 	if err := json.Unmarshal(rawConfig, to); err != nil {

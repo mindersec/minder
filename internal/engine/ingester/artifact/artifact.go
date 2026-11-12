@@ -6,6 +6,7 @@ package artifact
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	artif "github.com/mindersec/minder/internal/providers/artifact"
+	"github.com/mindersec/minder/internal/providers/oci"
 	"github.com/mindersec/minder/internal/verifier"
 	"github.com/mindersec/minder/internal/verifier/sigstore/container"
 	"github.com/mindersec/minder/internal/verifier/verifyif"
@@ -114,55 +116,128 @@ func (i *Ingest) Ingest(
 	}
 
 	// Filter the versions of the artifact that are applicable to this rule
-	applicable, err := i.getApplicableArtifactVersions(ctx, artifact, cfg)
+	applicable, digest, err := i.getApplicableArtifactVersions(ctx, artifact, cfg)
 	if err != nil {
 		// Take into consideration that the returned error is later wrapped in an error of type evalerrors
 		return nil, err
 	}
 
+	// A repo:tag entity (DockerHub, Quay) evaluates exactly one digest, so the
+	// checkpoint records it. Other artifacts (e.g. GHCR packages) may evaluate
+	// several digests at once, so they only record the time.
+	checkpoint := checkpoints.NewCheckpointV1Now()
+	if digest != "" {
+		checkpoint = checkpoint.WithDigest(digest)
+	}
+
 	return &interfaces.Ingested{
-		Object: applicable,
-		// We would ideally return an artifact's digest here, but
-		// the current state of the artifact ingester is actually evaluating
-		// multiple artifacts at the same time. This is not ideal, ideally
-		// we should evaluate one impulse at a time. This has to be fixed,
-		// but for now we return the current time as the checkpoint.
-		// We need to track the "impulse" that triggered the evaluation
-		// so we can return the correct checkpoint.
-		Checkpoint: checkpoints.NewCheckpointV1Now(),
+		Object:     applicable,
+		Checkpoint: checkpoint,
 	}, nil
 }
 
+// getApplicableArtifactVersions returns the provenance info for the artifact
+// versions that apply to this rule. When the entity is a single repo:tag, it
+// also returns the digest that tag resolved to; otherwise digest is empty.
 func (i *Ingest) getApplicableArtifactVersions(
 	ctx context.Context,
 	artifact *pb.Artifact,
 	cfg *ingesterConfig,
-) ([]imageInfo, error) {
+) (result []imageInfo, digest string, err error) {
 	if err := validateConfiguration(artifact, cfg); err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	vers, err := interfaces.As[provifv1.ArtifactProvider](i.prov)
-	if err != nil {
-		return nil, err
-	}
+	var versions []*pb.ArtifactVersion
+	tagProv, isTagProv := i.prov.(provifv1.OCITagVersionProvider)
+	tag, hasTag := entityTag(artifact)
+	if isTagProv && hasTag {
+		// The entity is one repo:tag, so evaluate only the version that tag points to now.
+		version, err := getOwnTagVersion(ctx, cfg, tagProv, artifact, tag)
+		if err != nil {
+			return nil, "", err
+		}
+		versions = []*pb.ArtifactVersion{version}
+		digest = version.GetSha()
+	} else {
+		vers, err := interfaces.As[provifv1.ArtifactProvider](i.prov)
+		if err != nil {
+			return nil, "", err
+		}
 
-	// Get all artifact versions filtering out those that don't apply to this rule
-	versions, err := getAndFilterArtifactVersions(ctx, cfg, vers, artifact)
-	if err != nil {
-		return nil, err
+		// Get all artifact versions filtering out those that don't apply to this rule
+		versions, err = getAndFilterArtifactVersions(ctx, cfg, vers, artifact)
+		if err != nil {
+			return nil, "", err
+		}
 	}
 
 	// Get the identity and provenance info for all artifact versions that apply to this rule
-	result, err := i.getVerificationResult(ctx, cfg, artifact, versions)
+	result, err = i.getVerificationResult(ctx, cfg, artifact, versions)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	zerolog.Ctx(ctx).Debug().Any("result", result).Msg("ingestion result")
 
 	// Return the list of provenance info for all applicable artifact versions
-	return result, nil
+	return result, digest, nil
+}
+
+// entityTag returns the tag of a repo:tag artifact entity. DockerHub and Quay
+// set ArtifactPk to "<name>:<tag>". It returns false for any other form, such
+// as an entity registered before the repo:tag identity ("<name>@<digest>"),
+// which keeps using the repository-wide path until it is refreshed.
+func entityTag(artifact *pb.Artifact) (string, bool) {
+	name := artifact.GetName()
+	if name == "" {
+		return "", false
+	}
+	tag, ok := strings.CutPrefix(artifact.GetArtifactPk(), name+":")
+	if !ok || tag == "" || strings.ContainsAny(tag, ":@/") {
+		return "", false
+	}
+	return tag, true
+}
+
+// getOwnTagVersion resolves the entity's own tag to its current version and
+// checks it against the rule's filters. A tag that does not match the rule's
+// tags or tag_regex skips the rule silently, since the rule targets other tags.
+// Any other filter rejection (e.g. the image is older than the retention
+// period) fails the evaluation, as it does on the repository-wide path.
+//
+// Known limitation: the version carries only the entity's own tag, even when
+// other tags point to the same digest. A rule listing several tags
+// (tags: [a, b]) needs all of them on one version, so it never matches a
+// repo:tag entity and is always skipped.
+func getOwnTagVersion(
+	ctx context.Context,
+	cfg *ingesterConfig,
+	prov provifv1.OCITagVersionProvider,
+	artifact *pb.Artifact,
+	tag string,
+) (*pb.ArtifactVersion, error) {
+	filter, err := artif.BuildFilter(cfg.Tags, cfg.TagRegex)
+	if err != nil {
+		return nil, fmt.Errorf("error building filter from artifact ingester config: %w", err)
+	}
+
+	version, err := prov.GetArtifactVersion(ctx, artifact.GetName(), tag)
+	if err != nil {
+		if oci.IsNotFound(err) {
+			return nil, evalerrors.NewErrEvaluationFailed("artifact tag %s:%s no longer exists", artifact.GetName(), tag)
+		}
+		return nil, fmt.Errorf("error retrieving artifact version for tag %s: %w", tag, err)
+	}
+
+	if err := filter.IsSkippable(version.GetCreatedAt().AsTime(), version.GetTags()); err != nil {
+		if errors.Is(err, artif.ErrTagsDoNotMatch) {
+			return nil, evalerrors.NewErrEvaluationSkipSilently("artifact tag %s does not match the rule's tags", tag)
+		}
+		return nil, evalerrors.NewErrEvaluationFailed("artifact version not applicable: %s", err)
+	}
+
+	return version, nil
 }
 
 func validateConfiguration(

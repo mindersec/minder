@@ -6,9 +6,11 @@ package artifact
 import (
 	"context"
 	"errors"
+	"net/http"
 	"testing"
 	"time"
 
+	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -28,6 +30,7 @@ import (
 	mockverify "github.com/mindersec/minder/internal/verifier/verifyif/mock"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 	mock_v1 "github.com/mindersec/minder/pkg/providers/v1/mock"
 )
@@ -308,6 +311,8 @@ func TestArtifactIngestMatching(t *testing.T) {
 
 			if tt.wantNonNilRes {
 				require.NotNil(t, got, "expected non-nil result")
+				require.Nil(t, got.Checkpoint.Checkpoint.Digest,
+					"a GHCR package can span several digests, so its checkpoint has none")
 			} else {
 				require.Nil(t, got, "expected nil result")
 			}
@@ -324,7 +329,8 @@ func TestArtifactIngestMatching(t *testing.T) {
 }
 
 // TestArtifactIngestDockerHub runs an artifact converted by the DockerHub
-// provider through Ingest and checks the image ref the verifier would resolve.
+// provider through Ingest. A repo:tag entity evaluates only the version its own
+// tag points to, and the checkpoint records that digest.
 func TestArtifactIngestDockerHub(t *testing.T) {
 	t.Parallel()
 
@@ -337,24 +343,26 @@ func TestArtifactIngestDockerHub(t *testing.T) {
 		&pb.DockerHubProviderConfig{Namespace: proto.String(namespace)})
 	require.NoError(t, err)
 
-	props, err := oci.NewArtifactProperties("myimage:v1.2", namespace, dh.GetRegistry(), digest)
+	// The stored oci/digest is stale; ingestion must use the digest resolved now.
+	props, err := oci.NewArtifactProperties("myimage:v1.2", namespace, dh.GetRegistry(), "sha256:stale")
 	require.NoError(t, err)
 
 	msg, err := dh.PropertiesToProtoMessage(pb.Entity_ENTITY_ARTIFACTS, props)
 	require.NoError(t, err)
 	art, ok := msg.(*pb.Artifact)
 	require.True(t, ok, "expected *pb.Artifact, got %T", msg)
+	require.Empty(t, art.GetVersions(), "the public artifact proto must not carry versions")
 
 	ctrl := gomock.NewController(t)
-	mockOCI := mock_v1.NewMockOCI(ctrl)
+	mockOCI := mock_v1.NewMockOCITagVersionProvider(ctrl)
 	mockVerifier := mockverify.NewMockArtifactVerifier(ctrl)
 
 	mockOCI.EXPECT().GetRegistry().Return(dh.GetRegistry()).AnyTimes()
 	mockOCI.EXPECT().
-		GetArtifactVersions(gomock.Any(), art, gomock.Any()).
-		Return([]*pb.ArtifactVersion{
-			{Sha: digest, Tags: []string{"v1.2"}, CreatedAt: timestamppb.New(time.Now())},
-		}, nil)
+		GetArtifactVersion(gomock.Any(), "myimage", "v1.2").
+		Return(&pb.ArtifactVersion{Sha: digest, Tags: []string{"v1.2"}, CreatedAt: timestamppb.New(time.Now())}, nil)
+	// The scoped path never lists the repository.
+	mockOCI.EXPECT().GetArtifactVersions(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 	mockOCI.EXPECT().
 		GetRawManifest(gomock.Any(), "myimage", digest).
 		Return(nil, errors.New("not needed"))
@@ -386,6 +394,153 @@ func TestArtifactIngestDockerHub(t *testing.T) {
 		Tags:       []string{"v1.2"},
 		Digest:     digest,
 	}, results[0].Identity)
+
+	require.NotNil(t, got.Checkpoint.Checkpoint.Digest)
+	require.Equal(t, digest, *got.Checkpoint.Checkpoint.Digest)
+}
+
+// TestArtifactIngestOwnTagFilters checks how the rule's filters apply to the
+// entity's own tag: a tag that does not match skips silently, while any other
+// rejection still fails the evaluation.
+func TestArtifactIngestOwnTagFilters(t *testing.T) {
+	t.Parallel()
+
+	recent := timestamppb.New(time.Now())
+	expired := timestamppb.New(provinfv1.ArtifactTypeContainerRetentionPeriod.AddDate(0, -1, 0))
+
+	for _, tt := range []struct {
+		name     string
+		tag      string
+		params   map[string]any
+		version  *pb.ArtifactVersion
+		getErr   error
+		wantErr  error
+		wantPass bool
+	}{
+		{name: "matching tag passes", tag: "v1",
+			params:   map[string]any{"name": "myimage", "tags": []any{"v1"}},
+			version:  &pb.ArtifactVersion{Sha: "sha256:aaa", Tags: []string{"v1"}, CreatedAt: recent},
+			wantPass: true},
+		{name: "matching tag regex passes", tag: "v1.2.3",
+			params:   map[string]any{"name": "myimage", "tag_regex": `^v1\.`},
+			version:  &pb.ArtifactVersion{Sha: "sha256:aaa", Tags: []string{"v1.2.3"}, CreatedAt: recent},
+			wantPass: true},
+		{name: "non-matching tag skips silently", tag: "dev",
+			params:  map[string]any{"name": "myimage", "tags": []any{"latest"}},
+			version: &pb.ArtifactVersion{Sha: "sha256:aaa", Tags: []string{"dev"}, CreatedAt: recent},
+			wantErr: evalerrors.ErrEvaluationSkipSilently},
+		{name: "non-matching tag regex skips silently", tag: "dev",
+			params:  map[string]any{"name": "myimage", "tag_regex": "^v"},
+			version: &pb.ArtifactVersion{Sha: "sha256:aaa", Tags: []string{"dev"}, CreatedAt: recent},
+			wantErr: evalerrors.ErrEvaluationSkipSilently},
+		// Known limitation: a multi-tag rule never matches one repo:tag entity.
+		{name: "multi-tag rule skips silently", tag: "a",
+			params:  map[string]any{"name": "myimage", "tags": []any{"a", "b"}},
+			version: &pb.ArtifactVersion{Sha: "sha256:aaa", Tags: []string{"a"}, CreatedAt: recent},
+			wantErr: evalerrors.ErrEvaluationSkipSilently},
+		{name: "expired image fails", tag: "v1",
+			params:  map[string]any{"name": "myimage"},
+			version: &pb.ArtifactVersion{Sha: "sha256:aaa", Tags: []string{"v1"}, CreatedAt: expired},
+			wantErr: interfaces.ErrEvaluationFailed},
+		{name: "signature tag fails", tag: "sha256-aaa.sig",
+			params:  map[string]any{"name": "myimage"},
+			version: &pb.ArtifactVersion{Sha: "sha256:aaa", Tags: []string{"sha256-aaa.sig"}, CreatedAt: recent},
+			wantErr: interfaces.ErrEvaluationFailed},
+		{name: "deleted tag fails", tag: "v1",
+			params:  map[string]any{"name": "myimage"},
+			getErr:  &transport.Error{StatusCode: http.StatusNotFound},
+			wantErr: interfaces.ErrEvaluationFailed},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			mockOCI := mock_v1.NewMockOCITagVersionProvider(ctrl)
+			mockVerifier := mockverify.NewMockArtifactVerifier(ctrl)
+
+			mockOCI.EXPECT().GetRegistry().Return("docker.io").AnyTimes()
+			mockOCI.EXPECT().GetArtifactVersion(gomock.Any(), "myimage", tt.tag).Return(tt.version, tt.getErr)
+			mockOCI.EXPECT().GetArtifactVersions(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+			if tt.wantPass {
+				mockOCI.EXPECT().GetRawManifest(gomock.Any(), "myimage", tt.version.Sha).
+					Return(nil, errors.New("not needed"))
+				mockVerifier.EXPECT().Verify(gomock.Any(), verifyif.ArtifactTypeContainer,
+					"testns", "myimage", tt.version.Sha).Return([]verifyif.Result{{}}, nil)
+			}
+
+			ing, err := NewArtifactDataIngest(mockOCI)
+			require.NoError(t, err)
+			ing.artifactVerifier = mockVerifier
+
+			art := &pb.Artifact{ArtifactPk: "myimage:" + tt.tag, Owner: "testns", Name: "myimage", Type: "container"}
+			got, err := ing.Ingest(context.Background(), art, tt.params)
+			if !tt.wantPass {
+				require.ErrorIs(t, err, tt.wantErr)
+				require.Nil(t, got)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tt.version.Sha, *got.Checkpoint.Checkpoint.Digest)
+		})
+	}
+}
+
+// TestArtifactIngestLegacyDigestIdentity checks that an entity registered
+// before the repo:tag identity, whose ArtifactPk is "<name>@<digest>", still
+// uses the repository-wide path and records no checkpoint digest.
+func TestArtifactIngestLegacyDigestIdentity(t *testing.T) {
+	t.Parallel()
+
+	const digest = "sha256:1234"
+
+	ctrl := gomock.NewController(t)
+	mockOCI := mock_v1.NewMockOCITagVersionProvider(ctrl)
+	mockVerifier := mockverify.NewMockArtifactVerifier(ctrl)
+
+	art := &pb.Artifact{ArtifactPk: "myimage@" + digest, Owner: "testns", Name: "myimage", Type: "container"}
+
+	mockOCI.EXPECT().GetRegistry().Return("docker.io").AnyTimes()
+	mockOCI.EXPECT().GetArtifactVersion(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+	mockOCI.EXPECT().GetArtifactVersions(gomock.Any(), art, gomock.Any()).
+		Return([]*pb.ArtifactVersion{{Sha: digest, Tags: []string{"v1"}, CreatedAt: timestamppb.New(time.Now())}}, nil)
+	mockOCI.EXPECT().GetRawManifest(gomock.Any(), "myimage", digest).Return(nil, errors.New("not needed"))
+	mockVerifier.EXPECT().Verify(gomock.Any(), verifyif.ArtifactTypeContainer, "testns", "myimage", digest).
+		Return([]verifyif.Result{{}}, nil)
+
+	ing, err := NewArtifactDataIngest(mockOCI)
+	require.NoError(t, err)
+	ing.artifactVerifier = mockVerifier
+
+	got, err := ing.Ingest(context.Background(), art, map[string]any{"name": "myimage"})
+	require.NoError(t, err)
+	require.Nil(t, got.Checkpoint.Checkpoint.Digest)
+}
+
+func TestEntityTag(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		name    string
+		art     *pb.Artifact
+		wantTag string
+		wantOK  bool
+	}{
+		{name: "repo:tag", art: &pb.Artifact{Name: "myimage", ArtifactPk: "myimage:v1.2"}, wantTag: "v1.2", wantOK: true},
+		{name: "nested repo", art: &pb.Artifact{Name: "team/app", ArtifactPk: "team/app:latest"},
+			wantTag: "latest", wantOK: true},
+		{name: "legacy repo@digest", art: &pb.Artifact{Name: "myimage", ArtifactPk: "myimage@sha256:abc"}},
+		{name: "pk for another repo", art: &pb.Artifact{Name: "myimage", ArtifactPk: "other:v1"}},
+		{name: "empty tag", art: &pb.Artifact{Name: "myimage", ArtifactPk: "myimage:"}},
+		{name: "GHCR numeric pk", art: &pb.Artifact{Name: "myimage", ArtifactPk: "12345"}},
+		{name: "empty name", art: &pb.Artifact{ArtifactPk: ":v1"}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			tag, ok := entityTag(tt.art)
+			require.Equal(t, tt.wantOK, ok)
+			require.Equal(t, tt.wantTag, tag)
+		})
+	}
 }
 
 func TestGetRegistryForProvider(t *testing.T) {

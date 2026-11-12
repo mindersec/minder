@@ -51,6 +51,10 @@ tags using the `tags` parameter or as a regular expression using the `tag_regex`
 parameter. If both are empty, the rule will match any tag. It is an error to
 specify both `tags` and `tag_regex`.
 
+For Docker Hub and Quay.io images, each registered artifact is a single tag, and
+a rule whose tags don't match that tag is skipped. See
+[How profiles evaluate a registered image](register_container_images.md#how-profiles-evaluate-a-registered-image).
+
 Create a new file called `profile-artifact-simple.yaml`. The following example
 would match a container image named `good-repo-go` with the `latest` tag. The
 profile would pass for any artifact that has a signature, regardless of who

@@ -2923,3 +2923,276 @@ func (mr *MockOCIMockRecorder) SupportsEntity(entType any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SupportsEntity", reflect.TypeOf((*MockOCI)(nil).SupportsEntity), entType)
 }
+
+// MockOCITagVersionProvider is a mock of OCITagVersionProvider interface.
+type MockOCITagVersionProvider struct {
+	ctrl     *gomock.Controller
+	recorder *MockOCITagVersionProviderMockRecorder
+	isgomock struct{}
+}
+
+// MockOCITagVersionProviderMockRecorder is the mock recorder for MockOCITagVersionProvider.
+type MockOCITagVersionProviderMockRecorder struct {
+	mock *MockOCITagVersionProvider
+}
+
+// NewMockOCITagVersionProvider creates a new mock instance.
+func NewMockOCITagVersionProvider(ctrl *gomock.Controller) *MockOCITagVersionProvider {
+	mock := &MockOCITagVersionProvider{ctrl: ctrl}
+	mock.recorder = &MockOCITagVersionProviderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockOCITagVersionProvider) EXPECT() *MockOCITagVersionProviderMockRecorder {
+	return m.recorder
+}
+
+// CanImplement mocks base method.
+func (m *MockOCITagVersionProvider) CanImplement(trait v10.ProviderType) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanImplement", trait)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanImplement indicates an expected call of CanImplement.
+func (mr *MockOCITagVersionProviderMockRecorder) CanImplement(trait any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockOCITagVersionProvider)(nil).CanImplement), trait)
+}
+
+// CreationOptions mocks base method.
+func (m *MockOCITagVersionProvider) CreationOptions(entType v10.Entity) *v11.EntityCreationOptions {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreationOptions", entType)
+	ret0, _ := ret[0].(*v11.EntityCreationOptions)
+	return ret0
+}
+
+// CreationOptions indicates an expected call of CreationOptions.
+func (mr *MockOCITagVersionProviderMockRecorder) CreationOptions(entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreationOptions", reflect.TypeOf((*MockOCITagVersionProvider)(nil).CreationOptions), entType)
+}
+
+// DeregisterEntity mocks base method.
+func (m *MockOCITagVersionProvider) DeregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeregisterEntity indicates an expected call of DeregisterEntity.
+func (mr *MockOCITagVersionProviderMockRecorder) DeregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeregisterEntity", reflect.TypeOf((*MockOCITagVersionProvider)(nil).DeregisterEntity), ctx, entType, props)
+}
+
+// FetchAllProperties mocks base method.
+func (m *MockOCITagVersionProvider) FetchAllProperties(ctx context.Context, getByProps *properties.Properties, entType v10.Entity, cachedProps *properties.Properties) (*properties.Properties, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchAllProperties", ctx, getByProps, entType, cachedProps)
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchAllProperties indicates an expected call of FetchAllProperties.
+func (mr *MockOCITagVersionProviderMockRecorder) FetchAllProperties(ctx, getByProps, entType, cachedProps any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockOCITagVersionProvider)(nil).FetchAllProperties), ctx, getByProps, entType, cachedProps)
+}
+
+// GetArtifactVersion mocks base method.
+func (m *MockOCITagVersionProvider) GetArtifactVersion(ctx context.Context, name, tag string) (*v10.ArtifactVersion, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetArtifactVersion", ctx, name, tag)
+	ret0, _ := ret[0].(*v10.ArtifactVersion)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetArtifactVersion indicates an expected call of GetArtifactVersion.
+func (mr *MockOCITagVersionProviderMockRecorder) GetArtifactVersion(ctx, name, tag any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetArtifactVersion", reflect.TypeOf((*MockOCITagVersionProvider)(nil).GetArtifactVersion), ctx, name, tag)
+}
+
+// GetArtifactVersions mocks base method.
+func (m *MockOCITagVersionProvider) GetArtifactVersions(ctx context.Context, artifact *v10.Artifact, filter v11.GetArtifactVersionsFilter) ([]*v10.ArtifactVersion, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetArtifactVersions", ctx, artifact, filter)
+	ret0, _ := ret[0].([]*v10.ArtifactVersion)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetArtifactVersions indicates an expected call of GetArtifactVersions.
+func (mr *MockOCITagVersionProviderMockRecorder) GetArtifactVersions(ctx, artifact, filter any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetArtifactVersions", reflect.TypeOf((*MockOCITagVersionProvider)(nil).GetArtifactVersions), ctx, artifact, filter)
+}
+
+// GetAuthenticator mocks base method.
+func (m *MockOCITagVersionProvider) GetAuthenticator() (authn.Authenticator, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAuthenticator")
+	ret0, _ := ret[0].(authn.Authenticator)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAuthenticator indicates an expected call of GetAuthenticator.
+func (mr *MockOCITagVersionProviderMockRecorder) GetAuthenticator() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthenticator", reflect.TypeOf((*MockOCITagVersionProvider)(nil).GetAuthenticator))
+}
+
+// GetDigest mocks base method.
+func (m *MockOCITagVersionProvider) GetDigest(ctx context.Context, name, tag string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDigest", ctx, name, tag)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDigest indicates an expected call of GetDigest.
+func (mr *MockOCITagVersionProviderMockRecorder) GetDigest(ctx, name, tag any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDigest", reflect.TypeOf((*MockOCITagVersionProvider)(nil).GetDigest), ctx, name, tag)
+}
+
+// GetEntityName mocks base method.
+func (m *MockOCITagVersionProvider) GetEntityName(entType v10.Entity, props *properties.Properties) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEntityName", entType, props)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEntityName indicates an expected call of GetEntityName.
+func (mr *MockOCITagVersionProviderMockRecorder) GetEntityName(entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityName", reflect.TypeOf((*MockOCITagVersionProvider)(nil).GetEntityName), entType, props)
+}
+
+// GetManifest mocks base method.
+func (m *MockOCITagVersionProvider) GetManifest(ctx context.Context, name, tag string) (*v1.Manifest, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetManifest", ctx, name, tag)
+	ret0, _ := ret[0].(*v1.Manifest)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetManifest indicates an expected call of GetManifest.
+func (mr *MockOCITagVersionProviderMockRecorder) GetManifest(ctx, name, tag any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManifest", reflect.TypeOf((*MockOCITagVersionProvider)(nil).GetManifest), ctx, name, tag)
+}
+
+// GetRawManifest mocks base method.
+func (m *MockOCITagVersionProvider) GetRawManifest(ctx context.Context, name, digest string) (*v11.RawManifest, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRawManifest", ctx, name, digest)
+	ret0, _ := ret[0].(*v11.RawManifest)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRawManifest indicates an expected call of GetRawManifest.
+func (mr *MockOCITagVersionProviderMockRecorder) GetRawManifest(ctx, name, digest any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRawManifest", reflect.TypeOf((*MockOCITagVersionProvider)(nil).GetRawManifest), ctx, name, digest)
+}
+
+// GetReferrer mocks base method.
+func (m *MockOCITagVersionProvider) GetReferrer(ctx context.Context, name, tag, artifactType string) (any, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetReferrer", ctx, name, tag, artifactType)
+	ret0, _ := ret[0].(any)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetReferrer indicates an expected call of GetReferrer.
+func (mr *MockOCITagVersionProviderMockRecorder) GetReferrer(ctx, name, tag, artifactType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetReferrer", reflect.TypeOf((*MockOCITagVersionProvider)(nil).GetReferrer), ctx, name, tag, artifactType)
+}
+
+// GetRegistry mocks base method.
+func (m *MockOCITagVersionProvider) GetRegistry() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRegistry")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetRegistry indicates an expected call of GetRegistry.
+func (mr *MockOCITagVersionProviderMockRecorder) GetRegistry() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRegistry", reflect.TypeOf((*MockOCITagVersionProvider)(nil).GetRegistry))
+}
+
+// PropertiesToProtoMessage mocks base method.
+func (m *MockOCITagVersionProvider) PropertiesToProtoMessage(entType v10.Entity, props *properties.Properties) (protoreflect.ProtoMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PropertiesToProtoMessage", entType, props)
+	ret0, _ := ret[0].(protoreflect.ProtoMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PropertiesToProtoMessage indicates an expected call of PropertiesToProtoMessage.
+func (mr *MockOCITagVersionProviderMockRecorder) PropertiesToProtoMessage(entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropertiesToProtoMessage", reflect.TypeOf((*MockOCITagVersionProvider)(nil).PropertiesToProtoMessage), entType, props)
+}
+
+// ProviderClassInfo mocks base method.
+func (m *MockOCITagVersionProvider) ProviderClassInfo() *v10.ProviderClassInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProviderClassInfo")
+	ret0, _ := ret[0].(*v10.ProviderClassInfo)
+	return ret0
+}
+
+// ProviderClassInfo indicates an expected call of ProviderClassInfo.
+func (mr *MockOCITagVersionProviderMockRecorder) ProviderClassInfo() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProviderClassInfo", reflect.TypeOf((*MockOCITagVersionProvider)(nil).ProviderClassInfo))
+}
+
+// RegisterEntity mocks base method.
+func (m *MockOCITagVersionProvider) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) (*properties.Properties, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RegisterEntity indicates an expected call of RegisterEntity.
+func (mr *MockOCITagVersionProviderMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockOCITagVersionProvider)(nil).RegisterEntity), ctx, entType, props)
+}
+
+// SupportsEntity mocks base method.
+func (m *MockOCITagVersionProvider) SupportsEntity(entType v10.Entity) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SupportsEntity", entType)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// SupportsEntity indicates an expected call of SupportsEntity.
+func (mr *MockOCITagVersionProviderMockRecorder) SupportsEntity(entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SupportsEntity", reflect.TypeOf((*MockOCITagVersionProvider)(nil).SupportsEntity), entType)
+}
