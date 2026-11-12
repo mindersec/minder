@@ -110,3 +110,51 @@ func TestMockResponseMethods(t *testing.T) {
 	assert.Equal(t, 400, newResp.StatusCode)
 	assert.Equal(t, 400, resp.StatusCode) // original modified
 }
+
+func TestMockHTTPHandlerInvalidKeys(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		keys    []string
+		wantErr string
+	}{
+		{
+			name:    "host without path",
+			keys:    []string{"https://api.example.com"},
+			wantErr: `invalid mock endpoint "https://api.example.com"`,
+		},
+		{
+			name:    "keys differing only by query string",
+			keys:    []string{"https://api.example.com/items?page=1", "https://api.example.com/items?page=2"},
+			wantErr: "both match",
+		},
+		{
+			name:    "keys differing only by scheme",
+			keys:    []string{"http://api.example.com/items", "https://api.example.com/items"},
+			wantErr: "both match",
+		},
+		{
+			name:    "malformed wildcard",
+			keys:    []string{"/api/v1/{"},
+			wantErr: `invalid mock endpoint "/api/v1/{"`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			dict := starlark.NewDict(len(tt.keys))
+			for _, k := range tt.keys {
+				require.NoError(t, dict.SetKey(starlark.String(k), &MockResponse{StatusCode: 200}))
+			}
+
+			var err error
+			require.NotPanics(t, func() {
+				_, err = buildMockHTTPHandler(dict)
+			})
+			require.ErrorContains(t, err, tt.wantErr)
+		})
+	}
+}

@@ -9,11 +9,7 @@
 package fixtures
 
 import (
-	"errors"
-
-	"github.com/google/uuid"
 	mockdssvc "github.com/mindersec/minder/internal/datasources/service/mock"
-	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"go.uber.org/mock/gomock"
 )
 
@@ -29,50 +25,6 @@ func NewDataSourcesServiceMock(opts ...func(mock DataSourcesSvcMock)) DataSource
 			opt(mock)
 		}
 		return mock
-	}
-}
-
-var (
-	errDefault = errors.New("error during data sources service operation")
-)
-
-func WithSuccessfulListDataSources(datasources ...*minderv1.DataSource) func(DataSourcesSvcMock) {
-	return func(mock DataSourcesSvcMock) {
-		mock.EXPECT().
-			List(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(datasources, nil)
-	}
-}
-
-func WithFailedListDataSources() func(DataSourcesSvcMock) {
-	return func(mock DataSourcesSvcMock) {
-		mock.EXPECT().
-			List(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(nil, errDefault)
-	}
-}
-
-func WithSuccessfulGetByName(projectID uuid.UUID, datasource *minderv1.DataSource) func(DataSourcesSvcMock) {
-	return func(mock DataSourcesSvcMock) {
-		mock.EXPECT().
-			GetByName(gomock.Any(), datasource.Name, projectID, gomock.Any()).
-			Return(datasource, nil)
-	}
-}
-
-func WithNotFoundGetByName(projectID uuid.UUID) func(DataSourcesSvcMock) {
-	return func(mock DataSourcesSvcMock) {
-		mock.EXPECT().
-			GetByName(gomock.Any(), gomock.Any(), projectID, gomock.Any()).
-			Return(&minderv1.DataSource{}, errDefault)
-	}
-}
-
-func WithFailedGetByName() func(DataSourcesSvcMock) {
-	return func(mock DataSourcesSvcMock) {
-		mock.EXPECT().
-			GetByName(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(nil, errDefault)
 	}
 }
 

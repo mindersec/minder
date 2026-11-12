@@ -7,12 +7,13 @@ package util
 import (
 	"encoding/json"
 	"fmt"
-	"math"
+	"io/fs"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
-	"strconv"
+	"strings"
 
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -116,16 +117,16 @@ type ExpandedFile struct {
 // If the file list contains "-" or regular files, it will leave them as-is.
 // If the file list contains directories, it will expand them into a list of files.
 func ExpandFileArgs(files ...string) ([]ExpandedFile, error) {
+	return ExpandFSFileArgs(nil, files...)
+}
+
+// ExpandFSFileArgs expands a list of file arguments into a list of files, optionally
+// traversing the provided fs.FS filesystem if non-nil. When sysFS is nil, the local
+// operating system filesystem is used.
+func ExpandFSFileArgs(sysFS fs.FS, files ...string) ([]ExpandedFile, error) {
 	var expandedFiles []ExpandedFile
 	for _, f := range files {
-		if f == "-" {
-			expandedFiles = append(expandedFiles, ExpandedFile{
-				Path:     f,
-				Expanded: false,
-			})
-			continue
-		}
-		if IsHTTPURL(f) {
+		if f == "-" || IsHTTPURL(f) {
 			expandedFiles = append(expandedFiles, ExpandedFile{
 				Path:     f,
 				Expanded: false,
@@ -133,52 +134,88 @@ func ExpandFileArgs(files ...string) ([]ExpandedFile, error) {
 			continue
 		}
 
-		f = filepath.Clean(f)
-		fi, err := os.Stat(f)
-		if err != nil {
-			return nil, fmt.Errorf("error getting file info: %w", err)
+		if sysFS != nil {
+			filesInFS, err := expandFromFS(sysFS, f)
+			if err != nil {
+				return nil, err
+			}
+			expandedFiles = append(expandedFiles, filesInFS...)
+			continue
 		}
 
-		expanded := fi.IsDir()
-		err = filepath.Walk(f, func(path string, info os.FileInfo, walkerr error) error {
-			if walkerr != nil {
-				return fmt.Errorf("error walking path %s: %w", path, walkerr)
-			}
-
-			if info.IsDir() {
-				return nil
-			}
-
-			expandedFiles = append(expandedFiles, ExpandedFile{
-				Path:     path,
-				Expanded: expanded,
-			})
-
-			return nil
-		})
+		filesInOS, err := expandFromOS(f)
 		if err != nil {
-			return nil, fmt.Errorf("error walking directory: %w", err)
+			return nil, err
 		}
+		expandedFiles = append(expandedFiles, filesInOS...)
 	}
 
 	return expandedFiles, nil
 }
 
-// Int32FromString converts a string to an int32
-func Int32FromString(v string) (int32, error) {
-	if v == "" {
-		return 0, fmt.Errorf("cannot convert empty string to int")
+func expandFromFS(sysFS fs.FS, f string) ([]ExpandedFile, error) {
+	lookupPath := path.Clean(filepath.ToSlash(f))
+
+	fi, err := fs.Stat(sysFS, lookupPath)
+	if err != nil {
+		return nil, fmt.Errorf("error getting file info: %w", err)
 	}
 
-	// convert string to int
-	asInt32, err := strconv.ParseInt(v, 10, 32)
+	if !fi.IsDir() {
+		return []ExpandedFile{{
+			Path:     lookupPath,
+			Expanded: false,
+		}}, nil
+	}
+
+	var results []ExpandedFile
+	err = fs.WalkDir(sysFS, lookupPath, func(p string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return fmt.Errorf("error walking path %s: %w", p, walkErr)
+		}
+		if d.IsDir() {
+			return nil
+		}
+		cleanP := path.Clean(p)
+		cleanP = strings.TrimPrefix(cleanP, "./")
+		results = append(results, ExpandedFile{
+			Path:     cleanP,
+			Expanded: true,
+		})
+		return nil
+	})
 	if err != nil {
-		return 0, fmt.Errorf("error converting string to int: %w", err)
+		return nil, fmt.Errorf("error walking directory: %w", err)
 	}
-	if asInt32 > math.MaxInt32 || asInt32 < math.MinInt32 {
-		return 0, fmt.Errorf("integer %d cannot fit into int32", asInt32)
+	return results, nil
+}
+
+func expandFromOS(f string) ([]ExpandedFile, error) {
+	f = filepath.Clean(f)
+	fi, err := os.Stat(f)
+	if err != nil {
+		return nil, fmt.Errorf("error getting file info: %w", err)
 	}
-	return int32(asInt32), nil
+
+	expanded := fi.IsDir()
+	var results []ExpandedFile
+	err = filepath.Walk(f, func(p string, info os.FileInfo, walkerr error) error {
+		if walkerr != nil {
+			return fmt.Errorf("error walking path %s: %w", p, walkerr)
+		}
+		if info.IsDir() {
+			return nil
+		}
+		results = append(results, ExpandedFile{
+			Path:     p,
+			Expanded: expanded,
+		})
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error walking directory: %w", err)
+	}
+	return results, nil
 }
 
 // ViperLogLevelToZerologLevel converts a viper log level to a zerolog log level

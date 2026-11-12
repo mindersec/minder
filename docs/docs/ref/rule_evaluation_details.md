@@ -207,9 +207,42 @@ Minder supports four remediation actions:
    - `minder.yq.evaluate`: applies a
      [yq `expression`](https://mikefarah.gitbook.io/yq/) to files selected by a
      list of `patterns`. Each element in the `patterns` list is represented as:
-     `{"type": "glob", "pattern": "file/path/*"}`. `glob` is currently the only
-     supported pattern type. This action supports using Go templates in the
-     `expression` but not in the `pattern` selection.
+     `{"type": "glob", "pattern": "file/path/*"}` or
+     `{"type": "eval_output", "pattern": "{{ toJson .EvalResultOutput.files }}"}`.
+
+     `glob` selects files from the ingested repository. `eval_output` renders
+     `pattern` as a Go template using the same data available to `expression`
+     (`Entity`, `Profile`, `Params`, and `EvalResultOutput`) and parses the
+     result as a JSON array of repository-relative file paths. The `toJson`
+     template helper is available to serialize evaluation output. Paths
+     selected with `eval_output` are treated as literal paths, not globs.
+     Targets from all selectors are merged and deduplicated, so each file is
+     patched once.
+
+     For example, a Rego rule can return the exact files that need patching
+     with `output := {"files": files_to_patch}`, where `files_to_patch` was
+     computed with `file.ls_glob`, `file.ls`, or `file.walk`. The remediation
+     then selects those files:
+
+     ```yaml
+     params:
+       expression: '.permissions = "read-all"'
+       patterns:
+         - type: eval_output
+           pattern: '{{ toJson .EvalResultOutput.files }}'
+     ```
+
+     This action supports using Go templates in `expression` and in
+     `eval_output` patterns, but not in `glob` patterns.
+   - `minder.delete`: deletes files matching the specified glob patterns. The
+     `params` field accepts a list of `patterns`, where each element is
+     represented as: `{"type": "glob", "pattern": "file/path/*"}`. `glob` is
+     currently the only supported pattern type. Files that do not exist are
+     silently ignored.
+     Note: glob patterns follow `filepath.Match` semantics; `**` is **not**
+     treated as a recursive wildcard. Use `dir/*` to match files one level
+     deep, or list explicit patterns for nested paths. Only files are deleted;
+     directories matched by a pattern are silently skipped.
 
    If the content modification produces a diff in the repository, Minder will
    open and manage a pull request against the branch used in the `git` ingest,

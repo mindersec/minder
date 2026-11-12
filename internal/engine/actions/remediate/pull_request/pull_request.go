@@ -331,10 +331,8 @@ func (r *Remediator) runOn(
 	}
 
 	logger.Debug().Msg("Staging changes")
-	for _, entry := range changeEntries {
-		if _, err := wt.Add(entry.Path); err != nil {
-			return nil, fmt.Errorf("cannot add file %s: %w", entry.Path, err)
-		}
+	if err := stageChanges(wt, changeEntries); err != nil {
+		return nil, err
 	}
 
 	logger.Debug().Msg("Committing changes")
@@ -608,4 +606,19 @@ func (*Remediator) runDoNothing(ctx context.Context, p *paramsPR) (json.RawMessa
 	}
 	// If there is no remediation metadata, return nil as the metadata and the error
 	return nil, err
+}
+
+func stageChanges(wt *git.Worktree, entries []*fsEntry) error {
+	for _, entry := range entries {
+		if entry.Delete {
+			if _, err := wt.Remove(entry.Path); err != nil {
+				return fmt.Errorf("cannot stage deletion of %s: %w", entry.Path, err)
+			}
+			continue
+		}
+		if _, err := wt.Add(entry.Path); err != nil {
+			return fmt.Errorf("cannot add file %s: %w", entry.Path, err)
+		}
+	}
+	return nil
 }

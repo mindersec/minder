@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"maps"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/go-git/go-billy/v5"
@@ -127,6 +128,60 @@ func withParams(m map[string]any) modificationConstructorOpt {
 		p.prCfg = &minderv1.RuleType_Definition_Remediate_PullRequestRemediation{
 			Params: s,
 		}
+	}
+}
+
+func testFSFromFiles(t *testing.T, testFiles testFileMap) billy.Filesystem {
+	t.Helper()
+	opts := make([]fsConstructorOpt, 0, len(testFiles))
+	for path, contents := range testFiles {
+		opts = append(opts, withFile(path, contents.origContents))
+	}
+	return newTestFS(t, opts...)
+}
+
+func checkExpectedEntries(t *testing.T, testFiles testFileMap, expectedPaths []string, entries []*fsEntry) {
+	t.Helper()
+
+	expected := make(map[string]struct{}, len(expectedPaths))
+	for _, path := range expectedPaths {
+		expected[path] = struct{}{}
+	}
+
+	require.Len(t, entries, len(expectedPaths))
+	seen := make(map[string]struct{}, len(entries))
+	for _, entry := range entries {
+		normalizedPath := filepath.ToSlash(entry.Path)
+		_, ok := expected[normalizedPath]
+		require.True(t, ok, "unexpected entry %s", normalizedPath)
+		_, duplicate := seen[normalizedPath]
+		require.False(t, duplicate, "duplicate entry %s", normalizedPath)
+		seen[normalizedPath] = struct{}{}
+
+		file := testFiles[normalizedPath]
+		if file.modifiedContents != "" {
+			require.Equal(t, file.modifiedContents, entry.Content)
+		}
+	}
+}
+
+func tooManyEvalOutputFiles() map[string]any {
+	files := make([]any, maxEvalOutputFiles+1)
+	for i := range files {
+		files[i] = fmt.Sprintf("file-%d.yaml", i)
+	}
+	return map[string]any{"files": files}
+}
+
+func evalOutputPattern(pattern string) map[string]any {
+	return map[string]any{
+		"expression": `.on = "workflow_dispatch"`,
+		"patterns": []any{
+			map[string]any{
+				"pattern": pattern,
+				"type":    string(patternTypeEvalOutput),
+			},
+		},
 	}
 }
 
@@ -391,6 +446,379 @@ updates:
 			},
 		},
 		{
+			name: "EvalOutputSelectsFiles",
+			yqParams: func(t *testing.T) *modificationConstructorParams {
+				t.Helper()
+				return newModificationParams(withParams(evalOutputPattern(`{{ toJson .EvalResultOutput.files }}`)))
+			},
+			evalOutput: map[string]any{
+				"files": []any{
+					workflowPullRequestTargetObjectFileName,
+					workflowPullRequestTargetDirectFileName,
+				},
+			},
+			testFiles: testFileMap{
+				workflowPullRequestTargetObjectFileName: {
+					origContents:     workflowWithPullRequestTargetObject,
+					modifiedContents: workflowDispatch,
+				},
+				workflowPullRequestTargetDirectFileName: {
+					origContents:     workflowWithPullRequestTargetDirect,
+					modifiedContents: workflowDispatch,
+				},
+				workflowPullRequestTargetSeqFileName: {
+					origContents:     workflowWithPullRequestTargetSeq,
+					modifiedContents: workflowWithPullRequestTargetSeq,
+				},
+			},
+			fs: testFSFromFiles,
+			checkEntries: func(t *testing.T, testFiles testFileMap, entries []*fsEntry) {
+				t.Helper()
+				checkExpectedEntries(t, testFiles, []string{
+					workflowPullRequestTargetObjectFileName,
+					workflowPullRequestTargetDirectFileName,
+				}, entries)
+			},
+		},
+		{
+			name: "EvalOutputDeduplicatesWithGlob",
+			yqParams: func(t *testing.T) *modificationConstructorParams {
+				t.Helper()
+				return newModificationParams(withParams(map[string]any{
+					"expression": `.on = "workflow_dispatch"`,
+					"patterns": []any{
+						map[string]any{
+							"pattern": workflowPullRequestTargetObjectFileName,
+							"type":    "glob",
+						},
+						map[string]any{
+							"pattern": `{{ toJson .EvalResultOutput.files }}`,
+							"type":    string(patternTypeEvalOutput),
+						},
+					},
+				}))
+			},
+			evalOutput: map[string]any{
+				"files": []any{
+					workflowPullRequestTargetObjectFileName,
+					workflowPullRequestTargetSeqFileName,
+				},
+			},
+			testFiles: testFileMap{
+				workflowPullRequestTargetObjectFileName: {
+					origContents:     workflowWithPullRequestTargetObject,
+					modifiedContents: workflowDispatch,
+				},
+				workflowPullRequestTargetSeqFileName: {
+					origContents:     workflowWithPullRequestTargetSeq,
+					modifiedContents: workflowDispatch,
+				},
+			},
+			fs: testFSFromFiles,
+			checkEntries: func(t *testing.T, testFiles testFileMap, entries []*fsEntry) {
+				t.Helper()
+				checkExpectedEntries(t, testFiles, []string{
+					workflowPullRequestTargetObjectFileName,
+					workflowPullRequestTargetSeqFileName,
+				}, entries)
+			},
+		},
+		{
+			name: "EvalOutputNormalizesAndDeduplicatesPaths",
+			yqParams: func(t *testing.T) *modificationConstructorParams {
+				t.Helper()
+				return newModificationParams(withParams(evalOutputPattern(`{{ toJson .EvalResultOutput.files }}`)))
+			},
+			evalOutput: map[string]any{
+				"files": []any{
+					"./" + workflowPullRequestTargetObjectFileName,
+					workflowPullRequestTargetObjectFileName,
+				},
+			},
+			testFiles: testFileMap{
+				workflowPullRequestTargetObjectFileName: {
+					origContents:     workflowWithPullRequestTargetObject,
+					modifiedContents: workflowDispatch,
+				},
+			},
+			fs: testFSFromFiles,
+			checkEntries: func(t *testing.T, testFiles testFileMap, entries []*fsEntry) {
+				t.Helper()
+				checkExpectedEntries(t, testFiles, []string{
+					workflowPullRequestTargetObjectFileName,
+				}, entries)
+			},
+		},
+		{
+			name: "EvalOutputTopLevelArray",
+			yqParams: func(t *testing.T) *modificationConstructorParams {
+				t.Helper()
+				return newModificationParams(withParams(evalOutputPattern(`{{ toJson .EvalResultOutput }}`)))
+			},
+			evalOutput: []any{workflowPullRequestTargetObjectFileName},
+			testFiles: testFileMap{
+				workflowPullRequestTargetObjectFileName: {
+					origContents:     workflowWithPullRequestTargetObject,
+					modifiedContents: workflowDispatch,
+				},
+			},
+			fs: testFSFromFiles,
+			checkEntries: func(t *testing.T, testFiles testFileMap, entries []*fsEntry) {
+				t.Helper()
+				checkExpectedEntries(t, testFiles, []string{
+					workflowPullRequestTargetObjectFileName,
+				}, entries)
+			},
+		},
+		{
+			name: "EvalOutputFromParams",
+			yqParams: func(t *testing.T) *modificationConstructorParams {
+				t.Helper()
+				return newModificationParams(withParams(evalOutputPattern(`{{ toJson .Params.files }}`)))
+			},
+			evalParams: map[string]any{
+				"files": []any{workflowPullRequestTargetObjectFileName},
+			},
+			testFiles: testFileMap{
+				workflowPullRequestTargetObjectFileName: {
+					origContents:     workflowWithPullRequestTargetObject,
+					modifiedContents: workflowDispatch,
+				},
+			},
+			fs: testFSFromFiles,
+			checkEntries: func(t *testing.T, testFiles testFileMap, entries []*fsEntry) {
+				t.Helper()
+				checkExpectedEntries(t, testFiles, []string{
+					workflowPullRequestTargetObjectFileName,
+				}, entries)
+			},
+		},
+		{
+			name: "EvalOutputEmptyList",
+			yqParams: func(t *testing.T) *modificationConstructorParams {
+				t.Helper()
+				return newModificationParams(withParams(evalOutputPattern(`{{ toJson .EvalResultOutput.files }}`)))
+			},
+			evalOutput: map[string]any{
+				"files": []any{},
+			},
+			testFiles: testFileMap{
+				workflowPullRequestTargetObjectFileName: {
+					origContents:     workflowWithPullRequestTargetObject,
+					modifiedContents: workflowWithPullRequestTargetObject,
+				},
+			},
+			fs: testFSFromFiles,
+			checkEntries: func(t *testing.T, _ testFileMap, entries []*fsEntry) {
+				t.Helper()
+				require.Len(t, entries, 0)
+			},
+		},
+		{
+			name: "EvalOutputTemplateParseError",
+			yqParams: func(t *testing.T) *modificationConstructorParams {
+				t.Helper()
+				return newModificationParams(withParams(evalOutputPattern(`{{ .EvalResultOutput.files`)))
+			},
+			evalOutput: map[string]any{
+				"files": []any{workflowPullRequestTargetObjectFileName},
+			},
+			testFiles: testFileMap{},
+			fs:        testFSFromFiles,
+			checkEntries: func(t *testing.T, _ testFileMap, entries []*fsEntry) {
+				t.Helper()
+				require.Len(t, entries, 0)
+			},
+			createErr: "cannot parse eval_output pattern template",
+		},
+		{
+			name: "EvalOutputTemplateExpansionError",
+			yqParams: func(t *testing.T) *modificationConstructorParams {
+				t.Helper()
+				return newModificationParams(withParams(evalOutputPattern(`{{ toJson .EvalResultOutput.missing }}`)))
+			},
+			evalOutput: map[string]any{
+				"files": []any{workflowPullRequestTargetObjectFileName},
+			},
+			testFiles: testFileMap{},
+			fs:        testFSFromFiles,
+			checkEntries: func(t *testing.T, _ testFileMap, entries []*fsEntry) {
+				t.Helper()
+				require.Len(t, entries, 0)
+			},
+			createErr: "cannot expand eval_output pattern template",
+		},
+		{
+			name: "EvalOutputNotAnArray",
+			yqParams: func(t *testing.T) *modificationConstructorParams {
+				t.Helper()
+				return newModificationParams(withParams(evalOutputPattern(`{{ toJson .EvalResultOutput }}`)))
+			},
+			evalOutput: map[string]any{
+				"files": []any{workflowPullRequestTargetObjectFileName},
+			},
+			testFiles: testFileMap{},
+			fs:        testFSFromFiles,
+			checkEntries: func(t *testing.T, _ testFileMap, entries []*fsEntry) {
+				t.Helper()
+				require.Len(t, entries, 0)
+			},
+			createErr: "must render a JSON array",
+		},
+		{
+			name: "EvalOutputNull",
+			yqParams: func(t *testing.T) *modificationConstructorParams {
+				t.Helper()
+				return newModificationParams(withParams(evalOutputPattern(`{{ toJson .EvalResultOutput }}`)))
+			},
+			testFiles: testFileMap{},
+			fs:        testFSFromFiles,
+			checkEntries: func(t *testing.T, _ testFileMap, entries []*fsEntry) {
+				t.Helper()
+				require.Len(t, entries, 0)
+			},
+			createErr: "must render a JSON array",
+		},
+		{
+			name: "EvalOutputNonStringEntry",
+			yqParams: func(t *testing.T) *modificationConstructorParams {
+				t.Helper()
+				return newModificationParams(withParams(evalOutputPattern(`{{ toJson .EvalResultOutput.files }}`)))
+			},
+			evalOutput: map[string]any{
+				"files": []any{1},
+			},
+			testFiles: testFileMap{},
+			fs:        testFSFromFiles,
+			checkEntries: func(t *testing.T, _ testFileMap, entries []*fsEntry) {
+				t.Helper()
+				require.Len(t, entries, 0)
+			},
+			createErr: "cannot parse eval_output pattern as a JSON array",
+		},
+		{
+			name: "EvalOutputEmptyPath",
+			yqParams: func(t *testing.T) *modificationConstructorParams {
+				t.Helper()
+				return newModificationParams(withParams(evalOutputPattern(`{{ toJson .EvalResultOutput.files }}`)))
+			},
+			evalOutput: map[string]any{
+				"files": []any{""},
+			},
+			testFiles: testFileMap{},
+			fs:        testFSFromFiles,
+			checkEntries: func(t *testing.T, _ testFileMap, entries []*fsEntry) {
+				t.Helper()
+				require.Len(t, entries, 0)
+			},
+			createErr: "target path cannot be empty",
+		},
+		{
+			name: "EvalOutputPathTraversal",
+			yqParams: func(t *testing.T) *modificationConstructorParams {
+				t.Helper()
+				return newModificationParams(withParams(evalOutputPattern(`{{ toJson .EvalResultOutput.files }}`)))
+			},
+			evalOutput: map[string]any{
+				"files": []any{"../outside.yaml"},
+			},
+			testFiles: testFileMap{},
+			fs:        testFSFromFiles,
+			checkEntries: func(t *testing.T, _ testFileMap, entries []*fsEntry) {
+				t.Helper()
+				require.Len(t, entries, 0)
+			},
+			createErr: "must stay within the repository root",
+		},
+		{
+			name: "EvalOutputAbsolutePath",
+			yqParams: func(t *testing.T) *modificationConstructorParams {
+				t.Helper()
+				return newModificationParams(withParams(evalOutputPattern(`{{ toJson .EvalResultOutput.files }}`)))
+			},
+			evalOutput: map[string]any{
+				"files": []any{"/etc/passwd"},
+			},
+			testFiles: testFileMap{},
+			fs:        testFSFromFiles,
+			checkEntries: func(t *testing.T, _ testFileMap, entries []*fsEntry) {
+				t.Helper()
+				require.Len(t, entries, 0)
+			},
+			createErr: "must be relative to the repository root",
+		},
+		{
+			name: "EvalOutputPathTooLong",
+			yqParams: func(t *testing.T) *modificationConstructorParams {
+				t.Helper()
+				return newModificationParams(withParams(evalOutputPattern(`{{ toJson .EvalResultOutput.files }}`)))
+			},
+			evalOutput: map[string]any{
+				"files": []any{strings.Repeat("a", PathBytesLimit+1) + ".yaml"},
+			},
+			testFiles: testFileMap{},
+			fs:        testFSFromFiles,
+			checkEntries: func(t *testing.T, _ testFileMap, entries []*fsEntry) {
+				t.Helper()
+				require.Len(t, entries, 0)
+			},
+			createErr: "exceeds 200 bytes",
+		},
+		{
+			name: "EvalOutputTooManyFiles",
+			yqParams: func(t *testing.T) *modificationConstructorParams {
+				t.Helper()
+				return newModificationParams(withParams(evalOutputPattern(`{{ toJson .EvalResultOutput.files }}`)))
+			},
+			evalOutput: tooManyEvalOutputFiles(),
+			testFiles:  testFileMap{},
+			fs:         testFSFromFiles,
+			checkEntries: func(t *testing.T, _ testFileMap, entries []*fsEntry) {
+				t.Helper()
+				require.Len(t, entries, 0)
+			},
+			createErr: "maximum is",
+		},
+		{
+			name: "EvalOutputMissingFile",
+			yqParams: func(t *testing.T) *modificationConstructorParams {
+				t.Helper()
+				return newModificationParams(withParams(evalOutputPattern(`{{ toJson .EvalResultOutput.files }}`)))
+			},
+			evalOutput: map[string]any{
+				"files": []any{"missing.yaml"},
+			},
+			testFiles: testFileMap{},
+			fs:        testFSFromFiles,
+			checkEntries: func(t *testing.T, _ testFileMap, entries []*fsEntry) {
+				t.Helper()
+				require.Len(t, entries, 0)
+			},
+			createErr: "cannot execute yq on missing.yaml: cannot read file missing.yaml",
+		},
+		{
+			name: "EvalOutputDirectory",
+			yqParams: func(t *testing.T) *modificationConstructorParams {
+				t.Helper()
+				return newModificationParams(withParams(evalOutputPattern(`{{ toJson .EvalResultOutput.files }}`)))
+			},
+			evalOutput: map[string]any{
+				"files": []any{".github/workflows"},
+			},
+			testFiles: testFileMap{
+				workflowPullRequestTargetObjectFileName: {
+					origContents:     workflowWithPullRequestTargetObject,
+					modifiedContents: workflowWithPullRequestTargetObject,
+				},
+			},
+			fs: testFSFromFiles,
+			checkEntries: func(t *testing.T, _ testFileMap, entries []*fsEntry) {
+				t.Helper()
+				require.Len(t, entries, 0)
+			},
+			createErr: "is a directory",
+		},
+		{
 			name: "Bad expression",
 			yqParams: func(t *testing.T) *modificationConstructorParams {
 				t.Helper()
@@ -429,7 +857,7 @@ updates:
 				t.Helper()
 				require.Len(t, entries, 0)
 			},
-			createErr: "cannot execute yq: cannot parse expression",
+			createErr: "cannot execute yq on .github/workflows/prt_object.yaml: cannot parse expression",
 		},
 	}
 

@@ -23,6 +23,7 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List repositories",
 	Long:  `The repo list subcommand is used to list registered repositories within Minder.`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)
