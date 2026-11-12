@@ -15,7 +15,6 @@ import (
 	"github.com/go-git/go-billy/v5/util"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/mikefarah/yq/v4/pkg/yqlib"
-	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/proto"
 	gologging "gopkg.in/op/go-logging.v1"
 
@@ -49,12 +48,14 @@ const (
 
 var _ fsModifier = (*yqExecute)(nil)
 
+type yqPattern struct {
+	Pattern string `json:"pattern"`
+	Type    string `json:"type"`
+}
+
 type yqExecuteConfig struct {
-	Expression string `json:"expression"`
-	Patterns   []struct {
-		Pattern string `json:"pattern"`
-		Type    string `json:"type"`
-	}
+	Expression string      `json:"expression"`
+	Patterns   []yqPattern `json:"patterns"`
 }
 
 type yqExecute struct {
@@ -82,7 +83,11 @@ func newYqExecute(
 	var conf yqExecuteConfig
 	err = json.Unmarshal(rawConfig, &conf)
 	if err != nil {
-		return nil, fmt.Errorf("cannot marshal config")
+		return nil, fmt.Errorf("cannot unmarshal config: %w", err)
+	}
+
+	if err := validateYqPatterns(conf.Patterns); err != nil {
+		return nil, err
 	}
 
 	return &yqExecute{
@@ -92,6 +97,30 @@ func newYqExecute(
 
 		config: conf,
 	}, nil
+}
+
+func validateYqPatterns(patterns []yqPattern) error {
+	for i, pattern := range patterns {
+		if pattern.Pattern == "" {
+			return fmt.Errorf("patterns[%d] missing required field: pattern", i)
+		}
+		if pattern.Type == "" {
+			return fmt.Errorf("patterns[%d] missing required field: type", i)
+		}
+
+		switch pattern.Type {
+		case string(patternTypeGlob):
+		case string(patternTypeEvalOutput):
+			if _, err := textutil.NewSafeTextTemplate(&pattern.Pattern, "eval_output_pattern"); err != nil {
+				return fmt.Errorf("patterns[%d] invalid eval_output template: %w", i, err)
+			}
+		default:
+			return fmt.Errorf("patterns[%d] unsupported type %q (supported: %q, %q)",
+				i, pattern.Type, patternTypeGlob, patternTypeEvalOutput)
+		}
+	}
+
+	return nil
 }
 
 // templateParams are the parameters for template expansion for the expression and target patterns
@@ -197,10 +226,7 @@ func (yq *yqExecute) resolveTargets(ctx context.Context, data templateParams) ([
 				}
 			}
 		default:
-			zerolog.Ctx(ctx).
-				Warn().
-				Str("pattern.Type", pattern.Type).
-				Msg("unsupported pattern type")
+			return nil, fmt.Errorf("unsupported pattern type %q", pattern.Type)
 		}
 	}
 
