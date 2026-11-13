@@ -6,6 +6,7 @@ package util
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	htmltemplate "html/template"
@@ -23,12 +24,14 @@ var (
 
 var (
 	// TemplateFuncs is a map of functions that can be used in templates
-	// It introduces two custom functions:
+	// It introduces three custom functions:
 	// - asMap: converts a structpb (or anything that implements the AsMap function call) to a map
 	// - mapGet: returns the value of a key in a map
+	// - toJson: marshals a value to its JSON representation
 	TemplateFuncs = template.FuncMap{
 		"asMap":  asMap,
 		"mapGet": mapGet,
+		"toJson": toJson,
 	}
 )
 
@@ -89,6 +92,15 @@ func valueOfKey(m map[string]interface{}, key string) (reflect.Value, error) {
 		return reflect.ValueOf(v), nil
 	}
 	return reflect.Value{}, fmt.Errorf("key not found: %s", key)
+}
+
+// toJson marshals a value to its JSON representation
+func toJson(v any) (string, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal value to JSON: %w", err)
+	}
+	return string(b), nil
 }
 
 // NewSafeTextTemplate creates a new SafeTemplate for text templates

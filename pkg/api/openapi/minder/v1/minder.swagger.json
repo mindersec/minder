@@ -333,7 +333,7 @@
             "description": "config is a JSON object that can be used to pass additional configuration",
             "in": "query",
             "required": false,
-            "type": "object"
+            "type": "string"
           },
           {
             "name": "providerClass",
@@ -3905,7 +3905,7 @@
         },
         "method": {
           "type": "string",
-          "title": "the method to use to create the PR. For now, these are supported:\n-- minder.content - ensures that the content of the file is exactly as specified\n                    refer to the Content message for more details\n-- minder.actions.replace_tags_with_sha - finds any github actions within a workflow\n                                          file and replaces the tag with the SHA\n-- minder.yq.evaluate - evaluates a yq expression on a file"
+          "title": "the method to use to create the PR. For now, these are supported:\n-- minder.content - ensures that the content of the file is exactly as specified\n                    refer to the Content message for more details\n-- minder.actions.replace_tags_with_sha - finds any github actions within a workflow\n                                          file and replaces the tag with the SHA\n-- minder.yq.evaluate - evaluates a yq expression on a file\n-- minder.delete - deletes files matching the specified glob patterns"
         },
         "params": {
           "type": "object",
@@ -3993,7 +3993,7 @@
         "NULL_VALUE"
       ],
       "default": "NULL_VALUE",
-      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\nThe JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+      "description": "Represents a JSON `null`.\n\n`NullValue` is a sentinel, using an enum with only one value to represent\nthe null value for the `Value` type union.\n\nA field of type `NullValue` with any value other than `0` is considered\ninvalid. Most ProtoJSON serializers will emit a `Value` with a `null_value`\nset as a JSON `null` regardless of the integer value, and so will round trip\nto a `0` value.\n\n - NULL_VALUE: Null value."
     },
     "v1Artifact": {
       "type": "object",

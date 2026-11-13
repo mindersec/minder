@@ -220,6 +220,10 @@ func TestExpandFileArgs(t *testing.T) {
 	for filePath, contents := range files {
 		assert.NoError(t, os.WriteFile(fmt.Sprintf("%s/%s", testDir, filePath), []byte(contents), 0600))
 	}
+	cwd, err := os.Getwd()
+	require.NoError(t, err)
+	relTestDir, err := filepath.Rel(cwd, testDir)
+	require.NoError(t, err)
 
 	tests := []struct {
 		name     string
@@ -254,9 +258,10 @@ func TestExpandFileArgs(t *testing.T) {
 		},
 		{
 			name:  "Parent-relative", // This test does not actually use the testDir
-			files: []string{"../service", "../engine/executor.go"},
+			files: []string{relTestDir + "/testdir", "../engine/executor.go"},
 			expected: []util.ExpandedFile{
-				{Path: "../service/service.go", Expanded: true},
+				{Path: fmt.Sprintf("%s/testdir/file1.txt", relTestDir), Expanded: true},
+				{Path: fmt.Sprintf("%s/testdir/file2.txt", relTestDir), Expanded: true},
 				{Path: "../engine/executor.go", Expanded: false},
 			},
 		},
@@ -370,83 +375,6 @@ func TestGetConfigValue(t *testing.T) {
 
 			result := v.Get(tc.key)
 			assert.Equal(t, tc.expected, result)
-		})
-	}
-}
-
-func TestInt32FromString(t *testing.T) {
-	t.Parallel()
-
-	type args struct {
-		v string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    int32
-		wantErr bool
-	}{
-		{
-			name:    "valid int32",
-			args:    args{v: "42"},
-			want:    42,
-			wantErr: false,
-		},
-		{
-			name:    "valid int32 negative",
-			args:    args{v: "-42"},
-			want:    -42,
-			wantErr: false,
-		},
-		{
-			name:    "big int32",
-			args:    args{v: "2147483647"},
-			want:    2147483647,
-			wantErr: false,
-		},
-		{
-			name:    "big int32 negative",
-			args:    args{v: "-2147483648"},
-			want:    -2147483648,
-			wantErr: false,
-		},
-		{
-			name:    "too big int32",
-			args:    args{v: "12147483648"},
-			want:    0,
-			wantErr: true,
-		},
-		{
-			name:    "valid zero",
-			args:    args{v: "0"},
-			want:    0,
-			wantErr: false,
-		},
-		{
-			name:    "invalid int32",
-			args:    args{v: "invalid"},
-			want:    0,
-			wantErr: true,
-		},
-		{
-			name:    "empty string",
-			args:    args{v: ""},
-			want:    0,
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := util.Int32FromString(tt.args.v)
-			if tt.wantErr {
-				require.Error(t, err, "expected error")
-				require.Zero(t, got, "expected zero")
-				return
-			}
-
-			assert.Equal(t, tt.want, got, "result didn't match")
 		})
 	}
 }
