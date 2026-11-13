@@ -20,6 +20,7 @@ import (
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/invites"
 	"github.com/mindersec/minder/internal/util"
 	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -346,7 +347,11 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	// Decide if it's an invitation or a role assignment
 	if sub == "" && inviteeEmail != "" {
 		invitation, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.Invitation, error) {
-			return s.invites.CreateInvite(ctx, qtx, s.evt, s.cfg.Email, targetProject, authzRole, inviteeEmail)
+			expiresAt := invites.ComputeExpiration(
+				req.GetInvitationExpiration().AsDuration(),
+				s.cfg.Invitations.MaxExpiration,
+			)
+			return s.invites.CreateInvite(ctx, qtx, s.evt, s.cfg.Email, targetProject, authzRole, inviteeEmail, expiresAt)
 		})
 		if err != nil {
 			return nil, err
@@ -469,7 +474,8 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 	// Validate the subject and email - decide if it's about updating an invitation or a role assignment
 	if sub == "" && inviteeEmail != "" {
 		updatedInvitation, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.Invitation, error) {
-			return s.invites.UpdateInvite(ctx, qtx, s.evt, s.cfg.Email, targetProject, authzRole, inviteeEmail)
+			expiresAt := invites.ComputeExpiration(0, s.cfg.Invitations.MaxExpiration)
+			return s.invites.UpdateInvite(ctx, qtx, s.evt, s.cfg.Email, targetProject, authzRole, inviteeEmail, expiresAt)
 		})
 		if err != nil {
 			return nil, err

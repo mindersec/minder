@@ -135,3 +135,8 @@ email:
   #   port: 587
   #   username: "smtp-user@example.com"
   #   password_file: "/path/to/smtp/password"
+
+# Invitation settings
+invitations:
+  max_expiration: 168h # Maximum duration for invitation validity (e.g. 168h / 7 days)
+

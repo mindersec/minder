@@ -4,7 +4,7 @@
 -- the invitee.
 
 -- name: ListInvitationsForProject :many
-SELECT user_invites.email, role, users.identity_subject, user_invites.created_at, user_invites.updated_at
+SELECT user_invites.email, role, users.identity_subject, user_invites.created_at, user_invites.updated_at, user_invites.expires_at
 FROM user_invites
   JOIN users ON user_invites.sponsor = users.id
 WHERE project = $1;
@@ -49,7 +49,7 @@ WHERE code = $1;
 -- The sponsor is the user who is inviting the invitee.
 
 -- name: CreateInvitation :one
-INSERT INTO user_invites (code, email, role, project, sponsor) VALUES ($1, $2, $3, $4, $5) RETURNING *;
+INSERT INTO user_invites (code, email, role, project, sponsor, expires_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
 
 -- DeleteInvitation deletes an invitation by its code. This is intended to be
 -- called by a user who has issued an invitation and then accepted it, declined
@@ -60,7 +60,7 @@ DELETE FROM user_invites WHERE code = $1 RETURNING *;
 
 -- UpdateInvitationRole updates an invitation by its code. This is intended to be
 -- called by a user who has issued an invitation and then decided to change the
--- role of the invitee.
+-- role of the invitee, or to renew an existing invitation.
 
 -- name: UpdateInvitationRole :one
-UPDATE user_invites SET role = $2, updated_at = NOW() WHERE code = $1 RETURNING *;
+UPDATE user_invites SET role = $2, expires_at = $3, updated_at = NOW() WHERE code = $1 RETURNING *;

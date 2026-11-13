@@ -6,10 +6,12 @@ package role
 import (
 	"context"
 	"testing"
+	"time"
 
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util/cli"
@@ -101,6 +103,57 @@ func TestRoleGrantCommand(t *testing.T) {
 			Args:           []string{"project", "role", "grant", "-j", testProject, "-e", testEmail, "-r", "viewer", "-o", app.JSON},
 			MockSetup:      setupMockGrantEmail,
 			ExpectedStderr: inviteBearerWarning,
+		},
+		{
+			Name: "grant role with email and invitation-expiration flag",
+			Args: []string{
+				"project", "role", "grant",
+				"-r", "admin",
+				"-e", "test@example.com",
+				"--invitation-expiration", "24h",
+			},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
+				t.Helper()
+
+				permissionsClient := mockv1.NewMockPermissionsServiceClient(ctrl)
+				permissionsClient.EXPECT().
+					AssignRole(gomock.Any(), gomock.Cond(func(x any) bool {
+						req, ok := x.(*minderv1.AssignRoleRequest)
+						if !ok {
+							return false
+						}
+						return req.GetRoleAssignment().GetEmail() == "test@example.com" &&
+							req.GetRoleAssignment().GetRole() == "admin" &&
+							req.GetInvitationExpiration().AsDuration() == 24*time.Hour
+					})).
+					Return(&minderv1.AssignRoleResponse{
+						Invitation: &minderv1.Invitation{
+							Code:      "inv-1234",
+							Email:     "test@example.com",
+							Role:      "admin",
+							ExpiresAt: timestamppb.New(time.Now().Add(24 * time.Hour)),
+						},
+					}, nil).
+					Times(1)
+
+				return cli.WithRPCClient[minderv1.PermissionsServiceClient](context.Background(), permissionsClient)
+			},
+		},
+		{
+			Name: "fails when invitation-expiration is set with subject",
+			Args: []string{
+				"project", "role", "grant",
+				"-r", "admin",
+				"-s", "user-sub-123",
+				"--invitation-expiration", "24h",
+			},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
+				t.Helper()
+
+				permissionsClient := mockv1.NewMockPermissionsServiceClient(ctrl)
+				return cli.WithRPCClient[minderv1.PermissionsServiceClient](context.Background(), permissionsClient)
+			},
+			ExpectedError: "cannot specify invitation-expiration when granting access to a subject",
 		},
 		{
 			Name: "fails on invalid output format",
