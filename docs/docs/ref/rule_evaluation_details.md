@@ -232,7 +232,9 @@ Minder supports four remediation actions:
      template helper is available to serialize evaluation output. Paths
      selected with `eval_output` are treated as literal paths, not globs.
      Targets from all selectors are merged and deduplicated, so each file is
-     patched once.
+     patched once. At least one pattern is required; a remediation with an
+     empty `patterns` list is rejected when the rule type is created or
+     updated.
 
      For example, a Rego rule can return the exact files that need patching
      with `output := {"files": files_to_patch}`, where `files_to_patch` was
@@ -252,8 +254,8 @@ Minder supports four remediation actions:
    - `minder.delete`: deletes files matching the specified glob patterns. The
      `params` field accepts a list of `patterns`, where each element is
      represented as: `{"type": "glob", "pattern": "file/path/*"}`. `glob` is
-     currently the only supported pattern type. Files that do not exist are
-     silently ignored.
+     currently the only supported pattern type, and at least one pattern is
+     required. Files that do not exist are silently ignored.
      Note: glob patterns follow `filepath.Match` semantics; `**` is **not**
      treated as a recursive wildcard. Use `dir/*` to match files one level
      deep, or list explicit patterns for nested paths. Only files are deleted;
