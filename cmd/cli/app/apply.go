@@ -51,7 +51,7 @@ func applyCommand(cmd *cobra.Command, args []string) error {
 	argFiles, _ := cmd.Flags().GetStringSlice("file")
 	fileNames = append(fileNames, argFiles...)
 
-	fileObjects, err := fileconvert.ResourcesFromPaths(cmd.Context(), cmd.Printf, fileNames...)
+	fileObjects, err := fileconvert.ResourcesFromPaths(cmd.Context(), nil, cmd.Printf, fileNames...)
 	if err != nil {
 		return cli.MessageAndError("Error reading resources", err)
 	}

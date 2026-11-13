@@ -26,7 +26,7 @@ func TestResourcesFromPathsRemoteUnsupportedExtension(t *testing.T) {
 	}))
 	defer server.Close()
 
-	resources, err := ResourcesFromPaths(context.Background(), t.Logf, server.URL+"/policy.yamlf")
+	resources, err := ResourcesFromPaths(context.Background(), nil, t.Logf, server.URL+"/policy.yamlf")
 	require.ErrorContains(t, err, "unsupported file extension")
 	require.ErrorContains(t, err, ".yamlf")
 	assert.Empty(t, resources)
@@ -44,7 +44,7 @@ func TestResourcesFromPathsRemoteYAMLWithTextPlainContentType(t *testing.T) {
 	defer server.Close()
 
 	url := server.URL + "/minder-rules-and-profiles/raw/main/security-baseline/profile.yaml?raw=1"
-	resources, err := ResourcesFromPaths(context.Background(), t.Logf, url)
+	resources, err := ResourcesFromPaths(context.Background(), nil, t.Logf, url)
 	require.NoError(t, err)
 	require.Len(t, resources, 1)
 

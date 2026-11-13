@@ -271,7 +271,7 @@ func isNotRuleTypeError(err error) bool {
 
 // loadSingleRule reads a single YAML file and returns the parsed RuleType, if any.
 func loadSingleRule(path string) (*minderv1.RuleType, error) {
-	decoder, closer := fileconvert.DecoderForFile(path)
+	decoder, closer := fileconvert.DecoderForFile(nil, path)
 	if decoder == nil {
 		return nil, fmt.Errorf("error opening file: %s", path)
 	}
@@ -301,7 +301,7 @@ func loadSingleRule(path string) (*minderv1.RuleType, error) {
 // *.yaml rules in that same directory are loaded and made available to the tests.
 // It collects errors instead of returning early on the first error.
 func (r *Runner) RunPaths(paths []string) ([]TestRun, error) {
-	expanded, err := util.ExpandFileArgs(paths...)
+	expanded, err := util.ExpandFileArgs(nil, paths...)
 	if err != nil {
 		return nil, fmt.Errorf("expanding paths: %w", err)
 	}
