@@ -343,7 +343,7 @@ func TestGetArtifactVersions(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			filter, err := artif.BuildFilter(tt.tags, tt.regex)
+			filter, err := artif.BuildFilter(tt.tags, tt.regex, artif.MatchAllTags)
 			require.NoError(t, err)
 			got, err := o.GetArtifactVersions(context.Background(), &minderv1.Artifact{Name: "myimage"}, filter)
 			require.NoError(t, err)
@@ -398,7 +398,7 @@ func TestGetArtifactVersions_GroupEdges(t *testing.T) {
 				require.NoError(t, err)
 				require.NoError(t, remote.Write(ref, img))
 			}
-			filter, err := artif.BuildFilter(nil, "")
+			filter, err := artif.BuildFilter(nil, "", artif.MatchAllTags)
 			require.NoError(t, err)
 			got, err := New(nil, host, host).GetArtifactVersions(
 				context.Background(), &minderv1.Artifact{Name: "myimage"}, filter)

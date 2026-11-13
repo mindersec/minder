@@ -142,28 +142,28 @@ func (i *Ingest) getApplicableArtifactVersions(
 	ctx context.Context,
 	artifact *pb.Artifact,
 	cfg *ingesterConfig,
-) (result []imageInfo, digest string, err error) {
+) ([]imageInfo, string, error) {
 	if err := validateConfiguration(artifact, cfg); err != nil {
 		return nil, "", err
 	}
 
 	var versions []*pb.ArtifactVersion
-	tagProv, isTagProv := i.prov.(provifv1.OCITagVersionProvider)
-	var tag string
-	var hasTag bool
-	if isTagProv {
+	var digest string
+	if tagProv, isTagProv := i.prov.(provifv1.OCITagVersionProvider); isTagProv {
 		// The provider owns its artifact identity format, so it extracts the tag.
-		tag, hasTag = tagProv.ArtifactTag(artifact)
-	}
-	if hasTag {
-		// The entity is one repo:tag, so evaluate only the version that tag points to now.
-		version, err := getOwnTagVersion(ctx, cfg, tagProv, artifact, tag)
-		if err != nil {
-			return nil, "", err
+		if tag, hasTag := tagProv.ArtifactTag(artifact); hasTag {
+			// The entity is one repo:tag, so evaluate only the version that tag points to now.
+			version, err := getOwnTagVersion(ctx, cfg, tagProv, artifact, tag)
+			if err != nil {
+				return nil, "", err
+			}
+			versions = []*pb.ArtifactVersion{version}
+			digest = version.GetSha()
 		}
-		versions = []*pb.ArtifactVersion{version}
-		digest = version.GetSha()
-	} else {
+	}
+	if len(versions) == 0 {
+		// Couldn't extract tag-specific versions, so list the repository's
+		// versions and keep those that apply to this rule.
 		vers, err := interfaces.As[provifv1.ArtifactProvider](i.prov)
 		if err != nil {
 			return nil, "", err
@@ -177,7 +177,7 @@ func (i *Ingest) getApplicableArtifactVersions(
 	}
 
 	// Get the identity and provenance info for all artifact versions that apply to this rule
-	result, err = i.getVerificationResult(ctx, cfg, artifact, versions)
+	result, err := i.getVerificationResult(ctx, cfg, artifact, versions)
 	if err != nil {
 		return nil, "", err
 	}
@@ -194,11 +194,8 @@ func (i *Ingest) getApplicableArtifactVersions(
 // Any other filter rejection (e.g. the image is older than the retention
 // period) fails the evaluation, as it does on the repository-wide path.
 //
-// Known limitation: the version carries only the entity's own tag, even when
-// other tags point to the same digest. A rule listing several tags
-// (tags: [a, b]) needs all of them on one version, so it never matches a
-// repo:tag entity and is always skipped. That skip is logged at info level so
-// the lost coverage is discoverable; tag_regex can match several tags instead.
+// The entity carries a single tag, so a tags list matches when the entity's
+// tag is any of the listed tags: tags: [a, b] applies to both a and b.
 func getOwnTagVersion(
 	ctx context.Context,
 	cfg *ingesterConfig,
@@ -206,7 +203,7 @@ func getOwnTagVersion(
 	artifact *pb.Artifact,
 	tag string,
 ) (*pb.ArtifactVersion, error) {
-	filter, err := artif.BuildFilter(cfg.Tags, cfg.TagRegex)
+	filter, err := artif.BuildFilter(cfg.Tags, cfg.TagRegex, artif.MatchAnyTag)
 	if err != nil {
 		return nil, fmt.Errorf("error building filter from artifact ingester config: %w", err)
 	}
@@ -226,13 +223,6 @@ func getOwnTagVersion(
 
 	if err := filter.IsSkippable(version.GetCreatedAt().AsTime(), version.GetTags()); err != nil {
 		if errors.Is(err, artif.ErrTagsDoNotMatch) {
-			if len(cfg.Tags) > 1 {
-				zerolog.Ctx(ctx).Info().
-					Str("artifact", artifact.GetName()).
-					Str("tag", tag).
-					Strs("rule_tags", cfg.Tags).
-					Msg("skipping artifact rule: a multi-tag rule can't match a single-tag entity; use tag_regex instead")
-			}
 			return nil, evalerrors.NewErrEvaluationSkipSilently("artifact tag %s does not match the rule's tags", tag)
 		}
 		return nil, evalerrors.NewErrEvaluationFailed("artifact version not applicable: %s", err)
@@ -417,7 +407,7 @@ func getAndFilterArtifactVersions(
 	artifact *pb.Artifact,
 ) ([]*pb.ArtifactVersion, error) {
 	// Build a tag filter based on the configuration
-	filter, err := artif.BuildFilter(cfg.Tags, cfg.TagRegex)
+	filter, err := artif.BuildFilter(cfg.Tags, cfg.TagRegex, artif.MatchAllTags)
 	if err != nil {
 		return nil, fmt.Errorf("error building filter from artifact ingester config: %w", err)
 	}

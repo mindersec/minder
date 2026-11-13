@@ -51,8 +51,9 @@ tags using the `tags` parameter or as a regular expression using the `tag_regex`
 parameter. If both are empty, the rule will match any tag. It is an error to
 specify both `tags` and `tag_regex`.
 
-For Docker Hub and Quay.io images, each registered artifact is a single tag, and
-a rule whose tags don't match that tag is skipped. See
+For Docker Hub and Quay.io images, each registered artifact is a single tag. A
+rule is skipped for an artifact whose tag doesn't match any of the rule's
+`tags`, or doesn't match its `tag_regex`. See
 [How profiles evaluate a registered image](register_container_images.md#how-profiles-evaluate-a-registered-image).
 
 Create a new file called `profile-artifact-simple.yaml`. The following example

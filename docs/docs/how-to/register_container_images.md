@@ -71,10 +71,9 @@ rule applies to:
 
 - If the image's tag matches, the rule is evaluated.
 - If the image's tag doesn't match, the rule is skipped for that image.
-- A `tags` list with more than one tag, such as `tags: [latest, stable]`,
-  never matches a registered image, because each one has a single tag. Use
-  `tag_regex`, such as `tag_regex: "^(latest|stable)$"`, to match any of
-  several tags.
+- A `tags` list matches an image whose tag is any one of the listed tags. For
+  example, `tags: [latest, stable]` applies the rule to both the `latest` and
+  the `stable` image.
 
 An image older than the artifact retention period (six months) fails the rule
 rather than being skipped.

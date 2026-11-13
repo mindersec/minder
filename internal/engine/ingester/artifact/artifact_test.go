@@ -4,14 +4,12 @@
 package artifact
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"testing"
 	"time"
 
-	"github.com/rs/zerolog"
 	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -419,8 +417,6 @@ func TestArtifactIngestOwnTagFilters(t *testing.T) {
 		getErr   error
 		wantErr  error
 		wantPass bool
-		// wantLog is a substring of the info-level log the skip must emit.
-		wantLog string
 	}{
 		{name: "matching tag passes", tag: "v1",
 			params:   map[string]any{"name": "myimage", "tags": []any{"v1"}},
@@ -438,12 +434,19 @@ func TestArtifactIngestOwnTagFilters(t *testing.T) {
 			params:  map[string]any{"name": "myimage", "tag_regex": "^v"},
 			version: &pb.ArtifactVersion{Sha: "sha256:aaa", Tags: []string{"dev"}, CreatedAt: recent},
 			wantErr: evalerrors.ErrEvaluationSkipSilently},
-		// Known limitation: a multi-tag rule never matches one repo:tag entity.
-		{name: "multi-tag rule skips silently and logs it", tag: "a",
+		// A tags list matches an entity whose single tag is any listed tag.
+		{name: "multi-tag rule passes for first listed tag", tag: "a",
+			params:   map[string]any{"name": "myimage", "tags": []any{"a", "b"}},
+			version:  &pb.ArtifactVersion{Sha: "sha256:aaa", Tags: []string{"a"}, CreatedAt: recent},
+			wantPass: true},
+		{name: "multi-tag rule passes for second listed tag", tag: "b",
+			params:   map[string]any{"name": "myimage", "tags": []any{"a", "b"}},
+			version:  &pb.ArtifactVersion{Sha: "sha256:aaa", Tags: []string{"b"}, CreatedAt: recent},
+			wantPass: true},
+		{name: "multi-tag rule skips unlisted tag silently", tag: "c",
 			params:  map[string]any{"name": "myimage", "tags": []any{"a", "b"}},
-			version: &pb.ArtifactVersion{Sha: "sha256:aaa", Tags: []string{"a"}, CreatedAt: recent},
-			wantErr: evalerrors.ErrEvaluationSkipSilently,
-			wantLog: "use tag_regex instead"},
+			version: &pb.ArtifactVersion{Sha: "sha256:aaa", Tags: []string{"c"}, CreatedAt: recent},
+			wantErr: evalerrors.ErrEvaluationSkipSilently},
 		{name: "expired image fails", tag: "v1",
 			params:  map[string]any{"name": "myimage"},
 			version: &pb.ArtifactVersion{Sha: "sha256:aaa", Tags: []string{"v1"}, CreatedAt: expired},
@@ -479,17 +482,8 @@ func TestArtifactIngestOwnTagFilters(t *testing.T) {
 			require.NoError(t, err)
 			ing.artifactVerifier = mockVerifier
 
-			var logs bytes.Buffer
-			ctx := zerolog.New(&logs).Level(zerolog.InfoLevel).WithContext(context.Background())
-
 			art := &pb.Artifact{ArtifactPk: "myimage:" + tt.tag, Owner: "testns", Name: "myimage", Type: "container"}
-			got, err := ing.Ingest(ctx, art, tt.params)
-			if tt.wantLog != "" {
-				require.Contains(t, logs.String(), tt.wantLog)
-			} else {
-				require.NotContains(t, logs.String(), "use tag_regex instead",
-					"only a multi-tag rule should log its skip")
-			}
+			got, err := ing.Ingest(context.Background(), art, tt.params)
 			if !tt.wantPass {
 				require.ErrorIs(t, err, tt.wantErr)
 				require.Nil(t, got)
