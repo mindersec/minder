@@ -222,67 +222,24 @@ func (ov *OCI) GetArtifactVersions(
 	versions := make([]*minderv1.ArtifactVersion, 0, len(tags))
 	byDigest := make(map[string]*minderv1.ArtifactVersion, len(tags))
 	for _, t := range tags {
-		ref, err := ov.getReference(artifact.GetName(), t)
+		tagVersion, err := ov.getTagVersion(ctx, artifact.GetName(), t)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get reference for tag %s: %w", t, err)
-		}
-
-		desc, err := remote.Get(ref,
-			remote.WithContext(ctx),
-			remote.WithUserAgent(constants.ServerUserAgent),
-		)
-		if err != nil {
-			if isNotFound(err) {
+			if errors.Is(err, provifv1.ErrArtifactTagNotFound) {
 				zerolog.Ctx(ctx).Info().
 					Str("name", artifact.GetName()).
 					Str("tag", t).
 					Msg("skipping artifact version: tag no longer exists")
 				continue
 			}
-			return nil, fmt.Errorf("failed to get descriptor for tag %s: %w", t, err)
+			return nil, err
 		}
 
-		var createdAt time.Time
-		//nolint:exhaustive // only index types need special handling; all other media types are treated as single-platform images
-		switch desc.MediaType {
-		case types.OCIImageIndex, types.DockerManifestList:
-			createdAt, err = resolveIndexCreatedAt(ctx, desc, t)
-			if err != nil {
-				return nil, fmt.Errorf("failed to resolve created time for index tag %s: %w", t, err)
-			}
-
-		default:
-			img, err := desc.Image()
-			if err != nil {
-				return nil, fmt.Errorf("failed to get image for tag %s: %w", t, err)
-			}
-			man, err := img.Manifest()
-			if err != nil {
-				return nil, fmt.Errorf("failed to get manifest for tag %s: %w", t, err)
-			}
-			createdAt, err = resolveCreatedAt(man, img.ConfigFile)
-			if err != nil {
-				return nil, fmt.Errorf("unable to get creation time for tag %s: %w", t, err)
-			}
-		}
-
-		// TODO: Consider caching
-		digest, err := ov.GetDigest(ctx, artifact.GetName(), t)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get digest for tag %s: %w", t, err)
-		}
-
-		if version, ok := byDigest[digest]; ok {
+		if version, ok := byDigest[tagVersion.Sha]; ok {
 			version.Tags = append(version.Tags, t)
 			continue
 		}
-		version := &minderv1.ArtifactVersion{
-			Tags:      []string{t},
-			Sha:       desc.Digest.String(),
-			CreatedAt: timestamppb.New(createdAt),
-		}
-		byDigest[digest] = version
-		versions = append(versions, version)
+		byDigest[tagVersion.Sha] = tagVersion
+		versions = append(versions, tagVersion)
 	}
 
 	// A tag-list filter requires every requested tag on the same version.
@@ -296,6 +253,64 @@ func (ov *OCI) GetArtifactVersions(
 		out = append(out, version)
 	}
 	return out, nil
+}
+
+// GetArtifactVersion returns the version a single tag currently points to,
+// resolved from the registry at call time. The version carries only that tag,
+// even when other tags share its digest. A deleted tag returns an error
+// wrapping provifv1.ErrArtifactTagNotFound.
+func (ov *OCI) GetArtifactVersion(ctx context.Context, contname, tag string) (*minderv1.ArtifactVersion, error) {
+	return ov.getTagVersion(ctx, contname, tag)
+}
+
+// getTagVersion fetches the tag's descriptor once and returns its top-level
+// digest (the index digest for multi-arch tags) and creation time.
+func (ov *OCI) getTagVersion(ctx context.Context, contname, tag string) (*minderv1.ArtifactVersion, error) {
+	ref, err := ov.getReference(contname, tag)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get reference for tag %s: %w", tag, err)
+	}
+
+	desc, err := remote.Get(ref,
+		remote.WithContext(ctx),
+		remote.WithUserAgent(constants.ServerUserAgent),
+	)
+	if err != nil {
+		if isNotFound(err) {
+			return nil, fmt.Errorf("failed to get descriptor for tag %s: %w: %w", tag, provifv1.ErrArtifactTagNotFound, err)
+		}
+		return nil, fmt.Errorf("failed to get descriptor for tag %s: %w", tag, err)
+	}
+
+	var createdAt time.Time
+	//nolint:exhaustive // only index types need special handling; all other media types are treated as single-platform images
+	switch desc.MediaType {
+	case types.OCIImageIndex, types.DockerManifestList:
+		createdAt, err = resolveIndexCreatedAt(ctx, desc, tag)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve created time for index tag %s: %w", tag, err)
+		}
+
+	default:
+		img, err := desc.Image()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get image for tag %s: %w", tag, err)
+		}
+		man, err := img.Manifest()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get manifest for tag %s: %w", tag, err)
+		}
+		createdAt, err = resolveCreatedAt(man, img.ConfigFile)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get creation time for tag %s: %w", tag, err)
+		}
+	}
+
+	return &minderv1.ArtifactVersion{
+		Tags:      []string{tag},
+		Sha:       desc.Digest.String(),
+		CreatedAt: timestamppb.New(createdAt),
+	}, nil
 }
 
 // resolveCreatedAt determines the creation time of an artifact version. It

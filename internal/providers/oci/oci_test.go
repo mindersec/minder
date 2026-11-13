@@ -32,6 +32,7 @@ import (
 
 	artif "github.com/mindersec/minder/internal/providers/artifact"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 func TestResolveCreatedAt(t *testing.T) {
@@ -342,7 +343,7 @@ func TestGetArtifactVersions(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			filter, err := artif.BuildFilter(tt.tags, tt.regex)
+			filter, err := artif.BuildFilter(tt.tags, tt.regex, artif.MatchAllTags)
 			require.NoError(t, err)
 			got, err := o.GetArtifactVersions(context.Background(), &minderv1.Artifact{Name: "myimage"}, filter)
 			require.NoError(t, err)
@@ -368,9 +369,9 @@ func TestGetArtifactVersions_GroupEdges(t *testing.T) {
 		{name: "signature alias excludes its whole group", alias: "v2.sig"},
 		{name: "deleted alias preserves remaining group", alias: "v2", failOnGet: 1,
 			status: http.StatusNotFound, wantTags: []string{"v1", "v3"}},
-		{name: "digest not found propagates", alias: "v2", failOnGet: 2,
-			status: http.StatusNotFound, wantErr: true},
-		{name: "digest forbidden propagates", alias: "v2", failOnGet: 2,
+		// Each tag is fetched once, so a non-404 failure on that fetch must
+		// propagate rather than return the rest of the group.
+		{name: "forbidden alias propagates", alias: "v2", failOnGet: 1,
 			status: http.StatusForbidden, wantErr: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -397,13 +398,13 @@ func TestGetArtifactVersions_GroupEdges(t *testing.T) {
 				require.NoError(t, err)
 				require.NoError(t, remote.Write(ref, img))
 			}
-			filter, err := artif.BuildFilter(nil, "")
+			filter, err := artif.BuildFilter(nil, "", artif.MatchAllTags)
 			require.NoError(t, err)
 			got, err := New(nil, host, host).GetArtifactVersions(
 				context.Background(), &minderv1.Artifact{Name: "myimage"}, filter)
 			if tt.wantErr {
-				require.ErrorContains(t, err, "unable to get digest for tag "+tt.alias)
-				assert.Nil(t, got, "do not return a partial group after a digest failure")
+				require.ErrorContains(t, err, "failed to get descriptor for tag "+tt.alias)
+				assert.Nil(t, got, "do not return a partial group after a fetch failure")
 			} else {
 				require.NoError(t, err)
 				if tt.wantTags == nil {
@@ -793,5 +794,89 @@ func TestGetReferrer_UsesRefHost(t *testing.T) {
 			assert.Greater(t, ownHits.Load(), ownBefore, "referrers request should reach %s", host)
 			assert.Equal(t, otherBefore, otherHits.Load(), "referrers request should not reach the other registry")
 		})
+	}
+}
+
+func TestGetArtifactVersion(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(registry.New(registry.Logger(log.New(io.Discard, "", 0))))
+	t.Cleanup(srv.Close)
+	host := strings.TrimPrefix(srv.URL, "http://")
+	created := time.Now().UTC().Truncate(time.Second)
+
+	img, err := mutate.ConfigFile(empty.Image, &v1.ConfigFile{
+		Created: v1.Time{Time: created}, OS: "linux", Architecture: "amd64",
+	})
+	require.NoError(t, err)
+	idx := mutate.AppendManifests(empty.Index, mutate.IndexAddendum{
+		Add:        img,
+		Descriptor: v1.Descriptor{Platform: &v1.Platform{OS: "linux", Architecture: "amd64"}},
+	})
+
+	// "v1" and "stable" share a digest; the result still carries only the requested tag.
+	for _, tag := range []string{"v1", "stable"} {
+		ref, err := name.NewTag(fmt.Sprintf("%s/testns/myimage:%s", host, tag))
+		require.NoError(t, err)
+		require.NoError(t, remote.Write(ref, img))
+	}
+	multiRef, err := name.NewTag(fmt.Sprintf("%s/testns/myimage:multi", host))
+	require.NoError(t, err)
+	require.NoError(t, remote.WriteIndex(multiRef, idx))
+
+	imgDigest, err := img.Digest()
+	require.NoError(t, err)
+	idxDigest, err := idx.Digest()
+	require.NoError(t, err)
+
+	o := New(nil, host, path.Join(host, "testns"))
+
+	for _, tt := range []struct {
+		name string
+		tag  string
+		want *minderv1.ArtifactVersion
+	}{
+		{name: "single-platform image", tag: "v1", want: &minderv1.ArtifactVersion{
+			Tags: []string{"v1"}, Sha: imgDigest.String(), CreatedAt: timestamppb.New(created)}},
+		{name: "index uses top-level digest", tag: "multi", want: &minderv1.ArtifactVersion{
+			Tags: []string{"multi"}, Sha: idxDigest.String(), CreatedAt: timestamppb.New(created)}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := o.GetArtifactVersion(context.Background(), "myimage", tt.tag)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+
+	t.Run("missing tag is not found", func(t *testing.T) {
+		t.Parallel()
+		_, err := o.GetArtifactVersion(context.Background(), "myimage", "nope")
+		require.Error(t, err)
+		assert.ErrorIs(t, err, provifv1.ErrArtifactTagNotFound)
+	})
+}
+
+func TestGetArtifactVersion_TagMovesBetweenCalls(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(registry.New(registry.Logger(log.New(io.Discard, "", 0))))
+	t.Cleanup(srv.Close)
+	host := strings.TrimPrefix(srv.URL, "http://")
+	ref, err := name.NewTag(fmt.Sprintf("%s/testns/myimage:latest", host))
+	require.NoError(t, err)
+	o := New(nil, host, path.Join(host, "testns"))
+
+	// The digest is resolved at call time, not cached from an earlier lookup.
+	for range 2 {
+		img, err := random.Image(256, 1)
+		require.NoError(t, err)
+		require.NoError(t, remote.Write(ref, img))
+		want, err := img.Digest()
+		require.NoError(t, err)
+
+		got, err := o.GetArtifactVersion(context.Background(), "myimage", "latest")
+		require.NoError(t, err)
+		assert.Equal(t, want.String(), got.GetSha())
 	}
 }
