@@ -38,6 +38,11 @@ var ErrEntityNotFound = errors.New("entity not found")
 // entity type which it does not recognize.
 var ErrUnsupportedEntity = errors.New("entity not supported by provider")
 
+// ErrArtifactTagNotFound is returned (wrapped) by OCITagVersionProvider's
+// GetArtifactVersion when the requested tag doesn't exist in the registry,
+// for example because it was deleted after the entity was registered.
+var ErrArtifactTagNotFound = errors.New("artifact tag not found")
+
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
 
 // EntityCreationOptions defines default behavior for entity creation
@@ -356,6 +361,26 @@ type OCI interface {
 	// returned by the registry, keyed by digest. Unlike GetManifest, it
 	// does not resolve a multi-platform index down to a single platform.
 	GetRawManifest(ctx context.Context, name, digest string) (*RawManifest, error)
+}
+
+// OCITagVersionProvider is an OCI provider whose artifact entities are a
+// single repo:tag (DockerHub, Quay). It can resolve one tag to its current
+// version without listing the whole repository.
+type OCITagVersionProvider interface {
+	OCI
+
+	// GetArtifactVersion returns the version the given tag currently points
+	// to, with its digest and creation time resolved from the registry at
+	// call time. The returned version carries only the given tag.
+	// If the tag doesn't exist, it returns a nil version and an error
+	// wrapping ErrArtifactTagNotFound; check it with errors.Is.
+	GetArtifactVersion(ctx context.Context, name, tag string) (*minderv1.ArtifactVersion, error)
+
+	// ArtifactTag returns the tag of a repo:tag artifact entity built by this
+	// provider. It returns false when the artifact isn't a repo:tag entity
+	// (e.g. one registered with an older identity), in which case callers
+	// should fall back to the repository-wide versions.
+	ArtifactTag(artifact *minderv1.Artifact) (string, bool)
 }
 
 // ParseAndValidate parses the given provider configuration and validates it.

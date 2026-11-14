@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"path"
 
+	"github.com/google/go-containerregistry/pkg/authn"
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
@@ -53,6 +54,9 @@ type dockerHubImageLister struct {
 
 // Ensure that the Docker Hub client implements the ImageLister interface
 var _ provifv1.ImageLister = (*dockerHubImageLister)(nil)
+
+// Ensure that the Docker Hub client implements the OCITagVersionProvider interface
+var _ provifv1.OCITagVersionProvider = (*dockerHubImageLister)(nil)
 
 // New creates a new Docker Hub client
 func New(cred provifv1.OAuth2TokenCredential, cfg *minderv1.DockerHubProviderConfig) (*dockerHubImageLister, error) {
@@ -115,6 +119,26 @@ func MarshalV1Config(rawCfg json.RawMessage) (json.RawMessage, error) {
 
 func (d *dockerHubImageLister) GetNamespaceURL() string {
 	return d.target.String()
+}
+
+// GetAuthenticator returns a Basic authenticator for the Docker Hub registry.
+// It uses the configured username, or the namespace when no username is set.
+func (d *dockerHubImageLister) GetAuthenticator() (authn.Authenticator, error) {
+	if d.cred == nil {
+		return authn.Anonymous, nil
+	}
+
+	tok, err := d.cred.GetAsOAuth2TokenSource().Token()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get token: %w", err)
+	}
+
+	username := d.cfg.GetUsername()
+	if username == "" {
+		username = d.namespace
+	}
+
+	return &authn.Basic{Username: username, Password: tok.AccessToken}, nil
 }
 
 // CanImplement returns true if the provider can implement the specified trait
@@ -189,7 +213,7 @@ func (d *dockerHubImageLister) FetchAllProperties(
 		return nil, fmt.Errorf("failed to resolve digest for %q: %w", name, err)
 	}
 
-	return oci.NewArtifactProperties(name, d.namespace, d.GetRegistry(), repo+"@"+digest)
+	return oci.NewArtifactProperties(name, d.namespace, d.GetRegistry(), digest)
 }
 
 // FetchProperty implements the provider interface

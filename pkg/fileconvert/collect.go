@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -24,14 +25,21 @@ type Printer func(string, ...any)
 // ResourcesFromPaths collects resources from paths, canceling any remote
 // file requests when ctx is canceled.
 func ResourcesFromPaths(ctx context.Context, printer Printer, paths ...string) ([]minderv1.ResourceMeta, error) {
-	files, err := util.ExpandFileArgs(paths...)
+	return ResourcesFromFSPaths(ctx, nil, printer, paths...)
+}
+
+// ResourcesFromFSPaths collects resources from paths in sysFS, canceling any remote
+// file requests when ctx is canceled. When sysFS is nil, the local operating system
+// filesystem is used.
+func ResourcesFromFSPaths(ctx context.Context, sysFS fs.FS, printer Printer, paths ...string) ([]minderv1.ResourceMeta, error) {
+	files, err := util.ExpandFSFileArgs(sysFS, paths...)
 	if err != nil {
 		return nil, fmt.Errorf("error expanding args: %w", err)
 	}
 
 	objects := make([]minderv1.ResourceMeta, 0, len(files))
 	for _, file := range files {
-		resources, err := ReadFromPath(ctx, printer, file)
+		resources, err := ReadFromFSPath(ctx, sysFS, printer, file)
 		if err != nil && !errors.Is(err, minderv1.ErrNotAResource) {
 			return nil, err
 		}
@@ -44,6 +52,12 @@ func ResourcesFromPaths(ctx context.Context, printer Printer, paths ...string) (
 // ReadFromPath reads one file and cancels remote requests when ctx is canceled.
 // If "-" is passed as the filename, stdin will be read as a YAML document.
 func ReadFromPath(ctx context.Context, printer Printer, file util.ExpandedFile) ([]minderv1.ResourceMeta, error) {
+	return ReadFromFSPath(ctx, nil, printer, file)
+}
+
+// ReadFromFSPath reads one file from sysFS and cancels remote requests when ctx is canceled.
+// When sysFS is nil, the local operating system filesystem is used.
+func ReadFromFSPath(ctx context.Context, sysFS fs.FS, printer Printer, file util.ExpandedFile) ([]minderv1.ResourceMeta, error) {
 	objects := []minderv1.ResourceMeta{}
 	var input Decoder
 	if file.Path == "-" {
@@ -64,7 +78,7 @@ func ReadFromPath(ctx context.Context, printer Printer, file util.ExpandedFile) 
 		input = builder(reader)
 	} else {
 		var closer io.Closer
-		input, closer = DecoderForFile(file.Path)
+		input, closer = DecoderForFSFile(sysFS, file.Path)
 		if input == nil {
 			// Not a valid file type, skip it.
 			return objects, nil
@@ -80,7 +94,9 @@ func ReadFromPath(ctx context.Context, printer Printer, file util.ExpandedFile) 
 			}
 			if file.Expanded && i == 0 {
 				// Skip files expanded from directories where the contents aren't valid
-				printer("Skipping expanded file %s due to error %s\n", file.Path, err)
+				if printer != nil {
+					printer("Skipping expanded file %s due to error %s\n", file.Path, err)
+				}
 				break
 			}
 			return nil, fmt.Errorf("error reading resource from file %s: %w", file.Path, err)

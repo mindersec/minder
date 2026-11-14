@@ -451,11 +451,15 @@ func TestFlushAllListFlushFails(t *testing.T) {
 	// This tests that flushing sends messages to the executor engine
 	evt.Register(constants.TopicQueueEntityEvaluate, flushedMessages.Add)
 
+	runErr := make(chan error, 1)
 	go func() {
-		t.Log("Running eventer")
-		err := evt.Run(ctx)
-		assert.NoError(t, err, "expected no error when running eventer")
+		runErr <- evt.Run(ctx)
 	}()
+	defer func() {
+		cancel()
+		require.NoError(t, <-runErr, "expected no error when running eventer")
+	}()
+	<-evt.Running()
 
 	// we'll wait 1 second for the lock to be available
 	var eventThreshold int64 = 1
@@ -501,11 +505,15 @@ func TestFlushAllListFlushListsARepoThatGetsDeletedLater(t *testing.T) {
 	// This tests that flushing sends messages to the executor engine
 	evt.Register(constants.TopicQueueEntityEvaluate, flushedMessages.Add)
 
+	runErr := make(chan error, 1)
 	go func() {
-		t.Log("Running eventer")
-		err := evt.Run(ctx)
-		assert.NoError(t, err, "expected no error when running eventer")
+		runErr <- evt.Run(ctx)
 	}()
+	defer func() {
+		cancel()
+		require.NoError(t, <-runErr, "expected no error when running eventer")
+	}()
+	<-evt.Running()
 
 	// we'll wait 1 second for the lock to be available
 	var eventThreshold int64 = 1

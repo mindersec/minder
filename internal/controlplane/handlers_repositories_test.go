@@ -34,6 +34,7 @@ import (
 	reposvc "github.com/mindersec/minder/internal/repositories"
 	mockrepo "github.com/mindersec/minder/internal/repositories/mock"
 	rf "github.com/mindersec/minder/internal/repositories/mock/fixtures"
+	"github.com/mindersec/minder/internal/util/cursor"
 	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/config/server"
@@ -701,4 +702,272 @@ func createServer(
 		providerManager: providerManager,
 		props:           propService.NewPropertiesService(store),
 	}
+}
+
+func TestServer_ListRepositories_Pagination(t *testing.T) {
+	t.Parallel()
+
+	// Build exactly RepoPageSize repos. The service fetches limit+1 internally
+	// and returns a non-nil cursor when a full page exists, so returning
+	// exactly RepoPageSize results triggers cursor generation.
+	pageSize := int64(reposvc.RepoPageSize)
+	repos := make([]*models.EntityWithProperties, int(pageSize))
+	for i := range repos {
+		repos[i] = simpleDbRepository(repoName, remoteRepoId)
+		// Unique IDs so the cursor returned by the service is non-nil.
+		repos[i].Entity.ID = uuid.New()
+	}
+
+	scenarios := []struct {
+		Name             string
+		Request          *pb.ListRepositoriesRequest
+		RepoServiceSetup repoMockBuilder
+		ProviderSetup    func(ctrl *gomock.Controller, mgr *mockmanager.MockProviderManager)
+		ExpectedCursor   bool // true = expect non-empty cursor
+		ExpectedError    string
+	}{
+		{
+			// When the service returns a full page (len == limit),
+			// the handler must set a non-empty cursor so the client
+			// knows there may be more results.
+			Name:    "returns next cursor when page is full",
+			Request: &pb.ListRepositoriesRequest{Limit: pageSize},
+			RepoServiceSetup: rf.NewRepoService(
+				rf.WithSuccessfulListRepositories(repos...),
+			),
+			ProviderSetup: func(ctrl *gomock.Controller, mgr *mockmanager.MockProviderManager) {
+				prov := newGitHub(func(mock githubMock) {
+					mock.EXPECT().
+						PropertiesToProtoMessage(pb.Entity_ENTITY_REPOSITORIES, gomock.Any()).
+						Return(&pb.Repository{Name: repoName, RepoId: remoteRepoId}, nil).
+						Times(int(pageSize))
+				})(ctrl)
+				mgr.EXPECT().InstantiateFromID(gomock.Any(), uuid.Nil).
+					Return(prov, nil).
+					Times(int(pageSize))
+			},
+			ExpectedCursor: true,
+		},
+		{
+			// When the service returns fewer results than the limit,
+			// the handler must return an empty cursor — we are on the
+			// last page and there is nothing more to fetch.
+			Name:    "no cursor on last page",
+			Request: &pb.ListRepositoriesRequest{Limit: pageSize},
+			RepoServiceSetup: rf.NewRepoService(
+				rf.WithSuccessfulListRepositories(
+					simpleDbRepository(repoName, remoteRepoId),
+					simpleDbRepository(repoName2, remoteRepoId2),
+				),
+			),
+			ProviderSetup: func(ctrl *gomock.Controller, mgr *mockmanager.MockProviderManager) {
+				prov := newGitHub(func(mock githubMock) {
+					mock.EXPECT().
+						PropertiesToProtoMessage(pb.Entity_ENTITY_REPOSITORIES, gomock.Any()).
+						Return(&pb.Repository{Name: repoName, RepoId: remoteRepoId}, nil).AnyTimes()
+				})(ctrl)
+				mgr.EXPECT().InstantiateFromID(gomock.Any(), uuid.Nil).
+					Return(prov, nil).AnyTimes()
+			},
+			ExpectedCursor: false,
+		},
+		{
+			// A corrupt or tampered cursor value must be rejected with
+			// InvalidArgument before any DB call is made.
+			Name: "invalid cursor returns error",
+			Request: &pb.ListRepositoriesRequest{
+				Cursor: "not-valid-base64!!!",
+			},
+			RepoServiceSetup: rf.NewRepoService(),
+			ExpectedError:    "invalid cursor",
+		},
+		{
+			// A valid base64 string that does not decode to a UUID must
+			// also be rejected, prevents passing arbitrary IDs.
+			Name: "cursor that is base64 but not a UUID returns error",
+			Request: &pb.ListRepositoriesRequest{
+				Cursor: cursor.EncodeValue("not-a-uuid"),
+			},
+			RepoServiceSetup: rf.NewRepoService(),
+			ExpectedError:    "invalid cursor",
+		},
+		{
+			// Empty cursor string means "start from the beginning" —
+			// must not be treated as an error.
+			Name:    "empty cursor is valid first page request",
+			Request: &pb.ListRepositoriesRequest{},
+			RepoServiceSetup: rf.NewRepoService(
+				rf.WithSuccessfulListRepositories(),
+			),
+			ExpectedCursor: false,
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.Name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Provider: engcontext.Provider{Name: ghprovider.Github},
+				Project:  engcontext.Project{ID: projectID},
+			})
+
+			mgr := mockmanager.NewMockProviderManager(ctrl)
+			if scenario.ProviderSetup != nil {
+				scenario.ProviderSetup(ctrl, mgr)
+			}
+
+			server := createServer(ctrl, scenario.RepoServiceSetup, false, mgr)
+
+			res, err := server.ListRepositories(ctx, scenario.Request)
+			if scenario.ExpectedError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), scenario.ExpectedError)
+				require.Nil(t, res)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, res)
+
+			if scenario.ExpectedCursor {
+				require.NotEmpty(t, res.Cursor,
+					"expected a non-empty cursor when page is full")
+
+				// Verify the cursor decodes back to a valid UUID —
+				// proving the encode/decode round-trip is correct.
+				decoded, decErr := cursor.NewEntityCursor(res.Cursor)
+				require.NoError(t, decErr, "cursor must be decodeable")
+				require.NotEqual(t, uuid.Nil, decoded.ID, "cursor must decode to a non-nil UUID")
+			} else {
+				require.Empty(t, res.Cursor,
+					"expected empty cursor on last page")
+			}
+		})
+	}
+}
+
+func TestFetchRepositoriesForProvider_PaginatesAllPages(t *testing.T) {
+	t.Parallel()
+
+	pageSize := 10
+	const totalRepos = 25
+	partialSize := totalRepos - 2*pageSize // 5
+
+	// Each repo gets a distinct UUID so we can verify the cursor advances.
+	makePage := func(n int) []*models.EntityWithProperties {
+		page := make([]*models.EntityWithProperties, n)
+		for i := range page {
+			page[i] = simpleDbRepository(repoName, remoteRepoId)
+			// Assign a unique ID per entity so cursors differ across pages.
+			page[i].Entity.ID = uuid.New()
+		}
+		return page
+	}
+
+	page1 := makePage(pageSize)
+	page2 := makePage(pageSize)
+	page3 := makePage(partialSize)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+		Project: engcontext.Project{ID: projectID},
+	})
+
+	prov := newGitHub(withSuccessfulListAllRepositories)(ctrl)
+	mgr := mockmanager.NewMockProviderManager(ctrl)
+	mgr.EXPECT().BulkInstantiateByTrait(
+		gomock.Any(),
+		gomock.Eq(projectID),
+		gomock.Eq(db.ProviderTypeRepoLister),
+		gomock.Eq(""),
+	).Return(map[uuid.UUID]manager.NameProviderTuple{
+		provider.ID: {Name: provider.Name, Provider: prov},
+	}, []string{}, nil)
+
+	// Track which cursors the loop passes on each call.
+	// Call 1: cursor must be uuid.Nil (start of list).
+	// Call 2: cursor must equal the ID of the last entity on page1.
+	// Call 3: cursor must equal the ID of the last entity on page2.
+	expectedCursors := []uuid.UUID{
+		uuid.Nil,
+		page1[len(page1)-1].Entity.ID,
+		page2[len(page2)-1].Entity.ID,
+	}
+	callCount := 0
+	allCollected := make([]*models.EntityWithProperties, 0, totalRepos)
+
+	mockSvc := mockrepo.NewMockRepositoryService(ctrl)
+	pages := [][]*models.EntityWithProperties{page1, page2, page3}
+	for i, page := range pages {
+		p := page
+		expCursor := expectedCursors[i]
+		mockSvc.EXPECT().
+			ListRepositories(
+				gomock.Any(),
+				gomock.Any(),
+				gomock.Any(),
+				// Verify the cursor matches the last ID of the previous page.
+				gomock.Cond(func(c any) bool {
+					return c.(uuid.UUID) == expCursor
+				}),
+
+				gomock.Any(),
+			).
+			DoAndReturn(func(_ context.Context, _, _, _ uuid.UUID, _ int) ([]*models.EntityWithProperties, uuid.UUID, error) {
+				callCount++
+				allCollected = append(allCollected, p...)
+				// Return uuid.Nil on the last page (fewer rows than limit).
+				// This matches what the real service does.
+				var nextID uuid.UUID
+				if i < len(pages)-1 {
+					nextID = p[len(p)-1].Entity.ID
+				}
+				return p, nextID, nil
+			}).
+			Times(1)
+	}
+
+	store := mockdb.NewMockStore(ctrl)
+	store.EXPECT().GetParentProjects(gomock.Any(), projectID).Return([]uuid.UUID{projectID}, nil).AnyTimes()
+	store.EXPECT().GetFeatureInProject(gomock.Any(), gomock.Any()).Return(json.RawMessage{}, nil).AnyTimes()
+	store.EXPECT().GetProviderByID(gomock.Any(), gomock.Any()).Return(provider, nil).AnyTimes()
+	store.EXPECT().FindProviders(gomock.Any(), gomock.Any()).Return([]db.Provider{provider}, nil).AnyTimes()
+	store.EXPECT().GetAccessTokenByProjectID(gomock.Any(), gomock.Any()).Return(db.ProviderAccessToken{
+		EncryptedAccessToken: pqtype.NullRawMessage{Valid: true, RawMessage: make(json.RawMessage, 16)},
+	}, nil).AnyTimes()
+
+	srv := &Server{
+		store:           store,
+		repos:           mockSvc,
+		cfg:             &server.Config{},
+		providerStore:   providers.NewProviderStore(store),
+		providerManager: mgr,
+		props:           propService.NewPropertiesService(store),
+	}
+
+	projectIDStr := projectID.String()
+	res, err := srv.ListRemoteRepositoriesFromProvider(ctx,
+		&pb.ListRemoteRepositoriesFromProviderRequest{
+			Context: &pb.Context{Project: &projectIDStr},
+		},
+	)
+
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// The loop made exactly 3 calls (two full pages + one partial).
+	require.Equal(t, 3, callCount,
+		"expected exactly 3 ListRepositories calls for %d repos at page size %d", totalRepos, pageSize)
+
+	// All repos were collected across the 3 pages.
+	require.Len(t, allCollected, totalRepos,
+		"expected all %d repositories to be collected, got %d", totalRepos, len(allCollected))
+
+	// The cursor on each call matched the last entity ID of the previous page,
+	//  proving the loop advances the cursor correctly and does not repeat pages.
 }

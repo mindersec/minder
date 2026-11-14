@@ -4,14 +4,17 @@
 package jsonyaml_test
 
 import (
+	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/mindersec/minder/internal/util/jsonyaml"
 )
 
-func TestConvertYAMLToJSON(t *testing.T) {
+func TestTranscodeYAMLToJSON(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -46,19 +49,21 @@ bar:
 		},
 	}
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := jsonyaml.ConvertYamlToJson(tt.yamlCase)
+			r := strings.NewReader(tt.yamlCase)
+			w := bytes.NewBuffer(nil)
+
+			err := jsonyaml.TranscodeYAMLToJSON(r, w)
 
 			if tt.wantErr {
 				assert.Error(t, err, "expected error")
 				return
 			}
 
-			assert.NoError(t, err, "unexpected error")
-			assert.Equal(t, tt.wantW, string(got), "unexpected output")
+			require.NoError(t, err, "unexpected error")
+			assert.Equal(t, tt.wantW, w.String(), "unexpected output")
 		})
 	}
 }
@@ -97,7 +102,6 @@ foo: bar
 		},
 	}
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

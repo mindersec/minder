@@ -6,7 +6,7 @@ package pull_request
 
 import (
 	"bytes"
-	"context" // #nosec G505 - we're not using sha1 for crypto, only to quickly compare contents
+	"context"
 	"fmt"
 
 	"google.golang.org/protobuf/proto"

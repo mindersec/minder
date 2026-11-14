@@ -21,6 +21,7 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List the providers available in a specific project",
 	Long:  `The minder provider list command lists the providers available in a specific project.`,
+	Args:  cobra.NoArgs,
 	RunE:  listProviderCommand,
 }
 

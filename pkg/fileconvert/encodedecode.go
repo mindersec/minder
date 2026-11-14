@@ -10,9 +10,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -56,13 +59,28 @@ var knownResourceTypes = []string{
 // DecoderForFile returns a Decoder for the file at the specified path,
 // or nil if the file is not of the appropriate type.
 func DecoderForFile(path string) (Decoder, io.Closer) {
-	path = filepath.Clean(path)
-	builder := decoderBuilder(path)
+	return DecoderForFSFile(nil, path)
+}
+
+// DecoderForFSFile returns a Decoder for the file at the specified path in sysFS,
+// or nil if the file is not of the appropriate type. When sysFS is nil, the local
+// operating system filesystem is used.
+func DecoderForFSFile(sysFS fs.FS, filePath string) (Decoder, io.Closer) {
+	builder := decoderBuilder(filePath)
 	// Return early without opening the file if the extension is unmatched.
 	if builder == nil {
 		return nil, nil
 	}
-	file, err := os.Open(path)
+	if sysFS != nil {
+		clean := path.Clean(filepath.ToSlash(filePath))
+		clean = strings.TrimPrefix(clean, "/")
+		file, err := sysFS.Open(clean)
+		if err != nil {
+			return nil, nil
+		}
+		return builder(file), file
+	}
+	file, err := os.Open(filepath.Clean(filePath)) // #nosec G304 - intentional file loading via CLI args
 	if err != nil {
 		return nil, nil
 	}

@@ -62,6 +62,11 @@ func TestListProviderCommand(t *testing.T) {
 			},
 			ExpectedError: "request timed out",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"provider", "list", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder provider list"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, ProviderCmd)

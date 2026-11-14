@@ -17,6 +17,7 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
+	"github.com/google/go-containerregistry/pkg/v1/types"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -114,7 +115,9 @@ func (o *OCI) GetReferrer(ctx context.Context, contname, tag, artifactType strin
 		return "", fmt.Errorf("failed to get digest: %w", err)
 	}
 
-	digname, err := name.NewDigest(fmt.Sprintf("%s@%s", ref.Context().RepositoryStr(), dig))
+	// Name() keeps the registry host; RepositoryStr() drops it, which made
+	// name.NewDigest default to Docker Hub regardless of the configured registry.
+	digname, err := name.NewDigest(fmt.Sprintf("%s@%s", ref.Context().Name(), dig))
 	if err != nil {
 		return "", fmt.Errorf("failed to get digest name: %w", err)
 	}
@@ -219,9 +222,9 @@ func (ov *OCI) GetArtifactVersions(
 	versions := make([]*minderv1.ArtifactVersion, 0, len(tags))
 	byDigest := make(map[string]*minderv1.ArtifactVersion, len(tags))
 	for _, t := range tags {
-		img, err := ov.getImage(ctx, artifact.GetName(), t)
+		tagVersion, err := ov.getTagVersion(ctx, artifact.GetName(), t)
 		if err != nil {
-			if isNotFound(err) {
+			if errors.Is(err, provifv1.ErrArtifactTagNotFound) {
 				zerolog.Ctx(ctx).Info().
 					Str("name", artifact.GetName()).
 					Str("tag", t).
@@ -231,33 +234,12 @@ func (ov *OCI) GetArtifactVersions(
 			return nil, err
 		}
 
-		man, err := img.Manifest()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get manifest for tag %s: %w", t, err)
-		}
-
-		createdAt, err := resolveCreatedAt(man, img.ConfigFile)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get creation time for tag %s: %w", t, err)
-		}
-
-		// TODO: Consider caching
-		digest, err := ov.GetDigest(ctx, artifact.GetName(), t)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get digest for tag %s: %w", t, err)
-		}
-
-		if version, ok := byDigest[digest]; ok {
+		if version, ok := byDigest[tagVersion.Sha]; ok {
 			version.Tags = append(version.Tags, t)
 			continue
 		}
-		version := &minderv1.ArtifactVersion{
-			Tags:      []string{t},
-			Sha:       digest,
-			CreatedAt: timestamppb.New(createdAt),
-		}
-		byDigest[digest] = version
-		versions = append(versions, version)
+		byDigest[tagVersion.Sha] = tagVersion
+		versions = append(versions, tagVersion)
 	}
 
 	// A tag-list filter requires every requested tag on the same version.
@@ -270,8 +252,65 @@ func (ov *OCI) GetArtifactVersions(
 		}
 		out = append(out, version)
 	}
-
 	return out, nil
+}
+
+// GetArtifactVersion returns the version a single tag currently points to,
+// resolved from the registry at call time. The version carries only that tag,
+// even when other tags share its digest. A deleted tag returns an error
+// wrapping provifv1.ErrArtifactTagNotFound.
+func (ov *OCI) GetArtifactVersion(ctx context.Context, contname, tag string) (*minderv1.ArtifactVersion, error) {
+	return ov.getTagVersion(ctx, contname, tag)
+}
+
+// getTagVersion fetches the tag's descriptor once and returns its top-level
+// digest (the index digest for multi-arch tags) and creation time.
+func (ov *OCI) getTagVersion(ctx context.Context, contname, tag string) (*minderv1.ArtifactVersion, error) {
+	ref, err := ov.getReference(contname, tag)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get reference for tag %s: %w", tag, err)
+	}
+
+	desc, err := remote.Get(ref,
+		remote.WithContext(ctx),
+		remote.WithUserAgent(constants.ServerUserAgent),
+	)
+	if err != nil {
+		if isNotFound(err) {
+			return nil, fmt.Errorf("failed to get descriptor for tag %s: %w: %w", tag, provifv1.ErrArtifactTagNotFound, err)
+		}
+		return nil, fmt.Errorf("failed to get descriptor for tag %s: %w", tag, err)
+	}
+
+	var createdAt time.Time
+	//nolint:exhaustive // only index types need special handling; all other media types are treated as single-platform images
+	switch desc.MediaType {
+	case types.OCIImageIndex, types.DockerManifestList:
+		createdAt, err = resolveIndexCreatedAt(ctx, desc, tag)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve created time for index tag %s: %w", tag, err)
+		}
+
+	default:
+		img, err := desc.Image()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get image for tag %s: %w", tag, err)
+		}
+		man, err := img.Manifest()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get manifest for tag %s: %w", tag, err)
+		}
+		createdAt, err = resolveCreatedAt(man, img.ConfigFile)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get creation time for tag %s: %w", tag, err)
+		}
+	}
+
+	return &minderv1.ArtifactVersion{
+		Tags:      []string{tag},
+		Sha:       desc.Digest.String(),
+		CreatedAt: timestamppb.New(createdAt),
+	}, nil
 }
 
 // resolveCreatedAt determines the creation time of an artifact version. It
@@ -332,4 +371,65 @@ func getDigestFromRef(ctx context.Context, ref name.Reference) (string, error) {
 	}
 
 	return desc.Digest.String(), nil
+}
+
+// resolveIndexCreatedAt returns the creation time for a multi-platform image
+// index. It prefers the index-level org.opencontainers.image.created annotation
+// and falls back to the first child image timestamp when the annotation is absent.
+func resolveIndexCreatedAt(ctx context.Context, desc *remote.Descriptor, tag string) (time.Time, error) {
+	idx, err := desc.ImageIndex()
+	if err != nil {
+		return time.Time{}, fmt.Errorf("failed to read image index for tag %s: %w", tag, err)
+	}
+	idxManifest, err := idx.IndexManifest()
+	if err != nil {
+		return time.Time{}, fmt.Errorf("failed to read index manifest for tag %s: %w", tag, err)
+	}
+	strcreated, ok := idxManifest.Annotations[imgspecv1.AnnotationCreated]
+	if ok {
+		createdAt, err := time.Parse(time.RFC3339, strcreated)
+		if err != nil {
+			return time.Time{}, fmt.Errorf("parsing created annotation for tag %s: %w", tag, err)
+		}
+		return createdAt, nil
+	}
+	return firstChildCreatedAt(ctx, idx)
+}
+
+// firstChildCreatedAt returns the creation timestamp of the first child image
+// that has a non-zero created field. All platforms in a multi-arch index are
+// typically built in the same CI run so their timestamps are effectively equal;
+// stopping at the first valid one avoids unnecessary registry calls.
+func firstChildCreatedAt(ctx context.Context, idx v1.ImageIndex) (time.Time, error) {
+	idxManifest, err := idx.IndexManifest()
+	if err != nil {
+		return time.Time{}, fmt.Errorf("reading index manifest: %w", err)
+	}
+
+	for _, desc := range idxManifest.Manifests {
+		// Check child manifest annotation first
+		if strcreated, ok := desc.Annotations[imgspecv1.AnnotationCreated]; ok {
+			t, err := time.Parse(time.RFC3339, strcreated)
+			if err == nil {
+				return t, nil
+			}
+		}
+		// Fall back to child config JSON
+		img, err := idx.Image(desc.Digest)
+		if err != nil {
+			zerolog.Ctx(ctx).Warn().Str("digest", desc.Digest.String()).
+				Err(err).Msg("skipping child image when determining index creation time")
+			continue
+		}
+		cfg, err := img.ConfigFile()
+		if err != nil {
+			zerolog.Ctx(ctx).Warn().Str("digest", desc.Digest.String()).
+				Err(err).Msg("skipping child config when determining index creation time")
+			continue
+		}
+		if !cfg.Created.IsZero() {
+			return cfg.Created.Time, nil
+		}
+	}
+	return time.Time{}, nil
 }

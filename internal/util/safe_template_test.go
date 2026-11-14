@@ -320,6 +320,35 @@ func TestRenderStructPB(t *testing.T) {
 			expected: "",
 			wantErr:  true,
 		},
+		{
+			name: "toJson: map",
+			args: args{
+				tmpl: "{{ toJson . }}",
+				s: map[string]any{
+					"name": "test",
+				},
+			},
+			expected: `{"name":"test"}`,
+			wantErr:  false,
+		},
+		{
+			name: "toJson: slice",
+			args: args{
+				tmpl: "{{ toJson . }}",
+				s:    []any{"one", "two"},
+			},
+			expected: `["one","two"]`,
+			wantErr:  false,
+		},
+		{
+			name: "toJson: unsupported value",
+			args: args{
+				tmpl: "{{ toJson . }}",
+				s:    func() {},
+			},
+			expected: "",
+			wantErr:  true,
+		},
 	}
 
 	for _, tt := range tests {

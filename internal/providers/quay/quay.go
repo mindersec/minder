@@ -54,6 +54,9 @@ type quayImageLister struct {
 // Ensure that the Quay client implements the ImageLister interface
 var _ provifv1.ImageLister = (*quayImageLister)(nil)
 
+// Ensure that the Quay client implements the OCITagVersionProvider interface
+var _ provifv1.OCITagVersionProvider = (*quayImageLister)(nil)
+
 // New creates a new Quay client
 func New(cred provifv1.OAuth2TokenCredential, cfg *minderv1.QuayProviderConfig) (*quayImageLister, error) {
 	cli := oauth2.NewClient(context.Background(), cred.GetAsOAuth2TokenSource())
@@ -191,7 +194,7 @@ func (q *quayImageLister) FetchAllProperties(
 		return nil, fmt.Errorf("failed to resolve digest for %q: %w", name, err)
 	}
 
-	return oci.NewArtifactProperties(name, q.namespace, q.GetRegistry(), repo+"@"+digest)
+	return oci.NewArtifactProperties(name, q.namespace, q.GetRegistry(), digest)
 }
 
 // FetchProperty implements the provider interface

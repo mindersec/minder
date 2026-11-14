@@ -55,7 +55,7 @@ func TestNewGitHubProviderClassManager(t *testing.T) {
 	mockPublisher := mockinterfaces.NewMockPublisher(ctrl)
 
 	mgr := NewGitHubProviderClassManager(
-		ratecache.NewRestClientCache(context.Background()),
+		ratecache.NewRestClientCache(t.Context()),
 		nil,
 		&server.ProviderConfig{},
 		&server.WebhookConfig{},
@@ -370,20 +370,15 @@ func (dummyCredential) SetToken(_ string) {}
 func TestValidateCredentials(t *testing.T) {
 	t.Parallel()
 
-	ctrl := gomock.NewController(t)
-	t.Cleanup(ctrl.Finish)
-
-	mockGhSvc := mockghsvc.NewMockGitHubProviderService(ctrl)
-	mgr := &githubProviderManager{
-		ghService: mockGhSvc,
-	}
-
-	ctx := context.Background()
-
 	t.Run("invalid credential type returns error", func(t *testing.T) {
 		t.Parallel()
 
-		err := mgr.ValidateCredentials(ctx, dummyCredential{}, &m.CredentialVerifyParams{RemoteUser: "test-user"})
+		ctrl := gomock.NewController(t)
+		t.Cleanup(ctrl.Finish)
+		mockGhSvc := mockghsvc.NewMockGitHubProviderService(ctrl)
+		mgr := &githubProviderManager{ghService: mockGhSvc}
+
+		err := mgr.ValidateCredentials(t.Context(), dummyCredential{}, &m.CredentialVerifyParams{RemoteUser: "test-user"})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid credential type")
 	})
@@ -391,32 +386,47 @@ func TestValidateCredentials(t *testing.T) {
 	t.Run("empty remote user skips token verification", func(t *testing.T) {
 		t.Parallel()
 
+		ctrl := gomock.NewController(t)
+		t.Cleanup(ctrl.Finish)
+		mockGhSvc := mockghsvc.NewMockGitHubProviderService(ctrl)
+		mgr := &githubProviderManager{ghService: mockGhSvc}
+
 		tokenCred := credentials.NewOAuth2TokenCredential("valid-token")
-		err := mgr.ValidateCredentials(ctx, tokenCred, &m.CredentialVerifyParams{RemoteUser: ""})
+		err := mgr.ValidateCredentials(t.Context(), tokenCred, &m.CredentialVerifyParams{RemoteUser: ""})
 		require.NoError(t, err)
 	})
 
 	t.Run("valid remote user with successful token verification", func(t *testing.T) {
 		t.Parallel()
 
+		ctrl := gomock.NewController(t)
+		t.Cleanup(ctrl.Finish)
+		mockGhSvc := mockghsvc.NewMockGitHubProviderService(ctrl)
+		mgr := &githubProviderManager{ghService: mockGhSvc}
+
 		mockGhSvc.EXPECT().
 			VerifyProviderTokenIdentity(gomock.Any(), "octocat", "valid-token").
 			Return(nil)
 
 		tokenCred := credentials.NewOAuth2TokenCredential("valid-token")
-		err := mgr.ValidateCredentials(ctx, tokenCred, &m.CredentialVerifyParams{RemoteUser: "octocat"})
+		err := mgr.ValidateCredentials(t.Context(), tokenCred, &m.CredentialVerifyParams{RemoteUser: "octocat"})
 		require.NoError(t, err)
 	})
 
 	t.Run("token identity verification failure returns error", func(t *testing.T) {
 		t.Parallel()
 
+		ctrl := gomock.NewController(t)
+		t.Cleanup(ctrl.Finish)
+		mockGhSvc := mockghsvc.NewMockGitHubProviderService(ctrl)
+		mgr := &githubProviderManager{ghService: mockGhSvc}
+
 		mockGhSvc.EXPECT().
 			VerifyProviderTokenIdentity(gomock.Any(), "octocat", "bad-token").
 			Return(errors.New("identity mismatch"))
 
 		tokenCred := credentials.NewOAuth2TokenCredential("bad-token")
-		err := mgr.ValidateCredentials(ctx, tokenCred, &m.CredentialVerifyParams{RemoteUser: "octocat"})
+		err := mgr.ValidateCredentials(t.Context(), tokenCred, &m.CredentialVerifyParams{RemoteUser: "octocat"})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "error verifying token identity: identity mismatch")
 	})
@@ -497,8 +507,12 @@ func helperGenerateEncryptedToken(t *testing.T) pqtype.NullRawMessage {
 func helperCreatePrivateKeyFile(t *testing.T) *os.File {
 	t.Helper()
 
-	tmpFile, err := os.CreateTemp("", "gh-app-pvtkey-*.pem")
+	tempDir := t.TempDir()
+	tmpFile, err := os.CreateTemp(tempDir, "gh-app-pvtkey-*.pem")
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = tmpFile.Close()
+	})
 
 	pvtKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	require.NoError(t, err)
@@ -554,7 +568,7 @@ func TestBuild_OAuthAndAppFlows(t *testing.T) {
 			DecryptOAuthToken(gomock.Any()).
 			Return(oauth2.Token{AccessToken: accessToken}, nil).Times(2)
 
-		clientCache := ratecache.NewRestClientCache(ctx)
+		clientCache := ratecache.NewRestClientCache(t.Context())
 		ghFactory := clients.NewGitHubClientFactory(telemetry.NewNoopMetrics())
 
 		mgr := &githubProviderManager{
@@ -635,7 +649,7 @@ func TestBuild_OAuthAndAppFlows(t *testing.T) {
 			DecryptOAuthToken(gomock.Any()).
 			Return(oauth2.Token{AccessToken: accessToken}, nil)
 
-		clientCache := ratecache.NewRestClientCache(ctx)
+		clientCache := ratecache.NewRestClientCache(t.Context())
 		ghFactory := clients.NewGitHubClientFactory(telemetry.NewNoopMetrics())
 
 		mgr := &githubProviderManager{
@@ -733,7 +747,6 @@ func TestBuild_OAuthAndAppFlows(t *testing.T) {
 
 		mockStore := mockdb.NewMockStore(ctrl)
 		keyFile := helperCreatePrivateKeyFile(t)
-		defer os.Remove(keyFile.Name())
 
 		prov := &db.Provider{
 			ID:         providerID,
@@ -751,7 +764,7 @@ func TestBuild_OAuthAndAppFlows(t *testing.T) {
 				IsOrg:             true,
 			}, nil)
 
-		clientCache := ratecache.NewRestClientCache(ctx)
+		clientCache := ratecache.NewRestClientCache(t.Context())
 		ghFactory := clients.NewGitHubClientFactory(telemetry.NewNoopMetrics())
 
 		mgr := &githubProviderManager{
@@ -793,7 +806,7 @@ func TestBuild_OAuthAndAppFlows(t *testing.T) {
 			GetInstallationIDByProviderID(gomock.Any(), uuid.NullUUID{UUID: providerID, Valid: true}).
 			Return(db.ProviderGithubAppInstallation{}, sql.ErrNoRows)
 
-		clientCache := ratecache.NewRestClientCache(ctx)
+		clientCache := ratecache.NewRestClientCache(t.Context())
 		ghFactory := clients.NewGitHubClientFactory(telemetry.NewNoopMetrics())
 
 		mgr := &githubProviderManager{
@@ -950,7 +963,7 @@ func TestDelete(t *testing.T) {
 			Return(oauth2.Token{AccessToken: accessToken}, nil).Times(2)
 
 		// Setup rest client cache with mock github client
-		clientCache := ratecache.NewRestClientCache(ctx)
+		clientCache := ratecache.NewRestClientCache(t.Context())
 		clientCache.Set("", accessToken, db.ProviderTypeGithub, mockGhClient)
 
 		// Mock store returning entities to deregister

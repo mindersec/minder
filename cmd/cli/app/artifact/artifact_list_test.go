@@ -125,6 +125,11 @@ func TestArtifactListCommand(t *testing.T) {
 			},
 			ExpectedError: "server error",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"artifact", "list", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder artifact list"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, ArtifactCmd)

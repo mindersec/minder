@@ -27,49 +27,6 @@ func NewGitHubMock(opts ...func(mock GitHubMock)) GitHubMockBuilder {
 	}
 }
 
-func WithSuccessfulGetPackageByName(artifact any) func(mock GitHubMock) {
-	return func(mock GitHubMock) {
-		mock.EXPECT().
-			GetPackageByName(
-				gomock.Any(),
-				gomock.Any(),
-				gomock.Any(),
-				gomock.Any(),
-			).
-			AnyTimes().
-			Return(artifact, nil)
-	}
-}
-
-func WithSuccessfulGetPackageVersionById(version any) func(mock GitHubMock) {
-	return func(mock GitHubMock) {
-		mock.EXPECT().
-			GetPackageVersionById(
-				gomock.Any(),
-				gomock.Any(),
-				gomock.Any(),
-				gomock.Any(),
-				gomock.Any(),
-			).
-			AnyTimes().
-			Return(version, nil)
-	}
-}
-
-func WithSuccessfulGetPullRequest(pr any) func(mock GitHubMock) {
-	return func(mock GitHubMock) {
-		mock.EXPECT().
-			GetPullRequest(
-				gomock.Any(),
-				gomock.Any(),
-				gomock.Any(),
-				gomock.Any(),
-			).
-			AnyTimes().
-			Return(pr, nil)
-	}
-}
-
 func WithSuccessfulGetEntityName(name string) func(mock GitHubMock) {
 	return func(mock GitHubMock) {
 		mock.EXPECT().

@@ -205,6 +205,7 @@ func AllInOneServerService(
 	validatorRegistry := validators.NewValidatorRegistry()
 	repoValidator := validators.NewRepositoryValidator(store)
 	validatorRegistry.AddValidator(pb.Entity_ENTITY_REPOSITORIES, repoValidator)
+	validatorRegistry.AddValidator(pb.Entity_ENTITY_ARTIFACTS, validators.NewArtifactValidator())
 
 	// Create entity creator
 	entityCreator := entityService.NewEntityCreator(

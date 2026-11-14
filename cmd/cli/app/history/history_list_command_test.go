@@ -68,6 +68,11 @@ func TestListCommand(t *testing.T) {
 			Args:          []string{"history", "list", "-o", "csv"},
 			ExpectedError: "invalid argument",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"history", "list", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder history list"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, historyCmd)

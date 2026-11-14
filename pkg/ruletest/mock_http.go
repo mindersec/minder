@@ -120,6 +120,10 @@ func buildMockHTTPHandler(mockDict *starlark.Dict) (http.Handler, error) {
 		return mux, nil
 	}
 
+	// Maps a normalized pattern to the key it came from, so two keys that
+	// normalize to the same pattern can be reported by their original names.
+	seen := make(map[string]string)
+
 	for _, key := range mockDict.Keys() {
 		val, found, err := mockDict.Get(key)
 		if err != nil || !found {
@@ -134,6 +138,7 @@ func buildMockHTTPHandler(mockDict *starlark.Dict) (http.Handler, error) {
 		// Normalize the URL to just the host and path to avoid mismatches from scheme,
 		// query parameters, etc. If url.Parse fails (e.g. it's just a raw path like
 		// "/api/v1/repos"), we safely fall back to using the raw key string.
+		origKey := keyStr
 		parsedURL, err := url.Parse(keyStr)
 		if err == nil && parsedURL.Host != "" {
 			keyStr = parsedURL.Host + parsedURL.Path
@@ -144,11 +149,32 @@ func buildMockHTTPHandler(mockDict *starlark.Dict) (http.Handler, error) {
 			return nil, fmt.Errorf("mock endpoint %q must be mapped to a mock_response, got %s", keyStr, val.Type())
 		}
 
-		mux.HandleFunc(keyStr, func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(mockResp.StatusCode)
-			_, _ = w.Write([]byte(mockResp.Body))
-		})
+		if prev, dup := seen[keyStr]; dup {
+			return nil, fmt.Errorf("mock endpoints %q and %q both match %q; "+
+				"scheme and query string are ignored when matching", prev, origKey, keyStr)
+		}
+		seen[keyStr] = origKey
+
+		if err := registerMock(mux, keyStr, mockResp); err != nil {
+			return nil, fmt.Errorf("invalid mock endpoint %q: %w", origKey, err)
+		}
 	}
 
 	return mux, nil
+}
+
+// registerMock adds a handler for pattern to mux. http.ServeMux panics on
+// an invalid or conflicting pattern; since patterns here come from test
+// files, turn that panic into an error instead of crashing the test run.
+func registerMock(mux *http.ServeMux, pattern string, resp *MockResponse) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
+	}()
+	mux.HandleFunc(pattern, func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(resp.StatusCode)
+		_, _ = w.Write([]byte(resp.Body))
+	})
+	return nil
 }

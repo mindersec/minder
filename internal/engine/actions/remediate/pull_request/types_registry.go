@@ -17,7 +17,6 @@ import (
 )
 
 type fsModifier interface {
-	hash() (string, error)
 	writeSummary(out io.Writer) error
 	createFsModEntries(ctx context.Context, ent proto.Message, params interfaces.ActionsParams) error
 	modifyFs() ([]*fsEntry, error)
@@ -46,6 +45,7 @@ func (mr modificationRegistry) registerBuiltIn() {
 	mr.register(minderContentModification, newContentModification)
 	mr.register(minderFrizbeeTagResolve, newFrizbeeTagResolveModification)
 	mr.register(minderYQEvaluate, newYqExecute)
+	mr.register(minderDeleteModification, newDeleteModification)
 }
 
 func (mr modificationRegistry) getModification(
