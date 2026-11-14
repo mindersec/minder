@@ -16,6 +16,7 @@ var projectDeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete a sub-project within a minder control plane",
 	Long:  `Delete a sub-project within a minder control plane`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		return viper.BindPFlags(cmd.Flags())
 	},

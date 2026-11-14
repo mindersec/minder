@@ -107,6 +107,11 @@ func TestDeleteCommand(t *testing.T) {
 			Args:          []string{"ruletype", "delete"},
 			ExpectedError: "at least one of the flags in the group [id name all] is required",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"ruletype", "delete", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder ruletype delete"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, ruleTypeCmd)
