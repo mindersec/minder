@@ -93,6 +93,11 @@ func TestArtifactGetCommand(t *testing.T) {
 			},
 			ExpectedError: "artifact not found",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"artifact", "get", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder artifact get"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, ArtifactCmd)

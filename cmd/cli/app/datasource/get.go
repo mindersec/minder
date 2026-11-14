@@ -24,6 +24,7 @@ var getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get data source details",
 	Long:  `The datasource get subcommand lets you retrieve details for a data source within Minder.`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)

@@ -112,6 +112,11 @@ func TestGetCommand(t *testing.T) {
 			},
 			ExpectedError: "entity not found",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"entity", "get", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder entity get"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, EntityCmd)
