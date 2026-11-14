@@ -7,7 +7,6 @@ package quickstart
 
 import (
 	"context"
-	"embed"
 	"fmt"
 	"os"
 	"strings"
@@ -17,7 +16,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gopkg.in/yaml.v3"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/cmd/cli/app/auth"
@@ -26,81 +24,65 @@ import (
 	"github.com/mindersec/minder/cmd/cli/app/repo"
 	ghclient "github.com/mindersec/minder/internal/providers/github/clients"
 	"github.com/mindersec/minder/internal/util/cli"
+	"github.com/mindersec/minder/pkg/api"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/fileconvert"
 )
 
 const (
+	// DefaultPolicyURL points to the OpenSSF security-baseline in minder-rules-and-profiles
+	// nolint:lll
+	DefaultPolicyURL = "https://github.com/mindersec/minder-rules-and-profiles?profiles/github"
+
 	// nolint:lll
 	stepPromptMsgWelcome = `
 Welcome! 👋 
 
 You are about to go through the quickstart process for Minder. Throughout this, you will: 
 
-* Enroll your provider
+* Authenticate and initialize your account
+* Review the baseline security policy to apply
+* Enroll your provider (e.g. GitHub)
 * Register your repositories
-* Create a rule type
-* Create a profile
+* Apply the security policy and profiles
 
 Let's get started!
 `
 	// nolint:lll
 	stepPromptMsgEnroll = `
-Step 1 - Enroll your provider.
+Step 2 - Enroll your provider.
 
 This will enroll the provider for your repositories.
 
-Currently Minder works with Github, but we are planning support for other providers too!
+Currently Minder works with GitHub, GitLab, and OCI registries, with more providers planned!
 
-The command we are about to do is the following:
+The command we are about to run is:
 
 minder provider enroll
 `
 	// nolint:lll
 	stepPromptMsgRegister = `
-Step 2 - Register your repositories.
+Step 3 - Register your repositories.
 
-Now that you have enrolled your provider successfully, you can register your repositories.
+Now that you have enrolled your provider successfully, you can register your repositories with Minder.
 
-The command we are about to do is the following:
+The command we are about to run is:
 
 minder repo register
 `
 	// nolint:lll
-	stepPromptMsgRuleType = `
-Step 3 - Create your first rule type - secret_scanning.
+	stepPromptMsgApplyPolicy = `
+Step 4 - Apply baseline security policy.
 
-Now that you have registered your repositories with Minder, let's create your first rule type!
-
-For the purpose of this quickstart, we are going to use a rule of type "secret_scanning" (secret_scanning.yaml).
-Secret scanning is about protecting you from accidentally leaking secrets in your repository.
-
-The command we are about to do is the following:
-
-minder ruletype create -f secret_scanning.yaml
-`
-	// nolint:lll
-	stepPromptMsgProfile = `
-Step 4 - Create your first profile.
-
-So far you have enrolled a provider, registered your repositories and created a rule type for secrets scanning.
-It's time to stitch all of that together by creating a profile. 
-
-Let's create a profile that enables secret scanning for all of your registered repositories. 
-
-We'll enable the remediate and alert features too, so Minder can automatically remediate any non-compliant repositories and alert you if needed.
-
-Your profile will be applied to the following repositories:
+We will now apply the security rules and profiles to your registered repositories:
 
 %s
 
-The command we are about to do is the following:
-
-minder profile create -f quickstart-profile.yaml
+The policy will be applied across your registered repositories.
 `
 	// nolint:lll
 	stepPromptMsgFinishBase = `
-You can now continue to explore Minder's features by adding or removing more repositories, create custom profiles with various rules, and much more.
+You can now continue to explore Minder's features by adding or removing repositories, configuring custom profiles, and reviewing evaluation status.
 
 For more information about Minder, see the following resources:
 
@@ -117,25 +99,36 @@ Thank you for using Minder!
 `
 	// nolint:lll
 	stepPromptMsgFinishOK = `
-Congratulations! 🎉 You've now successfully created your first profile in Minder!
-
-`
-	// nolint:lll
-	stepPromptMsgFinishExisting = `
-Congratulations! 🎉 It seems you already tried the quickstart command and created such a profile, so we skipped the profile creation step.
-
-In case you have registered new repositories during this flow, the profile will be applied to them too.
+Congratulations! 🎉 You've now successfully configured your baseline security posture in Minder!
 
 `
 )
 
-//go:embed embed*
-var content embed.FS
+// RuleTypeDetail holds descriptive info about a rule type
+type RuleTypeDetail struct {
+	Name        string
+	DisplayName string
+	Description string
+}
+
+// ProfileDetail holds descriptive info and remediation setting for a profile
+type ProfileDetail struct {
+	Name        string
+	DisplayName string
+	Remediate   string
+	Alert       string
+}
+
+// PolicySummary describes the resources contained in a policy
+type PolicySummary struct {
+	RuleTypes []RuleTypeDetail
+	Profiles  []ProfileDetail
+}
 
 var cmd = &cobra.Command{
 	Use:    "quickstart",
 	Short:  "Quickstart minder",
-	Long:   "The quickstart command provide the means to quickly get started with minder",
+	Long:   "The quickstart command provides the means to quickly get started with minder",
 	Hidden: true,
 	RunE:   cli.GRPCClientWrapRunE(quickstartCommand),
 }
@@ -153,9 +146,14 @@ func quickstartCommand(
 	repoClient := minderv1.NewRepositoryServiceClient(conn)
 	profileClient := minderv1.NewProfileServiceClient(conn)
 	ruleClient := minderv1.NewRuleTypeServiceClient(conn)
+	dataSourceClient := minderv1.NewDataSourceServiceClient(conn)
 
 	project := viper.GetString("project")
 	provider := viper.GetString("provider")
+	policyURL := viper.GetString("policy-url")
+	if policyURL == "" {
+		policyURL = DefaultPolicyURL
+	}
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
@@ -179,22 +177,38 @@ func quickstartCommand(
 		if err != nil {
 			return cli.MessageAndError("", err)
 		}
-		// User logged in successfully
-		// We now have to re-create the gRPC connection
+		// User logged in successfully - re-create gRPC connection
 		newConn, err := cli.GrpcForCommand(cmd, viper.GetViper())
 		if err != nil {
 			return err
 		}
 		defer newConn.Close()
 
-		// Update the existing clients with the new connection
 		conn = newConn
 		repoClient = minderv1.NewRepositoryServiceClient(conn)
 		profileClient = minderv1.NewProfileServiceClient(conn)
 		ruleClient = minderv1.NewRuleTypeServiceClient(conn)
+		dataSourceClient = minderv1.NewDataSourceServiceClient(conn)
 	}
 
-	// Step 1 - Confirm enrolling
+	// Step 1: Fetch and describe policy up-front
+	cmd.PrintErrln("Fetching baseline security policy from:", policyURL)
+	resources, summary, err := fetchPolicyResources(cmd.Context(), cmd.Printf, policyURL)
+	if err != nil {
+		return cli.MessageAndError("Error fetching security policy", err)
+	}
+
+	describeMsg := describePolicy(policyURL, summary)
+	yes = cli.PrintYesNoPrompt(cmd,
+		describeMsg,
+		"Accept policy and proceed?",
+		"Quickstart operation cancelled.",
+		true)
+	if !yes {
+		return nil
+	}
+
+	// Step 2: Enroll provider
 	yes = cli.PrintYesNoPrompt(cmd,
 		stepPromptMsgEnroll,
 		"Proceed?",
@@ -204,11 +218,9 @@ func quickstartCommand(
 		return nil
 	}
 
-	// New context so we don't time out between steps
 	ctx, cancel := getQuickstartContext(cmd.Context(), viper.GetViper())
 	defer cancel()
 
-	// Enroll provider
 	ctx = cli.WithRPCClient[minderv1.ProvidersServiceClient](ctx, minderv1.NewProvidersServiceClient(conn))
 	ctx = cli.WithRPCClient[minderv1.OAuthServiceClient](ctx, minderv1.NewOAuthServiceClient(conn))
 	cmd.SetContext(ctx)
@@ -217,7 +229,7 @@ func quickstartCommand(
 		return cli.MessageAndError("Error enrolling provider", err)
 	}
 
-	// Step 2 - Confirm repository registration
+	// Step 3: Register repositories
 	yes = cli.PrintYesNoPrompt(cmd,
 		stepPromptMsgRegister,
 		"Proceed?",
@@ -227,25 +239,21 @@ func quickstartCommand(
 		return nil
 	}
 
-	// New context so we don't time out between steps
 	ctx, cancel = getQuickstartContext(cmd.Context(), viper.GetViper())
 	defer cancel()
 
-	// Prompt to register repositories
 	cmd.SetContext(ctx)
 	err = repo.RegisterCmd(cmd, []string{})
 	if err != nil {
 		return cli.MessageAndError("Error registering repositories", err)
 	}
 
-	// New context so we don't time out between steps
 	ctx, cancel = getQuickstartContext(cmd.Context(), viper.GetViper())
 	defer cancel()
 
 	// Get the list of all registered repositories
 	var registeredRepos []string
 	var cursor string
-	// Do not fetch more than 100 pages
 	for range 100 {
 		listResp, err := repoClient.ListRepositories(ctx, &minderv1.ListRepositoriesRequest{
 			Context: &minderv1.Context{Provider: &provider, Project: &project},
@@ -264,24 +272,124 @@ func quickstartCommand(
 		}
 	}
 
-	return loadCatalog(cmd, ruleClient, profileClient, provider, project, registeredRepos)
+	// Step 4: Apply policy resources to registered repositories
+	return applyPolicyResources(cmd, ruleClient, profileClient, dataSourceClient, project, registeredRepos, resources)
 }
 
-// loadCatalog loads and applies the quickstart rule type and profile catalog
-// using the same prompts and flow as the inline implementation.
+// fetchPolicyResources retrieves resources from a remote git URL, HTTP URL, or local path
+func fetchPolicyResources(
+	ctx context.Context,
+	printer fileconvert.Printer,
+	rawURL string,
+) ([]minderv1.ResourceMeta, PolicySummary, error) {
+	var resources []minderv1.ResourceMeta
+	var err error
+
+	// If git URL style, clone and extract
+	if _, _, parseErr := fileconvert.ParseGitURL(rawURL); parseErr == nil {
+		resources, err = fileconvert.ResourcesFromGit(ctx, printer, rawURL)
+	} else {
+		resources, err = fileconvert.ResourcesFromPaths(ctx, printer, rawURL)
+	}
+
+	if err != nil {
+		return nil, PolicySummary{}, err
+	}
+	if len(resources) == 0 {
+		return nil, PolicySummary{}, fmt.Errorf("no resources found at %s", rawURL)
+	}
+
+	summary := summarizeResources(resources)
+	return resources, summary, nil
+}
+
+// summarizeResources extracts rule types and profiles for human review
+func summarizeResources(resources []minderv1.ResourceMeta) PolicySummary {
+	var summary PolicySummary
+	for _, res := range resources {
+		switch r := res.(type) {
+		case *minderv1.RuleType:
+			detail := RuleTypeDetail{
+				Name:        r.GetName(),
+				DisplayName: r.GetDisplayName(),
+				Description: r.GetDescription(),
+			}
+			summary.RuleTypes = append(summary.RuleTypes, detail)
+		case *minderv1.Profile:
+			detail := ProfileDetail{
+				Name:        r.GetName(),
+				DisplayName: r.GetDisplayName(),
+				Remediate:   r.GetRemediate(),
+				Alert:       r.GetAlert(),
+			}
+			if detail.Remediate == "" {
+				detail.Remediate = "off"
+			}
+			if detail.Alert == "" {
+				detail.Alert = "on"
+			}
+			summary.Profiles = append(summary.Profiles, detail)
+		}
+	}
+	return summary
+}
+
+// describePolicy formats rule types and profiles cleanly with markdown formatting
+func describePolicy(policyURL string, s PolicySummary) string {
+	var b strings.Builder
+	b.WriteString("\nStep 1 - Review Security Baseline Policy.\n\n")
+	fmt.Fprintf(&b, "Source: %s\n\n", policyURL)
+	b.WriteString("The following baseline controls will be configured in your project:\n")
+
+	if len(s.RuleTypes) > 0 {
+		b.WriteString("\nRule Types:\n")
+		for _, rt := range s.RuleTypes {
+			displayName := rt.DisplayName
+			if displayName == "" {
+				displayName = rt.Name
+			}
+			if rt.Description != "" {
+				fmt.Fprintf(&b, "  • %s: %s\n", displayName, rt.Description)
+			} else {
+				fmt.Fprintf(&b, "  • %s\n", displayName)
+			}
+		}
+	}
+
+	if len(s.Profiles) > 0 {
+		b.WriteString("\nProfiles:\n")
+		for _, p := range s.Profiles {
+			displayName := p.DisplayName
+			if displayName == "" {
+				displayName = p.Name
+			}
+			fmt.Fprintf(&b, "  • %s (Remediate: %s, Alert: %s)\n", displayName, p.Remediate, p.Alert)
+		}
+	}
+
+	b.WriteString("\nThese rules continuously evaluate your repositories and alert or remediate non-compliant settings.\n")
+	return b.String()
+}
+
+// applyPolicyResources re-uses Upsert helpers from api package to apply resources
 //
-//nolint:gocyclo // kept as a straight extraction to preserve behavior
-func loadCatalog(
+//nolint:gocyclo
+func applyPolicyResources(
 	cmd *cobra.Command,
 	ruleClient minderv1.RuleTypeServiceClient,
 	profileClient minderv1.ProfileServiceClient,
-	provider string,
+	dataSourceClient minderv1.DataSourceServiceClient,
 	project string,
 	registeredRepos []string,
+	resources []minderv1.ResourceMeta,
 ) error {
-	// Step 3 - Confirm rule type creation
+	reposList := strings.Join(registeredRepos, "\n")
+	if len(registeredRepos) == 0 {
+		reposList = "(No repositories registered yet)"
+	}
+
 	yes := cli.PrintYesNoPrompt(cmd,
-		stepPromptMsgRuleType,
+		fmt.Sprintf(stepPromptMsgApplyPolicy, reposList),
 		"Proceed?",
 		"Quickstart operation cancelled.",
 		true)
@@ -289,112 +397,72 @@ func loadCatalog(
 		return nil
 	}
 
-	// Creating the rule type
-	cmd.PrintErrln("Creating rule type...")
+	cmd.PrintErrln("Applying baseline security policy...")
 
-	// Load the rule type from the embedded file system
-	reader, err := content.Open("embed/secret_scanning.yaml")
-	if err != nil {
-		return cli.MessageAndError("error opening rule type", err)
+	v1Context := &minderv1.Context{
+		Project: &project,
+	}
+	v2Context := &minderv1.ContextV2{
+		ProjectId: project,
 	}
 
-	rt := &minderv1.RuleType{}
+	var dataSources []*minderv1.DataSource
+	var ruleTypes []*minderv1.RuleType
+	var profiles []*minderv1.Profile
 
-	if err := minderv1.ParseResource(reader, rt); err != nil {
-		return cli.MessageAndError("error parsing rule type", err)
-	}
-
-	if rt.Context == nil {
-		rt.Context = &minderv1.Context{}
-	}
-
-	rt.Context = &minderv1.Context{
-		Provider: &provider,
-		Project:  &project,
-	}
-
-	// New context so we don't time out between steps
-	ctx, cancel := getQuickstartContext(cmd.Context(), viper.GetViper())
-	defer cancel()
-
-	// Create the rule type in minder
-	_, err = ruleClient.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
-		RuleType: rt,
-	})
-	if err != nil {
-		if st, ok := status.FromError(err); ok {
-			if st.Code() != codes.AlreadyExists {
-				return fmt.Errorf("error creating rule type from: %w", err)
-			}
-			cmd.PrintErrln("Rule type secret_scanning already exists")
-		} else {
-			return cli.MessageAndError("error creating rule type", err)
+	for _, res := range resources {
+		switch r := res.(type) {
+		case *minderv1.DataSource:
+			r.Context = v2Context
+			dataSources = append(dataSources, r)
+		case *minderv1.RuleType:
+			r.Context = v1Context
+			ruleTypes = append(ruleTypes, r)
+		case *minderv1.Profile:
+			r.Context = v1Context
+			profiles = append(profiles, r)
 		}
 	}
 
-	// Step 4 - Confirm profile creation
-	yes = cli.PrintYesNoPrompt(cmd,
-		fmt.Sprintf(stepPromptMsgProfile, strings.Join(registeredRepos[:], "\n")),
-		"Proceed?",
-		"Quickstart operation cancelled.",
-		true)
-	if !yes {
-		return nil
-	}
-
-	// Creating the profile
-	cmd.PrintErrln("Creating profile...")
-	reader, err = content.Open("embed/profile.yaml")
-	if err != nil {
-		return cli.MessageAndError("error opening profile", err)
-	}
-
-	// Load the profile from the embedded file system
-	p, err := fileconvert.ReadResourceTyped[*minderv1.Profile](yaml.NewDecoder(reader))
-	if err != nil {
-		return cli.MessageAndError("error parsing profile", err)
-	}
-
-	if p.Context == nil {
-		p.Context = &minderv1.Context{}
-	}
-
-	p.Context = &minderv1.Context{
-		Provider: &provider,
-		Project:  &project,
-	}
-
-	// New context so we don't time out between steps
-	ctx, cancel = getQuickstartContext(cmd.Context(), viper.GetViper())
-	defer cancel()
-
-	alreadyExists := false
-	// Create the profile in minder
-	resp, err := profileClient.CreateProfile(ctx, &minderv1.CreateProfileRequest{
-		Profile: p,
-	})
-	if err != nil {
-		if st, ok := status.FromError(err); ok {
-			if st.Code() != codes.AlreadyExists {
-				return cli.MessageAndError("error creating profile", err)
-			}
-			alreadyExists = true
-		} else {
-			return cli.MessageAndError("error creating profile", err)
+	// 1. DataSources
+	for _, ds := range dataSources {
+		ctx, cancel := getQuickstartContext(cmd.Context(), viper.GetViper())
+		err := api.UpsertDataSource(ctx, dataSourceClient, ds)
+		cancel()
+		if err != nil {
+			return cli.MessageAndError(fmt.Sprintf("Unable to apply data source %s", ds.GetName()), err)
 		}
+		cmd.PrintErrf("Applied data source: %s\n", ds.GetName())
 	}
 
-	// Finish - Confirm profile creation
-	if alreadyExists {
-		// Print the "profile already exists" message
-		cmd.PrintErrln(cli.WarningBanner.Render(stepPromptMsgFinishExisting + stepPromptMsgFinishBase))
-	} else {
-		// Print the "profile created" message
-		cmd.PrintErrln(cli.WarningBanner.Render(stepPromptMsgFinishOK + stepPromptMsgFinishBase))
-		// Print the profile create result table
-		cmd.PrintErrln("Profile details (minder profile list):")
+	// 2. RuleTypes
+	for _, rt := range ruleTypes {
+		ctx, cancel := getQuickstartContext(cmd.Context(), viper.GetViper())
+		err := api.UpsertRuleType(ctx, ruleClient, rt)
+		cancel()
+		if err != nil {
+			return cli.MessageAndError(fmt.Sprintf("Unable to apply rule type %s", rt.GetName()), err)
+		}
+		cmd.PrintErrf("Applied rule type: %s\n", rt.GetName())
+	}
+
+	// 3. Profiles
+	for _, p := range profiles {
+		ctx, cancel := getQuickstartContext(cmd.Context(), viper.GetViper())
+		err := api.UpsertProfile(ctx, profileClient, p)
+		cancel()
+		if err != nil {
+			return cli.MessageAndError(fmt.Sprintf("Unable to apply profile %s", p.GetName()), err)
+		}
+		cmd.PrintErrf("Applied profile: %s\n", p.GetName())
+	}
+
+	// Finish
+	cmd.PrintErrln(cli.SuccessBanner.Render(stepPromptMsgFinishOK + stepPromptMsgFinishBase))
+	for _, prof := range profiles {
+		cmd.PrintErrf("Profile: %s\n", prof.GetName())
 		table := profile.NewProfileRulesTable(cmd.OutOrStdout())
-		profile.RenderProfileRulesTable(resp.GetProfile(), table)
+		profile.RenderProfileRulesTable(prof, table)
 		table.Render()
 	}
 
@@ -408,12 +476,18 @@ func init() {
 	cmd.Flags().StringP("project", "j", "", "ID of the project")
 	cmd.Flags().StringP("token", "t", "", "Personal Access Token (PAT) to use for enrollment")
 	cmd.Flags().StringP("owner", "o", "", "Owner to filter on for provider resources")
+	cmd.Flags().String("policy-url", DefaultPolicyURL, "URL or path to fetch baseline policy from")
+
 	// Bind flags
 	if err := viper.BindPFlag("token", cmd.Flags().Lookup("token")); err != nil {
 		cmd.PrintErrf("error: %s", err)
 		os.Exit(1)
 	}
 	if err := viper.BindPFlag("owner", cmd.Flags().Lookup("owner")); err != nil {
+		cmd.PrintErrf("error: %s", err)
+		os.Exit(1)
+	}
+	if err := viper.BindPFlag("policy-url", cmd.Flags().Lookup("policy-url")); err != nil {
 		cmd.PrintErrf("error: %s", err)
 		os.Exit(1)
 	}
