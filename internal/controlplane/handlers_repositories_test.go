@@ -704,6 +704,67 @@ func createServer(
 	}
 }
 
+func TestServer_ListRepositories_AllProviders(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+
+	githubProvider := db.Provider{ID: uuid.New(), Name: "github-app-example"}
+	gitlabProvider := db.Provider{ID: uuid.New(), Name: "gitlab-example"}
+
+	ghRepo1 := simpleDbRepository(repoName, remoteRepoId)
+	ghRepo1.Entity.ProviderID = githubProvider.ID
+	ghRepo2 := simpleDbRepository(repoName2, remoteRepoId2)
+	ghRepo2.Entity.ProviderID = githubProvider.ID
+	glRepo := simpleDbRepository(repoName, remoteRepoId2)
+	glRepo.Entity.ProviderID = gitlabProvider.ID
+
+	// With no provider in the request, the service is asked for
+	// repositories from every provider (a nil provider ID).
+	repoSvc := mockrepo.NewMockRepositoryService(ctrl)
+	repoSvc.EXPECT().
+		ListRepositories(gomock.Any(), projectID, uuid.Nil, uuid.Nil, gomock.Any()).
+		Return([]*models.EntityWithProperties{ghRepo1, glRepo, ghRepo2}, uuid.Nil, nil)
+
+	// Each provider is looked up once by ID to fill in the repository
+	// context, and never by name.
+	store := mockdb.NewMockStore(ctrl)
+	store.EXPECT().FindProviders(gomock.Any(), gomock.Any()).Times(0)
+	store.EXPECT().GetProviderByID(gomock.Any(), githubProvider.ID).Return(githubProvider, nil)
+	store.EXPECT().GetProviderByID(gomock.Any(), gitlabProvider.ID).Return(gitlabProvider, nil)
+
+	prov := newGitHub(func(mock githubMock) {
+		mock.EXPECT().PropertiesToProtoMessage(pb.Entity_ENTITY_REPOSITORIES, gomock.Any()).
+			DoAndReturn(func(_ pb.Entity, props *properties.Properties) (*pb.Repository, error) {
+				return &pb.Repository{RepoId: props.GetProperty("repo_id").GetInt64()}, nil
+			}).Times(3)
+	})(ctrl)
+	mgr := mockmanager.NewMockProviderManager(ctrl)
+	mgr.EXPECT().InstantiateFromID(gomock.Any(), gomock.Any()).Return(prov, nil).Times(3)
+
+	server := &Server{
+		store:           store,
+		repos:           repoSvc,
+		cfg:             &server.Config{},
+		providerStore:   providers.NewProviderStore(store),
+		providerManager: mgr,
+		props:           propService.NewPropertiesService(store),
+	}
+
+	ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+		Project: engcontext.Project{ID: projectID},
+	})
+
+	res, err := server.ListRepositories(ctx, &pb.ListRepositoriesRequest{})
+	require.NoError(t, err)
+
+	gotProviders := make([]string, 0, len(res.Results))
+	for _, r := range res.Results {
+		gotProviders = append(gotProviders, r.GetContext().GetProvider())
+		require.Equal(t, projectID.String(), r.GetContext().GetProject())
+	}
+	require.Equal(t, []string{githubProvider.Name, gitlabProvider.Name, githubProvider.Name}, gotProviders)
+}
+
 func TestServer_ListRepositories_Pagination(t *testing.T) {
 	t.Parallel()
 
