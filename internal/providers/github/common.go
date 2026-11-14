@@ -186,6 +186,21 @@ func NewGitHub(
 		gitConfig = cfg.Git
 	}
 	ghcrwrap := ghcr.FromGitHubClient(client, delegate.GetOwner())
+
+	// Only OAuth/PAT-backed providers send their token to GHCR. GHCR doesn't
+	// accept GitHub App installation tokens today: a pull with one is denied
+	// even with packages: read
+	// (https://github.com/orgs/community/discussions/171423), so App-backed
+	// providers stay anonymous, which still reaches public images.
+	// GHCR expects Basic auth, so pass the same authenticator GetAuthenticator
+	// returns rather than relying on ghcrOCI's OAuth2 Bearer default.
+	var ociOpts []oci.Option
+	if providerClass == db.ProviderClassGithub {
+		ociOpts = append(ociOpts, oci.WithRegistryAuthenticator(
+			delegate.GetCredential().GetAsContainerAuthenticator(ghcrwrap.Namespace()),
+		))
+	}
+
 	return &GitHub{
 		client:               client,
 		packageListingClient: packageListingClient,
@@ -193,13 +208,11 @@ func NewGitHub(
 		delegate:             delegate,
 		providerClass:        providerClass,
 		ghcrwrap:             ghcrwrap,
-		// TODO: this credential isn't used by ghcrOCI's GetDigest/GetManifest/GetRawManifest
-		// today -- see the "private GHCR images" known limitation in PR #6791. Wire it in
-		// when that gets fixed.
 		ghcrOCI: oci.New(
 			delegate.GetCredential(),
 			container.GHCRRegistry,
 			fmt.Sprintf("%s/%s", container.GHCRRegistry, ghcrwrap.Namespace()),
+			ociOpts...,
 		),
 		gitConfig:        gitConfig,
 		webhookConfig:    whcfg,
@@ -944,11 +957,25 @@ func (*GitHub) GetRegistry() string {
 
 // GetAuthenticator returns the authenticator for accessing GHCR.
 //
-// Uses GetAsContainerAuthenticator rather than ghcrOCI's own GetAuthenticator,
+// Uses GetContainerAuthenticator rather than ghcrOCI's own GetAuthenticator,
 // since that one assumes an OAuth2 token and returns a Bearer, not the Basic
 // auth GHCR expects.
 func (c *GitHub) GetAuthenticator() (authn.Authenticator, error) {
-	return c.GetCredential().GetAsContainerAuthenticator(c.ghcrwrap.Namespace()), nil
+	return c.GetContainerAuthenticator(c.ghcrwrap.Namespace()), nil
+}
+
+// GetContainerAuthenticator returns the authenticator for GHCR requests made
+// on behalf of owner, such as fetching signatures during verification.
+//
+// Only OAuth/PAT-backed providers send their token. GHCR doesn't accept
+// GitHub App installation tokens today: a pull with one is denied even with
+// packages: read (https://github.com/orgs/community/discussions/171423), so
+// App-backed providers get authn.Anonymous, which still reaches public images.
+func (c *GitHub) GetContainerAuthenticator(owner string) authn.Authenticator {
+	if c.providerClass != db.ProviderClassGithub {
+		return authn.Anonymous
+	}
+	return c.GetCredential().GetAsContainerAuthenticator(owner)
 }
 
 // GetArtifactVersions returns a list of all versions for a specific artifact
