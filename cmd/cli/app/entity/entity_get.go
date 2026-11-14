@@ -21,6 +21,7 @@ var getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get entity details",
 	Long:  `The entity get subcommand is used to get details for an entity instance within Minder.`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)

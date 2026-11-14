@@ -40,6 +40,12 @@ func TestOfflineGetCommandFlags(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "error parsing issuer URL")
 	})
+
+	t.Run("rejects unexpected positional arguments", func(t *testing.T) {
+		_, _, err := runOfflineTokenCmd(t, "auth", "offline-token", "get", "unexpected-arg")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `unknown command "unexpected-arg" for "minder auth offline-token get"`)
+	})
 }
 
 //nolint:paralleltest // Cannot run in parallel because it modifies global env and viper state

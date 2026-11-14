@@ -30,6 +30,7 @@ var getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get artifact details",
 	Long:  `The artifact get subcommand will get artifact details from an artifact, for a given ID.`,
+	Args:  cobra.NoArgs,
 	RunE:  getCommand,
 }
 

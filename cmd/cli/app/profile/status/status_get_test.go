@@ -146,6 +146,11 @@ func TestStatusGetCommand(t *testing.T) {
 			},
 			ExpectedError: "database connection failed",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"profile", "status", "get", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder profile status get"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, profile.ProfileCmd)

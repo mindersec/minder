@@ -214,6 +214,11 @@ func TestGetProviderCommand(t *testing.T) {
 			Args:          []string{"provider", "get", "-n", "github-app", "-o", "invalid_format"},
 			ExpectedError: "invalid argument",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"provider", "get", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder provider get"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, ProviderCmd)

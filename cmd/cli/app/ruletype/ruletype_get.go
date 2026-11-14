@@ -25,6 +25,7 @@ var getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get details for a rule type",
 	Long:  `The ruletype get subcommand lets you retrieve details for a rule type within Minder.`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)
