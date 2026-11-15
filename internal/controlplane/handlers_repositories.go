@@ -316,6 +316,12 @@ func (s *Server) DeleteRepositoryByName(
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
 	} else if err != nil {
+		// If the error is already a UserVisibleError, pass it through directly
+		// rather than hiding it behind an Internal status.
+		var userErr *util.NiceStatus
+		if errors.As(err, &userErr) {
+			return nil, err
+		}
 		return nil, status.Errorf(codes.Internal, "unexpected error deleting repo: %v", err)
 	}
 
