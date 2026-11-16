@@ -301,6 +301,7 @@ This is currently not populated in any requests or responses.
 | ----- | ---- | ----- | ----------- |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the role assignment is evaluated. |
 | role_assignment | <TypeLink type="minder-v1-RoleAssignment">RoleAssignment</TypeLink> |  | role_assignment is the role assignment to be created. |
+| invitation_expiration | <TypeLink type="google-protobuf-Duration">google.protobuf.Duration</TypeLink> |  | invitation_expiration is an optional requested validity duration for the invitation. If not set, or if it exceeds the server-configured maximum, the server-configured maximum will be used. |
 
 
 

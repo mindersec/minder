@@ -51,6 +51,8 @@ To add a user to your project, follow these steps:
      invite.
    - Replace `desired-role` with the chosen role for the user (e.g., `viewer`,
      `editor`).
+   - Optionally, specify `--invitation-expiration` (e.g. `24h`, `48h`) to
+     shorten the invitation validity window up to the server maximum (defaults to 7 days).
 
 3. You will receive a response message including an invitation code which can be
    used with
@@ -61,8 +63,9 @@ To add a user to your project, follow these steps:
 Relay the invitation code to the user who you are inviting to join your project.
 They will need to install the `minder` CLI and run
 `minder auth invite accept <invitation code>` to accept the invitation.
-Invitations will expire when used, or after 7 days, though users who have not
-accepted an invitation can be invited again.
+Invitations will expire when used, or after their expiration duration (defaults to
+7 days, though users can set a shorter validity window up to the server maximum),
+though users who have not accepted an invitation can be invited again.
 
 ## Viewing outstanding invitations
 
