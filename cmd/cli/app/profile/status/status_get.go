@@ -24,6 +24,7 @@ var getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get profile status",
 	Long:  `The profile status get subcommand lets you get profile status within Minder.`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %s", err)

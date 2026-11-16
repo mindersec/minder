@@ -26,6 +26,7 @@ for the minder control plane.
 Offline tokens are used to authenticate to the minder control plane without
 requiring the user's presence. This is useful for long-running processes
 that need to authenticate to the control plane.`,
+	Args: cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return err

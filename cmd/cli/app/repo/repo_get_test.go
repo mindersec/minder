@@ -87,6 +87,11 @@ func TestGetCommand(t *testing.T) {
 			},
 			ExpectedError: "repository not found",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"repo", "get", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder repo get"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, RepoCmd)
