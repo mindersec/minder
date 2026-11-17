@@ -13,11 +13,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/mindersec/minder/internal/db"
 	dbf "github.com/mindersec/minder/internal/db/fixtures"
 	"github.com/mindersec/minder/internal/remediationparams"
+	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/flags"
@@ -30,13 +32,14 @@ func TestRuleTypeService(t *testing.T) {
 	t.Parallel()
 
 	scenarios := []struct {
-		Name           string
-		RuleType       *pb.RuleType
-		DBSetup        dbf.DBMockBuilder
-		ExpectedError  string
-		TestMethod     method
-		SubscriptionID uuid.UUID
-		FeatureFlags   map[string]any
+		Name                string
+		RuleType            *pb.RuleType
+		DBSetup             dbf.DBMockBuilder
+		ExpectedError       string
+		ExpectedUserVisible bool
+		TestMethod          method
+		SubscriptionID      uuid.UUID
+		FeatureFlags        map[string]any
 	}{
 		{
 			Name:          "CreateRuleType rejects nil rule",
@@ -412,16 +415,18 @@ func TestRuleTypeService(t *testing.T) {
 			RuleType: newRuleType(withBasicStructure, withPullRequestRemediation(remediationparams.MethodYQEvaluate, map[string]any{
 				"expression": `.on = "workflow_dispatch"`,
 			})),
-			ExpectedError: "yq modification requires at least one valid pattern",
-			TestMethod:    create,
+			ExpectedError:       "yq modification requires at least one valid pattern",
+			ExpectedUserVisible: true,
+			TestMethod:          create,
 		},
 		{
 			Name: "UpdateRuleType rejects yq remediation without patterns",
 			RuleType: newRuleType(withBasicStructure, withPullRequestRemediation(remediationparams.MethodYQEvaluate, map[string]any{
 				"expression": `.on = "workflow_dispatch"`,
 			})),
-			ExpectedError: "yq modification requires at least one valid pattern",
-			TestMethod:    update,
+			ExpectedError:       "yq modification requires at least one valid pattern",
+			ExpectedUserVisible: true,
+			TestMethod:          update,
 		},
 		{
 			Name: "CreateRuleType rejects invalid yq eval_output template",
@@ -431,16 +436,18 @@ func TestRuleTypeService(t *testing.T) {
 					map[string]any{"pattern": "{{ toJson .EvalResultOutput.files", "type": "eval_output"},
 				},
 			})),
-			ExpectedError: "patterns[0] invalid eval_output template",
-			TestMethod:    create,
+			ExpectedError:       "patterns[0] invalid eval_output template",
+			ExpectedUserVisible: true,
+			TestMethod:          create,
 		},
 		{
 			Name: "CreateRuleType rejects delete remediation with empty patterns",
 			RuleType: newRuleType(withBasicStructure, withPullRequestRemediation(remediationparams.MethodDelete, map[string]any{
 				"patterns": []any{},
 			})),
-			ExpectedError: "delete modification requires at least one valid pattern",
-			TestMethod:    create,
+			ExpectedError:       "delete modification requires at least one valid pattern",
+			ExpectedUserVisible: true,
+			TestMethod:          create,
 		},
 		{
 			Name: "CreateRuleType accepts valid yq remediation",
@@ -531,6 +538,13 @@ func TestRuleTypeService(t *testing.T) {
 			} else {
 				require.Nil(t, res)
 				require.ErrorContains(t, err, scenario.ExpectedError)
+
+				if scenario.ExpectedUserVisible {
+					niceErr, ok := errors.AsType[*util.NiceStatus](err)
+					require.True(t, ok)
+					require.Equal(t, codes.InvalidArgument, niceErr.Code)
+					require.Contains(t, niceErr.Details, scenario.ExpectedError)
+				}
 			}
 		})
 	}

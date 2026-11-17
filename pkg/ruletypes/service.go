@@ -15,6 +15,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/open-policy-agent/opa/v1/ast"
+	"google.golang.org/grpc/codes"
 
 	"github.com/mindersec/minder/internal/db"
 	regoeval "github.com/mindersec/minder/internal/engine/eval/rego"
@@ -356,7 +357,8 @@ func validateRemediationParams(rem *pb.RuleType_Definition_Remediate) error {
 	}
 
 	if err := remediationparams.ValidatePullRequestParams(prRem.GetMethod(), params); err != nil {
-		return fmt.Errorf("invalid params for pull request remediation method %q: %w", prRem.GetMethod(), err)
+		return util.UserVisibleError(codes.InvalidArgument,
+			"invalid params for pull request remediation method %q: %v", prRem.GetMethod(), err)
 	}
 
 	return nil
