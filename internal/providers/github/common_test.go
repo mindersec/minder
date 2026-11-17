@@ -626,6 +626,14 @@ func (t *mockTransportError) RoundTrip(*http.Request) (*http.Response, error) {
 	return nil, t.err
 }
 
+type customMockTransport struct {
+	roundTrip func(*http.Request) (*http.Response, error)
+}
+
+func (t *customMockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	return t.roundTrip(req)
+}
+
 func TestIsMinderHook(t *testing.T) {
 	t.Parallel()
 
@@ -1869,6 +1877,155 @@ func TestCloseSecurityAdvisory(t *testing.T) {
 				}
 			} else {
 				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestCloseIssue(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		owner         string
+		repo          string
+		number        int
+		comment       string
+		setupMocks    func(*testGitHub)
+		expectedError string
+		validateIssue func(*testing.T, *github.Issue)
+	}{
+		{
+			name:    "close issue without comment success",
+			owner:   "test-owner",
+			repo:    "test-repo",
+			number:  42,
+			comment: "",
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusOK,
+							Body:       io.NopCloser(strings.NewReader(`{"number": 42, "state": "closed"}`)),
+							Header:     make(http.Header),
+						},
+					},
+				}
+				th.gh.client = github.NewClient(client)
+			},
+			validateIssue: func(t *testing.T, iss *github.Issue) {
+				t.Helper()
+				require.NotNil(t, iss)
+				assert.Equal(t, 42, iss.GetNumber())
+				assert.Equal(t, "closed", iss.GetState())
+			},
+		},
+		{
+			name:    "close issue with comment success",
+			owner:   "test-owner",
+			repo:    "test-repo",
+			number:  42,
+			comment: "Closing because fixed in main",
+			setupMocks: func(th *testGitHub) {
+				// RoundTripper handling both CreateComment and Issues.Edit
+				transport := &customMockTransport{
+					roundTrip: func(req *http.Request) (*http.Response, error) {
+						if strings.Contains(req.URL.Path, "/comments") {
+							return &http.Response{
+								StatusCode: http.StatusCreated,
+								Body:       io.NopCloser(strings.NewReader(`{"id": 101, "body": "Closing because fixed in main"}`)),
+								Header:     make(http.Header),
+							}, nil
+						}
+						return &http.Response{
+							StatusCode: http.StatusOK,
+							Body:       io.NopCloser(strings.NewReader(`{"number": 42, "state": "closed"}`)),
+							Header:     make(http.Header),
+						}, nil
+					},
+				}
+				th.gh.client = github.NewClient(&http.Client{Transport: transport})
+			},
+			validateIssue: func(t *testing.T, iss *github.Issue) {
+				t.Helper()
+				require.NotNil(t, iss)
+				assert.Equal(t, 42, iss.GetNumber())
+				assert.Equal(t, "closed", iss.GetState())
+			},
+		},
+		{
+			name:    "close issue with comment failure bubbles up",
+			owner:   "test-owner",
+			repo:    "test-repo",
+			number:  42,
+			comment: "Closing note",
+			setupMocks: func(th *testGitHub) {
+				transport := &customMockTransport{
+					roundTrip: func(req *http.Request) (*http.Response, error) {
+						if strings.Contains(req.URL.Path, "/comments") {
+							return &http.Response{
+								StatusCode: http.StatusInternalServerError,
+								Body:       io.NopCloser(strings.NewReader(`{"message": "failed to post comment"}`)),
+								Header:     make(http.Header),
+							}, nil
+						}
+						return &http.Response{
+							StatusCode: http.StatusOK,
+							Body:       io.NopCloser(strings.NewReader(`{"number": 42, "state": "closed"}`)),
+							Header:     make(http.Header),
+						}, nil
+					},
+				}
+				th.gh.client = github.NewClient(&http.Client{Transport: transport})
+			},
+			expectedError: "creating issue comment before closing",
+		},
+		{
+			name:    "close issue edit api error",
+			owner:   "test-owner",
+			repo:    "test-repo",
+			number:  42,
+			comment: "",
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusNotFound,
+							Body:       io.NopCloser(strings.NewReader(`{"message": "Issue Not Found"}`)),
+							Header:     make(http.Header),
+						},
+					},
+				}
+				th.gh.client = github.NewClient(client)
+			},
+			expectedError: "Issue Not Found",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			th := setupTest(t)
+			tt.setupMocks(th)
+
+			iss, err := th.gh.CloseIssue(
+				context.Background(),
+				tt.owner,
+				tt.repo,
+				tt.number,
+				tt.comment,
+			)
+
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+				assert.Nil(t, iss)
+			} else {
+				require.NoError(t, err)
+				if tt.validateIssue != nil {
+					tt.validateIssue(t, iss)
+				}
 			}
 		})
 	}
