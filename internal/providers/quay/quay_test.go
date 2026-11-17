@@ -227,6 +227,38 @@ func TestListImages(t *testing.T) {
 		assert.Equal(t, []string{"auth-service", "event-collector"}, images)
 	})
 
+	t.Run("follows next_page across two pages", func(t *testing.T) {
+		t.Parallel()
+
+		mux := http.NewServeMux()
+		mux.HandleFunc("/api/v1/repository", func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, http.MethodGet, r.Method)
+			assert.Equal(t, "paged-org", r.URL.Query().Get("namespace"))
+			w.Header().Set("Content-Type", "application/json")
+			if r.URL.Query().Get("next_page") == "page-2-token" {
+				_, _ = w.Write([]byte(`{"repositories": [{"name": "page-two-image"}]}`))
+				return
+			}
+			assert.Empty(t, r.URL.Query().Get("next_page"))
+			_, _ = w.Write([]byte(`{"next_page": "page-2-token", "repositories": [{"name": "page-one-a"}, {"name": "page-one-b"}]}`))
+		})
+
+		server := httptest.NewServer(mux)
+		defer server.Close()
+
+		targetURL, err := url.Parse(server.URL + "/api/v1/repository?namespace=paged-org")
+		require.NoError(t, err)
+
+		q := &quayImageLister{
+			cli:    server.Client(),
+			target: targetURL,
+		}
+
+		images, err := q.ListImages(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, []string{"page-one-a", "page-one-b", "page-two-image"}, images)
+	})
+
 	t.Run("empty repository list returns empty slice", func(t *testing.T) {
 		t.Parallel()
 
