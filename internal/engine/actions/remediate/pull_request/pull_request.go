@@ -329,6 +329,9 @@ func (r *Remediator) runOn(
 	if err != nil {
 		return nil, fmt.Errorf("cannot modifyFs: %w", err)
 	}
+	if len(changeEntries) == 0 {
+		return nil, fmt.Errorf("nothing to change: %w", enginerr.ErrActionFailed)
+	}
 
 	logger.Debug().Msg("Staging changes")
 	if err := stageChanges(wt, changeEntries); err != nil {

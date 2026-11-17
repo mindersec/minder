@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
@@ -271,4 +272,64 @@ func mustArtifactProperties(t *testing.T, name string) *properties.Properties {
 	props, err := NewArtifactProperties(name, "testns", "docker.io", "sha256:abc")
 	require.NoError(t, err)
 	return props
+}
+
+func TestArtifactTag(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		name    string
+		art     *minderv1.Artifact
+		wantTag string
+		wantOK  bool
+	}{
+		{name: "repo:tag", art: &minderv1.Artifact{Name: "myimage", ArtifactPk: "myimage:v1.2"},
+			wantTag: "v1.2", wantOK: true},
+		{name: "nested repo", art: &minderv1.Artifact{Name: "team/app", ArtifactPk: "team/app:latest"},
+			wantTag: "latest", wantOK: true},
+		{name: "legacy repo@digest", art: &minderv1.Artifact{Name: "myimage", ArtifactPk: "myimage@sha256:abc"}},
+		{name: "pk for another repo", art: &minderv1.Artifact{Name: "myimage", ArtifactPk: "other:v1"}},
+		{name: "empty tag", art: &minderv1.Artifact{Name: "myimage", ArtifactPk: "myimage:"}},
+		{name: "GHCR numeric pk", art: &minderv1.Artifact{Name: "myimage", ArtifactPk: "12345"}},
+		{name: "empty name", art: &minderv1.Artifact{ArtifactPk: ":v1"}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			tag, ok := (&OCI{}).ArtifactTag(tt.art)
+			assert.Equal(t, tt.wantOK, ok)
+			assert.Equal(t, tt.wantTag, tag)
+		})
+	}
+}
+
+// TestArtifactTagRoundTrip builds an artifact the way the DockerHub and Quay
+// providers do and checks ArtifactTag recovers the registered tag. If the
+// upstream ID format changes without ArtifactTag, this fails instead of
+// ingestion silently falling back to the repository-wide path.
+func TestArtifactTagRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		name    string
+		ref     string
+		wantTag string
+	}{
+		{name: "explicit tag", ref: "myimage:v1.2", wantTag: "v1.2"},
+		{name: "default tag", ref: "myimage", wantTag: DefaultTag},
+		{name: "nested repo", ref: "team/app:stable", wantTag: "stable"},
+		{name: "tag with dots and dashes", ref: "myimage:1.2.3-rc.1", wantTag: "1.2.3-rc.1"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			props, err := NewArtifactProperties(tt.ref, "testns", "docker.io", "sha256:abc")
+			require.NoError(t, err)
+			art, err := ArtifactV1FromProperties(props, "testns")
+			require.NoError(t, err)
+
+			tag, ok := (&OCI{}).ArtifactTag(art)
+			require.True(t, ok, "ArtifactTag rejected %q (ArtifactPk %q)", tt.ref, art.GetArtifactPk())
+			assert.Equal(t, tt.wantTag, tag)
+		})
+	}
 }

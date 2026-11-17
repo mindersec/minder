@@ -58,6 +58,26 @@ minder entity list --provider <provider-name> --type artifact
 
 The table shows each artifact's name, provider and ID.
 
+## How profiles evaluate a registered image
+
+Each registered image is evaluated on its own tag only. When a profile's
+artifact rule runs, Minder looks up the digest that the tag points to at that
+moment, so a tag that has moved to a new image is evaluated as the new image.
+Other tags in the same repository aren't evaluated; register them separately if
+you want profiles to apply to them.
+
+A rule's `tags` and `tag_regex` parameters choose which registered images the
+rule applies to:
+
+- If the image's tag matches, the rule is evaluated.
+- If the image's tag doesn't match, the rule is skipped for that image.
+- A `tags` list matches an image whose tag is any one of the listed tags. For
+  example, `tags: [latest, stable]` applies the rule to both the `latest` and
+  the `stable` image.
+
+An image older than the artifact retention period (six months) fails the rule
+rather than being skipped.
+
 ## Next steps
 
 Images from Docker Hub and Quay.io have properties, such as the repository path

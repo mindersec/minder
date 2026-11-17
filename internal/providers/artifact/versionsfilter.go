@@ -5,6 +5,7 @@
 package artifact
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"time"
@@ -15,8 +16,22 @@ import (
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
-// BuildFilter builds a container image filter based on the tags and tag regex as well as the creation time
-func BuildFilter(tags []string, tagRegex string) (*filter, error) {
+// TagMatchMode selects how a tags list is matched against an artifact's tags.
+// It has no effect on tag_regex or on an empty tags list.
+type TagMatchMode int
+
+const (
+	// MatchAllTags requires the artifact to carry every listed tag. This fits
+	// artifact versions that carry several tags, such as GHCR package versions.
+	MatchAllTags TagMatchMode = iota
+	// MatchAnyTag requires the artifact to carry at least one listed tag. This
+	// fits repo:tag entities (DockerHub, Quay), which carry exactly one tag.
+	MatchAnyTag
+)
+
+// BuildFilter builds a container image filter based on the tags and tag regex as well as the creation time.
+// mode selects whether a tags list must match all of the artifact's tags or any one of them.
+func BuildFilter(tags []string, tagRegex string, mode TagMatchMode) (*filter, error) {
 	if len(tags) > 0 && tagRegex != "" {
 		return nil, fmt.Errorf("cannot specify both tags and tag_regex")
 	}
@@ -28,7 +43,7 @@ func BuildFilter(tags []string, tagRegex string) (*filter, error) {
 			return nil, fmt.Errorf("cannot specify empty tag")
 		}
 		return &filter{
-			tagMatcher:      &tagListMatcher{tags: tags},
+			tagMatcher:      &tagListMatcher{tags: tags, mode: mode},
 			retentionPeriod: provifv1.ArtifactTypeContainerRetentionPeriod,
 		}, nil
 	}
@@ -54,6 +69,10 @@ func BuildFilter(tags []string, tagRegex string) (*filter, error) {
 		retentionPeriod: provifv1.ArtifactTypeContainerRetentionPeriod,
 	}, nil
 }
+
+// ErrTagsDoNotMatch is returned by IsSkippable when the artifact's tags do not
+// satisfy the configured tags or tag_regex.
+var ErrTagsDoNotMatch = errors.New("artifact tags do not match")
 
 type filter struct {
 	tagMatcher
@@ -84,7 +103,7 @@ func (f *filter) IsSkippable(createdAt time.Time, tags []string) error {
 	}
 	// if the artifact tags don't match the tag matcher, skip it
 	if !f.MatchTag(tags...) {
-		return fmt.Errorf("artifact tags does not match")
+		return ErrTagsDoNotMatch
 	}
 	return nil
 }
@@ -110,10 +129,14 @@ func (m *tagRegexMatcher) MatchTag(tags ...string) bool {
 
 type tagListMatcher struct {
 	tags []string
+	mode TagMatchMode
 }
 
 func (m *tagListMatcher) MatchTag(tags ...string) bool {
 	haveTags := sets.New(tags...)
+	if m.mode == MatchAnyTag {
+		return haveTags.HasAny(m.tags...)
+	}
 	return haveTags.HasAll(m.tags...)
 }
 

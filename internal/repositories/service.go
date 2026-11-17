@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/grpc/codes"
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/entities/models"
@@ -21,6 +22,7 @@ import (
 	"github.com/mindersec/minder/internal/entities/service/validators"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/providers/manager"
+	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
@@ -96,6 +98,14 @@ var (
 	// attempt to register an archived repo
 	ErrArchivedRepoForbidden = validators.ErrArchivedRepoForbidden
 )
+
+// ambiguousRepoNameError is returned when a lookup by name matches more than
+// one repository, e.g. when no provider is specified and the same repository
+// name is registered with multiple providers in the project.
+func ambiguousRepoNameError(fullName string) error {
+	return util.UserVisibleError(codes.InvalidArgument,
+		"repository %q matches more than one registered repository; please specify a provider", fullName)
+}
 
 type repositoryService struct {
 	store           db.Store
@@ -315,8 +325,10 @@ func (r *repositoryService) GetRepositoryByName(
 	if len(entities) == 0 {
 		return nil, sql.ErrNoRows
 	}
+	if len(entities) > 1 {
+		return nil, ambiguousRepoNameError(fullName)
+	}
 
-	// Use the first matching entity
 	ewp, err := r.propSvc.EntityWithPropertiesByID(ctx, entities[0].ID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching repository: %w", err)
@@ -402,6 +414,9 @@ func (r *repositoryService) DeleteByName(
 
 	if len(entities) == 0 {
 		return fmt.Errorf("error retrieving repository %s/%s in project %s: %w", repoOwner, repoName, projectID, sql.ErrNoRows)
+	}
+	if len(entities) > 1 {
+		return ambiguousRepoNameError(fullName)
 	}
 
 	// Fetch the entity with properties

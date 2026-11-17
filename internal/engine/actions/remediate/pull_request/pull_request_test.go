@@ -443,14 +443,15 @@ func TestPullRequestRemediate(t *testing.T) {
 	}
 
 	tests := []struct {
-		name             string
-		newRemArgs       *newPullRequestRemediateArgs
-		remArgs          *remediateArgs
-		repoSetup        func(*testing.T) (*git.Repository, error)
-		mockSetup        func(*testing.T, *mockghclient.MockGitHub)
-		expectedErr      error
-		wantInitErr      bool
-		expectedMetadata json.RawMessage
+		name                string
+		newRemArgs          *newPullRequestRemediateArgs
+		remArgs             *remediateArgs
+		repoSetup           func(*testing.T) (*git.Repository, error)
+		mockSetup           func(*testing.T, *mockghclient.MockGitHub)
+		expectedErr         error
+		expectedErrContains string
+		wantInitErr         bool
+		expectedMetadata    json.RawMessage
 	}{
 		{
 			name: "open a PR",
@@ -713,6 +714,30 @@ func TestPullRequestRemediate(t *testing.T) {
 			expectedMetadata: json.RawMessage(`{"pr_number":48}`),
 		},
 		{
+			name: "patch YQ with empty evaluation output has nothing to change",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      yqEvalOutputPrRem(),
+				actionType: TestActionTypeValid,
+			},
+			remArgs: func() *remediateArgs {
+				args := createTestRemArgs()
+				args.evalOutput = map[string]any{
+					"files": []any{},
+				}
+				return args
+			}(),
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(t *testing.T, mockGitHub *mockghclient.MockGitHub) {
+				t.Helper()
+
+				mockGitHub.EXPECT().
+					GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
+			},
+			expectedErr:         errors.ErrActionFailed,
+			expectedErrContains: "nothing to change",
+			expectedMetadata:    json.RawMessage(nil),
+		},
+		{
 			name: "delete files using minder.delete",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      deletePrRem(),
@@ -737,7 +762,7 @@ func TestPullRequestRemediate(t *testing.T) {
 			expectedMetadata: json.RawMessage(`{"pr_number":47}`),
 		},
 		{
-			name: "delete with no matching files fails on empty commit",
+			name: "delete with no matching files has nothing to change",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      deletePrRemWithPattern(".github/workflows/*.yaml"),
 				actionType: TestActionTypeValid,
@@ -748,12 +773,11 @@ func TestPullRequestRemediate(t *testing.T) {
 				t.Helper()
 
 				mockGitHub.EXPECT().
-					GetName(gomock.Any()).Return("stacklok-bot", nil)
-				mockGitHub.EXPECT().
 					GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
 			},
-			expectedErr:      git.ErrEmptyCommit,
-			expectedMetadata: json.RawMessage(nil),
+			expectedErr:         errors.ErrActionFailed,
+			expectedErrContains: "nothing to change",
+			expectedMetadata:    json.RawMessage(nil),
 		},
 		{
 			name: "open a PR with a rule name",
@@ -842,6 +866,9 @@ func TestPullRequestRemediate(t *testing.T) {
 				nil)
 
 			require.ErrorIs(t, err, tt.expectedErr, "expected error")
+			if tt.expectedErrContains != "" {
+				require.ErrorContains(t, err, tt.expectedErrContains)
+			}
 			require.Equal(t, tt.expectedMetadata, retMeta)
 		})
 	}

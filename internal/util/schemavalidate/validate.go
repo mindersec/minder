@@ -50,12 +50,36 @@ func buildValidationError(errs []*jsonschema.ValidationError) error {
 	return fmt.Errorf("invalid json schema: %s", strings.TrimSpace(strings.Join(problems, "\n")))
 }
 
+// copyDefault returns a deep copy of a schema default. Only the container
+// kinds JSON can produce need copying; scalars are already values.
+func copyDefault(v any) any {
+	switch typed := v.(type) {
+	case map[string]any:
+		out := make(map[string]any, len(typed))
+		for k, inner := range typed {
+			out[k] = copyDefault(inner)
+		}
+		return out
+	case []any:
+		out := make([]any, len(typed))
+		for i, inner := range typed {
+			out[i] = copyDefault(inner)
+		}
+		return out
+	default:
+		return v
+	}
+}
+
 // ApplyDefaults recursively applies default values from the schema to the object.
 func ApplyDefaults(schema *jsonschema.Schema, obj map[string]any) {
 	for key, def := range schema.Properties {
 		// If the key does not exist in obj, apply the default value from the schema if present
 		if _, exists := obj[key]; !exists && def.Default != nil {
-			obj[key] = *def.Default
+			// Copy the default. The compiled schema is reused across callers,
+			// so handing out the value itself lets a caller's write reach the
+			// schema and every later caller.
+			obj[key] = copyDefault(*def.Default)
 		}
 
 		// If def has properties, apply defaults to the nested object

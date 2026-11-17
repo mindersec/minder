@@ -55,6 +55,9 @@ type dockerHubImageLister struct {
 // Ensure that the Docker Hub client implements the ImageLister interface
 var _ provifv1.ImageLister = (*dockerHubImageLister)(nil)
 
+// Ensure that the Docker Hub client implements the OCITagVersionProvider interface
+var _ provifv1.OCITagVersionProvider = (*dockerHubImageLister)(nil)
+
 // New creates a new Docker Hub client
 func New(cred provifv1.OAuth2TokenCredential, cfg *minderv1.DockerHubProviderConfig) (*dockerHubImageLister, error) {
 	cli := oauth2.NewClient(context.Background(), cred.GetAsOAuth2TokenSource())

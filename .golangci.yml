@@ -12,6 +12,7 @@ linters:
   enable:
     - depguard
     - exhaustive
+    - forbidigo
     - goconst
     - gocyclo
     - gosec
@@ -39,6 +40,10 @@ linters:
               desc: We should use zerolog instead
             - pkg: io/ioutil
               desc: this is deprecated
+    forbidigo:
+      forbid:
+        - pattern: '^(cmd\.(Print|Printf|Println))$'
+          msg: 'Use fmt.Fprint*(cmd.OutOrStdout(), ...) for stdout or cmd.PrintErr* for stderr to avoid Cobra OutOrStderr fallback trap (see #6923)'
     goconst:
       min-len: 6
       min-occurrences: 5
