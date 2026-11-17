@@ -1717,7 +1717,16 @@ func TestGHCRAuthByProviderClass(t *testing.T) {
 			client := github.NewClient(nil)
 			gh := NewGitHub(client, client, nil, delegate, tt.class, nil, nil, nil)
 
-			assert.Equal(t, tt.wantRegistry, gh.ghcrOCI.RegistryAuthenticator(), "registry calls")
+			// Compare against an OCI client built the way NewGitHub should
+			// build it; assert.Equal deep-compares the unexported registry
+			// authenticator without needing an exported accessor.
+			var wantOpts []oci.Option
+			if tt.wantRegistry != nil {
+				wantOpts = append(wantOpts, oci.WithRegistryAuthenticator(tt.wantRegistry))
+			}
+			wantOCI := oci.New(&mockCredential{}, container.GHCRRegistry,
+				fmt.Sprintf("%s/%s", container.GHCRRegistry, gh.ghcrwrap.Namespace()), wantOpts...)
+			assert.Equal(t, wantOCI, gh.ghcrOCI, "registry calls")
 
 			auth, err := gh.GetAuthenticator()
 			require.NoError(t, err)

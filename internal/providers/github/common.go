@@ -187,15 +187,12 @@ func NewGitHub(
 	}
 	ghcrwrap := ghcr.FromGitHubClient(client, delegate.GetOwner())
 
-	// Only OAuth/PAT-backed providers send their token to GHCR. GHCR doesn't
-	// accept GitHub App installation tokens today: a pull with one is denied
-	// even with packages: read
-	// (https://github.com/orgs/community/discussions/171423), so App-backed
-	// providers stay anonymous, which still reaches public images.
-	// GHCR expects Basic auth, so pass the same authenticator GetAuthenticator
-	// returns rather than relying on ghcrOCI's OAuth2 Bearer default.
+	// Only OAuth/PAT-backed providers send their token to GHCR (see
+	// isOAuthBackedGitHub). GHCR expects Basic auth, so pass the same
+	// authenticator GetAuthenticator returns rather than relying on ghcrOCI's
+	// OAuth2 Bearer default.
 	var ociOpts []oci.Option
-	if providerClass == db.ProviderClassGithub {
+	if isOAuthBackedGitHub(providerClass) {
 		ociOpts = append(ociOpts, oci.WithRegistryAuthenticator(
 			delegate.GetCredential().GetAsContainerAuthenticator(ghcrwrap.Namespace()),
 		))
@@ -966,16 +963,23 @@ func (c *GitHub) GetAuthenticator() (authn.Authenticator, error) {
 
 // GetContainerAuthenticator returns the authenticator for GHCR requests made
 // on behalf of owner, such as fetching signatures during verification.
-//
-// Only OAuth/PAT-backed providers send their token. GHCR doesn't accept
-// GitHub App installation tokens today: a pull with one is denied even with
-// packages: read (https://github.com/orgs/community/discussions/171423), so
-// App-backed providers get authn.Anonymous, which still reaches public images.
+// See isOAuthBackedGitHub for why App-backed providers get authn.Anonymous.
 func (c *GitHub) GetContainerAuthenticator(owner string) authn.Authenticator {
-	if c.providerClass != db.ProviderClassGithub {
+	if !isOAuthBackedGitHub(c.providerClass) {
 		return authn.Anonymous
 	}
 	return c.GetCredential().GetAsContainerAuthenticator(owner)
+}
+
+// isOAuthBackedGitHub reports whether providerClass is backed by an OAuth/PAT
+// token, and so may send that token to GHCR.
+//
+// GHCR doesn't accept GitHub App installation tokens today: a pull with one is
+// denied even with packages: read
+// (https://github.com/orgs/community/discussions/171423). App-backed providers
+// therefore stay anonymous on GHCR, which still reaches public images.
+func isOAuthBackedGitHub(providerClass db.ProviderClass) bool {
+	return providerClass == db.ProviderClassGithub
 }
 
 // GetArtifactVersions returns a list of all versions for a specific artifact
