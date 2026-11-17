@@ -190,6 +190,9 @@ func (q *quayImageLister) FetchAllProperties(
 	}
 
 	digest, err := q.GetDigest(ctx, repo, tag)
+	if oci.IsNotFound(err) {
+		return nil, fmt.Errorf("artifact %q not found: %w: %w", name, provifv1.ErrEntityNotFound, err)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve digest for %q: %w", name, err)
 	}

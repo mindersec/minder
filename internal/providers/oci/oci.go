@@ -276,7 +276,7 @@ func (ov *OCI) getTagVersion(ctx context.Context, contname, tag string) (*minder
 		remote.WithUserAgent(constants.ServerUserAgent),
 	)
 	if err != nil {
-		if isNotFound(err) {
+		if IsNotFound(err) {
 			return nil, fmt.Errorf("failed to get descriptor for tag %s: %w: %w", tag, provifv1.ErrArtifactTagNotFound, err)
 		}
 		return nil, fmt.Errorf("failed to get descriptor for tag %s: %w", tag, err)
@@ -338,9 +338,9 @@ func resolveCreatedAt(man *v1.Manifest, configFile func() (*v1.ConfigFile, error
 	return cfg.Created.Time, nil
 }
 
-// isNotFound returns true when err is a registry 404 / MANIFEST_UNKNOWN,
-// meaning the tag was deleted after it appeared in the listing.
-func isNotFound(err error) bool {
+// IsNotFound returns true when err is a registry 404 / MANIFEST_UNKNOWN,
+// meaning the tag does not exist (for example, it was deleted upstream).
+func IsNotFound(err error) bool {
 	var terr *transport.Error
 	return errors.As(err, &terr) && terr.StatusCode == http.StatusNotFound
 }
@@ -364,13 +364,25 @@ func (o *OCI) getReference(contname, tag string) (name.Reference, error) {
 // TODO: Move this to a more appropriate location
 // TODO(#6972): Implement authentication
 func getDigestFromRef(ctx context.Context, ref name.Reference) (string, error) {
-	// Use the tag's top-level digest (the index for multi-arch tags), not a platform image's.
-	desc, err := remote.Get(ref, remote.WithContext(ctx), remote.WithUserAgent(constants.ServerUserAgent))
-	if err != nil {
-		return "", fmt.Errorf("failed to get descriptor: %w", err)
+	opts := []remote.Option{remote.WithContext(ctx), remote.WithUserAgent(constants.ServerUserAgent)}
+
+	// HEAD returns the tag's top-level digest (the index for multi-arch tags) without
+	// fetching the manifest, and does not count toward Docker Hub's pull rate limit.
+	desc, err := remote.Head(ref, opts...)
+	if err == nil {
+		return desc.Digest.String(), nil
+	}
+	if IsNotFound(err) {
+		return "", fmt.Errorf("failed to head descriptor: %w", err)
 	}
 
-	return desc.Digest.String(), nil
+	// Some registries omit Docker-Content-Digest on HEAD; fall back to GET.
+	gdesc, gerr := remote.Get(ref, opts...)
+	if gerr != nil {
+		return "", fmt.Errorf("failed to get descriptor (HEAD: %v): %w", err, gerr)
+	}
+
+	return gdesc.Digest.String(), nil
 }
 
 // resolveIndexCreatedAt returns the creation time for a multi-platform image

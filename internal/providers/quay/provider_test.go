@@ -196,10 +196,16 @@ func TestFetchAllProperties(t *testing.T) {
 			wantErr: "empty tag",
 		},
 		{
-			name:    "unknown image",
-			entType: minderv1.Entity_ENTITY_ARTIFACTS,
-			props:   properties.NewProperties(map[string]any{properties.PropertyName: "nosuchimage:v1"}),
-			wantErr: `failed to resolve digest for "nosuchimage:v1"`,
+			name:      "unknown image",
+			entType:   minderv1.Entity_ENTITY_ARTIFACTS,
+			props:     properties.NewProperties(map[string]any{properties.PropertyName: "nosuchimage:v1"}),
+			wantErrIs: provifv1.ErrEntityNotFound,
+		},
+		{
+			name:      "deleted tag",
+			entType:   minderv1.Entity_ENTITY_ARTIFACTS,
+			props:     properties.NewProperties(map[string]any{properties.PropertyName: "myimage:deleted"}),
+			wantErrIs: provifv1.ErrEntityNotFound,
 		},
 		{
 			name:      "unsupported entity type",
