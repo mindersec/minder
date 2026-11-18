@@ -372,11 +372,17 @@ func getDigestFromRef(ctx context.Context, ref name.Reference) (string, error) {
 	if err == nil {
 		return desc.Digest.String(), nil
 	}
-	if IsNotFound(err) {
+
+	// A *transport.Error means the registry answered with a non-2xx status (404, 401,
+	// 429, 5xx). Return it as-is: a GET would fail the same way, and after a 429 it
+	// would count against the very rate limit that was just hit.
+	var terr *transport.Error
+	if errors.As(err, &terr) {
 		return "", fmt.Errorf("failed to head descriptor: %w", err)
 	}
 
-	// Some registries omit Docker-Content-Digest on HEAD; fall back to GET.
+	// Otherwise HEAD succeeded but the response was unusable, e.g. a registry that
+	// omits Docker-Content-Digest on HEAD. Only then fall back to GET.
 	gdesc, gerr := remote.Get(ref, opts...)
 	if gerr != nil {
 		return "", fmt.Errorf("failed to get descriptor (HEAD: %v): %w", err, gerr)

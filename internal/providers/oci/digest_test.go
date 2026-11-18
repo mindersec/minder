@@ -5,6 +5,7 @@ package oci
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -19,15 +20,18 @@ import (
 	"github.com/google/go-containerregistry/pkg/registry"
 	"github.com/google/go-containerregistry/pkg/v1/random"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // manifestCounter wraps an in-memory registry, counting manifest requests by
 // method. When stripHeadDigest is set, HEAD responses omit Docker-Content-Digest.
+// When headStatus is non-zero, HEAD responses return that status code instead.
 type manifestCounter struct {
 	next            http.Handler
 	stripHeadDigest bool
+	headStatus      atomic.Int32
 	heads, gets     atomic.Int32
 	// tagGets counts GETs of the "v1" tag manifest, excluding other manifest
 	// GETs such as the referrers tag-schema fallback.
@@ -43,6 +47,10 @@ func (m *manifestCounter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodHead:
 		m.heads.Add(1)
+		if code := m.headStatus.Load(); code != 0 {
+			w.WriteHeader(int(code))
+			return
+		}
 		if m.stripHeadDigest {
 			rec := httptest.NewRecorder()
 			m.next.ServeHTTP(rec, r)
@@ -139,4 +147,33 @@ func TestGetDigestUsesHead(t *testing.T) {
 		assert.Equal(t, int32(1), counter.heads.Load())
 		assert.Equal(t, int32(0), counter.tagGets.Load(), "digest lookup must not GET the tag manifest")
 	})
+}
+
+func TestGetDigestHeadErrorStatusDoesNotFallBack(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		status int
+	}{
+		{name: "rate limited", status: http.StatusTooManyRequests},
+		{name: "unauthorized", status: http.StatusUnauthorized},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			counter, o, _ := newCountingRegistry(t, false)
+			counter.headStatus.Store(int32(tt.status))
+
+			_, err := o.GetDigest(context.Background(), "myimage", "v1")
+			require.Error(t, err)
+
+			var terr *transport.Error
+			require.True(t, errors.As(err, &terr), "expected a *transport.Error, got %v", err)
+			assert.Equal(t, tt.status, terr.StatusCode)
+			assert.GreaterOrEqual(t, counter.heads.Load(), int32(1))
+			assert.Equal(t, int32(0), counter.gets.Load(), "a failed HEAD status must not fall back to GET")
+		})
+	}
 }
