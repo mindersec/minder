@@ -17,6 +17,7 @@ var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete a profile",
 	Long:  `The profile delete subcommand lets you delete profiles within Minder.`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %s", err)

@@ -25,6 +25,7 @@ var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete a rule type",
 	Long:  `The ruletype delete subcommand lets you delete rule types within Minder.`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)
