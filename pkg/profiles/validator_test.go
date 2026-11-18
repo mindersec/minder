@@ -13,6 +13,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	mockdb "github.com/mindersec/minder/database/mock"
@@ -31,6 +33,11 @@ func TestValidatorScenarios(t *testing.T) {
 		t.Fatalf("Could not load test data: %s", err)
 	}
 	dbReturnsRuleType := dbMockWithRuleType(rawRuleDefinition)
+	rawArtifactRuleDefinition, err := loadRawRuleTypeDefFrom(artifactRuleTypeContent)
+	if err != nil {
+		t.Fatalf("Could not load test data: %s", err)
+	}
+	dbReturnsArtifactRuleType := dbMockWithRuleType(rawArtifactRuleDefinition)
 
 	validatorTestScenarios := []struct {
 		Name           string
@@ -118,6 +125,22 @@ func TestValidatorScenarios(t *testing.T) {
 			DBSetup:       dbReturnsRuleType,
 			ExpectedError: "expects entity repository, but was given entity artifact",
 		},
+		{
+			Name: "Validator accepts artifact rule with valid tag_regex",
+			Profile: makeProfile(withBasicProfileData, withArtifactRules(
+				makeRule(withRuleParam("tag_regex", "^v[0-9]+$")),
+			)),
+			DBSetup:        dbReturnsArtifactRuleType,
+			ExpectedResult: expectation(ruleName, ruleName),
+		},
+		{
+			Name: "Validator rejects artifact rule with invalid tag_regex",
+			Profile: makeProfile(withBasicProfileData, withArtifactRules(
+				makeRule(withRuleParam("tag_regex", "(")),
+			)),
+			DBSetup:       dbReturnsArtifactRuleType,
+			ExpectedError: "error compiling tag regex",
+		},
 	}
 
 	for _, testScenario := range validatorTestScenarios {
@@ -137,6 +160,7 @@ func TestValidatorScenarios(t *testing.T) {
 			if testScenario.ExpectedError != "" && testScenario.ExpectedResult == nil {
 				require.Nil(t, result)
 				require.ErrorContains(t, err, testScenario.ExpectedError)
+				require.Equal(t, codes.InvalidArgument, status.Code(err))
 			} else if testScenario.ExpectedError == "" && testScenario.ExpectedResult != nil {
 				require.NoError(t, err)
 				require.Equal(t, testScenario.ExpectedResult, result)
@@ -222,6 +246,40 @@ def:
   alert:
     type: security_advisory
     security_advisory: {}
+`
+var artifactRuleTypeContent = `
+---
+version: v1
+release_phase: beta
+type: rule-type
+name: branch_protection_allow_force_pushes
+display_name: Artifact signature check
+context:
+  provider: github
+description: Check artifact signatures
+guidance: Sign your artifacts.
+def:
+  in_entity: artifact
+  param_schema:
+    properties:
+      tags:
+        type: array
+        items:
+          type: string
+      tag_regex:
+        type: string
+  rule_schema:
+    type: object
+    properties: {}
+  ingest:
+    type: artifact
+    artifact: {}
+  eval:
+    type: jq
+    jq:
+      - ingested:
+          def: ".is_signed"
+        constant: true
 `
 var ruleName = "MyRule"
 var ruleUUID = uuid.New()
@@ -329,6 +387,12 @@ func withRuleParams(rule *minderv1.Profile_Rule) {
 	}
 }
 
+func withRuleParam(key, value string) func(rule *minderv1.Profile_Rule) {
+	return func(rule *minderv1.Profile_Rule) {
+		rule.Params.Fields = map[string]*structpb.Value{key: structpb.NewStringValue(value)}
+	}
+}
+
 func withRuleDefs(rule *minderv1.Profile_Rule) {
 	rule.Def.Fields = map[string]*structpb.Value{
 		"allow_force_pushes": {
@@ -348,8 +412,12 @@ func makeProfile(opts ...func(*minderv1.Profile)) *minderv1.Profile {
 }
 
 func loadRawRuleTypeDef() (json.RawMessage, error) {
+	return loadRawRuleTypeDefFrom(ruleTypeContent)
+}
+
+func loadRawRuleTypeDefFrom(content string) (json.RawMessage, error) {
 	// read rule type from disk and set it up as a fixture
-	f := strings.NewReader(ruleTypeContent)
+	f := strings.NewReader(content)
 
 	ruleType := &minderv1.RuleType{}
 	if err := minderv1.ParseResource(f, ruleType); err != nil {

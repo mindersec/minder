@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
+
+	artif "github.com/mindersec/minder/internal/providers/artifact"
 )
 
 type artifactType string
@@ -46,4 +48,18 @@ func configFromParams(params map[string]any) (*ingesterConfig, error) {
 	}
 
 	return cfg, nil
+}
+
+// ValidateParams checks that params are valid for the artifact ingester.
+func ValidateParams(params map[string]any) error {
+	cfg, err := configFromParams(params)
+	if err != nil {
+		return err
+	}
+
+	if _, err := artif.BuildFilter(cfg.Tags, cfg.TagRegex, artif.MatchAllTags); err != nil {
+		return fmt.Errorf("invalid artifact ingester params: %w", err)
+	}
+
+	return nil
 }

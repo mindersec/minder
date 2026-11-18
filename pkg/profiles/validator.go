@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/ingester"
 	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/selectors"
@@ -132,8 +133,16 @@ func (*Validator) validateRuleParams(
 			return fmt.Errorf("error validating rule: %w", err)
 		}
 
-		if err := ruleValidator.ValidateParamsAgainstSchema(profileRule.GetParams().AsMap()); err != nil {
+		params := profileRule.GetParams().AsMap()
+		if err := ruleValidator.ValidateParamsAgainstSchema(params); err != nil {
 			return fmt.Errorf("error validating rule params: %w", err)
+		}
+
+		if err := ingester.ValidateParams(ruleTypePB.GetDef().GetIngest().GetType(), params); err != nil {
+			return &RuleValidationError{
+				RuleType: profileRule.GetType(),
+				Err:      err.Error(),
+			}
 		}
 
 		key := RuleTypeAndNamePair{
