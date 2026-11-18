@@ -741,7 +741,7 @@ func TestServer_ListRepositories_AllProviders(t *testing.T) {
 	mgr := mockmanager.NewMockProviderManager(ctrl)
 	mgr.EXPECT().InstantiateFromID(gomock.Any(), gomock.Any()).Return(prov, nil).Times(3)
 
-	server := &Server{
+	srv := &Server{
 		store:           store,
 		repos:           repoSvc,
 		cfg:             &server.Config{},
@@ -754,7 +754,7 @@ func TestServer_ListRepositories_AllProviders(t *testing.T) {
 		Project: engcontext.Project{ID: projectID},
 	})
 
-	res, err := server.ListRepositories(ctx, &pb.ListRepositoriesRequest{})
+	res, err := srv.ListRepositories(ctx, &pb.ListRepositoriesRequest{})
 	require.NoError(t, err)
 
 	gotProviders := make([]string, 0, len(res.Results))
