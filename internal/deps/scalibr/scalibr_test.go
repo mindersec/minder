@@ -18,6 +18,7 @@ import (
 	"github.com/google/osv-scalibr/extractor"
 	py_requirements "github.com/google/osv-scalibr/extractor/filesystem/language/python/requirements"
 	"github.com/google/osv-scalibr/inventory/location"
+	"github.com/google/uuid"
 	"github.com/protobom/protobom/pkg/sbom"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
@@ -202,8 +203,14 @@ func Test_nodeFromPackage(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			got := nodeFromPackage(tt.inv)
-			// TODO: update the condition below to compare got with tt.want.
-			tt.want.Id = got.Id
+			// The node ID is a randomly generated UUID, so it cannot be
+			// compared against a fixed value. Assert that it is a well-formed
+			// UUID, then clear it so the structural comparison below covers
+			// every other field exactly.
+			if _, err := uuid.Parse(got.Id); err != nil {
+				t.Errorf("nodeFromPackage() id %q is not a valid UUID: %v", got.Id, err)
+			}
+			got.Id = ""
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Errorf("nodeFromPackage() diff:\n%s", diff)
 			}
