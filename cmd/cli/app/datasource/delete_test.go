@@ -133,6 +133,11 @@ func TestDataSourceDeleteCommand(t *testing.T) {
 			},
 			ExpectedError: "server error",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"datasource", "delete", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder datasource delete"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, DataSourceCmd)

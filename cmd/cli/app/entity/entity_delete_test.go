@@ -53,6 +53,11 @@ func TestDeleteCommand(t *testing.T) {
 			},
 			ExpectedError: "entity not found",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"entity", "delete", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder entity delete"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, EntityCmd)

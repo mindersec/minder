@@ -101,6 +101,11 @@ func TestRoleGrantListCommand(t *testing.T) {
 			},
 			ExpectedError: "server error",
 		},
+		{
+			Name:          "unexpected positional argument",
+			Args:          []string{"project", "role", "grant", "list", "unexpected-arg"},
+			ExpectedError: "unknown command",
+		},
 	}
 
 	cli.RunCmdTests(t, tests, RoleCmd)
