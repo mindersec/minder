@@ -173,6 +173,11 @@ func TestStatusListCommand(t *testing.T) {
 			},
 			ExpectedError: "profile status not found",
 		},
+		{
+			Name:          "unexpected positional argument",
+			Args:          []string{"profile", "status", "list", "unexpected-arg"},
+			ExpectedError: "unknown command",
+		},
 	}
 
 	cli.RunCmdTests(t, tests, profile.ProfileCmd)

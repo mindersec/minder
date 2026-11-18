@@ -23,6 +23,7 @@ var listCmd = &cobra.Command{
 	Short: "List roles on a project within the minder control plane",
 	Long: `The minder project role list command allows one to list roles
 available on a particular project.`,
+	Args: cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)
