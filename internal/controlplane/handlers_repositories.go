@@ -147,13 +147,21 @@ func (s *Server) ListRepositories(ctx context.Context,
 	logger.BusinessRecord(ctx).Provider = providerName
 	logger.BusinessRecord(ctx).Project = projectID
 
-	// Get provider ID from name
-	provider, err := s.providerStore.GetByName(ctx, projectID, providerName)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "provider not found")
+	// When no provider is specified, list repositories across all providers
+	// in the project rather than picking one of them. A nil provider ID
+	// matches every provider in the query.
+	providerID := uuid.Nil
+	providerNames := map[uuid.UUID]string{}
+	if providerName != "" {
+		provider, err := s.providerStore.GetByName(ctx, projectID, providerName)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, util.UserVisibleError(codes.NotFound, "provider not found")
+			}
+			return nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
 		}
-		return nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
+		providerID = provider.ID
+		providerNames[provider.ID] = provider.Name
 	}
 
 	// Decode cursor
@@ -168,7 +176,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 		reqLimit = repositories.RepoPageSize
 	}
 
-	repoEntities, lastCursorID, err := s.repos.ListRepositories(ctx, projectID, provider.ID, entityCursor.ID, reqLimit)
+	repoEntities, lastCursorID, err := s.repos.ListRepositories(ctx, projectID, providerID, entityCursor.ID, reqLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -196,8 +204,17 @@ func (s *Server) ListRepositories(ctx context.Context,
 
 		// Repositories contain a Context field which is not based on the entity properties,
 		// fill it.
+		entProviderName, ok := providerNames[ewp.Entity.ProviderID]
+		if !ok {
+			entProvider, err := s.providerStore.GetByID(ctx, ewp.Entity.ProviderID)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
+			}
+			entProviderName = entProvider.Name
+			providerNames[ewp.Entity.ProviderID] = entProviderName
+		}
 		pbRepo.Context = &pb.Context{
-			Provider: &provider.Name,
+			Provider: ptr.Ptr(entProviderName),
 			Project:  ptr.Ptr(projectID.String()),
 		}
 
