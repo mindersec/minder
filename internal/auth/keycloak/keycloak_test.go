@@ -5,6 +5,7 @@
 package keycloak
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/lestrrat-go/jwx/v3/jwt"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/mindersec/minder/internal/auth"
@@ -106,6 +108,67 @@ func TestKeyCloak_Resolve(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, tt.human, id.Human())
 			assert.Equal(t, tt.userid, id.String())
+		})
+	}
+}
+
+func TestKeyCloak_ResolveLogsAdminAPIStatus(t *testing.T) {
+	t.Parallel()
+
+	// The token endpoint works, but the admin API refuses every call, as it
+	// would for a service account that lost view-users.
+	f := &fakeKeycloak{}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/admin/realms/stacklok/", func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "forbidden", http.StatusForbidden)
+	})
+	mux.HandleFunc("/realms/stacklok/protocol/openid-connect/token", f.GetToken)
+	mux.HandleFunc("/realms/stacklok/.well-known/openid-configuration", f.GetOIDCConfig)
+	fakeServ := httptest.NewServer(mux)
+	t.Cleanup(fakeServ.Close)
+
+	kc, err := NewKeyCloak("", serverconfig.IdentityConfig{
+		IssuerUrl: fakeServ.URL,
+		Realm:     "stacklok",
+	})
+	if err != nil {
+		t.Fatalf("failed to create keycloak: %v", err)
+	}
+
+	tests := []struct {
+		name    string
+		resolve func(context.Context) (*auth.Identity, error)
+		lookups []string
+	}{{
+		name: "Resolve",
+		resolve: func(ctx context.Context) (*auth.Identity, error) {
+			return kc.Resolve(ctx, "user")
+		},
+		lookups: []string{"user id", "username"},
+	}, {
+		name: "ResolveFederated",
+		resolve: func(ctx context.Context) (*auth.Identity, error) {
+			return kc.ResolveFederated(ctx, "github", "123456")
+		},
+		lookups: []string{"github id"},
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var buf bytes.Buffer
+			ctx := zerolog.New(&buf).WithContext(context.Background())
+
+			id, err := tt.resolve(ctx)
+			assert.Nil(t, id)
+			assert.ErrorIs(t, err, auth.ErrNotFound)
+
+			logs := buf.String()
+			assert.Contains(t, logs, `"status":403`)
+			for _, lookup := range tt.lookups {
+				assert.Contains(t, logs, `"lookup":"`+lookup+`"`)
+			}
 		})
 	}
 }
