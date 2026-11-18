@@ -306,7 +306,9 @@ func (s *Server) DeleteRepositoryById(
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
 	} else if err != nil {
-		return nil, status.Errorf(codes.Internal, "unexpected error deleting repo: %v", err)
+		// Pass the error through unwrapped: UserVisibleErrors reach the user,
+		// and the middleware sanitizes anything else.
+		return nil, err
 	}
 
 	// return the response with the id of the deleted repository

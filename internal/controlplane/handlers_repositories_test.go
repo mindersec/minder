@@ -442,7 +442,7 @@ func TestServer_DeleteRepository(t *testing.T) {
 			Name:             "delete by ID fails when repo service returns error",
 			RepoID:           repoID,
 			RepoServiceSetup: rf.NewRepoService(rf.WithFailedDeleteByID(errDefault)),
-			ExpectedError:    "unexpected error deleting repo",
+			ExpectedError:    errDefault.Error(),
 		},
 		{
 			Name:             "deletion fails when repo is not found",
