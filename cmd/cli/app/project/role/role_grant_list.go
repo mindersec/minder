@@ -24,6 +24,7 @@ var grantListCmd = &cobra.Command{
 	Short: "List role grants within a given project",
 	Long: `The minder project role grant list command lists all role grants
 on a particular project.`,
+	Args: cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)

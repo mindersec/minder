@@ -92,6 +92,11 @@ func TestProjectCreateCommand(t *testing.T) {
 			},
 			ExpectedError: "server error",
 		},
+		{
+			Name:          "unexpected positional argument",
+			Args:          []string{"project", "create", "unexpected-arg"},
+			ExpectedError: "unknown command",
+		},
 	}
 
 	cli.RunCmdTests(t, tests, ProjectCmd)

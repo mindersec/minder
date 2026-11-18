@@ -17,6 +17,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/registry"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -31,6 +32,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	artif "github.com/mindersec/minder/internal/providers/artifact"
+	"github.com/mindersec/minder/internal/providers/credentials"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
@@ -264,6 +266,91 @@ func TestGetArtifactVersions_ReturnsErrorOnNonNotFound(t *testing.T) {
 type alwaysIncludeFilter struct{}
 
 func (*alwaysIncludeFilter) IsSkippable(_ time.Time, _ []string) error { return nil }
+
+// newBasicAuthRegistry starts an in-memory registry that requires the given
+// Basic credentials on every request. sawAuthHeader reports whether any
+// request carried an Authorization header.
+func newBasicAuthRegistry(t *testing.T, user, pass string) (host string, sawAuthHeader *atomic.Bool) {
+	t.Helper()
+
+	sawAuthHeader = &atomic.Bool{}
+	reg := registry.New(registry.Logger(log.New(io.Discard, "", 0)))
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "" {
+			sawAuthHeader.Store(true)
+		}
+		u, p, ok := r.BasicAuth()
+		if !ok || u != user || p != pass {
+			w.Header().Set("WWW-Authenticate", `Basic realm="test"`)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		reg.ServeHTTP(w, r)
+	}))
+	t.Cleanup(srv.Close)
+	return strings.TrimPrefix(srv.URL, "http://"), sawAuthHeader
+}
+
+func TestRegistryCallsUseRegistryAuthenticator(t *testing.T) {
+	t.Parallel()
+
+	const (
+		user = "octocat"
+		pass = "secret"
+		tag  = "v1"
+	)
+	basic := &authn.Basic{Username: user, Password: pass}
+
+	calls := map[string]func(ctx context.Context, o *OCI, digest string) error{
+		"ListTags": func(ctx context.Context, o *OCI, _ string) error {
+			_, err := o.ListTags(ctx, "myimage")
+			return err
+		},
+		"GetDigest": func(ctx context.Context, o *OCI, _ string) error {
+			_, err := o.GetDigest(ctx, "myimage", tag)
+			return err
+		},
+		"GetReferrer": func(ctx context.Context, o *OCI, _ string) error {
+			_, err := o.GetReferrer(ctx, "myimage", tag, "application/vnd.dev.sigstore.bundle.v0.3+json")
+			return err
+		},
+		"GetManifest": func(ctx context.Context, o *OCI, _ string) error {
+			_, err := o.GetManifest(ctx, "myimage", tag)
+			return err
+		},
+		"GetRawManifest": func(ctx context.Context, o *OCI, digest string) error {
+			_, err := o.GetRawManifest(ctx, "myimage", digest)
+			return err
+		},
+	}
+
+	for callName, call := range calls {
+		t.Run(callName, func(t *testing.T) {
+			t.Parallel()
+
+			host, sawAuthHeader := newBasicAuthRegistry(t, user, pass)
+			img, err := random.Image(256, 1)
+			require.NoError(t, err)
+			ref, err := name.NewTag(fmt.Sprintf("%s/testns/myimage:%s", host, tag))
+			require.NoError(t, err)
+			require.NoError(t, remote.Write(ref, img, remote.WithAuth(basic)))
+			digest, err := img.Digest()
+			require.NoError(t, err)
+			sawAuthHeader.Store(false)
+
+			// Without the option, calls stay anonymous even when a credential
+			// is present, as for the DockerHub and Quay providers.
+			anon := New(credentials.NewOAuth2TokenCredential("hub-token"), host, path.Join(host, "testns"))
+			err = call(context.Background(), anon, digest.String())
+			require.Error(t, err)
+			assert.False(t, sawAuthHeader.Load(), "anonymous client must not send credentials")
+
+			authed := New(nil, host, path.Join(host, "testns"), WithRegistryAuthenticator(basic))
+			require.NoError(t, call(context.Background(), authed, digest.String()))
+			assert.True(t, sawAuthHeader.Load())
+		})
+	}
+}
 
 func TestGetArtifactVersions(t *testing.T) {
 	t.Parallel()

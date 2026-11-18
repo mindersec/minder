@@ -19,6 +19,7 @@ var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete a data source",
 	Long:  `The datasource delete subcommand lets you delete a data source within Minder.`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)
