@@ -12,15 +12,15 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/zitadel/oidc/v3/pkg/client"
+	"github.com/zitadel/oidc/v3/pkg/oidc"
 
 	"github.com/mindersec/minder/pkg/config"
 )
 
-// OIDCConfig represents the openid-configuration response
+// OIDCConfig represents the extracted data from the openid-configuration response
 type OIDCConfig struct {
-	Issuer   string `json:"issuer"`
-	JWKSURI  string `json:"jwks_uri"`
-	TokenURI string `json:"token_endpoint"`
+	Issuer  string
+	JWKSURI url.URL
 }
 
 // IdentityConfigWrapper is the configuration for the identity provider
@@ -32,7 +32,7 @@ type IdentityConfigWrapper struct {
 // IdentityConfig is the configuration for the identity provider in minder server
 type IdentityConfig struct {
 	// IssuerUrl is the base URL for calling APIs on the identity server.  Note that this URL
-	// ised for direct communication with the identity server, and is not the URL that
+	// is used for direct communication with the identity server, and is not the URL that
 	// is included in the JWT tokens.  It is named 'issuer_url' for historical compatibility.
 	IssuerUrl string `mapstructure:"issuer_url" default:"http://localhost:8081"`
 	// Realm is the realm used by the identity server at IssuerUrl
@@ -75,16 +75,27 @@ func (sic *IdentityConfig) DiscoverOIDCEndpoints(ctx context.Context) (*OIDCConf
 	if sic.Realm != "" {
 		discoveryUrl = discoveryUrl.JoinPath("realms", sic.Realm)
 	}
+	discoveryUrl = discoveryUrl.JoinPath(oidc.DiscoveryEndpoint)
 
-	discoveredCfg, err := client.Discover(ctx, discoveryUrl.String(), http.DefaultClient)
+	// Zitadel's OIDC Discovery expects the *issuer* value to match the one provided
+	// by the server configuration
+	discoveredCfg, err := client.Discover(ctx, sic.IssuerClaim, http.DefaultClient, discoveryUrl.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to discover OIDC configuration: %w", err)
 	}
 
+	// The JWKS URIs should be reached via the internal (IssuerURL) hostname, rather
+	// than the external URL that might be used by clients. The _iss_ claim from the
+	// token should match the issuer Claim.
+	jwksURL, err := url.Parse(discoveredCfg.JwksURI)
+	if err != nil || jwksURL == nil {
+		return nil, fmt.Errorf("failed to parse JWKS URI: %w", err)
+	}
+	jwksURL.Host = discoveryUrl.Host
+
 	return &OIDCConfig{
-		Issuer:   discoveredCfg.Issuer,
-		JWKSURI:  discoveredCfg.JwksURI,
-		TokenURI: discoveredCfg.TokenEndpoint,
+		Issuer:  discoveredCfg.Issuer,
+		JWKSURI: *jwksURL,
 	}, nil
 }
 

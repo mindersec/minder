@@ -22,9 +22,9 @@ func TestIdentityConfig_DiscoverOIDCEndpoints(t *testing.T) {
 		if r.URL.Path == "/realms/stacklok/.well-known/openid-configuration" {
 			w.Header().Set("Content-Type", "application/json")
 			resp := map[string]interface{}{
-				"issuer":         "http://" + r.Host + "/realms/stacklok",
-				"jwks_uri":       "http://" + r.Host + "/realms/stacklok/keys",
-				"token_endpoint": "http://" + r.Host + "/realms/stacklok/token",
+				"issuer":         "http://public.example.com/realms/stacklok",
+				"jwks_uri":       "http://public.example.com/realms/stacklok/keys",
+				"token_endpoint": "http://public.example.com/realms/stacklok/token",
 			}
 			_ = json.NewEncoder(w).Encode(resp)
 			return
@@ -35,6 +35,7 @@ func TestIdentityConfig_DiscoverOIDCEndpoints(t *testing.T) {
 
 	cfg := &IdentityConfig{
 		IssuerUrl:    testServer.URL,
+		IssuerClaim:  "http://public.example.com/realms/stacklok",
 		Realm:        "stacklok",
 		ClientId:     "client-id",
 		ClientSecret: "client-secret",
@@ -44,9 +45,8 @@ func TestIdentityConfig_DiscoverOIDCEndpoints(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, oidcCfg)
 
-	assert.Equal(t, "http://"+testServer.Listener.Addr().String()+"/realms/stacklok", oidcCfg.Issuer)
-	assert.Equal(t, "http://"+testServer.Listener.Addr().String()+"/realms/stacklok/keys", oidcCfg.JWKSURI)
-	assert.Equal(t, "http://"+testServer.Listener.Addr().String()+"/realms/stacklok/token", oidcCfg.TokenURI)
+	assert.Equal(t, "http://public.example.com/realms/stacklok", oidcCfg.Issuer)
+	assert.Equal(t, "http://"+testServer.Listener.Addr().String()+"/realms/stacklok/keys", oidcCfg.JWKSURI.String())
 }
 
 func TestIdentityConfig_DiscoverOIDCEndpoints_InvalidURL(t *testing.T) {
