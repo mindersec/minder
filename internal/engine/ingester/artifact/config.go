@@ -54,7 +54,7 @@ func configFromParams(params map[string]any) (*ingesterConfig, error) {
 func ValidateParams(params map[string]any) error {
 	cfg, err := configFromParams(params)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid artifact ingester params: %w", err)
 	}
 
 	if _, err := artif.BuildFilter(cfg.Tags, cfg.TagRegex, artif.MatchAllTags); err != nil {
