@@ -89,6 +89,48 @@ func TestRuleType_Definition_Ingest_Validate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "valid builtin ingest passthrough",
+			ingest: &RuleType_Definition_Ingest{
+				Type: "builtin",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid artifact ingest passthrough",
+			ingest: &RuleType_Definition_Ingest{
+				Type: "artifact",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid git ingest passthrough",
+			ingest: &RuleType_Definition_Ingest{
+				Type: "git",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid deps ingest passthrough",
+			ingest: &RuleType_Definition_Ingest{
+				Type: "deps",
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty ingest type",
+			ingest: &RuleType_Definition_Ingest{
+				Type: "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "unknown ingest type",
+			ingest: &RuleType_Definition_Ingest{
+				Type: "nonexistent",
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -149,6 +191,7 @@ func TestRuleType_Definition_Eval_Validate(t *testing.T) {
 		{
 			name: "eval definition with same name and alias",
 			eval: &RuleType_Definition_Eval{
+				Type: "rego",
 				Rego: &RuleType_Definition_Eval_Rego{
 					Def: "package example.policy\n\nimport rego.v1\n\nallow if { true }",
 				},
@@ -162,6 +205,72 @@ func TestRuleType_Definition_Eval_Validate(t *testing.T) {
 					},
 				},
 			},
+			wantErr: true,
+		},
+		{
+			name: "valid jq eval definition",
+			eval: &RuleType_Definition_Eval{
+				Type: "jq",
+				Jq: []*RuleType_Definition_Eval_JQComparison{
+					{
+						Ingested: &RuleType_Definition_Eval_JQComparison_Operator{
+							Def: ".",
+						},
+						Profile: &RuleType_Definition_Eval_JQComparison_Operator{
+							Def: ".",
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "jq eval with empty rules",
+			eval: &RuleType_Definition_Eval{
+				Type: "jq",
+				Jq:   []*RuleType_Definition_Eval_JQComparison{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "valid vulncheck eval passthrough",
+			eval: &RuleType_Definition_Eval{
+				Type: "vulncheck",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid trusty eval passthrough",
+			eval: &RuleType_Definition_Eval{
+				Type: "trusty",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid homoglyphs eval passthrough",
+			eval: &RuleType_Definition_Eval{
+				Type:       "homoglyphs",
+				Homoglyphs: &RuleType_Definition_Eval_Homoglyphs{},
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty eval type",
+			eval: &RuleType_Definition_Eval{
+				Type: "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "unknown eval type",
+			eval: &RuleType_Definition_Eval{
+				Type: "nonexistent",
+			},
+			wantErr: true,
+		},
+		{
+			name:    "nil eval",
+			eval:    nil,
 			wantErr: true,
 		},
 	}

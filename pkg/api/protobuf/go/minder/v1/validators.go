@@ -231,7 +231,13 @@ func (ev *RuleType_Definition_Eval) Validate() error {
 				return fmt.Errorf("jq rule %d is invalid: %w", i, err)
 			}
 		}
-		// TODO: we don't have a default case here, and a bunch of tests don't set type
+	case "vulncheck", "trusty", "homoglyphs":
+		// Supported by the rule type engine eval factory, but their
+		// payloads (if any) don't need validation here.
+	case "":
+		return fmt.Errorf("%w: eval type is empty", ErrInvalidRuleTypeDefinition)
+	default:
+		return fmt.Errorf("%w: unsupported eval type: %s", ErrInvalidRuleTypeDefinition, ev.Type)
 	}
 
 	if ev.GetDataSources() != nil {
@@ -358,7 +364,13 @@ func (ing *RuleType_Definition_Ingest) Validate() error {
 		if err := ing.GetRest().Validate(); err != nil {
 			return err
 		}
-		// TODO: we don't have a default here, and a bunch of tests don't set type
+	case "builtin", "artifact", "git", "deps":
+		// Supported by the rule type engine ingester factory, but their
+		// payloads don't need validation here.
+	case "":
+		return fmt.Errorf("%w: ingest type is empty", ErrInvalidRuleTypeDefinition)
+	default:
+		return fmt.Errorf("%w: unsupported ingest type: %s", ErrInvalidRuleTypeDefinition, ing.Type)
 	}
 
 	return nil
