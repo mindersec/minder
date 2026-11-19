@@ -92,6 +92,7 @@ func (sic *IdentityConfig) DiscoverOIDCEndpoints(ctx context.Context) (*OIDCConf
 		return nil, fmt.Errorf("failed to parse JWKS URI: %w", err)
 	}
 	jwksURL.Host = discoveryUrl.Host
+	jwksURL.Scheme = discoveryUrl.Scheme
 
 	return &OIDCConfig{
 		Issuer:  discoveredCfg.Issuer,
