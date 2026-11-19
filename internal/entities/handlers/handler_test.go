@@ -6,6 +6,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"maps"
 	"testing"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/mindersec/minder/internal/entities/handlers/message"
 	"github.com/mindersec/minder/internal/entities/models"
 	"github.com/mindersec/minder/internal/entities/properties/service"
+	mockSvc "github.com/mindersec/minder/internal/entities/properties/service/mock"
 	"github.com/mindersec/minder/internal/entities/properties/service/mock/fixtures"
 	stubeventer "github.com/mindersec/minder/internal/events/stubs"
 	mockgithub "github.com/mindersec/minder/internal/providers/github/mock"
@@ -714,6 +716,149 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			assert.Equal(t, tt.topic, stubEventer.Topics[0], "Expected topic to be %s", tt.topic)
 			assert.Equal(t, 1, len(stubEventer.Sent), "Expected one publish call")
 			tt.checkWmMsg(t, stubEventer.Sent[0])
+		})
+	}
+}
+
+func TestRefreshByIDHandler_UpstreamNotFound(t *testing.T) {
+	t.Parallel()
+
+	artifactID := uuid.New()
+	artifactEwp := models.EntityWithProperties{
+		Entity: models.EntityInstance{
+			ID:         artifactID,
+			Type:       minderv1.Entity_ENTITY_ARTIFACTS,
+			Name:       "library/alpine:3.20",
+			ProviderID: providerID,
+			ProjectID:  projectID,
+		},
+		Properties: properties.NewProperties(map[string]any{properties.PropertyName: "library/alpine:3.20"}),
+	}
+
+	byID := func(id uuid.UUID) func() *message.HandleEntityAndDoMessage {
+		return func() *message.HandleEntityAndDoMessage {
+			return message.NewEntityRefreshAndDoMessage().WithEntityID(id)
+		}
+	}
+
+	tests := []struct {
+		name              string
+		handlerBuilderFn  handlerBuilder
+		messageBuilder    func() *message.HandleEntityAndDoMessage
+		setupPropSvcMocks func() fixtures.MockPropertyServiceBuilder
+		expectDelete      bool
+	}{
+		{
+			name:             "artifact not found upstream publishes a delete",
+			handlerBuilderFn: refreshByIDHandlerBuilder,
+			messageBuilder:   byID(artifactID),
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityWithPropertiesByID(artifactID, &artifactEwp),
+					fixtures.WithFailedRetrieveAllPropertiesForEntity(service.ErrEntityNotFound),
+				)
+			},
+			expectDelete: true,
+		},
+		{
+			name:             "wrapped not-found for an artifact publishes a delete",
+			handlerBuilderFn: refreshByIDHandlerBuilder,
+			messageBuilder:   byID(artifactID),
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityWithPropertiesByID(artifactID, &artifactEwp),
+					fixtures.WithFailedRetrieveAllPropertiesForEntity(
+						fmt.Errorf("error fetching properties for entity: %w", service.ErrEntityNotFound)),
+				)
+			},
+			expectDelete: true,
+		},
+		{
+			name:             "repository not found upstream is still only logged",
+			handlerBuilderFn: refreshByIDHandlerBuilder,
+			messageBuilder:   byID(repoID),
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityWithPropertiesByID(repoID, buildEwp(t, repoEwp, repoPropMap)),
+					fixtures.WithFailedRetrieveAllPropertiesForEntity(service.ErrEntityNotFound),
+				)
+			},
+		},
+		{
+			name:             "other artifact refresh errors are still only logged",
+			handlerBuilderFn: refreshByIDHandlerBuilder,
+			messageBuilder:   byID(artifactID),
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityWithPropertiesByID(artifactID, &artifactEwp),
+					fixtures.WithFailedRetrieveAllPropertiesForEntity(errors.New("registry returned 429")),
+				)
+			},
+		},
+		{
+			name:             "artifact missing from Minder is not treated as gone upstream",
+			handlerBuilderFn: refreshByIDHandlerBuilder,
+			messageBuilder:   byID(artifactID),
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				return fixtures.NewMockPropertiesService(
+					func(m *mockSvc.MockPropertiesService) {
+						m.EXPECT().EntityWithPropertiesByID(gomock.Any(), artifactID, gomock.Any()).
+							Return(nil, service.ErrEntityNotFound)
+					},
+				)
+			},
+		},
+		{
+			name:             "refresh-by-upstream-props handler does not delete artifacts",
+			handlerBuilderFn: refreshEntityHandlerBuilder,
+			messageBuilder: func() *message.HandleEntityAndDoMessage {
+				return message.NewEntityRefreshAndDoMessage().
+					WithEntity(minderv1.Entity_ENTITY_ARTIFACTS, properties.NewProperties(map[string]any{
+						properties.PropertyUpstreamID: "library/alpine:3.20",
+					})).
+					WithProviderImplementsHint("github")
+			},
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityByUpstreamHint(&artifactEwp, githubHint),
+					fixtures.WithFailedRetrieveAllPropertiesForEntity(service.ErrEntityNotFound),
+				)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+
+			handlerMsg := watermill.NewMessage(uuid.New().String(), nil)
+			require.NoError(t, tt.messageBuilder().ToMessage(handlerMsg))
+
+			mockStore := df.NewMockStore(df.WithRollbackTransaction())(ctrl)
+			stubEventer := &stubeventer.StubEventer{}
+			handler := tt.handlerBuilderFn(stubEventer, mockStore, tt.setupPropSvcMocks()(ctrl),
+				mock_manager.NewMockProviderManager(ctrl))
+			base, ok := handler.(*handleEntityAndDoBase)
+			require.True(t, ok)
+
+			require.NoError(t, base.handleRefreshEntityAndDo(handlerMsg))
+
+			if !tt.expectDelete {
+				require.Empty(t, stubEventer.Sent, "expected no publish")
+				return
+			}
+
+			require.Equal(t, []string{constants.TopicQueueReconcileEntityDelete}, stubEventer.Topics)
+			require.Len(t, stubEventer.Sent, 1)
+
+			var event messages.MinderEvent
+			require.NoError(t, json.Unmarshal(stubEventer.Sent[0].Payload, &event))
+			require.Equal(t, minderv1.Entity_ENTITY_ARTIFACTS, event.EntityType)
+			require.Equal(t, artifactID, event.EntityID)
+			require.Equal(t, projectID, event.ProjectID)
+			require.Equal(t, providerID, event.ProviderID)
 		})
 	}
 }

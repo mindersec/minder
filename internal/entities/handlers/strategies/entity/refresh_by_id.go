@@ -5,6 +5,7 @@ package entity
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -55,7 +56,9 @@ func (r *refreshEntityByIDStrategy) GetEntity(
 		err = r.propSvc.RetrieveAllPropertiesForEntity(
 			ctx, ewp, r.provMgr,
 			propertyService.ReadBuilder().WithStoreOrTransaction(t))
-		if err != nil {
+		if errors.Is(err, propertyService.ErrEntityNotFound) {
+			return nil, &strategies.UpstreamEntityNotFoundError{Entity: ewp, Err: err}
+		} else if err != nil {
 			return nil, fmt.Errorf("error retrieving properties for entity: %w", err)
 		}
 		return ewp, nil

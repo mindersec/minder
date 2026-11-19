@@ -70,7 +70,7 @@ func Test_handleRepoReconcilerEvent(t *testing.T) {
 
 			stubEventer := &stubeventer.StubEventer{}
 
-			reconciler, err := NewReconciler(nil, stubEventer, nil, nil, nil)
+			reconciler, err := NewReconciler(nil, stubEventer, nil, nil, nil, nil)
 			require.NoError(t, err)
 			require.NotNil(t, reconciler)
 

@@ -110,7 +110,7 @@ func TestArtifactReminderFlowsToRefreshAndEvaluate(t *testing.T) {
 
 	bus := newSyncBus(t)
 	reminderprocessor.NewReminderProcessor(bus).Register(bus)
-	reconciler, err := reconcilers.NewReconciler(store, bus, nil, nil, nil)
+	reconciler, err := reconcilers.NewReconciler(store, bus, nil, nil, nil, nil)
 	require.NoError(t, err)
 	reconciler.Register(bus)
 	handlers.NewRefreshByIDAndEvaluateHandler(bus, store, propSvc, provMgr).Register(bus)
