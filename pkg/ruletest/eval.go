@@ -19,6 +19,7 @@ import (
 	"github.com/mindersec/minder/internal/datasources"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
@@ -332,9 +333,10 @@ func mapToProto(entityType string, entityMap map[string]any) (proto.Message, err
 		msg = &minderv1.TaskRun{}
 	case minderv1.Entity_ENTITY_BUILD:
 		msg = &minderv1.Build{}
+	case minderv1.Entity_ENTITY_PULL_REQUESTS:
+		msg = &pbinternal.PullRequest{}
 	case minderv1.Entity_ENTITY_UNSPECIFIED,
-		minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS,
-		minderv1.Entity_ENTITY_PULL_REQUESTS:
+		minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS:
 		fallthrough
 	default:
 		return nil, fmt.Errorf("unsupported entity type for mapping to proto: %s", entityType)
