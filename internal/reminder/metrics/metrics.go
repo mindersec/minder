@@ -5,8 +5,17 @@
 package metrics
 
 import (
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 )
+
+// EntityTypeKey is the attribute key that tags reminder metrics with the entity type.
+const EntityTypeKey = attribute.Key("entity_type")
+
+// EntityTypeAttribute returns a measurement option that tags a recording with the entity type.
+func EntityTypeAttribute(entityType string) metric.MeasurementOption {
+	return metric.WithAttributes(EntityTypeKey.String(entityType))
+}
 
 // Default bucket boundaries in seconds for the delay histograms
 var delayBuckets = []float64{

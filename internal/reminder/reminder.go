@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -41,6 +42,7 @@ type reminder struct {
 
 	entityTypes []db.Entities
 	cursors     map[db.Entities]uuid.UUID
+	nextDue     map[db.Entities]time.Time
 
 	ticker *time.Ticker
 
@@ -50,8 +52,19 @@ type reminder struct {
 	metricsServerDone chan struct{}
 }
 
-// defaultEntityTypes are the entity types reminders are sent for.
-var defaultEntityTypes = []db.Entities{db.EntitiesRepository}
+// supportedEntityTypes are the entity types reminders can be sent for. Each
+// one is sent only when RecurrenceConfig.ForEntityType reports it enabled.
+var supportedEntityTypes = []db.Entities{db.EntitiesRepository, db.EntitiesArtifact}
+
+func enabledEntityTypes(cfg reminderconfig.RecurrenceConfig) []db.Entities {
+	enabled := make([]db.Entities, 0, len(supportedEntityTypes))
+	for _, entityType := range supportedEntityTypes {
+		if cfg.ForEntityType(entityType).Enabled {
+			enabled = append(enabled, entityType)
+		}
+	}
+	return enabled
+}
 
 // NewReminder creates a new reminder instance
 func NewReminder(ctx context.Context, store db.Store, config *reminderconfig.Config) (Interface, error) {
@@ -60,12 +73,20 @@ func NewReminder(ctx context.Context, store db.Store, config *reminderconfig.Con
 		cfg:               config,
 		stop:              make(chan struct{}),
 		metricsServerDone: make(chan struct{}),
-		entityTypes:       defaultEntityTypes,
-		cursors:           make(map[db.Entities]uuid.UUID, len(defaultEntityTypes)),
+		entityTypes:       enabledEntityTypes(config.RecurrenceConfig),
+		cursors:           make(map[db.Entities]uuid.UUID, len(supportedEntityTypes)),
+		nextDue:           make(map[db.Entities]time.Time, len(supportedEntityTypes)),
+	}
+
+	logger := zerolog.Ctx(ctx)
+	for entityType := range config.RecurrenceConfig.Entities {
+		if config.RecurrenceConfig.ForEntityType(entityType).Enabled && !slices.Contains(supportedEntityTypes, entityType) {
+			logger.Warn().Str("entity_type", string(entityType)).
+				Msg("reminders are not supported for this entity type, ignoring")
+		}
 	}
 
 	// Set to a random UUID to start
-	logger := zerolog.Ctx(ctx)
 	for _, entityType := range r.entityTypes {
 		r.cursors[entityType] = uuid.New()
 		logger.Info().Str("entity_type", string(entityType)).
@@ -94,9 +115,9 @@ func (r *reminder) Start(ctx context.Context) error {
 	// This also prevents resource leaks if user doesn't explicitly stop the reminder
 	defer r.Stop()
 
-	interval := r.cfg.RecurrenceConfig.Interval
-	if interval <= 0 {
-		return fmt.Errorf("invalid interval: %s", r.cfg.RecurrenceConfig.Interval)
+	interval, err := r.tickInterval()
+	if err != nil {
+		return err
 	}
 
 	if r.cfg.MetricsConfig.Enabled {
@@ -113,6 +134,7 @@ func (r *reminder) Start(ctx context.Context) error {
 		close(r.metricsServerDone)
 	}
 
+	logger.Info().Msgf("reminder ticking every %s for entity types %v", interval, r.entityTypes)
 	r.ticker = time.NewTicker(interval)
 
 	for {
@@ -125,11 +147,11 @@ func (r *reminder) Start(ctx context.Context) error {
 			<-r.metricsServerDone
 			logger.Info().Msg("reminder stopped")
 			return nil
-		case <-r.ticker.C:
+		case now := <-r.ticker.C:
 			// In-case sending reminders i.e. iterating over entities consumes more time than the
 			// interval, the ticker will adjust the time interval or drop ticks to make up for
 			// slow receivers.
-			if err := r.sendReminders(ctx); err != nil {
+			if err := r.sendReminders(ctx, now); err != nil {
 				logger.Error().Err(err).Msg("reconciliation request unsuccessful")
 			}
 		}
@@ -158,9 +180,47 @@ func (r *reminder) Stop() {
 	<-r.metricsServerDone
 }
 
-func (r *reminder) sendReminders(ctx context.Context) error {
+// tickInterval returns the shortest interval across the enabled entity types.
+func (r *reminder) tickInterval() (time.Duration, error) {
+	if len(r.entityTypes) == 0 {
+		return 0, errors.New("no entity types are enabled for reminders")
+	}
+
+	var shortest time.Duration
+	for _, entityType := range r.entityTypes {
+		interval := r.cfg.RecurrenceConfig.ForEntityType(entityType).Interval
+		if interval <= 0 {
+			return 0, fmt.Errorf("invalid interval for %s: %s", entityType, interval)
+		}
+		if shortest == 0 || interval < shortest {
+			shortest = interval
+		}
+	}
+	return shortest, nil
+}
+
+// isDue reports whether entityType should be processed on the tick at now.
+// A type is due when its next due time falls within half a tick of now, so
+// that small delays in tick delivery don't push it back a whole tick.
+func (r *reminder) isDue(entityType db.Entities, now time.Time, tick time.Duration) bool {
+	return !now.Add(tick / 2).Before(r.nextDue[entityType])
+}
+
+func (r *reminder) sendReminders(ctx context.Context, now time.Time) error {
+	tick, err := r.tickInterval()
+	if err != nil {
+		return err
+	}
+
 	var errs []error
 	for _, entityType := range r.entityTypes {
+		if !r.isDue(entityType, now, tick) {
+			zerolog.Ctx(ctx).Debug().Str("entity_type", string(entityType)).
+				Msgf("not due until %s, skipping", r.nextDue[entityType])
+			continue
+		}
+		r.nextDue[entityType] = now.Add(r.cfg.RecurrenceConfig.ForEntityType(entityType).Interval)
+
 		if err := r.sendRemindersForEntityType(ctx, entityType); err != nil {
 			errs = append(errs, fmt.Errorf("error sending %s reminders: %w", entityType, err))
 		}
@@ -171,6 +231,8 @@ func (r *reminder) sendReminders(ctx context.Context) error {
 
 func (r *reminder) sendRemindersForEntityType(ctx context.Context, entityType db.Entities) error {
 	logger := zerolog.Ctx(ctx).With().Str("entity_type", string(entityType)).Logger()
+	minElapsed := r.cfg.RecurrenceConfig.ForEntityType(entityType).MinElapsed
+	entityTypeAttr := metrics.EntityTypeAttribute(string(entityType))
 
 	repos, repoToLastUpdated, err := r.getEntityBatch(ctx, entityType)
 	if err != nil {
@@ -190,7 +252,7 @@ func (r *reminder) sendRemindersForEntityType(ctx context.Context, entityType db
 	}
 
 	if r.metrics != nil {
-		r.metrics.BatchSize.Record(ctx, int64(len(repos)))
+		r.metrics.BatchSize.Record(ctx, int64(len(repos)), entityTypeAttr)
 	}
 
 	err = r.eventPublisher.Publish(constants.TopicQueueRepoReminder, messages...)
@@ -200,11 +262,11 @@ func (r *reminder) sendRemindersForEntityType(ctx context.Context, entityType db
 
 	for _, repo := range repos {
 		if r.metrics != nil {
-			sendDelay := time.Since(repoToLastUpdated[repo.ID]) - r.cfg.RecurrenceConfig.MinElapsed
+			sendDelay := time.Since(repoToLastUpdated[repo.ID]) - minElapsed
 			// TODO: Track whether this is a new vs existing reminder
 			// Previously used repo.ReminderLastSent field which is now removed
 			recorder := r.metrics.SendDelay
-			recorder.Record(ctx, sendDelay.Seconds())
+			recorder.Record(ctx, sendDelay.Seconds(), entityTypeAttr)
 		}
 	}
 
@@ -223,16 +285,17 @@ func (r *reminder) getEntityBatch(
 
 	logger.Debug().Msgf("fetching entities after cursor: %s", r.cursors[entityType])
 
+	recurrence := r.cfg.RecurrenceConfig.ForEntityType(entityType)
 	repos, err := r.store.ListEntitiesAfterID(ctx, db.ListEntitiesAfterIDParams{
 		EntityType: entityType,
 		ID:         r.cursors[entityType],
-		Limit:      int64(r.cfg.RecurrenceConfig.BatchSize),
+		Limit:      int64(recurrence.BatchSize),
 	})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	eligibleRepos, eligibleReposLastUpdated, err := r.getEligibleEntities(ctx, repos)
+	eligibleRepos, eligibleReposLastUpdated, err := r.getEligibleEntities(ctx, repos, recurrence.MinElapsed)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -243,7 +306,7 @@ func (r *reminder) getEntityBatch(
 	return eligibleRepos, eligibleReposLastUpdated, nil
 }
 
-func (r *reminder) getEligibleEntities(ctx context.Context, repos []db.EntityInstance) (
+func (r *reminder) getEligibleEntities(ctx context.Context, repos []db.EntityInstance, minElapsed time.Duration) (
 	[]db.EntityInstance, map[uuid.UUID]time.Time, error,
 ) {
 	eligibleRepos := make([]db.EntityInstance, 0, len(repos))
@@ -264,7 +327,7 @@ func (r *reminder) getEligibleEntities(ctx context.Context, repos []db.EntityIns
 		idToLastUpdate[ruleEval.EntityInstanceID] = ruleEval.OldestLastUpdated
 	}
 
-	cutoff := time.Now().Add(-1 * r.cfg.RecurrenceConfig.MinElapsed)
+	cutoff := time.Now().Add(-1 * minElapsed)
 	for _, repo := range repos {
 		if t, ok := idToLastUpdate[repo.ID]; ok && t.Before(cutoff) {
 			eligibleRepos = append(eligibleRepos, repo)
