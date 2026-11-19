@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	mockdb "github.com/mindersec/minder/database/mock"
+	"github.com/mindersec/minder/internal/api"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	entmodels "github.com/mindersec/minder/internal/entities/models"
@@ -218,7 +219,11 @@ func TestGetArtifactByName(t *testing.T) {
 		Provider: engcontext.Provider{Name: providerName},
 	})
 
-	validProvider := &db.Provider{ID: providerID, Name: providerName}
+	validProvider := &db.Provider{ID: providerID, Name: providerName, Class: db.ProviderClassGithub}
+	dockerhubProvider := &db.Provider{ID: providerID, Name: providerName, Class: db.ProviderClassDockerhub}
+	classProvider := func(class db.ProviderClass) *db.Provider {
+		return &db.Provider{ID: providerID, Name: providerName, Class: class}
+	}
 
 	makeEWP := func(repoFullName string) *entmodels.EntityWithProperties {
 		propsObj := properties.NewProperties(map[string]any{
@@ -232,16 +237,107 @@ func TestGetArtifactByName(t *testing.T) {
 			}, propsObj)
 	}
 
+	type setupFn func(*mockdb.MockStore, *mockproviders.MockProviderStore, *mockpropssvc.MockPropertiesService)
+
+	// providerOnly expects only the provider lookup, for names rejected after it.
+	providerOnly := func(provider *db.Provider) setupFn {
+		return func(_ *mockdb.MockStore, ps *mockproviders.MockProviderStore, _ *mockpropssvc.MockPropertiesService) {
+			ps.EXPECT().GetByName(gomock.Any(), projectID, providerName).Return(provider, nil)
+		}
+	}
+
+	// registryFound expects an artifact stored under exactly lookupName for a
+	// container registry provider.
+	registryFound := func(provider *db.Provider, lookupName string) setupFn {
+		return func(store *mockdb.MockStore, ps *mockproviders.MockProviderStore, props *mockpropssvc.MockPropertiesService) {
+			ps.EXPECT().GetByName(gomock.Any(), projectID, providerName).Return(provider, nil)
+			store.EXPECT().GetTypedEntitiesByPropertyV1(
+				gomock.Any(), db.EntitiesArtifact, properties.PropertyName, lookupName,
+				db.GetTypedEntitiesOptions{ProjectID: projectID, ProviderID: providerID},
+			).Return([]db.EntityInstance{{ID: artifactID}}, nil)
+			props.EXPECT().EntityWithPropertiesByID(gomock.Any(), artifactID, gomock.Any()).Return(makeEWP(""), nil)
+			props.EXPECT().RetrieveAllPropertiesForEntity(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+			props.EXPECT().EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(&pb.Artifact{ArtifactPk: "myimage@sha256:abc"}, nil)
+		}
+	}
+
 	tests := []struct {
 		name        string
 		artifactRef string
-		setupMocks  func(*mockdb.MockStore, *mockproviders.MockProviderStore, *mockpropssvc.MockPropertiesService)
+		setupMocks  setupFn
 		wantCode    codes.Code
 	}{
 		{
 			name:        "invalid name — too few parts",
 			artifactRef: "myorg/myartifact",
-			setupMocks:  func(_ *mockdb.MockStore, _ *mockproviders.MockProviderStore, _ *mockpropssvc.MockPropertiesService) {},
+			setupMocks:  providerOnly(validProvider),
+			wantCode:    codes.InvalidArgument,
+		},
+		{
+			name:        "github provider rejects a 1-part name",
+			artifactRef: "alpine:latest",
+			setupMocks:  providerOnly(validProvider),
+			wantCode:    codes.InvalidArgument,
+		},
+		{
+			name:        "dockerhub — repo:tag name is looked up as given",
+			artifactRef: "alpine:latest",
+			setupMocks:  registryFound(dockerhubProvider, "alpine:latest"),
+			wantCode:    codes.OK,
+		},
+		{
+			name:        "dockerhub — tagless name is looked up as given",
+			artifactRef: "alpine",
+			setupMocks:  registryFound(dockerhubProvider, "alpine"),
+			wantCode:    codes.OK,
+		},
+		{
+			name:        "dockerhub — tag with a dot",
+			artifactRef: "myimage:v1.2",
+			setupMocks:  registryFound(dockerhubProvider, "myimage:v1.2"),
+			wantCode:    codes.OK,
+		},
+		{
+			name:        "dockerhub — slashes are not parsed as owner/repo",
+			artifactRef: "myorg/myrepo/myartifact",
+			setupMocks: func(store *mockdb.MockStore, ps *mockproviders.MockProviderStore, _ *mockpropssvc.MockPropertiesService) {
+				ps.EXPECT().GetByName(gomock.Any(), projectID, providerName).Return(dockerhubProvider, nil)
+				store.EXPECT().GetTypedEntitiesByPropertyV1(
+					gomock.Any(), db.EntitiesArtifact, properties.PropertyName, "myorg/myrepo/myartifact",
+					db.GetTypedEntitiesOptions{ProjectID: projectID, ProviderID: providerID},
+				).Return(nil, nil)
+			},
+			wantCode: codes.NotFound,
+		},
+		{
+			name:        "dockerhub — empty name",
+			artifactRef: "",
+			setupMocks:  providerOnly(dockerhubProvider),
+			wantCode:    codes.InvalidArgument,
+		},
+		{
+			name:        "quay — repo:tag name is looked up as given",
+			artifactRef: "alpine:latest",
+			setupMocks:  registryFound(classProvider(db.ProviderClassQuay), "alpine:latest"),
+			wantCode:    codes.OK,
+		},
+		{
+			name:        "gitlab — lookup by name is not supported",
+			artifactRef: "alpine:latest",
+			setupMocks:  providerOnly(classProvider(db.ProviderClassGitlab)),
+			wantCode:    codes.InvalidArgument,
+		},
+		{
+			name:        "ghcr — lookup by name is not supported",
+			artifactRef: "myorg/myrepo/myartifact",
+			setupMocks:  providerOnly(classProvider(db.ProviderClassGhcr)),
+			wantCode:    codes.InvalidArgument,
+		},
+		{
+			name:        "unknown provider class — lookup by name is not supported",
+			artifactRef: "alpine:latest",
+			setupMocks:  providerOnly(classProvider("some-future-class")),
 			wantCode:    codes.InvalidArgument,
 		},
 		{
@@ -291,7 +387,7 @@ func TestGetArtifactByName(t *testing.T) {
 				props.EXPECT().EntityWithPropertiesByID(gomock.Any(), artifactID, gomock.Any()).Return(ewp, nil)
 				props.EXPECT().RetrieveAllPropertiesForEntity(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 				props.EXPECT().EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(&pb.Artifact{}, nil)
+					Return(&pb.Artifact{ArtifactPk: "12345"}, nil)
 			},
 			wantCode: codes.OK,
 		},
@@ -323,11 +419,77 @@ func TestGetArtifactByName(t *testing.T) {
 			if tt.wantCode == codes.OK {
 				require.NoError(t, err)
 				require.NotNil(t, resp)
+				require.Equal(t, artifactID.String(), resp.GetArtifact().GetArtifactPk())
 			} else {
 				require.Error(t, err)
 				st, ok := status.FromError(err)
 				require.True(t, ok)
 				require.Equal(t, tt.wantCode, st.Code())
+			}
+		})
+	}
+}
+
+func TestGetArtifactById(t *testing.T) {
+	t.Parallel()
+
+	projectID := uuid.New()
+	artifactID := uuid.New()
+
+	ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+		Project: engcontext.Project{ID: projectID},
+	})
+
+	ctrl := gomock.NewController(t)
+	mockProps := mockpropssvc.NewMockPropertiesService(ctrl)
+
+	ewp := entmodels.NewEntityWithPropertiesFromInstance(
+		entmodels.EntityInstance{
+			ID:        artifactID,
+			Type:      pb.Entity_ENTITY_ARTIFACTS,
+			ProjectID: projectID,
+		}, properties.NewProperties(map[string]any{}))
+	mockProps.EXPECT().EntityWithPropertiesByID(gomock.Any(), artifactID, gomock.Any()).Return(ewp, nil)
+	mockProps.EXPECT().RetrieveAllPropertiesForEntity(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+	mockProps.EXPECT().EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(&pb.Artifact{ArtifactPk: "myimage@sha256:abc"}, nil)
+
+	server := Server{props: mockProps}
+
+	resp, err := server.GetArtifactById(ctx, &pb.GetArtifactByIdRequest{Id: artifactID.String()})
+	require.NoError(t, err)
+	require.Equal(t, artifactID.String(), resp.GetArtifact().GetArtifactPk())
+}
+
+func TestGetArtifactByNameRequestValidation(t *testing.T) {
+	t.Parallel()
+
+	validator, err := api.NewValidator()
+	require.NoError(t, err)
+
+	tests := []struct {
+		name    string
+		valid   bool
+		comment string
+	}{
+		{name: "alpine:latest", valid: true, comment: "dockerhub repo:tag"},
+		{name: "myns/alpine:latest", valid: true, comment: "namespaced repo:tag"},
+		{name: "myimage:v1.2", valid: true, comment: "tag with a dot"},
+		{name: "alpine", valid: true, comment: "tagless"},
+		{name: "myorg/myrepo/myartifact", valid: true, comment: "github owner/repo/name"},
+		{name: "alpine latest", valid: false, comment: "spaces are still rejected"},
+		{name: "alpine@sha256:abc", valid: false, comment: "digest references are still rejected"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.comment, func(t *testing.T) {
+			t.Parallel()
+
+			err := validator.Validate(&pb.GetArtifactByNameRequest{Name: tt.name})
+			if tt.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
 			}
 		})
 	}

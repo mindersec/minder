@@ -20,6 +20,7 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List profiles",
 	Long:  `The profile list subcommand lets you list profiles within Minder.`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %s", err)

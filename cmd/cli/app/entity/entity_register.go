@@ -89,7 +89,7 @@ func registerCommand(cmd *cobra.Command, _ []string) error {
 	case app.JSON, app.YAML:
 		return cli.PrintProto(cmd, format, resp.GetEntity())
 	default:
-		fmt.Fprintf(cmd.OutOrStdout(), "Successfully registered entity with ID: %s\n", resp.GetEntity().GetId())
+		cmd.PrintErrf("Successfully registered entity with ID: %s\n", resp.GetEntity().GetId())
 	}
 
 	return nil

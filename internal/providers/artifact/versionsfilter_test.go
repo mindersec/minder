@@ -23,6 +23,7 @@ func TestBuildFilter(t *testing.T) {
 		name     string
 		tags     []string
 		regex    string
+		mode     TagMatchMode
 		expected *filter
 		mustErr  bool
 	}{
@@ -31,7 +32,17 @@ func TestBuildFilter(t *testing.T) {
 			tags:    []string{"hello", "bye"},
 			mustErr: false,
 			expected: &filter{
-				tagMatcher:      &tagListMatcher{tags: []string{"hello", "bye"}},
+				tagMatcher:      &tagListMatcher{tags: []string{"hello", "bye"}, mode: MatchAllTags},
+				retentionPeriod: time.Time{},
+			},
+		},
+		{
+			name:    "tags-any",
+			tags:    []string{"hello", "bye"},
+			mode:    MatchAnyTag,
+			mustErr: false,
+			expected: &filter{
+				tagMatcher:      &tagListMatcher{tags: []string{"hello", "bye"}, mode: MatchAnyTag},
 				retentionPeriod: time.Time{},
 			},
 		},
@@ -74,7 +85,7 @@ func TestBuildFilter(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			f, err := BuildFilter(tc.tags, tc.regex)
+			f, err := BuildFilter(tc.tags, tc.regex, tc.mode)
 			if tc.mustErr {
 				require.Error(t, err)
 				return
@@ -92,6 +103,7 @@ func Test_filter_IsSkippable(t *testing.T) {
 	type fieldsArgs struct {
 		tags     []string
 		tagRegex string
+		mode     TagMatchMode
 	}
 	type args struct {
 		createdAt time.Time
@@ -271,12 +283,48 @@ func Test_filter_IsSkippable(t *testing.T) {
 			},
 			wantSkip: true,
 		},
+		{
+			name: "all-match tags list skips artifact with only one listed tag",
+			fieldsArgs: fieldsArgs{
+				tags: []string{"latest", "stable"},
+				mode: MatchAllTags,
+			},
+			args: args{
+				createdAt: time.Now(),
+				tags:      []string{"latest"},
+			},
+			wantSkip: true,
+		},
+		{
+			name: "any-match tags list matches artifact with one listed tag",
+			fieldsArgs: fieldsArgs{
+				tags: []string{"latest", "stable"},
+				mode: MatchAnyTag,
+			},
+			args: args{
+				createdAt: time.Now(),
+				tags:      []string{"stable"},
+			},
+			wantSkip: false,
+		},
+		{
+			name: "any-match tags list skips artifact with no listed tag",
+			fieldsArgs: fieldsArgs{
+				tags: []string{"latest", "stable"},
+				mode: MatchAnyTag,
+			},
+			args: args{
+				createdAt: time.Now(),
+				tags:      []string{"dev"},
+			},
+			wantSkip: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			f, err := BuildFilter(tt.fieldsArgs.tags, tt.fieldsArgs.tagRegex)
+			f, err := BuildFilter(tt.fieldsArgs.tags, tt.fieldsArgs.tagRegex, tt.fieldsArgs.mode)
 			if tt.wantBuildErr {
 				assert.Error(t, err)
 				return

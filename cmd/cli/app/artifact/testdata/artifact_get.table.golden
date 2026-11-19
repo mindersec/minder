@@ -1,6 +1,9 @@
- ID    │ TYPE   │ OWNER    │ NAME         │ REPOSITORY   │ VISIBILITY   │ CREATION DATE             
-───────┼────────┼──────────┼──────────────┼──────────────┼──────────────┼───────────────────────────
- 111   │ image  │ owner-1  │ artifact-1   │ org/repo     │ public       │ 2024-01-02T15:04:05Z      
+ ID                            │ TYPE  │ OWNER   │ NAME       │ REPOSITORY │ VISIBILITY │ CREATION  
+                               │       │         │            │            │            │ DATE      
+───────────────────────────────┼───────┼─────────┼────────────┼────────────┼────────────┼───────────
+ 3f2504e0-4f89-41d3-9a0c-0305e │ image │ owner-1 │ artifact-1 │ org/repo   │ public     │ 2024-01-0 
+ 82c3301                       │       │         │            │            │            │ 2T15:04:0 
+                               │       │         │            │            │            │ 5Z        
  PROFILE                    │ RULE                         │ RESULT  │ DETAILS                      
 ────────────────────────────┼──────────────────────────────┼─────────┼──────────────────────────────
  artifact-security-baseline │ Require artifact attestation │ failure │ Alert: artifact attestation  

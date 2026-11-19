@@ -71,6 +71,11 @@ func TestTokenCommand(t *testing.T) {
 				ExpectedError:     "error loading credentials",
 				ExpectEmptyStdout: true,
 			},
+			{
+				Name:          "unexpected positional argument returns error",
+				Args:          []string{"auth", "token", "extra-arg"},
+				ExpectedError: `unknown command "extra-arg" for "minder auth token"`,
+			},
 		}
 
 		cli.RunCmdTests(t, tests, AuthCmd)

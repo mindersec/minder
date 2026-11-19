@@ -16,7 +16,7 @@ minder ruletype apply [files...] [flags]
 ### Options
 
 ```
-  -f, --file stringArray   Path to the YAML defining the rule type (or - for stdin). Can be specified multiple times. Can be a directory.
+  -f, --file stringArray   Path or HTTP(S) URL to the YAML defining the rule type (or - for stdin). Can be specified multiple times. Can be a directory.
   -h, --help               help for apply
 ```
 

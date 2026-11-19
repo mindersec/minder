@@ -14,6 +14,8 @@ var (
 	// ErrDuplicateDataSourceFuncKey is the error returned when a data source
 	// function key is already registered.
 	ErrDuplicateDataSourceFuncKey = errors.New("duplicate data source function key")
+	// ErrNilDataSource is the error returned when attempting to register a nil data source.
+	ErrNilDataSource = errors.New("cannot register nil data source")
 )
 
 // DataSourceRegistry is the interface that a data source registry must implement.
@@ -32,19 +34,25 @@ func NewDataSourceRegistry() *DataSourceRegistry {
 
 // RegisterDataSource registers a data source with the registry.
 // Note that the name of the data source must be unique.
-func (reg *DataSourceRegistry) RegisterDataSource(name string, ds DataSource) (err error) {
-	for key, f := range ds.GetFuncs() {
+func (reg *DataSourceRegistry) RegisterDataSource(name string, ds DataSource) error {
+	if ds == nil {
+		return ErrNilDataSource
+	}
+
+	funcs := ds.GetFuncs()
+	stored := make([]DataSourceFuncKey, 0, len(funcs))
+
+	for key, f := range funcs {
 		funckey := makeKey(name, key)
-		if _, ok := reg.r.Load(funckey); ok {
+		if orig, loaded := reg.r.LoadOrStore(funckey, f); loaded {
+			reg.r.Store(funckey, orig)
+			// Roll back any functions registered during this call
+			for _, k := range stored {
+				reg.r.Delete(k)
+			}
 			return fmt.Errorf("%w: %s", ErrDuplicateDataSourceFuncKey, funckey)
 		}
-
-		// We only flush the store if there was no error
-		defer func() {
-			if err == nil {
-				reg.r.Store(funckey, f)
-			}
-		}()
+		stored = append(stored, funckey)
 	}
 
 	return nil

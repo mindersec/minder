@@ -26,6 +26,8 @@ const (
 	ArtifactPropertyNamespace = "oci/namespace"
 	// ArtifactPropertyRegistry is the registry host serving the artifact (e.g. "docker.io").
 	ArtifactPropertyRegistry = "oci/registry"
+	// ArtifactPropertyDigest is the digest the artifact's tag currently points to.
+	ArtifactPropertyDigest = "oci/digest"
 )
 
 // ParseImageRef splits a namespace-relative "repo[:tag]" reference, defaulting the tag to DefaultTag.
@@ -38,6 +40,12 @@ func ParseImageRef(ref string) (repo, tag string, err error) {
 		return "", "", fmt.Errorf("invalid image reference %q: empty tag", ref)
 	}
 	return repo, cmp.Or(tag, DefaultTag), nil
+}
+
+// HasExplicitTag reports whether a "repo[:tag]" reference names its tag.
+func HasExplicitTag(ref string) bool {
+	_, _, hasTag := strings.Cut(ref, ":")
+	return hasTag
 }
 
 // ArtifactNameFromProperties returns the non-empty artifact name from props.
@@ -54,20 +62,45 @@ func ArtifactNameFromProperties(props *properties.Properties) (string, error) {
 
 // NewArtifactProperties builds the properties for a container artifact entity. name is the
 // namespace-relative "repo[:tag]" reference; the repository is derived from it.
-func NewArtifactProperties(name, namespace, registry, upstreamID string) (*properties.Properties, error) {
-	repo, _, err := ParseImageRef(name)
+func NewArtifactProperties(name, namespace, registry, digest string) (*properties.Properties, error) {
+	repo, tag, err := ParseImageRef(name)
 	if err != nil {
 		return nil, err
 	}
 
 	return properties.NewProperties(map[string]any{
 		properties.PropertyName:         name,
-		properties.PropertyUpstreamID:   upstreamID,
+		properties.PropertyUpstreamID:   upstreamID(repo, tag),
 		properties.ArtifactPropertyType: string(verifyif.ArtifactTypeContainer),
 		ArtifactPropertyRepository:      path.Join(namespace, repo),
 		ArtifactPropertyNamespace:       namespace,
 		ArtifactPropertyRegistry:        registry,
+		ArtifactPropertyDigest:          digest,
 	}), nil
+}
+
+// upstreamID returns the upstream ID of a container artifact entity, "repo:tag".
+// ArtifactTag parses it back, so the two must change together.
+func upstreamID(repo, tag string) string {
+	return repo + ":" + tag
+}
+
+// ArtifactTag returns the tag of a repo:tag artifact entity, read from the
+// "<name>:<tag>" ArtifactPk that NewArtifactProperties and
+// ArtifactV1FromProperties produce. It returns false for any other form, such
+// as an entity registered before the repo:tag identity ("<name>@<digest>"),
+// so the caller can fall back to the repository-wide path until the entity is
+// refreshed.
+func (*OCI) ArtifactTag(artifact *minderv1.Artifact) (string, bool) {
+	name := artifact.GetName()
+	if name == "" {
+		return "", false
+	}
+	tag, ok := strings.CutPrefix(artifact.GetArtifactPk(), upstreamID(name, ""))
+	if !ok || tag == "" || strings.ContainsAny(tag, ":@/") {
+		return "", false
+	}
+	return tag, true
 }
 
 // ArtifactV1FromProperties converts container artifact properties to a minder v1 Artifact.

@@ -37,6 +37,30 @@ def test_eval_error_404():
     assert.eq(res["message"], "evaluation failure: denied")
     assert.eq(res["details"], "denied for test/repo")
 
+# A mock_http key that is not a valid ServeMux pattern, or two keys that
+# collide once the scheme and query string are stripped, must fail the
+# eval() call with an error rather than panicking the whole run.
+def test_fail_mock_http_colliding_keys():
+    eval(
+        rule="branch_protection_reviews",
+        entity={"owner": "test", "name": "repo"},
+        profile={"required_reviews": 2},
+        mock_http={
+            "https://api.github.com/repos/test/repo/branches/main/protection?page=1": body("{}"),
+            "https://api.github.com/repos/test/repo/branches/main/protection?page=2": body("{}"),
+        },
+    )
+
+def test_fail_mock_http_invalid_key():
+    eval(
+        rule="branch_protection_reviews",
+        entity={"owner": "test", "name": "repo"},
+        profile={"required_reviews": 2},
+        mock_http={
+            "https://api.github.com": body("{}"),
+        },
+    )
+
 # branch_protection_reviews declares provider_traits: [github]. When
 # provider_traits_present lists other traits but excludes it, the rule type
 # is not applicable to the test provider, and eval() reports a skip rather

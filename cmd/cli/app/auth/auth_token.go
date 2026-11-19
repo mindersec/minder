@@ -23,6 +23,7 @@ var tokenCmd = &cobra.Command{
 	Short: "Print your token for Minder",
 	Long: `The token command allows for printing the token for Minder. This is useful
 for using with automation scripts or other tools.`,
+	Args: cobra.NoArgs,
 	RunE: TokenCommand,
 }
 

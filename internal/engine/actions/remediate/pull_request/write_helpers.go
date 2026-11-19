@@ -4,7 +4,6 @@
 package pull_request
 
 import (
-	"crypto/sha1" // #nosec G505 - we're not using sha1 for crypto, only to quickly compare contents
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,6 +24,7 @@ type fsEntry struct {
 	Path    string `json:"path"`
 	Content string `json:"content"`
 	Mode    string `json:"mode"`
+	Delete  bool   `json:"delete,omitempty"`
 }
 
 func (fe *fsEntry) write(fs billy.Filesystem) error {
@@ -73,31 +73,18 @@ func (fcs *fsChangeSet) writeEntries() error {
 	for i := range fcs.entries {
 		entry := fcs.entries[i]
 
+		if entry.Delete {
+			if err := fcs.fs.Remove(entry.Path); err != nil && !os.IsNotExist(err) {
+				return fmt.Errorf("cannot delete entry %s: %w", entry.Path, err)
+			}
+			continue
+		}
 		if err := entry.write(fcs.fs); err != nil {
 			return fmt.Errorf("cannot write entry %s: %w", entry.Path, err)
 		}
 	}
 
 	return nil
-}
-
-func (fcs *fsChangeSet) hash() (string, error) {
-	if fcs.entries == nil {
-		return "", fmt.Errorf("no entries")
-	}
-
-	var combinedContents string
-
-	for i := range fcs.entries {
-		if len(fcs.entries[i].Content) == 0 {
-			// just making sure we call sha1() after expandContents()
-			return "", fmt.Errorf("content (index %d) is empty", i)
-		}
-		combinedContents += fcs.entries[i].Path + fcs.entries[i].Content
-	}
-
-	// #nosec G401 - we're not using sha1 for crypto, only to quickly compare contents
-	return fmt.Sprintf("%x", sha1.Sum([]byte(combinedContents))), nil
 }
 
 func (fcs *fsChangeSet) writeSummary(out io.Writer) error {

@@ -110,6 +110,11 @@ func TestListCommand(t *testing.T) {
 			},
 			ExpectedError: "database connection failed",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"profile", "list", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder profile list"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, ProfileCmd)

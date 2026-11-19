@@ -64,7 +64,10 @@ type containerAuth struct {
 
 func (c *containerAuth) getAuthenticator(owner string) authn.Authenticator {
 	if c.ghClient != nil {
-		return c.ghClient.GetCredential().GetAsContainerAuthenticator(owner)
+		// Gated by provider class: GHCR doesn't accept GitHub App installation
+		// tokens today (https://github.com/orgs/community/discussions/171423),
+		// so App-backed providers fetch signatures anonymously.
+		return c.ghClient.GetContainerAuthenticator(owner)
 	}
 	if c.concreteAuthn != nil {
 		return c.concreteAuthn

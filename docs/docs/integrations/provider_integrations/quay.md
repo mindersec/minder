@@ -52,6 +52,9 @@ minder provider enroll --class quay --token <robot-account-token>
 
 Once enrolled, your Quay.io repositories can be listed by Minder.
 
+To register images from your Quay.io namespace, see
+[Register container images](../../how-to/register_container_images.md).
+
 ## Token rotation
 
 Robot account tokens do not expire automatically, but should be rotated

@@ -38,13 +38,6 @@ const (
 	BodyMaxLength = 10000
 	// MaxFieldLength is the maximum length of a string field
 	MaxFieldLength = 200
-	// TODO: These params should be written directly to the email template,
-	// not static in the binary...
-
-	// DefaultMinderTermsURL is the default terms URL for minder
-	DefaultMinderTermsURL = "https://stacklok.com/stacklok-terms-of-service"
-	// DefaultMinderPrivacyURL is the default privacy URL for minder
-	DefaultMinderPrivacyURL = "https://stacklok.com/privacy-policy/"
 )
 
 var (
@@ -95,8 +88,6 @@ type bodyData struct {
 	InvitationURL    string
 	RecipientEmail   string
 	MinderURL        string
-	TermsURL         string
-	PrivacyURL       string
 	SignInURL        string
 	RoleName         string
 	RoleVerb         string
@@ -123,8 +114,6 @@ func NewMessage(
 		InvitationURL:    inviteURL,
 		RecipientEmail:   inviteeEmail,
 		MinderURL:        minderURLBase,
-		TermsURL:         DefaultMinderTermsURL,
-		PrivacyURL:       DefaultMinderPrivacyURL,
 		SignInURL:        minderURLBase,
 		RoleName:         role,
 		RoleVerb:         authz.AllRolesVerbs[authz.Role(role)],

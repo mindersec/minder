@@ -10,6 +10,7 @@ package tools
 //go:generate go install github.com/daixiang0/gci
 //go:generate go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt
 //go:generate go install golang.org/x/tools/cmd/goimports
+//go:generate go install golang.org/x/tools/cmd/deadcode
 //go:generate go install golang.org/x/lint/golint
 //go:generate go install github.com/go-critic/go-critic/cmd/gocritic
 //go:generate go install github.com/sqlc-dev/sqlc/cmd/sqlc
@@ -37,6 +38,7 @@ import (
 	_ "github.com/sqlc-dev/sqlc/cmd/sqlc"
 	_ "go.uber.org/mock/mockgen"
 	_ "golang.org/x/lint/golint"
+	_ "golang.org/x/tools/cmd/deadcode"
 	_ "golang.org/x/tools/cmd/goimports"
 	_ "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
 	_ "google.golang.org/protobuf/cmd/protoc-gen-go"

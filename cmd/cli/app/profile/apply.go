@@ -140,5 +140,5 @@ func init() {
 	ProfileCmd.AddCommand(applyCmd)
 	// Flags
 	applyCmd.Flags().StringArrayP("file", "f", []string{},
-		"Path to the YAML defining the profile (or - for stdin). Can be specified multiple files")
+		"Path or HTTP(S) URL to the YAML defining the profile (or - for stdin). Can be specified multiple files")
 }

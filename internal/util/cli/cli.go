@@ -11,7 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/erikgeiser/promptkit/confirmation"
@@ -161,45 +160,6 @@ func ValidateRepositoryName(repository string) error {
 		return fmt.Errorf("invalid repository name: %s", repository)
 	}
 	return nil
-}
-
-// GetNameAndOwnerFromRepository returns the owner and name from a repository name in the format owner/name
-func GetNameAndOwnerFromRepository(repository string) (string, string) {
-	first, second, found := strings.Cut(repository, "/")
-	if !found {
-		return "", first
-	}
-
-	return first, second
-}
-
-// ConcatenateAndWrap takes a string and a maximum line length (maxLen),
-// then outputs the string as a multiline string where each line does not exceed maxLen characters.
-func ConcatenateAndWrap(input string, maxLen int) string {
-	if maxLen <= 0 {
-		return input
-	}
-
-	var result string
-	var lineLength int
-
-	for _, runeValue := range input {
-		// If the line length equals the len, append a newline and reset lineLength
-		if lineLength == maxLen {
-			if result[len(result)-1] != ' ' {
-				// We trim at a word
-				result += "-\n"
-			} else {
-				// We trim at a space, no need to add "-"
-				result += "\n"
-			}
-			lineLength = 0
-		}
-		result += string(runeValue)
-		lineLength++
-	}
-
-	return result
 }
 
 // GetConfigDirPath returns the path to the config directory

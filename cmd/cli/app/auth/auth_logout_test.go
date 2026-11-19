@@ -134,4 +134,12 @@ func TestLogoutCommand(t *testing.T) {
 		assert.ErrorAs(t, wrappedErr.Err, &urlErr)
 		assert.Empty(t, stdout)
 	})
+
+	t.Run("returns error when unexpected positional arguments are provided", func(t *testing.T) {
+		setupLogoutEnv(t, true, true, defaultLogoutConfig)
+
+		_, _, err := runLogout(t, "auth", "logout", "unexpected-arg")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "unknown command \"unexpected-arg\" for \"minder auth logout\"")
+	})
 }

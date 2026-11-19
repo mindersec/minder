@@ -22,6 +22,7 @@ var getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get a given provider available in a specific project",
 	Long:  `The minder provider get command gets a given provider available in a specific project.`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)

@@ -43,7 +43,8 @@ func TestRegisterCommand(t *testing.T) {
 
 				return cli.WithRPCClient[minderv1.EntityInstanceServiceClient](context.Background(), client)
 			},
-			GoldenFileName: "register_success.txt",
+			ExpectEmptyStdout: true,
+			ExpectedStderr:    "Successfully registered entity with ID: 00000000-0000-0000-0000-000000000001\n",
 		},
 		{
 			Name: "register with properties - json output",
@@ -94,7 +95,8 @@ func TestRegisterCommand(t *testing.T) {
 					Return(&minderv1.RegisterEntityResponse{Entity: mockResp.Results[0]}, nil)
 				return cli.WithRPCClient[minderv1.EntityInstanceServiceClient](context.Background(), client)
 			},
-			GoldenFileName: "register_comma_value.json",
+			ExpectEmptyStdout: true,
+			ExpectedStderr:    "Successfully registered entity with ID: 00000000-0000-0000-0000-000000000001\n",
 		},
 		{
 			Name:          "missing required type flag",

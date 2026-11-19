@@ -193,7 +193,7 @@ func TestSMTP_sendEmail(t *testing.T) {
 			port, err := util.GetRandomPort()
 			require.NoError(t, err)
 			cfg := tt.config
-			cfg.Host = "localhost"
+			cfg.Host = "127.0.0.1"
 			cfg.Port = int(port)
 			serverTLS, clientTLS := makeTLSConfig(t)
 

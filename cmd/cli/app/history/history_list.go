@@ -28,6 +28,7 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List history",
 	Long:  `The history list subcommand lets you list history within Minder.`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)

@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -115,6 +116,36 @@ func frizbeePrRemWithExcludes(e []string) *pb.RuleType_Definition_Remediate_Pull
 	}
 }
 
+func deletePrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation {
+	return deletePrRemWithPattern(".github/workflows/*.yml")
+}
+
+func deletePrRemWithPattern(pattern string) *pb.RuleType_Definition_Remediate_PullRequestRemediation {
+	return &pb.RuleType_Definition_Remediate_PullRequestRemediation{
+		Method: "minder.delete",
+		Title:  "Delete workflow files",
+		Body:   "This PR deletes workflow files",
+		Params: &structpb.Struct{
+			Fields: map[string]*structpb.Value{
+				"patterns": {
+					Kind: &structpb.Value_ListValue{
+						ListValue: &structpb.ListValue{
+							Values: []*structpb.Value{
+								structpb.NewStructValue(&structpb.Struct{
+									Fields: map[string]*structpb.Value{
+										"pattern": structpb.NewStringValue(pattern),
+										"type":    structpb.NewStringValue("glob"),
+									},
+								}),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func yqPrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation {
 	return &pb.RuleType_Definition_Remediate_PullRequestRemediation{
 		Method: "minder.yq.evaluate",
@@ -152,12 +183,36 @@ func yqPrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation {
 	}
 }
 
+func yqEvalOutputPrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation {
+	return &pb.RuleType_Definition_Remediate_PullRequestRemediation{
+		Method: "minder.yq.evaluate",
+		Title:  "Patch workflows selected by evaluation output",
+		Body:   "This PR patches workflows selected by evaluation output",
+		Params: &structpb.Struct{
+			Fields: map[string]*structpb.Value{
+				"expression": structpb.NewStringValue(`.on = "workflow_dispatch"`),
+				"patterns": structpb.NewListValue(&structpb.ListValue{
+					Values: []*structpb.Value{
+						structpb.NewStructValue(&structpb.Struct{
+							Fields: map[string]*structpb.Value{
+								"pattern": structpb.NewStringValue(`{{ toJson .EvalResultOutput.files }}`),
+								"type":    structpb.NewStringValue("eval_output"),
+							},
+						}),
+					},
+				}),
+			},
+		},
+	}
+}
+
 type remediateArgs struct {
-	remAction models.ActionOpt
-	ent       protoreflect.ProtoMessage
-	pol       map[string]any
-	params    map[string]any
-	ruleName  string
+	remAction  models.ActionOpt
+	ent        protoreflect.ProtoMessage
+	pol        map[string]any
+	params     map[string]any
+	ruleName   string
+	evalOutput any
 }
 
 func createTestRemArgs() *remediateArgs {
@@ -252,7 +307,14 @@ type hookFunc func(*git.Repository) error
 func mockUpstreamSetup(t *testing.T, postSetupHooks ...hookFunc) (*git.Repository, error) {
 	t.Helper()
 
-	tmpdir := t.TempDir()
+	// On macOS (and other platforms where /var or /tmp is a symlink to /private/var),
+	// git resolves symlinks when cloning via file:// URLs. We evaluate symlinks here so
+	// the path matches what git computes and Billy's bound OS filesystem (WithBoundOS)
+	// does not reject it as escaping the base directory.
+	tmpdir, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		return nil, err
+	}
 	fsStorer := filesystem.NewStorage(osfs.New(tmpdir), nil)
 	// we create an OS filesystem with a bound OS so that the git repo can be
 	// references as an upstream remote using file:// URL
@@ -283,6 +345,10 @@ func mockUpstreamSetup(t *testing.T, postSetupHooks ...hookFunc) (*git.Repositor
 
 	_, err = wt.Add(".gitignore")
 	if err != nil {
+		return nil, err
+	}
+
+	if err := wt.Filesystem.MkdirAll(".github/workflows", 0755); err != nil {
 		return nil, err
 	}
 
@@ -377,14 +443,15 @@ func TestPullRequestRemediate(t *testing.T) {
 	}
 
 	tests := []struct {
-		name             string
-		newRemArgs       *newPullRequestRemediateArgs
-		remArgs          *remediateArgs
-		repoSetup        func(*testing.T) (*git.Repository, error)
-		mockSetup        func(*testing.T, *mockghclient.MockGitHub)
-		expectedErr      error
-		wantInitErr      bool
-		expectedMetadata json.RawMessage
+		name                string
+		newRemArgs          *newPullRequestRemediateArgs
+		remArgs             *remediateArgs
+		repoSetup           func(*testing.T) (*git.Repository, error)
+		mockSetup           func(*testing.T, *mockghclient.MockGitHub)
+		expectedErr         error
+		expectedErrContains string
+		wantInitErr         bool
+		expectedMetadata    json.RawMessage
 	}{
 		{
 			name: "open a PR",
@@ -616,6 +683,103 @@ func TestPullRequestRemediate(t *testing.T) {
 			expectedMetadata: json.RawMessage(`{"pr_number":45}`),
 		},
 		{
+			name: "patch YQ targets from evaluation output",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      yqEvalOutputPrRem(),
+				actionType: TestActionTypeValid,
+			},
+			remArgs: func() *remediateArgs {
+				args := createTestRemArgs()
+				args.evalOutput = map[string]any{
+					"files": []any{".github/workflows/build.yml"},
+				}
+				return args
+			}(),
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(t *testing.T, mockGitHub *mockghclient.MockGitHub) {
+				t.Helper()
+
+				happyPathMockSetup(mockGitHub)
+
+				mockGitHub.EXPECT().
+					CreatePullRequest(
+						gomock.Any(),
+						repoOwner, repoName,
+						"Patch workflows selected by evaluation output",
+						"This PR patches workflows selected by evaluation output",
+						refFromBranch(branchBaseName("Patch workflows selected by evaluation output", "")), dflBranchTo).
+					Return(&github.PullRequest{Number: github.Int(48)}, nil)
+			},
+			expectedErr:      errors.ErrActionPending,
+			expectedMetadata: json.RawMessage(`{"pr_number":48}`),
+		},
+		{
+			name: "patch YQ with empty evaluation output has nothing to change",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      yqEvalOutputPrRem(),
+				actionType: TestActionTypeValid,
+			},
+			remArgs: func() *remediateArgs {
+				args := createTestRemArgs()
+				args.evalOutput = map[string]any{
+					"files": []any{},
+				}
+				return args
+			}(),
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(t *testing.T, mockGitHub *mockghclient.MockGitHub) {
+				t.Helper()
+
+				mockGitHub.EXPECT().
+					GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
+			},
+			expectedErr:         errors.ErrActionFailed,
+			expectedErrContains: "nothing to change",
+			expectedMetadata:    json.RawMessage(nil),
+		},
+		{
+			name: "delete files using minder.delete",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      deletePrRem(),
+				actionType: TestActionTypeValid,
+			},
+			remArgs:   createTestRemArgs(),
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(t *testing.T, mockGitHub *mockghclient.MockGitHub) {
+				t.Helper()
+
+				happyPathMockSetup(mockGitHub)
+
+				mockGitHub.EXPECT().
+					CreatePullRequest(
+						gomock.Any(),
+						repoOwner, repoName,
+						"Delete workflow files", "This PR deletes workflow files",
+						refFromBranch(branchBaseName("Delete workflow files", "")), dflBranchTo).
+					Return(&github.PullRequest{Number: github.Int(47)}, nil)
+			},
+			expectedErr:      errors.ErrActionPending,
+			expectedMetadata: json.RawMessage(`{"pr_number":47}`),
+		},
+		{
+			name: "delete with no matching files has nothing to change",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      deletePrRemWithPattern(".github/workflows/*.yaml"),
+				actionType: TestActionTypeValid,
+			},
+			remArgs:   createTestRemArgs(),
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(t *testing.T, mockGitHub *mockghclient.MockGitHub) {
+				t.Helper()
+
+				mockGitHub.EXPECT().
+					GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
+			},
+			expectedErr:         errors.ErrActionFailed,
+			expectedErrContains: "nothing to change",
+			expectedMetadata:    json.RawMessage(nil),
+		},
+		{
 			name: "open a PR with a rule name",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      dependabotPrRem(),
@@ -688,8 +852,12 @@ func TestPullRequestRemediate(t *testing.T) {
 					Fs:     testWt.Filesystem,
 					Storer: testrepo.Storer,
 				})
+			evalOutput := any(struct{ ViolationMsg string }{ViolationMsg: "gomod"})
+			if tt.remArgs.evalOutput != nil {
+				evalOutput = tt.remArgs.evalOutput
+			}
 			evalParams.SetEvalResult(&interfaces2.EvaluationResult{
-				Output: struct{ ViolationMsg string }{ViolationMsg: "gomod"},
+				Output: evalOutput,
 			})
 			retMeta, err := engine.Do(context.Background(),
 				interfaces.ActionCmdOn,
@@ -698,6 +866,9 @@ func TestPullRequestRemediate(t *testing.T) {
 				nil)
 
 			require.ErrorIs(t, err, tt.expectedErr, "expected error")
+			if tt.expectedErrContains != "" {
+				require.ErrorContains(t, err, tt.expectedErrContains)
+			}
 			require.Equal(t, tt.expectedMetadata, retMeta)
 		})
 	}

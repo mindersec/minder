@@ -18,7 +18,7 @@ minder artifact get [flags]
 ```
   -h, --help            help for get
   -i, --id string       ID of the artifact to get info from
-  -n, --name string     name of the artifact to get info from in the form repoOwner/repoName/artifactName
+  -n, --name string     name of the artifact to get info from: repoOwner/repoName/artifactName for GitHub providers, or the registered image name (e.g. alpine:latest) for container registry providers
   -o, --output string   Output format (one of json,yaml,table) (default "table")
 ```
 

@@ -52,21 +52,11 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 // GetArtifactByName gets an artifact by name
 // nolint:gocyclo
 func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByNameRequest) (*pb.GetArtifactByNameResponse, error) {
-	nameParts := strings.Split(in.Name, "/")
-	if len(nameParts) < 3 {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid artifact name user repoOwner/repoName/artifactName")
-	}
-
 	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 	providerName := entityCtx.Provider.Name
 
 	logger.BusinessRecord(ctx).Provider = providerName
-
-	repoOwner := nameParts[0]
-	repoName := nameParts[1]
-	// PropertyName for artifacts is stored as "owner/artifactName"
-	fullArtifactName := repoOwner + "/" + strings.Join(nameParts[2:], "/")
 
 	// Get provider ID from name
 	provider, err := s.providerStore.GetByName(ctx, projectID, providerName)
@@ -77,12 +67,16 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 		return nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
 	}
 
-	// Search for artifact by its full owner/artifactName
+	lookupName, wantRepo, err := artifactLookupName(in.Name, provider.Class)
+	if err != nil {
+		return nil, err
+	}
+
 	entities, err := s.store.GetTypedEntitiesByPropertyV1(
 		ctx,
 		db.EntitiesArtifact,
 		properties.PropertyName,
-		fullArtifactName,
+		lookupName,
 		db.GetTypedEntitiesOptions{
 			ProjectID:  projectID,
 			ProviderID: provider.ID,
@@ -106,9 +100,11 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 	}
 
 	// Validate the artifact belongs to the requested repository
-	storedRepo := ewp.Properties.GetProperty(ghprops.ArtifactPropertyRepo).GetString()
-	if storedRepo != "" && storedRepo != repoOwner+"/"+repoName {
-		return nil, status.Errorf(codes.NotFound, "artifact not found")
+	if wantRepo != "" {
+		storedRepo := ewp.Properties.GetProperty(ghprops.ArtifactPropertyRepo).GetString()
+		if storedRepo != "" && storedRepo != wantRepo {
+			return nil, status.Errorf(codes.NotFound, "artifact not found")
+		}
 	}
 
 	// Retrieve all properties from provider
@@ -126,6 +122,7 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 	if !ok {
 		return nil, fmt.Errorf("unexpected type: %T", somePB)
 	}
+	pbArtifact.ArtifactPk = ewp.Entity.ID.String()
 
 	// Telemetry logging
 	logger.BusinessRecord(ctx).ProviderID = ewp.Entity.ProviderID
@@ -139,6 +136,36 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 		Artifact: pbArtifact,
 		Versions: nil, // explicitly nil, will probably deprecate that field later
 	}, nil
+}
+
+// artifactLookupName returns the PropertyName to look an artifact up by and,
+// for GitHub-backed providers, the "owner/repo" the artifact must belong to.
+func artifactLookupName(name string, class db.ProviderClass) (lookupName, wantRepo string, err error) {
+	switch class {
+	case db.ProviderClassGithub, db.ProviderClassGithubApp:
+		// Requests use "owner/repo/name"; the PropertyName is stored as "owner/name".
+		nameParts := strings.Split(name, "/")
+		if len(nameParts) < 3 {
+			return "", "", util.UserVisibleError(codes.InvalidArgument,
+				"invalid artifact name user repoOwner/repoName/artifactName")
+		}
+		repoOwner := nameParts[0]
+		return repoOwner + "/" + strings.Join(nameParts[2:], "/"), repoOwner + "/" + nameParts[1], nil
+	case db.ProviderClassDockerhub, db.ProviderClassQuay:
+		// Container registry providers store the name exactly as registered,
+		// e.g. "alpine:latest".
+		if name == "" {
+			return "", "", util.UserVisibleError(codes.InvalidArgument, "artifact name is required")
+		}
+		return name, "", nil
+	case db.ProviderClassGhcr, db.ProviderClassGitlab:
+		// Listed so the exhaustive linter flags any newly added class.
+		// Neither class supports looking artifacts up by name.
+		fallthrough
+	default:
+		return "", "", util.UserVisibleError(codes.InvalidArgument,
+			"looking up artifacts by name is not supported for provider class %q", class)
+	}
 }
 
 // GetArtifactById gets an artifact by id
@@ -186,6 +213,7 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 	if !ok {
 		return nil, fmt.Errorf("unexpected type: %T", somePB)
 	}
+	pbArtifact.ArtifactPk = ewp.Entity.ID.String()
 
 	// Telemetry logging
 	logger.BusinessRecord(ctx).ProviderID = ewp.Entity.ProviderID

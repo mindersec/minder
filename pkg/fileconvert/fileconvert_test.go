@@ -6,6 +6,7 @@ package fileconvert
 import (
 	"bytes"
 	"cmp"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -272,7 +273,7 @@ func TestKnownResourceTypesInSync(t *testing.T) {
 func TestReadAll(t *testing.T) {
 	t.Parallel()
 
-	dirResources, err := ResourcesFromPaths(t.Logf, "testdata/directory")
+	dirResources, err := ResourcesFromPaths(context.Background(), t.Logf, "testdata/directory")
 	require.NoError(t, err)
 
 	collectedInput, closer := DecoderForFile("testdata/resources.yaml")
@@ -300,7 +301,7 @@ func TestReadAll(t *testing.T) {
 func TestReadWriteRoundTrip(t *testing.T) {
 	t.Parallel()
 
-	dirResources, err := ResourcesFromPaths(t.Logf, "testdata/directory")
+	dirResources, err := ResourcesFromPaths(context.Background(), t.Logf, "testdata/directory")
 	require.NoError(t, err)
 
 	tempFile := filepath.Clean(filepath.Join(t.TempDir(), "collected.yaml"))

@@ -81,6 +81,11 @@ func TestGetCommand(t *testing.T) {
 			},
 			ExpectedError: "profile not found",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"profile", "get", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder profile get"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, ProfileCmd)

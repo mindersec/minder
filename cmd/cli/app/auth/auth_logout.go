@@ -19,6 +19,7 @@ var logoutCmd = &cobra.Command{
 	Use:   "logout",
 	Short: "Logout from minder control plane.",
 	Long:  `Logout from minder control plane. Credentials will be removed from $XDG_CONFIG_HOME/minder/`,
+	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
 		if err != nil {

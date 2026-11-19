@@ -63,7 +63,17 @@ func TestGetCommand(t *testing.T) {
 		{
 			Name:          "giving both id and name",
 			Args:          []string{"ruletype", "get", "-n", ruleName, "-i", ruleID, app.Table},
+			ExpectedError: `unknown command "table" for "minder ruletype get"`,
+		},
+		{
+			Name:          "giving both id and name with flag",
+			Args:          []string{"ruletype", "get", "-n", ruleName, "-i", ruleID, "-o", app.Table},
 			ExpectedError: "please provide either the --id or --name flag, but not both",
+		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"ruletype", "get", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder ruletype get"`,
 		},
 	}
 

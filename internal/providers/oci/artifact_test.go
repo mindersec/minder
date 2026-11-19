@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
@@ -71,6 +72,15 @@ func TestParseImageRef(t *testing.T) {
 	}
 }
 
+func TestHasExplicitTag(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, HasExplicitTag("alpine:latest"))
+	assert.True(t, HasExplicitTag("myorg/alpine:v1.2"))
+	assert.False(t, HasExplicitTag("alpine"))
+	assert.False(t, HasExplicitTag("myorg/alpine"))
+}
+
 func TestArtifactNameFromProperties(t *testing.T) {
 	t.Parallel()
 
@@ -125,6 +135,7 @@ func TestNewArtifactProperties(t *testing.T) {
 		namespace    string
 		registry     string
 		wantRepo     string
+		wantUpstream string
 		wantErr      string
 	}{
 		{
@@ -133,13 +144,15 @@ func TestNewArtifactProperties(t *testing.T) {
 			namespace:    "library",
 			registry:     "docker.io",
 			wantRepo:     "library/alpine",
+			wantUpstream: "alpine:latest",
 		},
 		{
-			name:         "untagged image",
+			name:         "untagged image gets the default tag",
 			artifactName: "alpine",
 			namespace:    "library",
 			registry:     "docker.io",
 			wantRepo:     "library/alpine",
+			wantUpstream: "alpine:latest",
 		},
 		{
 			name:         "Quay image",
@@ -147,6 +160,7 @@ func TestNewArtifactProperties(t *testing.T) {
 			namespace:    "myorg",
 			registry:     "quay.io",
 			wantRepo:     "myorg/envoy",
+			wantUpstream: "envoy:v1.30",
 		},
 		{
 			name:         "missing repository",
@@ -168,7 +182,7 @@ func TestNewArtifactProperties(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			props, err := NewArtifactProperties(tt.artifactName, tt.namespace, tt.registry, "upstream-id")
+			props, err := NewArtifactProperties(tt.artifactName, tt.namespace, tt.registry, "sha256:abc")
 			if tt.wantErr != "" {
 				require.ErrorContains(t, err, tt.wantErr)
 				assert.Nil(t, props)
@@ -177,11 +191,12 @@ func TestNewArtifactProperties(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, tt.artifactName, props.GetProperty(properties.PropertyName).GetString())
-			assert.Equal(t, "upstream-id", props.GetProperty(properties.PropertyUpstreamID).GetString())
+			assert.Equal(t, tt.wantUpstream, props.GetProperty(properties.PropertyUpstreamID).GetString())
 			assert.Equal(t, "container", props.GetProperty(properties.ArtifactPropertyType).GetString())
 			assert.Equal(t, tt.wantRepo, props.GetProperty(ArtifactPropertyRepository).GetString())
 			assert.Equal(t, tt.namespace, props.GetProperty(ArtifactPropertyNamespace).GetString())
 			assert.Equal(t, tt.registry, props.GetProperty(ArtifactPropertyRegistry).GetString())
+			assert.Equal(t, "sha256:abc", props.GetProperty(ArtifactPropertyDigest).GetString())
 		})
 	}
 }
@@ -194,6 +209,7 @@ func TestArtifactV1FromProperties(t *testing.T) {
 		props     *properties.Properties
 		namespace string
 		wantName  string
+		wantPk    string
 		wantErr   string
 	}{
 		{
@@ -201,12 +217,14 @@ func TestArtifactV1FromProperties(t *testing.T) {
 			props:     mustArtifactProperties(t, "myimage:v1.2"),
 			namespace: "testns",
 			wantName:  "myimage",
+			wantPk:    "myimage:v1.2",
 		},
 		{
 			name:      "untagged name is unchanged",
 			props:     mustArtifactProperties(t, "myimage"),
 			namespace: "testns",
 			wantName:  "myimage",
+			wantPk:    "myimage:latest",
 		},
 		{
 			name:      "missing name",
@@ -241,7 +259,7 @@ func TestArtifactV1FromProperties(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, "myimage@sha256:abc", got.GetArtifactPk())
+			assert.Equal(t, tt.wantPk, got.GetArtifactPk())
 			assert.Equal(t, tt.namespace, got.GetOwner())
 			assert.Equal(t, tt.wantName, got.GetName())
 			assert.Equal(t, "container", got.GetType())
@@ -251,7 +269,67 @@ func TestArtifactV1FromProperties(t *testing.T) {
 
 func mustArtifactProperties(t *testing.T, name string) *properties.Properties {
 	t.Helper()
-	props, err := NewArtifactProperties(name, "testns", "docker.io", "myimage@sha256:abc")
+	props, err := NewArtifactProperties(name, "testns", "docker.io", "sha256:abc")
 	require.NoError(t, err)
 	return props
+}
+
+func TestArtifactTag(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		name    string
+		art     *minderv1.Artifact
+		wantTag string
+		wantOK  bool
+	}{
+		{name: "repo:tag", art: &minderv1.Artifact{Name: "myimage", ArtifactPk: "myimage:v1.2"},
+			wantTag: "v1.2", wantOK: true},
+		{name: "nested repo", art: &minderv1.Artifact{Name: "team/app", ArtifactPk: "team/app:latest"},
+			wantTag: "latest", wantOK: true},
+		{name: "legacy repo@digest", art: &minderv1.Artifact{Name: "myimage", ArtifactPk: "myimage@sha256:abc"}},
+		{name: "pk for another repo", art: &minderv1.Artifact{Name: "myimage", ArtifactPk: "other:v1"}},
+		{name: "empty tag", art: &minderv1.Artifact{Name: "myimage", ArtifactPk: "myimage:"}},
+		{name: "GHCR numeric pk", art: &minderv1.Artifact{Name: "myimage", ArtifactPk: "12345"}},
+		{name: "empty name", art: &minderv1.Artifact{ArtifactPk: ":v1"}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			tag, ok := (&OCI{}).ArtifactTag(tt.art)
+			assert.Equal(t, tt.wantOK, ok)
+			assert.Equal(t, tt.wantTag, tag)
+		})
+	}
+}
+
+// TestArtifactTagRoundTrip builds an artifact the way the DockerHub and Quay
+// providers do and checks ArtifactTag recovers the registered tag. If the
+// upstream ID format changes without ArtifactTag, this fails instead of
+// ingestion silently falling back to the repository-wide path.
+func TestArtifactTagRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		name    string
+		ref     string
+		wantTag string
+	}{
+		{name: "explicit tag", ref: "myimage:v1.2", wantTag: "v1.2"},
+		{name: "default tag", ref: "myimage", wantTag: DefaultTag},
+		{name: "nested repo", ref: "team/app:stable", wantTag: "stable"},
+		{name: "tag with dots and dashes", ref: "myimage:1.2.3-rc.1", wantTag: "1.2.3-rc.1"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			props, err := NewArtifactProperties(tt.ref, "testns", "docker.io", "sha256:abc")
+			require.NoError(t, err)
+			art, err := ArtifactV1FromProperties(props, "testns")
+			require.NoError(t, err)
+
+			tag, ok := (&OCI{}).ArtifactTag(art)
+			require.True(t, ok, "ArtifactTag rejected %q (ArtifactPk %q)", tt.ref, art.GetArtifactPk())
+			assert.Equal(t, tt.wantTag, tag)
+		})
+	}
 }

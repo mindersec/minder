@@ -146,6 +146,7 @@ func TestFetchAllProperties(t *testing.T) {
 		wantName       string
 		wantRepo       string
 		wantUpstreamID string
+		wantDigest     string
 		wantErr        string
 		wantErrIs      error
 	}{
@@ -155,7 +156,8 @@ func TestFetchAllProperties(t *testing.T) {
 			props:          properties.NewProperties(map[string]any{properties.PropertyName: "myimage:v1.2"}),
 			wantName:       "myimage:v1.2",
 			wantRepo:       namespace + "/myimage",
-			wantUpstreamID: "myimage@" + taggedDigest,
+			wantUpstreamID: "myimage:v1.2",
+			wantDigest:     taggedDigest,
 		},
 		{
 			name:           "no tag defaults to latest",
@@ -163,7 +165,8 @@ func TestFetchAllProperties(t *testing.T) {
 			props:          properties.NewProperties(map[string]any{properties.PropertyName: "myimage"}),
 			wantName:       "myimage",
 			wantRepo:       namespace + "/myimage",
-			wantUpstreamID: "myimage@" + latestDigest,
+			wantUpstreamID: "myimage:latest",
+			wantDigest:     latestDigest,
 		},
 		{
 			name:           "multi-arch tag uses index digest",
@@ -171,7 +174,8 @@ func TestFetchAllProperties(t *testing.T) {
 			props:          properties.NewProperties(map[string]any{properties.PropertyName: "myimage:multi"}),
 			wantName:       "myimage:multi",
 			wantRepo:       namespace + "/myimage",
-			wantUpstreamID: "myimage@" + multiArchDigest,
+			wantUpstreamID: "myimage:multi",
+			wantDigest:     multiArchDigest,
 		},
 		{
 			name:    "missing name property",
@@ -192,10 +196,16 @@ func TestFetchAllProperties(t *testing.T) {
 			wantErr: "empty tag",
 		},
 		{
-			name:    "unknown image",
-			entType: minderv1.Entity_ENTITY_ARTIFACTS,
-			props:   properties.NewProperties(map[string]any{properties.PropertyName: "nosuchimage:v1"}),
-			wantErr: `failed to resolve digest for "nosuchimage:v1"`,
+			name:      "unknown image",
+			entType:   minderv1.Entity_ENTITY_ARTIFACTS,
+			props:     properties.NewProperties(map[string]any{properties.PropertyName: "nosuchimage:v1"}),
+			wantErrIs: provifv1.ErrEntityNotFound,
+		},
+		{
+			name:      "deleted tag",
+			entType:   minderv1.Entity_ENTITY_ARTIFACTS,
+			props:     properties.NewProperties(map[string]any{properties.PropertyName: "myimage:deleted"}),
+			wantErrIs: provifv1.ErrEntityNotFound,
 		},
 		{
 			name:      "unsupported entity type",
@@ -228,6 +238,7 @@ func TestFetchAllProperties(t *testing.T) {
 
 			assert.Equal(t, tt.wantName, got.GetProperty(properties.PropertyName).GetString())
 			assert.Equal(t, tt.wantUpstreamID, got.GetProperty(properties.PropertyUpstreamID).GetString())
+			assert.Equal(t, tt.wantDigest, got.GetProperty(oci.ArtifactPropertyDigest).GetString())
 			assert.Equal(t, tt.wantRepo, got.GetProperty(oci.ArtifactPropertyRepository).GetString())
 			assert.Equal(t, namespace, got.GetProperty(oci.ArtifactPropertyNamespace).GetString())
 			assert.Equal(t, host, got.GetProperty(oci.ArtifactPropertyRegistry).GetString())
@@ -264,9 +275,42 @@ func TestFetchAllPropertiesMirroredDigest(t *testing.T) {
 
 	origID := orig.GetProperty(properties.PropertyUpstreamID).GetString()
 	mirrorID := mirror.GetProperty(properties.PropertyUpstreamID).GetString()
-	assert.Equal(t, "orig@"+origDigest, origID)
-	assert.Equal(t, "mirror@"+mirrorDigest, mirrorID)
+	assert.Equal(t, "orig:v1", origID)
+	assert.Equal(t, "mirror:v1", mirrorID)
 	assert.NotEqual(t, origID, mirrorID)
+	assert.Equal(t, origDigest, orig.GetProperty(oci.ArtifactPropertyDigest).GetString())
+	assert.Equal(t, mirrorDigest, mirror.GetProperty(oci.ArtifactPropertyDigest).GetString())
+}
+
+func TestFetchAllPropertiesTagsOnSameDigest(t *testing.T) {
+	t.Parallel()
+
+	const namespace = "testns"
+
+	host := newTestRegistry(t)
+	img, err := random.Image(256, 1)
+	require.NoError(t, err)
+	v1Digest := pushImage(t, img, host, namespace+"/myimage", "v1")
+	latestDigest := pushImage(t, img, host, namespace+"/myimage", "latest")
+	require.Equal(t, v1Digest, latestDigest)
+
+	lister := &quayImageLister{
+		OCI: oci.New(nil, host, path.Join(host, namespace)),
+	}
+
+	v1Props, err := lister.FetchAllProperties(context.Background(),
+		properties.NewProperties(map[string]any{properties.PropertyName: "myimage:v1"}),
+		minderv1.Entity_ENTITY_ARTIFACTS, nil)
+	require.NoError(t, err)
+	latest, err := lister.FetchAllProperties(context.Background(),
+		properties.NewProperties(map[string]any{properties.PropertyName: "myimage:latest"}),
+		minderv1.Entity_ENTITY_ARTIFACTS, nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, "myimage:v1", v1Props.GetProperty(properties.PropertyUpstreamID).GetString())
+	assert.Equal(t, "myimage:latest", latest.GetProperty(properties.PropertyUpstreamID).GetString())
+	assert.Equal(t, v1Digest, v1Props.GetProperty(oci.ArtifactPropertyDigest).GetString())
+	assert.Equal(t, v1Digest, latest.GetProperty(oci.ArtifactPropertyDigest).GetString())
 }
 
 func TestGetEntityName(t *testing.T) {
@@ -329,6 +373,7 @@ func TestPropertiesToProtoMessage(t *testing.T) {
 		entType   minderv1.Entity
 		props     *properties.Properties
 		wantName  string
+		wantPk    string
 		wantErrIs error
 	}{
 		{
@@ -336,12 +381,14 @@ func TestPropertiesToProtoMessage(t *testing.T) {
 			entType:  minderv1.Entity_ENTITY_ARTIFACTS,
 			props:    mustArtifactProperties(t, "myimage:v1.2"),
 			wantName: "myimage",
+			wantPk:   "myimage:v1.2",
 		},
 		{
 			name:     "untagged name",
 			entType:  minderv1.Entity_ENTITY_ARTIFACTS,
 			props:    mustArtifactProperties(t, "myimage"),
 			wantName: "myimage",
+			wantPk:   "myimage:latest",
 		},
 		{
 			name:      "unsupported entity type",
@@ -365,7 +412,7 @@ func TestPropertiesToProtoMessage(t *testing.T) {
 			require.NoError(t, err)
 			art, ok := got.(*minderv1.Artifact)
 			require.True(t, ok, "expected *minderv1.Artifact, got %T", got)
-			assert.Equal(t, "myimage@sha256:abc", art.GetArtifactPk())
+			assert.Equal(t, tt.wantPk, art.GetArtifactPk())
 			assert.Equal(t, "testns", art.GetOwner())
 			assert.Equal(t, tt.wantName, art.GetName())
 			assert.Equal(t, "container", art.GetType())
@@ -416,7 +463,7 @@ func TestConvertedArtifactImageRef(t *testing.T) {
 
 func mustArtifactProperties(t *testing.T, ref string) *properties.Properties {
 	t.Helper()
-	props, err := oci.NewArtifactProperties(ref, "testns", "quay.io", "myimage@sha256:abc")
+	props, err := oci.NewArtifactProperties(ref, "testns", "quay.io", "sha256:abc")
 	require.NoError(t, err)
 	return props
 }

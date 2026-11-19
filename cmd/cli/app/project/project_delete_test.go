@@ -68,6 +68,11 @@ func TestProjectDeleteCommand(t *testing.T) {
 			},
 			ExpectedError: "server error",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"project", "delete", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder project delete"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, ProjectCmd)
