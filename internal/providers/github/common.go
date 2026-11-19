@@ -808,15 +808,20 @@ func (c *GitHub) CreateIssue(
 	return issue, nil
 }
 
-// CloseIssue closes an issue in a repository
+// CloseIssue closes an issue in a repository. If comment is non-empty,
+// it creates an issue comment before closing the issue.
 func (c *GitHub) CloseIssue(
 	ctx context.Context,
 	owner, repo string,
 	number int,
 	comment string,
 ) (*github.Issue, error) {
-	_ = comment
-	// TODO: If comment is provided, create an issue comment before closing the issue.
+	if comment != "" {
+		if _, err := c.CreateIssueComment(ctx, owner, repo, number, comment); err != nil {
+			return nil, fmt.Errorf("creating issue comment before closing: %w", err)
+		}
+	}
+
 	issue, _, err := c.client.Issues.Edit(ctx, owner, repo, number, &github.IssueRequest{
 		State: github.String("closed"),
 	})
