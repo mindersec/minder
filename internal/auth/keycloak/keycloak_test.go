@@ -69,8 +69,9 @@ func TestKeyCloak_Resolve(t *testing.T) {
 	t.Cleanup(fakeServ.Close)
 
 	kc, err := NewKeyCloak("", serverconfig.IdentityConfig{
-		IssuerUrl: fakeServ.URL,
-		Realm:     "stacklok",
+		IssuerUrl:   fakeServ.URL,
+		IssuerClaim: "https://auth.example.com/realms/stacklok",
+		Realm:       "stacklok",
 	})
 	if err != nil {
 		t.Fatalf("failed to create keycloak: %v", err)
@@ -137,9 +138,8 @@ func (*fakeKeycloak) GetToken(w http.ResponseWriter, _ *http.Request) {
 func (*fakeKeycloak) GetOIDCConfig(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if _, err := w.Write([]byte(`{
-		"issuer": "http://` + r.Host + `/realms/stacklok",
-		"jwks_uri": "http://` + r.Host + `/realms/stacklok/protocol/openid-connect/certs",
-		"token_endpoint": "http://` + r.Host + `/realms/stacklok/protocol/openid-connect/token"
+		"issuer": "https://auth.example.com/realms/stacklok",
+		"jwks_uri": "https://auth.example.com/realms/stacklok/protocol/openid-connect/certs"
 	}`)); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
