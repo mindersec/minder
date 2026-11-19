@@ -16,6 +16,7 @@ import (
 	"github.com/mindersec/minder/internal/engine/engcontext"
 )
 
+// MaxReasonLength is the maximum number of characters allowed in an exception reason.
 const MaxReasonLength = 500
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
