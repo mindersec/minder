@@ -575,6 +575,63 @@ func Test_sendReminders_perTypeSchedule(t *testing.T) {
 	}
 }
 
+func Test_sendReminders_intervalNotMultipleOfTick(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	store := mockdb.NewMockStore(ctrl)
+
+	calls := map[db.Entities]int{}
+	store.EXPECT().ListEntitiesAfterID(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, arg db.ListEntitiesAfterIDParams) ([]db.EntityInstance, error) {
+			calls[arg.EntityType]++
+			return nil, nil
+		}).AnyTimes()
+	store.EXPECT().ListOldestRuleEvaluationsByEntityID(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+
+	r := createTestReminder(t, store, &reminderconfig.Config{
+		RecurrenceConfig: reminderconfig.RecurrenceConfig{
+			Interval: time.Hour, BatchSize: 10, MinElapsed: time.Hour,
+			Entities: map[db.Entities]reminderconfig.EntityRecurrenceConfig{
+				db.EntitiesArtifact: {Enabled: ptr(true), Interval: ptr(90 * time.Minute)},
+			},
+		},
+	})
+	r.eventPublisher = &fakePublisher{}
+	ctx := context.Background()
+	start := time.Date(2026, 11, 20, 0, 0, 0, 0, time.UTC)
+
+	tick, err := r.tickInterval()
+	require.NoError(t, err)
+	require.Equal(t, time.Hour, tick)
+
+	tests := []struct {
+		tick        int
+		artifactDue bool
+	}{
+		{tick: 1, artifactDue: true},
+		{tick: 2, artifactDue: false},
+		{tick: 3, artifactDue: true},
+		{tick: 4, artifactDue: false},
+		{tick: 5, artifactDue: true},
+		{tick: 6, artifactDue: false},
+	}
+
+	artifactCalls := 0
+	for _, tt := range tests {
+		now := start.Add(time.Duration(tt.tick-1) * tick)
+		require.Equal(t, tt.artifactDue, r.isDue(db.EntitiesArtifact, now, tick), "artifact due on tick %d", tt.tick)
+		require.True(t, r.isDue(db.EntitiesRepository, now, tick), "repository due on tick %d", tt.tick)
+
+		require.NoError(t, r.sendReminders(ctx, now))
+		if tt.artifactDue {
+			artifactCalls++
+		}
+		require.Equal(t, tt.tick, calls[db.EntitiesRepository], "repository calls after tick %d", tt.tick)
+		require.Equal(t, artifactCalls, calls[db.EntitiesArtifact], "artifact calls after tick %d", tt.tick)
+	}
+}
+
 func Test_sendReminders_metricsTaggedWithEntityType(t *testing.T) {
 	t.Parallel()
 

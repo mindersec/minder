@@ -199,11 +199,10 @@ func (r *reminder) tickInterval() (time.Duration, error) {
 	return shortest, nil
 }
 
-// isDue reports whether entityType should be processed on the tick at now.
-// A type is due when its next due time falls within half a tick of now, so
-// that small delays in tick delivery don't push it back a whole tick.
+// A type is due once its next due time has passed. The small slack absorbs
+// late tick delivery without letting a type run early by most of a tick.
 func (r *reminder) isDue(entityType db.Entities, now time.Time, tick time.Duration) bool {
-	return !now.Add(tick / 2).Before(r.nextDue[entityType])
+	return !now.Add(tick / 10).Before(r.nextDue[entityType])
 }
 
 func (r *reminder) sendReminders(ctx context.Context, now time.Time) error {
@@ -260,9 +259,9 @@ func (r *reminder) sendRemindersForEntityType(ctx context.Context, entityType db
 		return fmt.Errorf("error publishing messages: %w", err)
 	}
 
-	for _, repo := range entities {
+	for _, entity := range entities {
 		if r.metrics != nil {
-			sendDelay := time.Since(entityToLastUpdated[repo.ID]) - minElapsed
+			sendDelay := time.Since(entityToLastUpdated[entity.ID]) - minElapsed
 			// TODO: Track whether this is a new vs existing reminder
 			// Previously used repo.ReminderLastSent field which is now removed
 			recorder := r.metrics.SendDelay
@@ -313,8 +312,8 @@ func (r *reminder) getEligibleEntities(ctx context.Context, entities []db.Entity
 
 	// We have a slice of entity instances, extract UUIDs for evaluation lookup
 	entityIds := make([]uuid.UUID, 0, len(entities))
-	for _, repo := range entities {
-		entityIds = append(entityIds, repo.ID)
+	for _, entity := range entities {
+		entityIds = append(entityIds, entity.ID)
 	}
 
 	// Use entity_instance_id based query instead of repository_id
@@ -328,9 +327,9 @@ func (r *reminder) getEligibleEntities(ctx context.Context, entities []db.Entity
 	}
 
 	cutoff := time.Now().Add(-1 * minElapsed)
-	for _, repo := range entities {
-		if t, ok := idToLastUpdate[repo.ID]; ok && t.Before(cutoff) {
-			eligibleEntities = append(eligibleEntities, repo)
+	for _, entity := range entities {
+		if t, ok := idToLastUpdate[entity.ID]; ok && t.Before(cutoff) {
+			eligibleEntities = append(eligibleEntities, entity)
 		}
 	}
 
@@ -375,19 +374,19 @@ func createReminderMessages(ctx context.Context, entities []db.EntityInstance) (
 	logger := zerolog.Ctx(ctx)
 
 	messages := make([]*message.Message, 0, len(entities))
-	for _, repo := range entities {
-		repoReconcileMessage, err := remindermessages.NewEntityReminderMessage(
-			repo.ProviderID, repo.ID, repo.ProjectID,
+	for _, entity := range entities {
+		reminderMsg, err := remindermessages.NewEntityReminderMessage(
+			entity.ProviderID, entity.ID, entity.ProjectID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error creating reminder message: %w", err)
 		}
 
 		logger.Debug().
-			Str("entity_id", repo.ID.String()).
+			Str("entity_id", entity.ID.String()).
 			Msg("created reminder message")
 
-		messages = append(messages, repoReconcileMessage)
+		messages = append(messages, reminderMsg)
 	}
 
 	return messages, nil
