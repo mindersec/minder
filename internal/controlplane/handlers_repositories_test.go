@@ -165,6 +165,106 @@ func TestServer_RegisterRepository(t *testing.T) {
 	}
 }
 
+func TestServer_RegisterRepository_EntityRefProvider(t *testing.T) {
+	t.Parallel()
+
+	githubProvider := db.Provider{ID: uuid.New(), Name: "github-app-example"}
+	gitlabProvider := db.Provider{ID: uuid.New(), Name: "gitlab-example"}
+
+	scenarios := []struct {
+		Name             string
+		ProviderName     string
+		FoundProviders   []db.Provider
+		ExpectedProvider string
+		ExpectedCode     codes.Code
+	}{
+		{
+			Name:             "uses the named provider when one is specified",
+			ProviderName:     gitlabProvider.Name,
+			FoundProviders:   []db.Provider{gitlabProvider},
+			ExpectedProvider: gitlabProvider.Name,
+		},
+		{
+			Name:             "infers the provider when only one can list repositories",
+			FoundProviders:   []db.Provider{githubProvider},
+			ExpectedProvider: githubProvider.Name,
+		},
+		{
+			Name:           "fails when more than one provider can list repositories",
+			FoundProviders: []db.Provider{githubProvider, gitlabProvider},
+			ExpectedCode:   codes.InvalidArgument,
+		},
+		{
+			Name:         "fails when no provider can list repositories",
+			ExpectedCode: codes.NotFound,
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.Name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+
+			store := mockdb.NewMockStore(ctrl)
+			store.EXPECT().
+				GetParentProjects(gomock.Any(), projectID).
+				Return([]uuid.UUID{projectID}, nil)
+			store.EXPECT().
+				FindProviders(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, arg db.FindProvidersParams) ([]db.Provider, error) {
+					// Without a provider name, only providers which can
+					// list repositories are considered.
+					if scenario.ProviderName == "" {
+						require.False(t, arg.Name.Valid)
+						require.Equal(t, db.NullProviderType{
+							ProviderType: db.ProviderTypeRepoLister, Valid: true,
+						}, arg.Trait)
+					} else {
+						require.Equal(t, scenario.ProviderName, arg.Name.String)
+					}
+					return scenario.FoundProviders, nil
+				})
+
+			repoSvc := mockrepo.NewMockRepositoryService(ctrl)
+			if scenario.ExpectedProvider != "" {
+				repoSvc.EXPECT().
+					CreateRepository(gomock.Any(), gomock.Any(), projectID, gomock.Any()).
+					DoAndReturn(func(_ context.Context, prov *db.Provider, _ uuid.UUID, _ *properties.Properties,
+					) (*pb.Repository, error) {
+						require.Equal(t, scenario.ExpectedProvider, prov.Name)
+						return creationResult, nil
+					})
+			}
+
+			srv := &Server{
+				store:         store,
+				repos:         repoSvc,
+				providerStore: providers.NewProviderStore(store),
+			}
+
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Provider: engcontext.Provider{Name: scenario.ProviderName},
+				Project:  engcontext.Project{ID: projectID},
+			})
+			req := &pb.RegisterRepositoryRequest{
+				Entity: &pb.UpstreamEntityRef{
+					Type:       pb.Entity_ENTITY_REPOSITORIES,
+					Properties: mustNewPBStruct(map[string]any{properties.PropertyName: repoOwnerAndName}),
+				},
+			}
+
+			res, err := srv.RegisterRepository(ctx, req)
+			if scenario.ExpectedCode != codes.OK {
+				require.Nil(t, res)
+				require.Equal(t, scenario.ExpectedCode, status.Code(err))
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, creationResult, res.GetResult().GetRepository())
+		})
+	}
+}
+
 func TestServer_ListRepositories(t *testing.T) {
 	t.Parallel()
 
