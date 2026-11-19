@@ -8,6 +8,7 @@ package reconcilers
 import (
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
+	entityService "github.com/mindersec/minder/internal/entities/service"
 	"github.com/mindersec/minder/internal/providers/manager"
 	"github.com/mindersec/minder/internal/repositories"
 	"github.com/mindersec/minder/pkg/eventer/constants"
@@ -21,6 +22,7 @@ type Reconciler struct {
 	crypteng        crypto.Engine
 	providerManager manager.ProviderManager
 	repos           repositories.RepositoryService
+	entities        entityService.EntityService
 }
 
 // NewReconciler creates a new reconciler object
@@ -30,6 +32,7 @@ func NewReconciler(
 	cryptoEngine crypto.Engine,
 	providerManager manager.ProviderManager,
 	repositoryService repositories.RepositoryService,
+	entities entityService.EntityService,
 ) (*Reconciler, error) {
 	return &Reconciler{
 		store:           store,
@@ -37,6 +40,7 @@ func NewReconciler(
 		crypteng:        cryptoEngine,
 		providerManager: providerManager,
 		repos:           repositoryService,
+		entities:        entities,
 	}, nil
 }
 
