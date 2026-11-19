@@ -124,15 +124,46 @@ func (s *Server) repoCreateInfoFromUpstreamEntityRef(
 	inPropsMap := entity.GetProperties().AsMap()
 	fetchByProps := properties.NewProperties(inPropsMap)
 
-	provider, err := s.providerStore.GetByName(ctx, projectID, providerName)
+	provider, err := s.repoProviderFromName(ctx, projectID, providerName)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil, util.UserVisibleError(codes.NotFound, "provider not found")
-		}
-		return nil, nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
+		return nil, nil, err
 	}
 
 	return fetchByProps, provider, nil
+}
+
+// repoProviderFromName returns the provider to register a repository with.
+// When no provider name is given, it only infers one if exactly one provider
+// in the project can list repositories, rather than picking one of several.
+func (s *Server) repoProviderFromName(
+	ctx context.Context,
+	projectID uuid.UUID,
+	providerName string,
+) (*db.Provider, error) {
+	if providerName != "" {
+		provider, err := s.providerStore.GetByName(ctx, projectID, providerName)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, util.UserVisibleError(codes.NotFound, "provider not found")
+			}
+			return nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
+		}
+		return provider, nil
+	}
+
+	provs, err := s.providerStore.GetByTraitInHierarchy(ctx, projectID, "", db.ProviderTypeRepoLister)
+	if err != nil {
+		pErr := providers.ErrProviderNotFoundBy{}
+		if errors.As(err, &pErr) {
+			return nil, util.UserVisibleError(codes.NotFound, "no suitable provider found, please enroll a provider")
+		}
+		return nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
+	}
+	if len(provs) > 1 {
+		return nil, util.UserVisibleError(codes.InvalidArgument,
+			"more than one provider can register repositories in this project; please specify a provider")
+	}
+	return &provs[0], nil
 }
 
 // ListRepositories returns a list of repositories for a given project
