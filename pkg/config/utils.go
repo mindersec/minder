@@ -166,6 +166,8 @@ func ReadConfigFromViper[CFG any](v *viper.Viper) (*CFG, error) {
 // https://github.com/spf13/viper/issues/761, we need to call viper.SetDefault() for each
 // field in the struct to be able to use env var overrides.  This also lets us use the
 // struct as the source of default values, so yay?
+//
+// Fields tagged `viperdefault:"skip"` are not registered.
 func SetViperStructDefaults(v *viper.Viper, prefix string, s any) {
 	structType := reflect.TypeOf(s)
 
@@ -178,6 +180,11 @@ func SetViperStructDefaults(v *viper.Viper, prefix string, s any) {
 		if field.Tag.Get("mapstructure") == "" {
 			// Error, need a tag
 			panic(fmt.Sprintf("Untagged config struct field %q", field.Name))
+		}
+		if field.Tag.Get("viperdefault") == "skip" {
+			// The caller binds this field's nested keys itself. Registering the
+			// field as a leaf key would let its whole value shadow those keys.
+			continue
 		}
 
 		var valueName string

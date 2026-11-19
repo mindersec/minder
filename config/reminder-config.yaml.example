@@ -5,6 +5,20 @@ recurrence:
   interval: "1h"
   batch_size: 100
   min_elapsed: "1h"
+  # Per-entity-type overrides. Any field left out falls back to the values
+  # above. Only repositories are enabled unless `enabled` says otherwise.
+  # Also settable with REMINDER_RECURRENCE_ENTITIES_<TYPE>_<FIELD> or
+  # --entity-recurrence <type>.<field>=<value>.
+  #
+  # Artifacts need a slower cadence than repositories: Docker Hub's anonymous
+  # pull rate limit is roughly 17 pulls per hour, and each artifact reminder
+  # triggers an evaluation that pulls from the registry.
+  # entities:
+  #   artifact:
+  #     enabled: true
+  #     interval: "6h"
+  #     batch_size: 10
+  #     min_elapsed: "12h"
 
 database:
   dbhost: "postgres"
