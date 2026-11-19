@@ -1120,6 +1120,21 @@ func (mr *MockStoreMockRecorder) GetEntityByID(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityByID", reflect.TypeOf((*MockStore)(nil).GetEntityByID), ctx, id)
 }
 
+// GetEntityByIDAndProject mocks base method.
+func (m *MockStore) GetEntityByIDAndProject(ctx context.Context, arg db.GetEntityByIDAndProjectParams) (db.EntityInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEntityByIDAndProject", ctx, arg)
+	ret0, _ := ret[0].(db.EntityInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEntityByIDAndProject indicates an expected call of GetEntityByIDAndProject.
+func (mr *MockStoreMockRecorder) GetEntityByIDAndProject(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityByIDAndProject", reflect.TypeOf((*MockStore)(nil).GetEntityByIDAndProject), ctx, arg)
+}
+
 // GetEntityByName mocks base method.
 func (m *MockStore) GetEntityByName(ctx context.Context, arg db.GetEntityByNameParams) (db.EntityInstance, error) {
 	m.ctrl.T.Helper()
