@@ -234,25 +234,25 @@ func (r *reminder) sendRemindersForEntityType(ctx context.Context, entityType db
 	minElapsed := r.cfg.RecurrenceConfig.ForEntityType(entityType).MinElapsed
 	entityTypeAttr := metrics.EntityTypeAttribute(string(entityType))
 
-	repos, repoToLastUpdated, err := r.getEntityBatch(ctx, entityType)
+	entities, entityToLastUpdated, err := r.getEntityBatch(ctx, entityType)
 	if err != nil {
 		return fmt.Errorf("error fetching entity batch: %w", err)
 	}
 
-	if len(repos) == 0 {
+	if len(entities) == 0 {
 		logger.Debug().Msg("no entities to send reminders for")
 		return nil
 	}
 
-	logger.Info().Msgf("created entity batch of size: %d", len(repos))
+	logger.Info().Msgf("created entity batch of size: %d", len(entities))
 
-	messages, err := createReminderMessages(ctx, repos)
+	messages, err := createReminderMessages(ctx, entities)
 	if err != nil {
 		return fmt.Errorf("error creating reminder messages: %w", err)
 	}
 
 	if r.metrics != nil {
-		r.metrics.BatchSize.Record(ctx, int64(len(repos)), entityTypeAttr)
+		r.metrics.BatchSize.Record(ctx, int64(len(entities)), entityTypeAttr)
 	}
 
 	err = r.eventPublisher.Publish(constants.TopicQueueRepoReminder, messages...)
@@ -260,9 +260,9 @@ func (r *reminder) sendRemindersForEntityType(ctx context.Context, entityType db
 		return fmt.Errorf("error publishing messages: %w", err)
 	}
 
-	for _, repo := range repos {
+	for _, repo := range entities {
 		if r.metrics != nil {
-			sendDelay := time.Since(repoToLastUpdated[repo.ID]) - minElapsed
+			sendDelay := time.Since(entityToLastUpdated[repo.ID]) - minElapsed
 			// TODO: Track whether this is a new vs existing reminder
 			// Previously used repo.ReminderLastSent field which is now removed
 			recorder := r.metrics.SendDelay
@@ -286,7 +286,7 @@ func (r *reminder) getEntityBatch(
 	logger.Debug().Msgf("fetching entities after cursor: %s", r.cursors[entityType])
 
 	recurrence := r.cfg.RecurrenceConfig.ForEntityType(entityType)
-	repos, err := r.store.ListEntitiesAfterID(ctx, db.ListEntitiesAfterIDParams{
+	entities, err := r.store.ListEntitiesAfterID(ctx, db.ListEntitiesAfterIDParams{
 		EntityType: entityType,
 		ID:         r.cursors[entityType],
 		Limit:      int64(recurrence.BatchSize),
@@ -295,30 +295,30 @@ func (r *reminder) getEntityBatch(
 		return nil, nil, err
 	}
 
-	eligibleRepos, eligibleReposLastUpdated, err := r.getEligibleEntities(ctx, repos, recurrence.MinElapsed)
+	eligibleEntities, eligibleEntitiesLastUpdated, err := r.getEligibleEntities(ctx, entities, recurrence.MinElapsed)
 	if err != nil {
 		return nil, nil, err
 	}
-	logger.Debug().Msgf("%d/%d entities are eligible for reminders", len(eligibleRepos), len(repos))
+	logger.Debug().Msgf("%d/%d entities are eligible for reminders", len(eligibleEntities), len(entities))
 
-	r.updateCursor(ctx, entityType, repos)
+	r.updateCursor(ctx, entityType, entities)
 
-	return eligibleRepos, eligibleReposLastUpdated, nil
+	return eligibleEntities, eligibleEntitiesLastUpdated, nil
 }
 
-func (r *reminder) getEligibleEntities(ctx context.Context, repos []db.EntityInstance, minElapsed time.Duration) (
+func (r *reminder) getEligibleEntities(ctx context.Context, entities []db.EntityInstance, minElapsed time.Duration) (
 	[]db.EntityInstance, map[uuid.UUID]time.Time, error,
 ) {
-	eligibleRepos := make([]db.EntityInstance, 0, len(repos))
+	eligibleEntities := make([]db.EntityInstance, 0, len(entities))
 
 	// We have a slice of entity instances, extract UUIDs for evaluation lookup
-	repoIds := make([]uuid.UUID, 0, len(repos))
-	for _, repo := range repos {
-		repoIds = append(repoIds, repo.ID)
+	entityIds := make([]uuid.UUID, 0, len(entities))
+	for _, repo := range entities {
+		entityIds = append(entityIds, repo.ID)
 	}
 
 	// Use entity_instance_id based query instead of repository_id
-	oldestRuleEvals, err := r.store.ListOldestRuleEvaluationsByEntityID(ctx, repoIds)
+	oldestRuleEvals, err := r.store.ListOldestRuleEvaluationsByEntityID(ctx, entityIds)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -328,22 +328,22 @@ func (r *reminder) getEligibleEntities(ctx context.Context, repos []db.EntityIns
 	}
 
 	cutoff := time.Now().Add(-1 * minElapsed)
-	for _, repo := range repos {
+	for _, repo := range entities {
 		if t, ok := idToLastUpdate[repo.ID]; ok && t.Before(cutoff) {
-			eligibleRepos = append(eligibleRepos, repo)
+			eligibleEntities = append(eligibleEntities, repo)
 		}
 	}
 
-	return eligibleRepos, idToLastUpdate, nil
+	return eligibleEntities, idToLastUpdate, nil
 }
 
-func (r *reminder) updateCursor(ctx context.Context, entityType db.Entities, repos []db.EntityInstance) {
+func (r *reminder) updateCursor(ctx context.Context, entityType db.Entities, entities []db.EntityInstance) {
 	logger := zerolog.Ctx(ctx).With().Str("entity_type", string(entityType)).Logger()
 
-	if len(repos) == 0 {
+	if len(entities) == 0 {
 		r.cursors[entityType] = uuid.Nil
 	} else {
-		r.cursors[entityType] = repos[len(repos)-1].ID
+		r.cursors[entityType] = entities[len(entities)-1].ID
 		r.adjustCursorForEndOfList(ctx, entityType)
 	}
 
@@ -371,11 +371,11 @@ func (r *reminder) adjustCursorForEndOfList(ctx context.Context, entityType db.E
 	}
 }
 
-func createReminderMessages(ctx context.Context, repos []db.EntityInstance) ([]*message.Message, error) {
+func createReminderMessages(ctx context.Context, entities []db.EntityInstance) ([]*message.Message, error) {
 	logger := zerolog.Ctx(ctx)
 
-	messages := make([]*message.Message, 0, len(repos))
-	for _, repo := range repos {
+	messages := make([]*message.Message, 0, len(entities))
+	for _, repo := range entities {
 		repoReconcileMessage, err := remindermessages.NewEntityReminderMessage(
 			repo.ProviderID, repo.ID, repo.ProjectID,
 		)
@@ -384,7 +384,7 @@ func createReminderMessages(ctx context.Context, repos []db.EntityInstance) ([]*
 		}
 
 		logger.Debug().
-			Str("repo", repo.ID.String()).
+			Str("entity_id", repo.ID.String()).
 			Msg("created reminder message")
 
 		messages = append(messages, repoReconcileMessage)
