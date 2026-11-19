@@ -87,7 +87,7 @@ type project
     define profile_delete: editor or policy_writer
 
     define exception_get: viewer
-    define exception_create: editor or policy_writer
+    define exception_upsert: editor or policy_writer
     define exception_delete: editor or policy_writer
 
     define profile_status_get: viewer

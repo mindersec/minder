@@ -3770,7 +3770,10 @@ const (
 type ExceptionServiceClient interface {
 	// ListExceptions returns active exceptions for the current project.
 	ListExceptions(ctx context.Context, in *ListExceptionsRequest, opts ...grpc.CallOption) (*ListExceptionsResponse, error)
-	// CreateException creates or updates an exception.
+	// CreateException creates or updates (upserts) an exception identified by
+	// the entity, profile name, and rule name. If an exception already exists
+	// for that identity, it is updated. When updating, a supplied reason
+	// replaces the existing reason; an omitted reason preserves it.
 	CreateException(ctx context.Context, in *CreateExceptionRequest, opts ...grpc.CallOption) (*CreateExceptionResponse, error)
 	// DeleteException deletes an exception.
 	DeleteException(ctx context.Context, in *DeleteExceptionRequest, opts ...grpc.CallOption) (*DeleteExceptionResponse, error)
@@ -3822,7 +3825,10 @@ func (c *exceptionServiceClient) DeleteException(ctx context.Context, in *Delete
 type ExceptionServiceServer interface {
 	// ListExceptions returns active exceptions for the current project.
 	ListExceptions(context.Context, *ListExceptionsRequest) (*ListExceptionsResponse, error)
-	// CreateException creates or updates an exception.
+	// CreateException creates or updates (upserts) an exception identified by
+	// the entity, profile name, and rule name. If an exception already exists
+	// for that identity, it is updated. When updating, a supplied reason
+	// replaces the existing reason; an omitted reason preserves it.
 	CreateException(context.Context, *CreateExceptionRequest) (*CreateExceptionResponse, error)
 	// DeleteException deletes an exception.
 	DeleteException(context.Context, *DeleteExceptionRequest) (*DeleteExceptionResponse, error)

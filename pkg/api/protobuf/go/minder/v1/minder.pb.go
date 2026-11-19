@@ -129,7 +129,7 @@ const (
 	Relation_RELATION_ENTITY_UPDATE                     Relation = 44
 	Relation_RELATION_ENTITY_DELETE                     Relation = 45
 	Relation_RELATION_EXCEPTION_GET                     Relation = 46
-	Relation_RELATION_EXCEPTION_CREATE                  Relation = 47
+	Relation_RELATION_EXCEPTION_UPSERT                  Relation = 47
 	Relation_RELATION_EXCEPTION_DELETE                  Relation = 48
 )
 
@@ -183,7 +183,7 @@ var (
 		44: "RELATION_ENTITY_UPDATE",
 		45: "RELATION_ENTITY_DELETE",
 		46: "RELATION_EXCEPTION_GET",
-		47: "RELATION_EXCEPTION_CREATE",
+		47: "RELATION_EXCEPTION_UPSERT",
 		48: "RELATION_EXCEPTION_DELETE",
 	}
 	Relation_value = map[string]int32{
@@ -234,7 +234,7 @@ var (
 		"RELATION_ENTITY_UPDATE":                     44,
 		"RELATION_ENTITY_DELETE":                     45,
 		"RELATION_EXCEPTION_GET":                     46,
-		"RELATION_EXCEPTION_CREATE":                  47,
+		"RELATION_EXCEPTION_UPSERT":                  47,
 		"RELATION_EXCEPTION_DELETE":                  48,
 	}
 )
@@ -12754,19 +12754,23 @@ func (x *RegisterEntityResponse) GetEntity() *EntityInstance {
 	return nil
 }
 
-// Exception represents an exception for an entity and rule type.
+// Exception represents an exception for an entity and rule instance.
 type Exception struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// id is the unique identifier of the exception.
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// entity is the entity associated with the exception.
 	Entity *EntityInstance `protobuf:"bytes,2,opt,name=entity,proto3" json:"entity,omitempty"`
-	// rule_type_id is the ID of the rule type being excepted.
-	RuleTypeId string `protobuf:"bytes,3,opt,name=rule_type_id,json=ruleTypeId,proto3" json:"rule_type_id,omitempty"`
 	// expires_at is when the exception expires.
 	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	// created_at is when the exception was created.
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	// profile_name identifies the profile containing the rule.
+	ProfileName string `protobuf:"bytes,6,opt,name=profile_name,json=profileName,proto3" json:"profile_name,omitempty"`
+	// rule_name identifies the specific rule within the profile.
+	RuleName string `protobuf:"bytes,7,opt,name=rule_name,json=ruleName,proto3" json:"rule_name,omitempty"`
+	// reason is a short description explaining why the exception was created.
+	Reason        string `protobuf:"bytes,8,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -12815,13 +12819,6 @@ func (x *Exception) GetEntity() *EntityInstance {
 	return nil
 }
 
-func (x *Exception) GetRuleTypeId() string {
-	if x != nil {
-		return x.RuleTypeId
-	}
-	return ""
-}
-
 func (x *Exception) GetExpiresAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.ExpiresAt
@@ -12834,6 +12831,27 @@ func (x *Exception) GetCreatedAt() *timestamppb.Timestamp {
 		return x.CreatedAt
 	}
 	return nil
+}
+
+func (x *Exception) GetProfileName() string {
+	if x != nil {
+		return x.ProfileName
+	}
+	return ""
+}
+
+func (x *Exception) GetRuleName() string {
+	if x != nil {
+		return x.RuleName
+	}
+	return ""
+}
+
+func (x *Exception) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
 }
 
 // ListExceptionsRequest requests active exceptions for a project.
@@ -12935,10 +12953,14 @@ type CreateExceptionRequest struct {
 	Context *Context `protobuf:"bytes,1,opt,name=context,proto3" json:"context,omitempty"`
 	// entity_id is the ID of the entity being excepted.
 	EntityId string `protobuf:"bytes,2,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
-	// rule_type_id is the ID of the rule type being excepted.
-	RuleTypeId string `protobuf:"bytes,3,opt,name=rule_type_id,json=ruleTypeId,proto3" json:"rule_type_id,omitempty"`
 	// expires_at is when the exception expires.
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// profile_name identifies the profile containing the rule.
+	ProfileName string `protobuf:"bytes,5,opt,name=profile_name,json=profileName,proto3" json:"profile_name,omitempty"`
+	// rule_name identifies the specific rule within the profile.
+	RuleName string `protobuf:"bytes,6,opt,name=rule_name,json=ruleName,proto3" json:"rule_name,omitempty"`
+	// reason is an optional short description explaining the exception.
+	Reason        *string `protobuf:"bytes,7,opt,name=reason,proto3,oneof" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -12987,18 +13009,32 @@ func (x *CreateExceptionRequest) GetEntityId() string {
 	return ""
 }
 
-func (x *CreateExceptionRequest) GetRuleTypeId() string {
-	if x != nil {
-		return x.RuleTypeId
-	}
-	return ""
-}
-
 func (x *CreateExceptionRequest) GetExpiresAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.ExpiresAt
 	}
 	return nil
+}
+
+func (x *CreateExceptionRequest) GetProfileName() string {
+	if x != nil {
+		return x.ProfileName
+	}
+	return ""
+}
+
+func (x *CreateExceptionRequest) GetRuleName() string {
+	if x != nil {
+		return x.RuleName
+	}
+	return ""
+}
+
+func (x *CreateExceptionRequest) GetReason() string {
+	if x != nil && x.Reason != nil {
+		return *x.Reason
+	}
+	return ""
 }
 
 // CreateExceptionResponse contains the created exception.
@@ -16617,29 +16653,32 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01\"P\n" +
 	"\x16RegisterEntityResponse\x126\n" +
-	"\x06entity\x18\x01 \x01(\v2\x19.minder.v1.EntityInstanceB\x03\xe0A\x02R\x06entity\"\xe6\x01\n" +
+	"\x06entity\x18\x01 \x01(\v2\x19.minder.v1.EntityInstanceB\x03\xe0A\x02R\x06entity\"\xb0\x02\n" +
 	"\tException\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x121\n" +
-	"\x06entity\x18\x02 \x01(\v2\x19.minder.v1.EntityInstanceR\x06entity\x12 \n" +
-	"\frule_type_id\x18\x03 \x01(\tR\n" +
-	"ruleTypeId\x129\n" +
+	"\x06entity\x18\x02 \x01(\v2\x19.minder.v1.EntityInstanceR\x06entity\x129\n" +
 	"\n" +
 	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x129\n" +
 	"\n" +
-	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"E\n" +
+	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12!\n" +
+	"\fprofile_name\x18\x06 \x01(\tR\vprofileName\x12\x1b\n" +
+	"\trule_name\x18\a \x01(\tR\bruleName\x12\x16\n" +
+	"\x06reason\x18\b \x01(\tR\x06reasonJ\x04\b\x03\x10\x04R\frule_type_id\"E\n" +
 	"\x15ListExceptionsRequest\x12,\n" +
 	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\"S\n" +
 	"\x16ListExceptionsResponse\x129\n" +
 	"\n" +
 	"exceptions\x18\x01 \x03(\v2\x14.minder.v1.ExceptionB\x03\xe0A\x02R\n" +
-	"exceptions\"\xe7\x01\n" +
+	"exceptions\"\xee\x02\n" +
 	"\x16CreateExceptionRequest\x12,\n" +
 	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12(\n" +
-	"\tentity_id\x18\x02 \x01(\tB\v\xe0A\x02\xbaH\x05r\x03\xb0\x01\x01R\bentityId\x12-\n" +
-	"\frule_type_id\x18\x03 \x01(\tB\v\xe0A\x02\xbaH\x05r\x03\xb0\x01\x01R\n" +
-	"ruleTypeId\x12F\n" +
+	"\tentity_id\x18\x02 \x01(\tB\v\xe0A\x02\xbaH\x05r\x03\xb0\x01\x01R\bentityId\x12F\n" +
 	"\n" +
-	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\v\xe0A\x02\xbaH\x05\xb2\x01\x02@\x01R\texpiresAt\"R\n" +
+	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\v\xe0A\x02\xbaH\x05\xb2\x01\x02@\x01R\texpiresAt\x12&\n" +
+	"\fprofile_name\x18\x05 \x01(\tB\x03\xe0A\x02R\vprofileName\x12F\n" +
+	"\trule_name\x18\x06 \x01(\tB)\xe0A\x02\xbaH#r!\x18\xc8\x012\x1c^[A-Za-z][-/'()[:word:] :]*$R\bruleName\x12%\n" +
+	"\x06reason\x18\a \x01(\tB\b\xbaH\x05r\x03\x18\xf4\x03H\x00R\x06reason\x88\x01\x01B\t\n" +
+	"\a_reasonJ\x04\b\x03\x10\x04R\frule_type_id\"R\n" +
 	"\x17CreateExceptionResponse\x127\n" +
 	"\texception\x18\x01 \x01(\v2\x14.minder.v1.ExceptionB\x03\xe0A\x02R\texception\"c\n" +
 	"\x16DeleteExceptionRequest\x12,\n" +
@@ -16762,7 +16801,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x16RELATION_ENTITY_UPDATE\x10,\x1a\x11\xea\xdc\x14\rentity_update\x12-\n" +
 	"\x16RELATION_ENTITY_DELETE\x10-\x1a\x11\xea\xdc\x14\rentity_delete\x12-\n" +
 	"\x16RELATION_EXCEPTION_GET\x10.\x1a\x11\xea\xdc\x14\rexception_get\x123\n" +
-	"\x19RELATION_EXCEPTION_CREATE\x10/\x1a\x14\xea\xdc\x14\x10exception_create\x123\n" +
+	"\x19RELATION_EXCEPTION_UPSERT\x10/\x1a\x14\xea\xdc\x14\x10exception_upsert\x123\n" +
 	"\x19RELATION_EXCEPTION_DELETE\x100\x1a\x14\xea\xdc\x14\x10exception_delete*\x82\x01\n" +
 	"\x0eTargetResource\x12\x1f\n" +
 	"\x1bTARGET_RESOURCE_UNSPECIFIED\x10\x00\x12\x18\n" +
@@ -17698,6 +17737,7 @@ func file_minder_v1_minder_proto_init() {
 	file_minder_v1_minder_proto_msgTypes[179].OneofWrappers = []any{
 		(*ProviderParameter_GithubApp)(nil),
 	}
+	file_minder_v1_minder_proto_msgTypes[206].OneofWrappers = []any{}
 	file_minder_v1_minder_proto_msgTypes[211].OneofWrappers = []any{
 		(*DataSource_Structured)(nil),
 		(*DataSource_Rest)(nil),

@@ -111,7 +111,7 @@ ExceptionService provides API endpoints for managing exceptions.
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | ListExceptions | [ListExceptionsRequest](#minder-v1-ListExceptionsRequest) | [ListExceptionsResponse](#minder-v1-ListExceptionsResponse) | ListExceptions returns active exceptions for the current project. |
-| CreateException | [CreateExceptionRequest](#minder-v1-CreateExceptionRequest) | [CreateExceptionResponse](#minder-v1-CreateExceptionResponse) | CreateException creates or updates an exception. |
+| CreateException | [CreateExceptionRequest](#minder-v1-CreateExceptionRequest) | [CreateExceptionResponse](#minder-v1-CreateExceptionResponse) | CreateException creates or updates (upserts) an exception identified by the entity, profile name, and rule name. If an exception already exists for that identity, it is updated. When updating, a supplied reason replaces the existing reason; an omitted reason preserves it. |
 | DeleteException | [DeleteExceptionRequest](#minder-v1-DeleteExceptionRequest) | [DeleteExceptionResponse](#minder-v1-DeleteExceptionResponse) | DeleteException deletes an exception. |
 
 
@@ -476,8 +476,10 @@ CreateExceptionRequest specifies an exception to create.
 | ----- | ---- | ----- | ----------- |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context identifies the project. |
 | entity_id | <TypeLink type="string">string</TypeLink> |  | entity_id is the ID of the entity being excepted. |
-| rule_type_id | <TypeLink type="string">string</TypeLink> |  | rule_type_id is the ID of the rule type being excepted. |
 | expires_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | expires_at is when the exception expires. |
+| profile_name | <TypeLink type="string">string</TypeLink> |  | profile_name identifies the profile containing the rule. |
+| rule_name | <TypeLink type="string">string</TypeLink> |  | rule_name identifies the specific rule within the profile. |
+| reason | <TypeLink type="string">string</TypeLink> | optional | reason is an optional short description explaining the exception. |
 
 
 
@@ -1135,16 +1137,18 @@ This is only used in responses.
 
 <Message id="minder-v1-Exception">Exception</Message>
 
-Exception represents an exception for an entity and rule type.
+Exception represents an exception for an entity and rule instance.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | <TypeLink type="string">string</TypeLink> |  | id is the unique identifier of the exception. |
 | entity | <TypeLink type="minder-v1-EntityInstance">EntityInstance</TypeLink> |  | entity is the entity associated with the exception. |
-| rule_type_id | <TypeLink type="string">string</TypeLink> |  | rule_type_id is the ID of the rule type being excepted. |
 | expires_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | expires_at is when the exception expires. |
 | created_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | created_at is when the exception was created. |
+| profile_name | <TypeLink type="string">string</TypeLink> |  | profile_name identifies the profile containing the rule. |
+| rule_name | <TypeLink type="string">string</TypeLink> |  | rule_name identifies the specific rule within the profile. |
+| reason | <TypeLink type="string">string</TypeLink> |  | reason is a short description explaining why the exception was created. |
 
 
 
@@ -3562,7 +3566,7 @@ existing ones.
 | RELATION_ENTITY_UPDATE | 44 |  |
 | RELATION_ENTITY_DELETE | 45 |  |
 | RELATION_EXCEPTION_GET | 46 |  |
-| RELATION_EXCEPTION_CREATE | 47 |  |
+| RELATION_EXCEPTION_UPSERT | 47 |  |
 | RELATION_EXCEPTION_DELETE | 48 |  |
 
 

@@ -998,7 +998,7 @@
     },
     "/api/v1/exception": {
       "post": {
-        "summary": "CreateException creates or updates an exception.",
+        "summary": "CreateException creates or updates (upserts) an exception identified by\nthe entity, profile name, and rule name. If an exception already exists\nfor that identity, it is updated. When updating, a supplied reason\nreplaces the existing reason; an omitted reason preserves it.",
         "operationId": "ExceptionService_CreateException",
         "responses": {
           "200": {
@@ -4332,21 +4332,30 @@
           "type": "string",
           "description": "entity_id is the ID of the entity being excepted."
         },
-        "ruleTypeId": {
-          "type": "string",
-          "description": "rule_type_id is the ID of the rule type being excepted."
-        },
         "expiresAt": {
           "type": "string",
           "format": "date-time",
           "description": "expires_at is when the exception expires."
+        },
+        "profileName": {
+          "type": "string",
+          "description": "profile_name identifies the profile containing the rule."
+        },
+        "ruleName": {
+          "type": "string",
+          "description": "rule_name identifies the specific rule within the profile."
+        },
+        "reason": {
+          "type": "string",
+          "description": "reason is an optional short description explaining the exception."
         }
       },
       "description": "CreateExceptionRequest specifies an exception to create.",
       "required": [
         "entityId",
-        "ruleTypeId",
-        "expiresAt"
+        "expiresAt",
+        "profileName",
+        "ruleName"
       ]
     },
     "v1CreateExceptionResponse": {
@@ -4986,10 +4995,6 @@
           "$ref": "#/definitions/v1EntityInstance",
           "description": "entity is the entity associated with the exception."
         },
-        "ruleTypeId": {
-          "type": "string",
-          "description": "rule_type_id is the ID of the rule type being excepted."
-        },
         "expiresAt": {
           "type": "string",
           "format": "date-time",
@@ -4999,9 +5004,21 @@
           "type": "string",
           "format": "date-time",
           "description": "created_at is when the exception was created."
+        },
+        "profileName": {
+          "type": "string",
+          "description": "profile_name identifies the profile containing the rule."
+        },
+        "ruleName": {
+          "type": "string",
+          "description": "rule_name identifies the specific rule within the profile."
+        },
+        "reason": {
+          "type": "string",
+          "description": "reason is a short description explaining why the exception was created."
         }
       },
-      "description": "Exception represents an exception for an entity and rule type."
+      "description": "Exception represents an exception for an entity and rule instance."
     },
     "v1GetArtifactByIdResponse": {
       "type": "object",
