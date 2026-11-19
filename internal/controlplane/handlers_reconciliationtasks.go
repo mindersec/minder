@@ -90,17 +90,15 @@ func getRepositoryReconciliationMessage(ctx context.Context, store db.Store,
 		return nil, status.Errorf(codes.InvalidArgument, "error parsing repository id: %v", err)
 	}
 
-	// Fetch entity by ID
-	ent, err := store.GetEntityByID(ctx, repoUUID)
+	// Fetch entity by ID, scoped to the project
+	ent, err := store.GetEntityByIDAndProject(ctx, db.GetEntityByIDAndProjectParams{
+		ID:        repoUUID,
+		ProjectID: entityCtx.Project.ID,
+	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
 	} else if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
-	}
-
-	// Verify project matches
-	if ent.ProjectID != entityCtx.Project.ID {
-		return nil, status.Errorf(codes.NotFound, "repository not found")
 	}
 
 	// Telemetry logging
