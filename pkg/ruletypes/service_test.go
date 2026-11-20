@@ -526,8 +526,30 @@ func withBasicStructure(ruleType *pb.RuleType) {
 	ruleType.Def = &pb.RuleType_Definition{
 		InEntity:   string(pb.RepositoryEntity),
 		RuleSchema: &structpb.Struct{},
-		Ingest:     &pb.RuleType_Definition_Ingest{},
-		Eval:       &pb.RuleType_Definition_Eval{},
+		// The bunch of tests don't set these payloads, but the
+		// validators require a known ingest/eval type, so we use
+		// minimal valid rest/jq definitions here. The jq eval (rather
+		// than rego) also keeps rego version detection at "v0", which
+		// most test expectations rely on.
+		Ingest: &pb.RuleType_Definition_Ingest{
+			Type: pb.IngestTypeRest,
+			Rest: &pb.RestType{
+				Endpoint: "https://example.com/api",
+			},
+		},
+		Eval: &pb.RuleType_Definition_Eval{
+			Type: "jq",
+			Jq: []*pb.RuleType_Definition_Eval_JQComparison{
+				{
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
+						Def: ".",
+					},
+					Profile: &pb.RuleType_Definition_Eval_JQComparison_Operator{
+						Def: ".",
+					},
+				},
+			},
+		},
 	}
 	ruleType.Severity = &pb.Severity{Value: pb.Severity_VALUE_HIGH}
 }

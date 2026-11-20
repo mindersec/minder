@@ -216,7 +216,15 @@ func (ev *RuleType_Definition_Eval) Validate() error {
 	}
 
 	// Not using import to avoid circular dependency
+	//
+	// Note that unknown eval types are deliberately accepted: this
+	// validator ships as part of the client-facing API package, and old
+	// clients must keep being able to read rule types that use eval
+	// types introduced after their release. The set of types the engine
+	// actually supports is enforced server-side.
 	switch ev.Type {
+	case "":
+		return fmt.Errorf("%w: eval type is empty", ErrInvalidRuleTypeDefinition)
 	case "rego":
 		if err := ev.GetRego().Validate(); err != nil {
 			return err
@@ -231,7 +239,6 @@ func (ev *RuleType_Definition_Eval) Validate() error {
 				return fmt.Errorf("jq rule %d is invalid: %w", i, err)
 			}
 		}
-		// TODO: we don't have a default case here, and a bunch of tests don't set type
 	}
 
 	if ev.GetDataSources() != nil {
@@ -347,7 +354,12 @@ func (ing *RuleType_Definition_Ingest) Validate() error {
 		return fmt.Errorf("%w: ingest is nil", ErrInvalidRuleTypeDefinition)
 	}
 
+	// Unknown ingest types are deliberately accepted for forward
+	// compatibility with clients older than the types they may read;
+	// the supported set is enforced server-side. See the eval validator.
 	switch ing.Type {
+	case "":
+		return fmt.Errorf("%w: ingest type is empty", ErrInvalidRuleTypeDefinition)
 	case IngestTypeDiff:
 		if ing.GetDiff() == nil {
 			return fmt.Errorf("%w: diff ingest is nil", ErrInvalidRuleTypeDefinition)
@@ -358,7 +370,6 @@ func (ing *RuleType_Definition_Ingest) Validate() error {
 		if err := ing.GetRest().Validate(); err != nil {
 			return err
 		}
-		// TODO: we don't have a default here, and a bunch of tests don't set type
 	}
 
 	return nil

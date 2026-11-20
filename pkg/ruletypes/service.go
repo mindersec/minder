@@ -486,6 +486,10 @@ func (s *ruleTypeService) validateRuleTypeCommon(ctx context.Context, ruleType *
 		return "", errors.Join(ErrRuleTypeInvalid, err)
 	}
 
+	if err := validateEvalAndIngestTypes(ruleType); err != nil {
+		return "", errors.Join(ErrRuleTypeInvalid, err)
+	}
+
 	regoVersion, err := s.validateAndDetectRegoVersion(ctx, ruleType)
 	if err != nil {
 		return "", errors.Join(ErrRuleTypeInvalid, err)
@@ -500,4 +504,30 @@ func (s *ruleTypeService) validateRuleTypeCommon(ctx context.Context, ruleType *
 	}
 
 	return regoVersion, nil
+}
+
+// validateEvalAndIngestTypes enforces that the rule type uses an eval/ingest
+// type the engine factories actually support. This runs server-side rather
+// than in the shared pb validators: the API package is vendored by clients
+// (e.g. the CLI), and older clients must keep being able to parse rule types
+// using types introduced after their release.
+//
+// The lists below must be kept in sync with the factory switches in
+// internal/engine/eval/eval.go and internal/engine/ingester/ingester.go.
+func validateEvalAndIngestTypes(ruleType *pb.RuleType) error {
+	evalType := ruleType.Def.GetEval().GetType()
+	switch evalType {
+	case "rego", "jq", "vulncheck", "trusty", "homoglyphs":
+	default:
+		return fmt.Errorf("unsupported eval type: %s", evalType)
+	}
+
+	ingestType := ruleType.Def.GetIngest().GetType()
+	switch ingestType {
+	case pb.IngestTypeRest, pb.IngestTypeDiff, "builtin", "artifact", "git", "deps":
+	default:
+		return fmt.Errorf("unsupported ingest type: %s", ingestType)
+	}
+
+	return nil
 }
