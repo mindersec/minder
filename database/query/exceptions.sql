@@ -3,17 +3,26 @@
 INSERT INTO exceptions (
     project_id,
     entity_id,
-    rule_type_id,
+    profile_name,
+    rule_name,
+    reason,
     expires_at
 ) VALUES (
     sqlc.arg(project_id),
     sqlc.arg(entity_id),
-    sqlc.arg(rule_type_id),
+    sqlc.arg(profile_name),
+    sqlc.arg(rule_name),
+    sqlc.arg(reason),
     sqlc.arg(expires_at)
 )
-ON CONFLICT (entity_id, rule_type_id)
+ON CONFLICT (entity_id, lower(profile_name), lower(rule_name))
 DO UPDATE SET
-    expires_at = EXCLUDED.expires_at
+    expires_at = EXCLUDED.expires_at,
+    reason = CASE
+      WHEN sqlc.arg(reason_provided)::boolean
+      THEN EXCLUDED.reason
+      ELSE exceptions.reason
+    END
 RETURNING *;
 
 -- ListExceptions lists active exceptions for a project
