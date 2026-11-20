@@ -12,6 +12,7 @@ import (
 	"net/url"
 
 	"github.com/lestrrat-go/jwx/v3/jwt"
+	"github.com/rs/zerolog"
 	"golang.org/x/oauth2/clientcredentials"
 
 	"github.com/mindersec/minder/internal/auth"
@@ -78,27 +79,21 @@ func (k *KeyCloak) URL() url.URL {
 
 // Resolve implements auth.IdentityProvider.
 func (k *KeyCloak) Resolve(ctx context.Context, id string) (*auth.Identity, error) {
-	// First, look up by user ID
-	resp, err := k.kcClient.GetAdminRealmsRealmUsersUserIdWithResponse(ctx, k.realm, id, nil)
-	if err == nil && resp.StatusCode() == http.StatusOK {
-		id := k.userToIdentity(*resp.JSON200)
-		if id != nil {
-			return id, nil
-		}
+	// Keycloak doesn't guarantee that user IDs and usernames look different,
+	// so try id as a user ID first, then as a username.
+	ident, byID := k.lookupByID(ctx, id)
+	if ident != nil {
+		return ident, nil
 	}
-
-	// next, try lookup by username
-	userLookup, err := k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, k.realm, &client.GetAdminRealmsRealmUsersParams{
+	ident, byUsername := k.searchUsers(ctx, "by_username", &client.GetAdminRealmsRealmUsersParams{
 		Exact:    ptr.Ptr(true),
 		Username: &id,
 	})
-	if err == nil && userLookup.StatusCode() == http.StatusOK && len(*userLookup.JSON200) == 1 {
-		id := k.userToIdentity((*userLookup.JSON200)[0])
-		if id != nil {
-			return id, nil
-		}
+	if ident != nil {
+		return ident, nil
 	}
 
+	k.logNoIdentity(ctx, byID, byUsername)
 	return nil, auth.ErrNotFound
 }
 
@@ -109,17 +104,114 @@ func (k *KeyCloak) ResolveFederated(ctx context.Context, federatedIdP, id string
 	}
 
 	// try lookup by GitHub numeric ID (legacy Keycloak behavior)
-	userLookup, err := k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, k.realm, &client.GetAdminRealmsRealmUsersParams{
+	ident, byGitHubID := k.searchUsers(ctx, "by_github_id", &client.GetAdminRealmsRealmUsersParams{
 		Q: ptr.Ptr(fmt.Sprintf("gh_id:%s", id)),
 	})
-	if err == nil && userLookup.StatusCode() == http.StatusOK && len(*userLookup.JSON200) == 1 {
-		id := k.userToIdentity((*userLookup.JSON200)[0])
-		if id != nil {
-			return id, nil
-		}
+	if ident != nil {
+		return ident, nil
 	}
 
+	k.logNoIdentity(ctx, byGitHubID)
 	return nil, auth.ErrNotFound
+}
+
+// lookupMiss records what one Keycloak user lookup returned when it didn't
+// produce an identity.
+type lookupMiss struct {
+	lookup  string
+	err     error
+	status  int
+	matches int
+	// byID marks the lookup by user ID. Keycloak answers it with 404 when the
+	// user doesn't exist, while a user search returns 200 and an empty list.
+	byID bool
+}
+
+// unexpected reports whether the miss points at something other than the
+// user not existing, such as the admin API refusing or never receiving the
+// request (a gateway that doesn't route /admin answers 404 to searches too).
+func (m lookupMiss) unexpected() bool {
+	switch {
+	case m.err != nil:
+		return true
+	case m.status == http.StatusOK:
+		// A user came back, but without the fields userToIdentity needs.
+		return m.byID || m.matches > 0
+	case m.status == http.StatusNotFound:
+		return !m.byID
+	default:
+		return true
+	}
+}
+
+func (m lookupMiss) fields() *zerolog.Event {
+	d := zerolog.Dict()
+	if m.err != nil {
+		return d.AnErr("error", m.err)
+	}
+	d = d.Int("status", m.status)
+	if m.status == http.StatusOK && !m.byID {
+		d = d.Int("matches", m.matches)
+	}
+	return d
+}
+
+// lookupByID fetches the user whose Keycloak ID is id.
+func (k *KeyCloak) lookupByID(ctx context.Context, id string) (*auth.Identity, lookupMiss) {
+	miss := lookupMiss{lookup: "by_id", byID: true}
+	resp, err := k.kcClient.GetAdminRealmsRealmUsersUserIdWithResponse(ctx, k.realm, id, nil)
+	if err != nil {
+		miss.err = err
+		return nil, miss
+	}
+	miss.status = resp.StatusCode()
+	if miss.status == http.StatusOK && resp.JSON200 != nil {
+		if ident := k.userToIdentity(*resp.JSON200); ident != nil {
+			return ident, miss
+		}
+	}
+	return nil, miss
+}
+
+// searchUsers returns the identity of the only user matching params.
+func (k *KeyCloak) searchUsers(
+	ctx context.Context, lookup string, params *client.GetAdminRealmsRealmUsersParams,
+) (*auth.Identity, lookupMiss) {
+	miss := lookupMiss{lookup: lookup}
+	resp, err := k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, k.realm, params)
+	if err != nil {
+		miss.err = err
+		return nil, miss
+	}
+	miss.status = resp.StatusCode()
+	if miss.status != http.StatusOK || resp.JSON200 == nil {
+		return nil, miss
+	}
+	miss.matches = len(*resp.JSON200)
+	if miss.matches == 1 {
+		if ident := k.userToIdentity((*resp.JSON200)[0]); ident != nil {
+			return ident, miss
+		}
+	}
+	return nil, miss
+}
+
+// logNoIdentity logs every lookup that Resolve or ResolveFederated tried
+// before returning auth.ErrNotFound. Without it, a 401, 403 or 404 from the
+// admin API looks the same as a user who doesn't exist. It logs at warn level
+// if any lookup failed for another reason than the user not existing.
+func (k *KeyCloak) logNoIdentity(ctx context.Context, misses ...lookupMiss) {
+	level := zerolog.DebugLevel
+	for _, m := range misses {
+		if m.unexpected() {
+			level = zerolog.WarnLevel
+		}
+	}
+	event := zerolog.Ctx(ctx).WithLevel(level).Str("realm", k.realm)
+	for _, m := range misses {
+		event = event.Dict(m.lookup, m.fields())
+	}
+	event.Msg("keycloak found no matching user")
 }
 
 // Validate implements auth.IdentityProvider.
