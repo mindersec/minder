@@ -122,9 +122,9 @@ profiles and ensure the specifics of their security posture are attested to.
 For more information about `minder`, see:
 
 - `minder` CLI commands -
-  [Docs](https://mindersec.github.io/ref/cli/minder).
+  [Docs](../ref/cli/minder.md).
 - `minder` REST API Documentation -
-  [Docs](https://mindersec.github.io/ref/api).
+  [Docs](../ref/api.mdx).
 - `minder` rules and profiles maintained by Minder's team -
   [GitHub](https://github.com/mindersec/minder-rules-and-profiles).
-- Minder documentation - [Docs](https://mindersec.github.io/).
+- Minder documentation - [Docs](https://docs.mindersec.dev/).

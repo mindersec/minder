@@ -181,7 +181,7 @@ sentence.
 
 ### Minder technical terms
 
-See also: [Key concepts](https://mindersec.github.io/understand/key_concepts)
+See also: [Key concepts](https://docs.mindersec.dev/understand/key_concepts)
 
 **alert**: a rule evaluation that has a status of _failure_ or _error_; this is
 something that should be shown to the user for a problem to resolve.

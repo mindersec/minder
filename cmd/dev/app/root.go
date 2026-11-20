@@ -23,7 +23,7 @@ func CmdRoot() *cobra.Command {
 		Short:         "mindev provides developer tooling for minder",
 		SilenceErrors: true,
 		Long: `For more information about minder, please visit:
-https://mindersec.github.io/`,
+https://docs.mindersec.dev/`,
 	}
 
 	cmd.AddCommand(rule_type.CmdRuleType())

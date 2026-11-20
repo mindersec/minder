@@ -1,7 +1,7 @@
 # Minder documentation
 
 This directory contains the user documentation for Minder, hosted at
-<https://mindersec.github.io>.
+<https://docs.mindersec.dev>.
 
 The docs are built with [Docusaurus](https://docusaurus.io/), an open source
 static website generator optimized for documentation use cases.
