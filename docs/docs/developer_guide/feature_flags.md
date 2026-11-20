@@ -26,7 +26,7 @@ Appropriate usages of feature flags:
   needing to build and push a new binary or config option (particularly if other
   code has changed in the meantime). In this case, feature flags provide a
   consistent way of managing configuration as an alternative to
-  `internal/config/server`. Note that _feature flags_ affect a particular
+  `pkg/config/server`. Note that _feature flags_ affect a particular
   invocation (based on the user or project in question), while _config_
   generally affects all behavior of the server.
 
@@ -44,7 +44,7 @@ flags once the feature is considered "stable". Here are some examples of
 alternative mechanisms to use for long-term behavior changes:
 
 - **Server configuration**. See
-  [`internal/config/server`](https://github.com/mindersec/minder/tree/main/internal/config/server)
+  [`pkg/config/server`](https://github.com/mindersec/minder/tree/main/pkg/config/server)
   for long-term options that should be on or off at server startup and don't
   need to change based on the invocation.
 

@@ -44,7 +44,7 @@ The APIs are defined in protobuf
 [here](https://github.com/mindersec/minder/blob/main/proto/minder/v1/minder.proto).
 
 An OpenAPI / swagger spec is generated to
-[here](https://github.com/mindersec/minder/blob/main/pkg/api/openapi/proto/minder/v1/minder.swagger.json)
+[here](https://github.com/mindersec/minder/blob/main/pkg/api/openapi/minder/v1/minder.swagger.json)
 
 It can be accessed over gRPC or HTTP using
 [gprc-gateway](https://grpc-ecosystem.github.io/grpc-gateway/).

@@ -222,5 +222,5 @@ also write your own rule types and integrations.
 
 Here are some resources to get you started:
 
-- https://stacklok.com/blog/how-to-create-new-rule-types-in-minder-to-apply-custom-github-repo-security-settings
-- https://stacklok.com/blog/writing-minder-rule-types-with-open-policy-agent-and-rego
+- [How to create new rule types in Minder to apply custom GitHub repo security settings](https://web.archive.org/web/20250419113917/https://stacklok.com/blog/how-to-create-new-rule-types-in-minder-to-apply-custom-github-repo-security-settings) (archived)
+- [Writing Minder rule types with Open Policy Agent and Rego](https://web.archive.org/web/20241104122055/https://stacklok.com/blog/writing-minder-rule-types-with-open-policy-agent-and-rego) (archived)

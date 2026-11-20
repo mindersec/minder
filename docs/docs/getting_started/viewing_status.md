@@ -91,14 +91,14 @@ looks for secret scanning to be enabled in your repository, then _disabling_
 secret scanning in that repository should produce a GitHub Security Advisory.
 
 In this example, if you
-[disable secret scanning](https://docs.github.com/en/code-security/secret-scanning/configuring-secret-scanning-for-your-repositories)
+[disable secret scanning](https://docs.github.com/en/code-security/how-tos/secure-your-secrets/detect-secret-leaks/enable-secret-scanning)
 in one of your registered repositories, Minder will create a GitHub Security
 Advisory in that repository. To view that, navigate to the repository on GitHub,
 click on the Security tab and view the Security Advisories. There will be a new
 advisories named `minder: profile my_profile failed with rule secret_scanning`.
 
 To resolve this issue, you can
-[enable secret scanning](https://docs.github.com/en/code-security/secret-scanning/configuring-secret-scanning-for-your-repositories)
+[enable secret scanning](https://docs.github.com/en/code-security/how-tos/secure-your-secrets/detect-secret-leaks/enable-secret-scanning)
 in that repository. When you do this, the advisory will be deleted. If you go
 back to the Security Advisories page on that repository, you will see that the
 advisory that was created by Minder has been closed.
