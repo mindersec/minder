@@ -80,10 +80,6 @@ func TestArtifactReminderFlowsToRefreshAndEvaluate(t *testing.T) {
 	}
 
 	store.EXPECT().ListEntitiesAfterID(gomock.Any(), db.ListEntitiesAfterIDParams{
-		EntityType: db.EntitiesRepository, ID: uuid.Nil, Limit: 100,
-	}).Return(nil, nil)
-	store.EXPECT().ListOldestRuleEvaluationsByEntityID(gomock.Any(), []uuid.UUID{}).Return(nil, nil)
-	store.EXPECT().ListEntitiesAfterID(gomock.Any(), db.ListEntitiesAfterIDParams{
 		EntityType: db.EntitiesArtifact, ID: uuid.Nil, Limit: 5,
 	}).Return([]db.EntityInstance{artifact}, nil)
 	store.EXPECT().ListOldestRuleEvaluationsByEntityID(gomock.Any(), []uuid.UUID{artifact.ID}).
@@ -129,7 +125,7 @@ func TestArtifactReminderFlowsToRefreshAndEvaluate(t *testing.T) {
 	})
 	r.eventPublisher = bus
 
-	require.NoError(t, r.sendReminders(context.Background(), time.Now()))
+	require.NoError(t, entityReminderFor(t, r, db.EntitiesArtifact).sendReminders(context.Background()))
 
 	require.Len(t, bus.sent[constants.TopicQueueRepoReminder], 1)
 	require.Len(t, bus.sent[constants.TopicQueueReconcileRepoInit], 1)

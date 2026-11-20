@@ -6,7 +6,9 @@ package reminder
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -163,15 +165,16 @@ func Test_getEntityBatch(t *testing.T) {
 			}
 
 			r := createTestReminder(t, store, cfg)
+			er := newTestEntityReminder(t, r, db.EntitiesRepository)
 
-			got, _, err := r.getEntityBatch(context.Background(), db.EntitiesRepository)
+			got, _, err := er.getEntityBatch(context.Background())
 			if test.err != "" {
 				require.ErrorContains(t, err, test.err)
 				return
 			}
 			require.NoError(t, err)
 			require.ElementsMatch(t, got, test.expectedOutput.repos)
-			require.Equal(t, test.expectedOutput.repoCursor, r.cursors[db.EntitiesRepository])
+			require.Equal(t, test.expectedOutput.repoCursor, er.cursor)
 		})
 	}
 }
@@ -198,16 +201,18 @@ func Test_sendReminders_onlyRepositoriesByDefault(t *testing.T) {
 	r := createTestReminder(t, store, &reminderconfig.Config{
 		RecurrenceConfig: reminderconfig.RecurrenceConfig{Interval: time.Hour, BatchSize: 5, MinElapsed: time.Minute},
 	})
-	require.Equal(t, []db.Entities{db.EntitiesRepository}, r.entityTypes)
+	require.Len(t, r.entityReminders, 1)
+	er := r.entityReminders[0]
+	require.Equal(t, db.EntitiesRepository, er.entityType)
 	pub := &fakePublisher{}
 	r.eventPublisher = pub
 
-	require.NoError(t, r.sendReminders(context.Background(), time.Now()))
+	require.NoError(t, er.sendReminders(context.Background()))
 
 	require.Len(t, pub.published, 1)
 	require.Equal(t, constants.TopicQueueRepoReminder, pub.published[0].topic)
 	require.Len(t, pub.published[0].messages, 2)
-	require.Equal(t, map[db.Entities]uuid.UUID{db.EntitiesRepository: uuid.Nil}, r.cursors)
+	require.Equal(t, uuid.Nil, er.cursor)
 }
 
 func Test_getEntityBatch_perTypeCursorAcrossBatches(t *testing.T) {
@@ -255,56 +260,26 @@ func Test_getEntityBatch_perTypeCursorAcrossBatches(t *testing.T) {
 	r := createTestReminder(t, store, &reminderconfig.Config{
 		RecurrenceConfig: reminderconfig.RecurrenceConfig{BatchSize: 2, MinElapsed: time.Minute},
 	})
+	repoReminder := newTestEntityReminder(t, r, db.EntitiesRepository)
+	artifactReminder := newTestEntityReminder(t, r, db.EntitiesArtifact)
 	ctx := context.Background()
 
-	got, _, err := r.getEntityBatch(ctx, db.EntitiesRepository)
+	got, _, err := repoReminder.getEntityBatch(ctx)
 	require.NoError(t, err)
 	require.ElementsMatch(t, repos[:2], got)
-	require.Equal(t, repos[1].ID, r.cursors[db.EntitiesRepository])
+	require.Equal(t, repos[1].ID, repoReminder.cursor)
 
-	got, _, err = r.getEntityBatch(ctx, db.EntitiesArtifact)
+	got, _, err = artifactReminder.getEntityBatch(ctx)
 	require.NoError(t, err)
 	require.ElementsMatch(t, artifacts, got)
-	require.Equal(t, uuid.Nil, r.cursors[db.EntitiesArtifact])
-	require.Equal(t, repos[1].ID, r.cursors[db.EntitiesRepository])
+	require.Equal(t, uuid.Nil, artifactReminder.cursor)
+	require.Equal(t, repos[1].ID, repoReminder.cursor)
 
-	got, _, err = r.getEntityBatch(ctx, db.EntitiesRepository)
+	got, _, err = repoReminder.getEntityBatch(ctx)
 	require.NoError(t, err)
 	require.ElementsMatch(t, repos[2:], got)
-	require.Equal(t, uuid.Nil, r.cursors[db.EntitiesRepository])
-	require.Equal(t, uuid.Nil, r.cursors[db.EntitiesArtifact])
-}
-
-func Test_sendReminders_errorInOneTypeDoesNotSkipOthers(t *testing.T) {
-	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-	store := mockdb.NewMockStore(ctrl)
-	artifacts := []db.EntityInstance{{ID: generateUUIDFromNum(t, 11), EntityType: db.EntitiesArtifact}}
-
-	gomock.InOrder(
-		store.EXPECT().ListEntitiesAfterID(gomock.Any(), gomock.Any()).Return(nil, sql.ErrConnDone),
-		store.EXPECT().ListEntitiesAfterID(gomock.Any(), gomock.Any()).Return(artifacts, nil),
-		store.EXPECT().ListOldestRuleEvaluationsByEntityID(gomock.Any(), gomock.Any()).
-			Return(getStandardOldestRuleEvals(t, artifacts), nil),
-		store.EXPECT().EntityExistsAfterID(gomock.Any(), gomock.Any()).Return(false, nil),
-	)
-
-	r := createTestReminder(t, store, &reminderconfig.Config{
-		RecurrenceConfig: reminderconfig.RecurrenceConfig{
-			Interval: time.Hour, BatchSize: 5, MinElapsed: time.Minute,
-			Entities: map[db.Entities]reminderconfig.EntityRecurrenceConfig{db.EntitiesArtifact: {Enabled: ptr(true)}},
-		},
-	})
-	require.Equal(t, []db.Entities{db.EntitiesRepository, db.EntitiesArtifact}, r.entityTypes)
-	pub := &fakePublisher{}
-	r.eventPublisher = pub
-
-	err := r.sendReminders(context.Background(), time.Now())
-	require.ErrorIs(t, err, sql.ErrConnDone)
-	require.ErrorContains(t, err, string(db.EntitiesRepository))
-	require.Len(t, pub.published, 1)
-	require.Len(t, pub.published[0].messages, 1)
+	require.Equal(t, uuid.Nil, repoReminder.cursor)
+	require.Equal(t, uuid.Nil, artifactReminder.cursor)
 }
 
 type publishedBatch struct {
@@ -313,16 +288,32 @@ type publishedBatch struct {
 }
 
 type fakePublisher struct {
+	mu        sync.Mutex
 	published []publishedBatch
+	closed    bool
 }
 
 func (f *fakePublisher) Publish(topic string, messages ...*message.Message) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.closed {
+		return errors.New("publisher closed")
+	}
 	f.published = append(f.published, publishedBatch{topic: topic, messages: messages})
 	return nil
 }
 
-func (*fakePublisher) Close() error {
+func (f *fakePublisher) Close() error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.closed = true
 	return nil
+}
+
+func (f *fakePublisher) isClosed() bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.closed
 }
 
 func generateUUIDFromNum(t *testing.T, num int) uuid.UUID {
@@ -357,13 +348,46 @@ func getReposTillId(t *testing.T, id int) []db.EntityInstance {
 func createTestReminder(t *testing.T, store db.Store, config *reminderconfig.Config) *reminder {
 	t.Helper()
 
-	return &reminder{
-		store:       store,
-		cfg:         config,
-		entityTypes: enabledEntityTypes(config.RecurrenceConfig),
-		cursors:     make(map[db.Entities]uuid.UUID),
-		nextDue:     make(map[db.Entities]time.Time),
+	r := &reminder{
+		store:             store,
+		cfg:               config,
+		stop:              make(chan struct{}),
+		metricsServerDone: make(chan struct{}),
+		newTicker:         realTicker,
+		eventPublisher:    &fakePublisher{},
 	}
+	if types := enabledEntityTypes(config.RecurrenceConfig); len(types) > 0 && config.RecurrenceConfig.Interval > 0 {
+		ers, err := r.newEntityReminders(types)
+		require.NoError(t, err)
+		for _, er := range ers {
+			er.cursor = uuid.Nil
+		}
+		r.entityReminders = ers
+	}
+	return r
+}
+
+func newTestEntityReminder(t *testing.T, r *reminder, entityType db.Entities) *entityReminder {
+	t.Helper()
+
+	return &entityReminder{
+		reminder:       r,
+		entityType:     entityType,
+		recurrence:     r.cfg.RecurrenceConfig.ForEntityType(entityType),
+		entityTypeAttr: metrics.EntityTypeAttribute(string(entityType)),
+	}
+}
+
+func entityReminderFor(t *testing.T, r *reminder, entityType db.Entities) *entityReminder {
+	t.Helper()
+
+	for _, er := range r.entityReminders {
+		if er.entityType == entityType {
+			return er
+		}
+	}
+	t.Fatalf("no entity reminder for %s", entityType)
+	return nil
 }
 
 func getStandardOldestRuleEvals(t *testing.T, repos []db.EntityInstance) []db.ListOldestRuleEvaluationsByEntityIDRow {
@@ -433,44 +457,49 @@ func Test_enabledEntityTypes(t *testing.T) {
 	}
 }
 
-func Test_tickInterval(t *testing.T) {
+func Test_newEntityReminders(t *testing.T) {
 	t.Parallel()
 
-	newReminder := func(cfg reminderconfig.RecurrenceConfig) *reminder {
-		return createTestReminder(t, nil, &reminderconfig.Config{RecurrenceConfig: cfg})
+	build := func(cfg reminderconfig.RecurrenceConfig) ([]*entityReminder, error) {
+		r := &reminder{cfg: &reminderconfig.Config{RecurrenceConfig: cfg}}
+		return r.newEntityReminders(enabledEntityTypes(cfg))
+	}
+	intervals := func(ers []*entityReminder) map[db.Entities]time.Duration {
+		out := make(map[db.Entities]time.Duration, len(ers))
+		for _, er := range ers {
+			out[er.entityType] = er.recurrence.Interval
+		}
+		return out
 	}
 
-	got, err := newReminder(reminderconfig.RecurrenceConfig{Interval: time.Hour}).tickInterval()
+	ers, err := build(reminderconfig.RecurrenceConfig{Interval: time.Hour})
 	require.NoError(t, err)
-	require.Equal(t, time.Hour, got)
+	require.Equal(t, map[db.Entities]time.Duration{db.EntitiesRepository: time.Hour}, intervals(ers))
 
-	got, err = newReminder(reminderconfig.RecurrenceConfig{
+	ers, err = build(reminderconfig.RecurrenceConfig{
 		Interval: time.Hour,
 		Entities: map[db.Entities]reminderconfig.EntityRecurrenceConfig{
 			db.EntitiesArtifact: {Enabled: ptr(true), Interval: ptr(6 * time.Hour)},
 		},
-	}).tickInterval()
+	})
 	require.NoError(t, err)
-	require.Equal(t, time.Hour, got, "tick runs at the shortest enabled interval")
+	require.Equal(t, map[db.Entities]time.Duration{
+		db.EntitiesRepository: time.Hour,
+		db.EntitiesArtifact:   6 * time.Hour,
+	}, intervals(ers), "each type keeps its own interval")
+	for _, er := range ers {
+		require.NotEqual(t, uuid.Nil, er.cursor, "cursor starts at a random UUID")
+	}
 
-	got, err = newReminder(reminderconfig.RecurrenceConfig{
-		Interval: 6 * time.Hour,
-		Entities: map[db.Entities]reminderconfig.EntityRecurrenceConfig{
-			db.EntitiesArtifact: {Enabled: ptr(true), Interval: ptr(30 * time.Minute)},
-		},
-	}).tickInterval()
-	require.NoError(t, err)
-	require.Equal(t, 30*time.Minute, got)
-
-	_, err = newReminder(reminderconfig.RecurrenceConfig{
+	_, err = build(reminderconfig.RecurrenceConfig{
 		Interval: time.Hour,
 		Entities: map[db.Entities]reminderconfig.EntityRecurrenceConfig{
 			db.EntitiesRepository: {Enabled: ptr(false)},
 		},
-	}).tickInterval()
+	})
 	require.ErrorContains(t, err, "no entity types are enabled")
 
-	_, err = newReminder(reminderconfig.RecurrenceConfig{}).tickInterval()
+	_, err = build(reminderconfig.RecurrenceConfig{})
 	require.ErrorContains(t, err, "invalid interval for repository")
 }
 
@@ -487,11 +516,6 @@ func Test_sendReminders_artifactEnabledViaConfig(t *testing.T) {
 		ProjectID:  uuid.New(),
 	}
 	recentArtifact := db.EntityInstance{ID: generateUUIDFromNum(t, 12), EntityType: db.EntitiesArtifact}
-
-	store.EXPECT().ListEntitiesAfterID(gomock.Any(), db.ListEntitiesAfterIDParams{
-		EntityType: db.EntitiesRepository, ID: uuid.Nil, Limit: 100,
-	}).Return(nil, nil)
-	store.EXPECT().ListOldestRuleEvaluationsByEntityID(gomock.Any(), []uuid.UUID{}).Return(nil, nil)
 
 	store.EXPECT().ListEntitiesAfterID(gomock.Any(), db.ListEntitiesAfterIDParams{
 		EntityType: db.EntitiesArtifact, ID: uuid.Nil, Limit: 3,
@@ -516,7 +540,7 @@ func Test_sendReminders_artifactEnabledViaConfig(t *testing.T) {
 	pub := &fakePublisher{}
 	r.eventPublisher = pub
 
-	require.NoError(t, r.sendReminders(context.Background(), time.Now()))
+	require.NoError(t, entityReminderFor(t, r, db.EntitiesArtifact).sendReminders(context.Background()))
 
 	require.Len(t, pub.published, 1)
 	require.Equal(t, constants.TopicQueueRepoReminder, pub.published[0].topic)
@@ -527,109 +551,6 @@ func Test_sendReminders_artifactEnabledViaConfig(t *testing.T) {
 	require.Equal(t, remindermessages.EntityReminderEvent{
 		Project: artifact.ProjectID, ProviderID: artifact.ProviderID, EntityID: artifact.ID,
 	}, *evt)
-}
-
-func Test_sendReminders_perTypeSchedule(t *testing.T) {
-	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-	store := mockdb.NewMockStore(ctrl)
-
-	calls := map[db.Entities]int{}
-	store.EXPECT().ListEntitiesAfterID(gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, arg db.ListEntitiesAfterIDParams) ([]db.EntityInstance, error) {
-			calls[arg.EntityType]++
-			return nil, nil
-		}).AnyTimes()
-	store.EXPECT().ListOldestRuleEvaluationsByEntityID(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
-
-	r := createTestReminder(t, store, &reminderconfig.Config{
-		RecurrenceConfig: reminderconfig.RecurrenceConfig{
-			Interval: time.Hour, BatchSize: 10, MinElapsed: time.Hour,
-			Entities: map[db.Entities]reminderconfig.EntityRecurrenceConfig{
-				db.EntitiesArtifact: {Enabled: ptr(true), Interval: ptr(3 * time.Hour)},
-			},
-		},
-	})
-	r.eventPublisher = &fakePublisher{}
-	ctx := context.Background()
-	start := time.Date(2026, 11, 20, 0, 0, 0, 0, time.UTC)
-
-	type tick struct {
-		at              time.Duration
-		repoCalls       int
-		artifactCalls   int
-		artifactNextDue time.Duration
-	}
-	for _, tk := range []tick{
-		{at: 0, repoCalls: 1, artifactCalls: 1, artifactNextDue: 3 * time.Hour},
-		{at: time.Hour, repoCalls: 2, artifactCalls: 1, artifactNextDue: 3 * time.Hour},
-		{at: 2 * time.Hour, repoCalls: 3, artifactCalls: 1, artifactNextDue: 3 * time.Hour},
-		{at: 3*time.Hour - time.Second, repoCalls: 4, artifactCalls: 2, artifactNextDue: 6*time.Hour - time.Second},
-		{at: 4 * time.Hour, repoCalls: 5, artifactCalls: 2, artifactNextDue: 6*time.Hour - time.Second},
-	} {
-		require.NoError(t, r.sendReminders(ctx, start.Add(tk.at)))
-		require.Equal(t, tk.repoCalls, calls[db.EntitiesRepository], "repository calls after tick at %s", tk.at)
-		require.Equal(t, tk.artifactCalls, calls[db.EntitiesArtifact], "artifact calls after tick at %s", tk.at)
-		require.Equal(t, start.Add(tk.artifactNextDue), r.nextDue[db.EntitiesArtifact])
-	}
-}
-
-func Test_sendReminders_intervalNotMultipleOfTick(t *testing.T) {
-	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-	store := mockdb.NewMockStore(ctrl)
-
-	calls := map[db.Entities]int{}
-	store.EXPECT().ListEntitiesAfterID(gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, arg db.ListEntitiesAfterIDParams) ([]db.EntityInstance, error) {
-			calls[arg.EntityType]++
-			return nil, nil
-		}).AnyTimes()
-	store.EXPECT().ListOldestRuleEvaluationsByEntityID(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
-
-	r := createTestReminder(t, store, &reminderconfig.Config{
-		RecurrenceConfig: reminderconfig.RecurrenceConfig{
-			Interval: time.Hour, BatchSize: 10, MinElapsed: time.Hour,
-			Entities: map[db.Entities]reminderconfig.EntityRecurrenceConfig{
-				db.EntitiesArtifact: {Enabled: ptr(true), Interval: ptr(90 * time.Minute)},
-			},
-		},
-	})
-	r.eventPublisher = &fakePublisher{}
-	ctx := context.Background()
-	start := time.Date(2026, 11, 20, 0, 0, 0, 0, time.UTC)
-
-	tick, err := r.tickInterval()
-	require.NoError(t, err)
-	require.Equal(t, time.Hour, tick)
-
-	tests := []struct {
-		tick        int
-		artifactDue bool
-	}{
-		{tick: 1, artifactDue: true},
-		{tick: 2, artifactDue: false},
-		{tick: 3, artifactDue: true},
-		{tick: 4, artifactDue: false},
-		{tick: 5, artifactDue: true},
-		{tick: 6, artifactDue: false},
-	}
-
-	artifactCalls := 0
-	for _, tt := range tests {
-		now := start.Add(time.Duration(tt.tick-1) * tick)
-		require.Equal(t, tt.artifactDue, r.isDue(db.EntitiesArtifact, now, tick), "artifact due on tick %d", tt.tick)
-		require.True(t, r.isDue(db.EntitiesRepository, now, tick), "repository due on tick %d", tt.tick)
-
-		require.NoError(t, r.sendReminders(ctx, now))
-		if tt.artifactDue {
-			artifactCalls++
-		}
-		require.Equal(t, tt.tick, calls[db.EntitiesRepository], "repository calls after tick %d", tt.tick)
-		require.Equal(t, artifactCalls, calls[db.EntitiesArtifact], "artifact calls after tick %d", tt.tick)
-	}
 }
 
 func Test_sendReminders_metricsTaggedWithEntityType(t *testing.T) {
@@ -664,10 +585,13 @@ func Test_sendReminders_metricsTaggedWithEntityType(t *testing.T) {
 	r.eventPublisher = &fakePublisher{}
 	r.metrics = m
 
-	require.NoError(t, r.sendReminders(context.Background(), time.Now()))
+	ctx := context.Background()
+	for _, er := range r.entityReminders {
+		require.NoError(t, er.sendReminders(ctx))
+	}
 
 	var rm metricdata.ResourceMetrics
-	require.NoError(t, reader.Collect(context.Background(), &rm))
+	require.NoError(t, reader.Collect(ctx, &rm))
 
 	batchSizes := map[string]int64{}
 	sendDelayCounts := map[string]uint64{}

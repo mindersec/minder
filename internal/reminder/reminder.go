@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/metric"
 
 	"github.com/mindersec/minder/internal/db"
 	remindermessages "github.com/mindersec/minder/internal/reminder/messages"
@@ -33,23 +34,35 @@ type Interface interface {
 	Stop()
 }
 
-// reminder sends reminders to the minder server to process entities in background.
+// reminder holds the resources shared by every entity type and runs one
+// entityReminder per enabled entity type, each on its own ticker.
 type reminder struct {
-	store    db.Store
-	cfg      *reminderconfig.Config
-	stop     chan struct{}
-	stopOnce sync.Once
+	store db.Store
+	cfg   *reminderconfig.Config
 
-	entityTypes []db.Entities
-	cursors     map[db.Entities]uuid.UUID
-	nextDue     map[db.Entities]time.Time
+	mu        sync.Mutex
+	stop      chan struct{}
+	stopOnce  sync.Once
+	closeOnce sync.Once
+	wg        sync.WaitGroup
 
-	ticker *time.Ticker
+	entityReminders []*entityReminder
+	newTicker       func(time.Duration) (<-chan time.Time, func())
 
 	eventPublisher message.Publisher
 
 	metrics           *metrics.Metrics
 	metricsServerDone chan struct{}
+}
+
+// entityReminder revisits the entities of a single type. Its cursor is only
+// touched by the goroutine running it, so it needs no locking.
+type entityReminder struct {
+	*reminder
+	entityType     db.Entities
+	recurrence     reminderconfig.EntityRecurrence
+	entityTypeAttr metric.MeasurementOption
+	cursor         uuid.UUID
 }
 
 // supportedEntityTypes are the entity types reminders can be sent for. Each
@@ -66,6 +79,34 @@ func enabledEntityTypes(cfg reminderconfig.RecurrenceConfig) []db.Entities {
 	return enabled
 }
 
+func realTicker(d time.Duration) (<-chan time.Time, func()) {
+	t := time.NewTicker(d)
+	return t.C, t.Stop
+}
+
+func (r *reminder) newEntityReminders(entityTypes []db.Entities) ([]*entityReminder, error) {
+	if len(entityTypes) == 0 {
+		return nil, errors.New("no entity types are enabled for reminders")
+	}
+
+	ers := make([]*entityReminder, 0, len(entityTypes))
+	for _, entityType := range entityTypes {
+		recurrence := r.cfg.RecurrenceConfig.ForEntityType(entityType)
+		if recurrence.Interval <= 0 {
+			return nil, fmt.Errorf("invalid interval for %s: %s", entityType, recurrence.Interval)
+		}
+		ers = append(ers, &entityReminder{
+			reminder:       r,
+			entityType:     entityType,
+			recurrence:     recurrence,
+			entityTypeAttr: metrics.EntityTypeAttribute(string(entityType)),
+			// Start from a random UUID so restarts don't always begin at the same entity
+			cursor: uuid.New(),
+		})
+	}
+	return ers, nil
+}
+
 // NewReminder creates a new reminder instance
 func NewReminder(ctx context.Context, store db.Store, config *reminderconfig.Config) (Interface, error) {
 	r := &reminder{
@@ -73,9 +114,7 @@ func NewReminder(ctx context.Context, store db.Store, config *reminderconfig.Con
 		cfg:               config,
 		stop:              make(chan struct{}),
 		metricsServerDone: make(chan struct{}),
-		entityTypes:       enabledEntityTypes(config.RecurrenceConfig),
-		cursors:           make(map[db.Entities]uuid.UUID, len(supportedEntityTypes)),
-		nextDue:           make(map[db.Entities]time.Time, len(supportedEntityTypes)),
+		newTicker:         realTicker,
 	}
 
 	logger := zerolog.Ctx(ctx)
@@ -86,11 +125,14 @@ func NewReminder(ctx context.Context, store db.Store, config *reminderconfig.Con
 		}
 	}
 
-	// Set to a random UUID to start
-	for _, entityType := range r.entityTypes {
-		r.cursors[entityType] = uuid.New()
-		logger.Info().Str("entity_type", string(entityType)).
-			Msgf("initial cursor: %s", r.cursors[entityType])
+	ers, err := r.newEntityReminders(enabledEntityTypes(config.RecurrenceConfig))
+	if err != nil {
+		return nil, err
+	}
+	r.entityReminders = ers
+	for _, er := range ers {
+		logger.Info().Str("entity_type", string(er.entityType)).
+			Msgf("initial cursor: %s", er.cursor)
 	}
 
 	pub, err := r.getMessagePublisher(ctx)
@@ -102,7 +144,8 @@ func NewReminder(ctx context.Context, store db.Store, config *reminderconfig.Con
 	return r, nil
 }
 
-// Start starts the reminder by sending reminders at regular intervals
+// Start runs one goroutine per enabled entity type, each sending reminders at
+// that type's own interval, and blocks until ctx is cancelled or Stop is called.
 func (r *reminder) Start(ctx context.Context) error {
 	logger := zerolog.Ctx(ctx)
 	select {
@@ -114,11 +157,6 @@ func (r *reminder) Start(ctx context.Context) error {
 	// An errored out reminder cannot be started again, so it is stopped here
 	// This also prevents resource leaks if user doesn't explicitly stop the reminder
 	defer r.Stop()
-
-	interval, err := r.tickInterval()
-	if err != nil {
-		return err
-	}
 
 	if r.cfg.MetricsConfig.Enabled {
 		if err := r.startMetricServer(ctx); err != nil {
@@ -134,45 +172,54 @@ func (r *reminder) Start(ctx context.Context) error {
 		close(r.metricsServerDone)
 	}
 
-	logger.Info().Msgf("reminder ticking every %s for entity types %v", interval, r.entityTypes)
-	r.ticker = time.NewTicker(interval)
-
-	for {
-		select {
-		case <-ctx.Done():
-			<-r.metricsServerDone
-			logger.Info().Msg("reminder stopped")
-			return nil
-		case <-r.stop:
-			<-r.metricsServerDone
-			logger.Info().Msg("reminder stopped")
-			return nil
-		case now := <-r.ticker.C:
-			// In-case sending reminders i.e. iterating over entities consumes more time than the
-			// interval, the ticker will adjust the time interval or drop ticks to make up for
-			// slow receivers.
-			if err := r.sendReminders(ctx, now); err != nil {
-				logger.Error().Err(err).Msg("reconciliation request unsuccessful")
-			}
-		}
+	if err := r.startEntityReminders(ctx); err != nil {
+		return err
 	}
+
+	select {
+	case <-ctx.Done():
+	case <-r.stop:
+	}
+	logger.Info().Msg("reminder stopped")
+	return nil
 }
 
-// Stop stops the reminder service
-// Stopping the reminder service closes the stop channel and stops the ticker (if not nil).
-// It also closes the event publisher database connection which means that only reminders
-// that were sent successfully will be processed. Any reminders that were not sent will be lost.
-// Stopping the reminder service while the service is starting up may cause the ticker to not be
-// stopped as ticker might not have been created yet. Ticker will be stopped after Start returns
-// as defer statement in Start will stop the ticker.
-func (r *reminder) Stop() {
-	if r.ticker != nil {
-		defer r.ticker.Stop()
+func (r *reminder) startEntityReminders(ctx context.Context) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	select {
+	case <-r.stop:
+		return errors.New("reminder stopped while starting")
+	default:
 	}
+
+	for _, er := range r.entityReminders {
+		ticks, stopTicker := r.newTicker(er.recurrence.Interval)
+		r.wg.Add(1)
+		go func() {
+			defer r.wg.Done()
+			defer stopTicker()
+			er.run(ctx, ticks)
+		}()
+	}
+	return nil
+}
+
+// Stop stops the reminder service and blocks until every entity type's
+// goroutine has exited. The event publisher is closed only after that, so a
+// batch that is mid-publish when Stop is called is still sent.
+func (r *reminder) Stop() {
+	r.mu.Lock()
 	r.stopOnce.Do(func() {
 		close(r.stop)
-		err := r.eventPublisher.Close()
-		if err != nil {
+	})
+	r.mu.Unlock()
+
+	r.wg.Wait()
+
+	r.closeOnce.Do(func() {
+		if err := r.eventPublisher.Close(); err != nil {
 			zerolog.Ctx(context.Background()).Error().Err(err).Msg("error closing event publisher")
 		}
 	})
@@ -180,60 +227,31 @@ func (r *reminder) Stop() {
 	<-r.metricsServerDone
 }
 
-// tickInterval returns the shortest interval across the enabled entity types.
-func (r *reminder) tickInterval() (time.Duration, error) {
-	if len(r.entityTypes) == 0 {
-		return 0, errors.New("no entity types are enabled for reminders")
-	}
+func (e *entityReminder) run(ctx context.Context, ticks <-chan time.Time) {
+	logger := zerolog.Ctx(ctx).With().Str("entity_type", string(e.entityType)).Logger()
+	logger.Info().Msgf("sending reminders every %s", e.recurrence.Interval)
 
-	var shortest time.Duration
-	for _, entityType := range r.entityTypes {
-		interval := r.cfg.RecurrenceConfig.ForEntityType(entityType).Interval
-		if interval <= 0 {
-			return 0, fmt.Errorf("invalid interval for %s: %s", entityType, interval)
-		}
-		if shortest == 0 || interval < shortest {
-			shortest = interval
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-e.stop:
+			return
+		case <-ticks:
+			// If a batch takes longer than the interval, the ticker drops ticks
+			// rather than queueing them, so this type never runs back to back.
+			if err := e.sendReminders(ctx); err != nil {
+				logger.Error().Err(err).Msg("reconciliation request unsuccessful")
+			}
 		}
 	}
-	return shortest, nil
 }
 
-// A type is due once its next due time has passed. The small slack absorbs
-// late tick delivery without letting a type run early by most of a tick.
-func (r *reminder) isDue(entityType db.Entities, now time.Time, tick time.Duration) bool {
-	return !now.Add(tick / 10).Before(r.nextDue[entityType])
-}
+func (e *entityReminder) sendReminders(ctx context.Context) error {
+	ctx = zerolog.Ctx(ctx).With().Str("entity_type", string(e.entityType)).Logger().WithContext(ctx)
+	logger := zerolog.Ctx(ctx)
 
-func (r *reminder) sendReminders(ctx context.Context, now time.Time) error {
-	tick, err := r.tickInterval()
-	if err != nil {
-		return err
-	}
-
-	var errs []error
-	for _, entityType := range r.entityTypes {
-		if !r.isDue(entityType, now, tick) {
-			zerolog.Ctx(ctx).Debug().Str("entity_type", string(entityType)).
-				Msgf("not due until %s, skipping", r.nextDue[entityType])
-			continue
-		}
-		r.nextDue[entityType] = now.Add(r.cfg.RecurrenceConfig.ForEntityType(entityType).Interval)
-
-		if err := r.sendRemindersForEntityType(ctx, entityType); err != nil {
-			errs = append(errs, fmt.Errorf("error sending %s reminders: %w", entityType, err))
-		}
-	}
-
-	return errors.Join(errs...)
-}
-
-func (r *reminder) sendRemindersForEntityType(ctx context.Context, entityType db.Entities) error {
-	logger := zerolog.Ctx(ctx).With().Str("entity_type", string(entityType)).Logger()
-	minElapsed := r.cfg.RecurrenceConfig.ForEntityType(entityType).MinElapsed
-	entityTypeAttr := metrics.EntityTypeAttribute(string(entityType))
-
-	entities, entityToLastUpdated, err := r.getEntityBatch(ctx, entityType)
+	entities, entityToLastUpdated, err := e.getEntityBatch(ctx)
 	if err != nil {
 		return fmt.Errorf("error fetching entity batch: %w", err)
 	}
@@ -250,22 +268,21 @@ func (r *reminder) sendRemindersForEntityType(ctx context.Context, entityType db
 		return fmt.Errorf("error creating reminder messages: %w", err)
 	}
 
-	if r.metrics != nil {
-		r.metrics.BatchSize.Record(ctx, int64(len(entities)), entityTypeAttr)
+	if e.metrics != nil {
+		e.metrics.BatchSize.Record(ctx, int64(len(entities)), e.entityTypeAttr)
 	}
 
-	err = r.eventPublisher.Publish(constants.TopicQueueRepoReminder, messages...)
+	err = e.eventPublisher.Publish(constants.TopicQueueRepoReminder, messages...)
 	if err != nil {
 		return fmt.Errorf("error publishing messages: %w", err)
 	}
 
 	for _, entity := range entities {
-		if r.metrics != nil {
-			sendDelay := time.Since(entityToLastUpdated[entity.ID]) - minElapsed
+		if e.metrics != nil {
+			sendDelay := time.Since(entityToLastUpdated[entity.ID]) - e.recurrence.MinElapsed
 			// TODO: Track whether this is a new vs existing reminder
 			// Previously used repo.ReminderLastSent field which is now removed
-			recorder := r.metrics.SendDelay
-			recorder.Record(ctx, sendDelay.Seconds(), entityTypeAttr)
+			e.metrics.SendDelay.Record(ctx, sendDelay.Seconds(), e.entityTypeAttr)
 		}
 	}
 
@@ -277,30 +294,27 @@ func (r *reminder) sendRemindersForEntityType(ctx context.Context, entityType db
 	return nil
 }
 
-func (r *reminder) getEntityBatch(
-	ctx context.Context, entityType db.Entities,
-) ([]db.EntityInstance, map[uuid.UUID]time.Time, error) {
-	logger := zerolog.Ctx(ctx).With().Str("entity_type", string(entityType)).Logger()
+func (e *entityReminder) getEntityBatch(ctx context.Context) ([]db.EntityInstance, map[uuid.UUID]time.Time, error) {
+	logger := zerolog.Ctx(ctx)
 
-	logger.Debug().Msgf("fetching entities after cursor: %s", r.cursors[entityType])
+	logger.Debug().Msgf("fetching entities after cursor: %s", e.cursor)
 
-	recurrence := r.cfg.RecurrenceConfig.ForEntityType(entityType)
-	entities, err := r.store.ListEntitiesAfterID(ctx, db.ListEntitiesAfterIDParams{
-		EntityType: entityType,
-		ID:         r.cursors[entityType],
-		Limit:      int64(recurrence.BatchSize),
+	entities, err := e.store.ListEntitiesAfterID(ctx, db.ListEntitiesAfterIDParams{
+		EntityType: e.entityType,
+		ID:         e.cursor,
+		Limit:      int64(e.recurrence.BatchSize),
 	})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	eligibleEntities, eligibleEntitiesLastUpdated, err := r.getEligibleEntities(ctx, entities, recurrence.MinElapsed)
+	eligibleEntities, eligibleEntitiesLastUpdated, err := e.getEligibleEntities(ctx, entities, e.recurrence.MinElapsed)
 	if err != nil {
 		return nil, nil, err
 	}
 	logger.Debug().Msgf("%d/%d entities are eligible for reminders", len(eligibleEntities), len(entities))
 
-	r.updateCursor(ctx, entityType, entities)
+	e.updateCursor(ctx, entities)
 
 	return eligibleEntities, eligibleEntitiesLastUpdated, nil
 }
@@ -316,7 +330,6 @@ func (r *reminder) getEligibleEntities(ctx context.Context, entities []db.Entity
 		entityIds = append(entityIds, entity.ID)
 	}
 
-	// Use entity_instance_id based query instead of repository_id
 	oldestRuleEvals, err := r.store.ListOldestRuleEvaluationsByEntityID(ctx, entityIds)
 	if err != nil {
 		return nil, nil, err
@@ -336,37 +349,34 @@ func (r *reminder) getEligibleEntities(ctx context.Context, entities []db.Entity
 	return eligibleEntities, idToLastUpdate, nil
 }
 
-func (r *reminder) updateCursor(ctx context.Context, entityType db.Entities, entities []db.EntityInstance) {
-	logger := zerolog.Ctx(ctx).With().Str("entity_type", string(entityType)).Logger()
-
+func (e *entityReminder) updateCursor(ctx context.Context, entities []db.EntityInstance) {
 	if len(entities) == 0 {
-		r.cursors[entityType] = uuid.Nil
+		e.cursor = uuid.Nil
 	} else {
-		r.cursors[entityType] = entities[len(entities)-1].ID
-		r.adjustCursorForEndOfList(ctx, entityType)
+		e.cursor = entities[len(entities)-1].ID
+		e.adjustCursorForEndOfList(ctx)
 	}
 
-	logger.Debug().Msgf("updated cursor to: %s", r.cursors[entityType])
+	zerolog.Ctx(ctx).Debug().Msgf("updated cursor to: %s", e.cursor)
 }
 
-func (r *reminder) adjustCursorForEndOfList(ctx context.Context, entityType db.Entities) {
-	logger := zerolog.Ctx(ctx).With().Str("entity_type", string(entityType)).Logger()
+func (e *entityReminder) adjustCursorForEndOfList(ctx context.Context) {
+	logger := zerolog.Ctx(ctx)
 
-	cursor := r.cursors[entityType]
-	exists, err := r.store.EntityExistsAfterID(ctx, db.EntityExistsAfterIDParams{
-		EntityType: entityType,
-		ID:         cursor,
+	exists, err := e.store.EntityExistsAfterID(ctx, db.EntityExistsAfterIDParams{
+		EntityType: e.entityType,
+		ID:         e.cursor,
 	})
 	if err != nil {
 		logger.Error().Err(err).Msgf("unable to check if entity exists after cursor: %s"+
-			", resetting cursor to zero uuid", cursor)
-		r.cursors[entityType] = uuid.Nil
+			", resetting cursor to zero uuid", e.cursor)
+		e.cursor = uuid.Nil
 		return
 	}
 
 	if !exists {
-		logger.Info().Msgf("cursor %s is at the end of the list, resetting cursor to zero uuid", cursor)
-		r.cursors[entityType] = uuid.Nil
+		logger.Info().Msgf("cursor %s is at the end of the list, resetting cursor to zero uuid", e.cursor)
+		e.cursor = uuid.Nil
 	}
 }
 
