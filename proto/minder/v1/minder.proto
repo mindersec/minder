@@ -4475,23 +4475,20 @@ message Exception {
     // entity is the entity associated with the exception.
     EntityInstance entity = 2;
 
-    reserved 3;
-    reserved "rule_type_id";
-
     // expires_at is when the exception expires.
-    google.protobuf.Timestamp expires_at = 4;
+    google.protobuf.Timestamp expires_at = 3;
 
     // created_at is when the exception was created.
-    google.protobuf.Timestamp created_at = 5;
+    google.protobuf.Timestamp created_at = 4;
 
     // profile_name identifies the profile containing the rule.
-    string profile_name = 6;
+    string profile_name = 5;
 
     // rule_name identifies the specific rule within the profile.
-    string rule_name = 7;
+    string rule_name = 6;
 
     // reason is a short description explaining why the exception was created.
-    string reason = 8;
+    string reason = 7;
 }
 
 // ListExceptionsRequest requests active exceptions for a project.
@@ -4519,22 +4516,23 @@ message CreateExceptionRequest {
         (google.api.field_behavior) = REQUIRED
     ];
 
-    reserved 3;
-    reserved "rule_type_id";
-
     // expires_at is when the exception expires.
-    google.protobuf.Timestamp expires_at = 4 [
+    google.protobuf.Timestamp expires_at = 3 [
         (buf.validate.field).timestamp.gt_now = true,
         (google.api.field_behavior) = REQUIRED
     ];
 
     // profile_name identifies the profile containing the rule.
-    string profile_name = 5 [
+    string profile_name = 4 [
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z][-/[:word:]]*$",
+            max_len: 200,
+        },
         (google.api.field_behavior) = REQUIRED
     ];
 
     // rule_name identifies the specific rule within the profile.
-    string rule_name = 6 [
+    string rule_name = 5 [
         (buf.validate.field).string = {
             pattern: "^[A-Za-z][-/'()[:word:] :]*$",
             max_len: 200,
@@ -4543,7 +4541,7 @@ message CreateExceptionRequest {
     ];
 
     // reason is an optional short description explaining the exception.
-    optional string reason = 7 [
+    optional string reason = 6 [
         (buf.validate.field).string = {
             max_len: 500,
         }

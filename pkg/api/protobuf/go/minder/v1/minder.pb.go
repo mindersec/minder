@@ -12774,15 +12774,15 @@ type Exception struct {
 	// entity is the entity associated with the exception.
 	Entity *EntityInstance `protobuf:"bytes,2,opt,name=entity,proto3" json:"entity,omitempty"`
 	// expires_at is when the exception expires.
-	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	// created_at is when the exception was created.
-	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	// profile_name identifies the profile containing the rule.
-	ProfileName string `protobuf:"bytes,6,opt,name=profile_name,json=profileName,proto3" json:"profile_name,omitempty"`
+	ProfileName string `protobuf:"bytes,5,opt,name=profile_name,json=profileName,proto3" json:"profile_name,omitempty"`
 	// rule_name identifies the specific rule within the profile.
-	RuleName string `protobuf:"bytes,7,opt,name=rule_name,json=ruleName,proto3" json:"rule_name,omitempty"`
+	RuleName string `protobuf:"bytes,6,opt,name=rule_name,json=ruleName,proto3" json:"rule_name,omitempty"`
 	// reason is a short description explaining why the exception was created.
-	Reason        string `protobuf:"bytes,8,opt,name=reason,proto3" json:"reason,omitempty"`
+	Reason        string `protobuf:"bytes,7,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -12966,13 +12966,13 @@ type CreateExceptionRequest struct {
 	// entity_id is the ID of the entity being excepted.
 	EntityId string `protobuf:"bytes,2,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
 	// expires_at is when the exception expires.
-	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	// profile_name identifies the profile containing the rule.
-	ProfileName string `protobuf:"bytes,5,opt,name=profile_name,json=profileName,proto3" json:"profile_name,omitempty"`
+	ProfileName string `protobuf:"bytes,4,opt,name=profile_name,json=profileName,proto3" json:"profile_name,omitempty"`
 	// rule_name identifies the specific rule within the profile.
-	RuleName string `protobuf:"bytes,6,opt,name=rule_name,json=ruleName,proto3" json:"rule_name,omitempty"`
+	RuleName string `protobuf:"bytes,5,opt,name=rule_name,json=ruleName,proto3" json:"rule_name,omitempty"`
 	// reason is an optional short description explaining the exception.
-	Reason        *string `protobuf:"bytes,7,opt,name=reason,proto3,oneof" json:"reason,omitempty"`
+	Reason        *string `protobuf:"bytes,6,opt,name=reason,proto3,oneof" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -14469,14 +14469,14 @@ type RuleType_Definition_Eval_Rego struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// type is the type of evaluation engine to use
 	// for rego. We currently have two modes of operation:
-	// - deny-by-default: this is the default mode of operation
-	//   where we deny access by default and allow access only
-	//   if the profile explicitly allows it. It expects the
-	//   profile to set an `allow` variable to true or false.
-	// - constraints: this is the mode of operation where we
-	//   allow access by default and deny access only if a
-	//   violation is found. It expects the profile to set a
-	//   `violations` variable with a "msg" field.
+	//   - deny-by-default: this is the default mode of operation
+	//     where we deny access by default and allow access only
+	//     if the profile explicitly allows it. It expects the
+	//     profile to set an `allow` variable to true or false.
+	//   - constraints: this is the mode of operation where we
+	//     allow access by default and deny access only if a
+	//     violation is found. It expects the profile to set a
+	//     `violations` variable with a "msg" field.
 	Type string `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
 	// def is the definition of the rego profile.
 	Def string `protobuf:"bytes,2,opt,name=def,proto3" json:"def,omitempty"`
@@ -14768,9 +14768,13 @@ type RuleType_Definition_Remediate_PullRequestRemediation struct {
 	Contents []*RuleType_Definition_Remediate_PullRequestRemediation_Content `protobuf:"bytes,3,rep,name=contents,proto3" json:"contents,omitempty"`
 	// the method to use to create the PR. For now, these are supported:
 	// -- minder.content - ensures that the content of the file is exactly as specified
-	//                     refer to the Content message for more details
+	//
+	//	refer to the Content message for more details
+	//
 	// -- minder.actions.replace_tags_with_sha - finds any github actions within a workflow
-	//                                           file and replaces the tag with the SHA
+	//
+	//	file and replaces the tag with the SHA
+	//
 	// -- minder.yq.evaluate - evaluates a yq expression on a file
 	// -- minder.delete - deletes files matching the specified glob patterns
 	Method string `protobuf:"bytes,4,opt,name=method,proto3" json:"method,omitempty"`
@@ -16664,32 +16668,32 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01\"P\n" +
 	"\x16RegisterEntityResponse\x126\n" +
-	"\x06entity\x18\x01 \x01(\v2\x19.minder.v1.EntityInstanceB\x03\xe0A\x02R\x06entity\"\xb0\x02\n" +
+	"\x06entity\x18\x01 \x01(\v2\x19.minder.v1.EntityInstanceB\x03\xe0A\x02R\x06entity\"\x9c\x02\n" +
 	"\tException\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x121\n" +
 	"\x06entity\x18\x02 \x01(\v2\x19.minder.v1.EntityInstanceR\x06entity\x129\n" +
 	"\n" +
-	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x129\n" +
+	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x129\n" +
 	"\n" +
-	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12!\n" +
-	"\fprofile_name\x18\x06 \x01(\tR\vprofileName\x12\x1b\n" +
-	"\trule_name\x18\a \x01(\tR\bruleName\x12\x16\n" +
-	"\x06reason\x18\b \x01(\tR\x06reasonJ\x04\b\x03\x10\x04R\frule_type_id\"E\n" +
+	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12!\n" +
+	"\fprofile_name\x18\x05 \x01(\tR\vprofileName\x12\x1b\n" +
+	"\trule_name\x18\x06 \x01(\tR\bruleName\x12\x16\n" +
+	"\x06reason\x18\a \x01(\tR\x06reason\"E\n" +
 	"\x15ListExceptionsRequest\x12,\n" +
 	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\"S\n" +
 	"\x16ListExceptionsResponse\x129\n" +
 	"\n" +
 	"exceptions\x18\x01 \x03(\v2\x14.minder.v1.ExceptionB\x03\xe0A\x02R\n" +
-	"exceptions\"\xee\x02\n" +
+	"exceptions\"\xfb\x02\n" +
 	"\x16CreateExceptionRequest\x12,\n" +
 	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12(\n" +
 	"\tentity_id\x18\x02 \x01(\tB\v\xe0A\x02\xbaH\x05r\x03\xb0\x01\x01R\bentityId\x12F\n" +
 	"\n" +
-	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\v\xe0A\x02\xbaH\x05\xb2\x01\x02@\x01R\texpiresAt\x12&\n" +
-	"\fprofile_name\x18\x05 \x01(\tB\x03\xe0A\x02R\vprofileName\x12F\n" +
-	"\trule_name\x18\x06 \x01(\tB)\xe0A\x02\xbaH#r!\x18\xc8\x012\x1c^[A-Za-z][-/'()[:word:] :]*$R\bruleName\x12%\n" +
-	"\x06reason\x18\a \x01(\tB\b\xbaH\x05r\x03\x18\xf4\x03H\x00R\x06reason\x88\x01\x01B\t\n" +
-	"\a_reasonJ\x04\b\x03\x10\x04R\frule_type_id\"R\n" +
+	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\v\xe0A\x02\xbaH\x05\xb2\x01\x02@\x01R\texpiresAt\x12G\n" +
+	"\fprofile_name\x18\x04 \x01(\tB$\xe0A\x02\xbaH\x1er\x1c\x18\xc8\x012\x17^[A-Za-z][-/[:word:]]*$R\vprofileName\x12F\n" +
+	"\trule_name\x18\x05 \x01(\tB)\xe0A\x02\xbaH#r!\x18\xc8\x012\x1c^[A-Za-z][-/'()[:word:] :]*$R\bruleName\x12%\n" +
+	"\x06reason\x18\x06 \x01(\tB\b\xbaH\x05r\x03\x18\xf4\x03H\x00R\x06reason\x88\x01\x01B\t\n" +
+	"\a_reason\"R\n" +
 	"\x17CreateExceptionResponse\x127\n" +
 	"\texception\x18\x01 \x01(\v2\x14.minder.v1.ExceptionB\x03\xe0A\x02R\texception\"c\n" +
 	"\x16DeleteExceptionRequest\x12,\n" +
