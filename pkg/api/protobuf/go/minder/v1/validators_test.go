@@ -125,11 +125,14 @@ func TestRuleType_Definition_Ingest_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "unknown ingest type",
+			// Unknown types must be accepted client-side so that old
+			// clients can read rule types using future types; the
+			// server rejects them (see pkg/ruletypes).
+			name: "unknown ingest type allowed for forward compatibility",
 			ingest: &RuleType_Definition_Ingest{
 				Type: "nonexistent",
 			},
-			wantErr: true,
+			wantErr: false,
 		},
 	}
 
@@ -262,11 +265,14 @@ func TestRuleType_Definition_Eval_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "unknown eval type",
+			// Unknown types must be accepted client-side so that old
+			// clients can read rule types using future types; the
+			// server rejects them (see pkg/ruletypes).
+			name: "unknown eval type allowed for forward compatibility",
 			eval: &RuleType_Definition_Eval{
 				Type: "nonexistent",
 			},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name:    "nil eval",
