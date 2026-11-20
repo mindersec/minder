@@ -5,6 +5,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"testing"
 	"time"
@@ -44,7 +45,10 @@ func TestCreate(t *testing.T) {
 	}
 
 	store.EXPECT().
-		GetEntityByID(gomock.Any(), entityID).
+		GetEntityByIDAndProject(gomock.Any(), db.GetEntityByIDAndProjectParams{
+			ID:        entityID,
+			ProjectID: projectID,
+		}).
 		Return(db.EntityInstance{
 			ID:        entityID,
 			ProjectID: projectID,
@@ -101,12 +105,13 @@ func TestCreateEntityWrongProject(t *testing.T) {
 		ExpiresAt:  time.Now().Add(24 * time.Hour),
 	}
 
+	// The entity is in another project, so the project-scoped lookup finds nothing.
 	store.EXPECT().
-		GetEntityByID(gomock.Any(), entityID).
-		Return(db.EntityInstance{
+		GetEntityByIDAndProject(gomock.Any(), db.GetEntityByIDAndProjectParams{
 			ID:        entityID,
-			ProjectID: uuid.New(),
-		}, nil)
+			ProjectID: projectID,
+		}).
+		Return(db.EntityInstance{}, sql.ErrNoRows)
 
 	ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
 		Project: engcontext.Project{
@@ -137,7 +142,10 @@ func TestCreateRuleTypeWrongProject(t *testing.T) {
 	}
 
 	store.EXPECT().
-		GetEntityByID(gomock.Any(), entityID).
+		GetEntityByIDAndProject(gomock.Any(), db.GetEntityByIDAndProjectParams{
+			ID:        entityID,
+			ProjectID: projectID,
+		}).
 		Return(db.EntityInstance{
 			ID:        entityID,
 			ProjectID: projectID,
@@ -181,7 +189,10 @@ func TestCreateError(t *testing.T) {
 	}
 
 	store.EXPECT().
-		GetEntityByID(gomock.Any(), entityID).
+		GetEntityByIDAndProject(gomock.Any(), db.GetEntityByIDAndProjectParams{
+			ID:        entityID,
+			ProjectID: projectID,
+		}).
 		Return(db.EntityInstance{
 			ID:        entityID,
 			ProjectID: projectID,

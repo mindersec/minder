@@ -199,18 +199,18 @@ func (s *entityService) GetEntityByID(
 	entityID uuid.UUID,
 	projectID uuid.UUID,
 ) (*pb.EntityInstance, error) {
-	// Get entity from database
-	entity, err := s.store.GetEntityByID(ctx, entityID)
+	// Get entity from database, scoped to the project.
+	// TODO(#4419): EntityWithPropertiesByID below fetches the entity again.
+	// Collapse this into a single project-scoped fetch once it takes a project.
+	_, err := s.store.GetEntityByIDAndProject(ctx, db.GetEntityByIDAndProjectParams{
+		ID:        entityID,
+		ProjectID: projectID,
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "entity not found")
 		}
 		return nil, fmt.Errorf("error fetching entity: %w", err)
-	}
-
-	// Verify entity belongs to the project
-	if entity.ProjectID != projectID {
-		return nil, status.Errorf(codes.NotFound, "entity not found in project")
 	}
 
 	// Get properties
@@ -276,17 +276,15 @@ func (s *entityService) DeleteEntityByID(
 	projectID uuid.UUID,
 ) error {
 	// Get entity to verify it exists and belongs to the project
-	entity, err := s.store.GetEntityByID(ctx, entityID)
+	_, err := s.store.GetEntityByIDAndProject(ctx, db.GetEntityByIDAndProjectParams{
+		ID:        entityID,
+		ProjectID: projectID,
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return status.Errorf(codes.NotFound, "entity not found")
 		}
 		return fmt.Errorf("error fetching entity: %w", err)
-	}
-
-	// Verify entity belongs to the project
-	if entity.ProjectID != projectID {
-		return status.Errorf(codes.NotFound, "entity not found in project")
 	}
 
 	// Delete entity and its properties in a transaction

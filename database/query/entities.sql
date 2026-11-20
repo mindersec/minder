@@ -51,6 +51,14 @@ SELECT * FROM entity_instances
 WHERE entity_instances.id = $1
 LIMIT 1;
 
+-- GetEntityByIDAndProject retrieves an entity by its ID, only if it belongs
+-- to the given project. Use this when the entity ID comes from a user request,
+-- so that an entity in another project can never be returned.
+-- name: GetEntityByIDAndProject :one
+SELECT * FROM entity_instances
+WHERE entity_instances.id = sqlc.arg(id) AND entity_instances.project_id = sqlc.arg(project_id)
+LIMIT 1;
+
 -- GetEntityByName retrieves an entity by its name for a project or hierarchy of projects.
 -- name: GetEntityByName :one
 SELECT * FROM entity_instances

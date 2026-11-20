@@ -54,12 +54,12 @@ func (s *exceptionService) Create(
 ) (*Exception, error) {
 	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
-	entity, err := s.store.GetEntityByID(ctx, exception.EntityID)
+	_, err := s.store.GetEntityByIDAndProject(ctx, db.GetEntityByIDAndProjectParams{
+		ID:        exception.EntityID,
+		ProjectID: projectID,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get entity: %w", err)
-	}
-	if entity.ProjectID != projectID {
-		return nil, fmt.Errorf("entity does not belong to project")
 	}
 	_, err = s.store.GetRuleTypeByID(ctx, db.GetRuleTypeByIDParams{
 		Projects: []uuid.UUID{projectID},
