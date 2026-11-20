@@ -30,10 +30,10 @@ configurations required for Minder to function properly:
 2. **Client setup:** Create two separate clients within the realm:
    - **minder-cli:** A client for command-line interactions.
    - **minder-server:** A client for server-side operations.
-3. Identity provider linkage: Connect your chosen identity orovider (e.g.,
+3. Identity provider linkage: Connect your chosen identity provider (e.g.,
    GitHub, Google) to Keycloak. To facilitate this process, you may use the
-   initialization script available at
-   [Minder Identity Initialization Script](https://github.com/mindersec/minder/blob/main/identity/scripts/initialize.sh).
+   realm configuration available at
+   [Minder Keycloak Realm Configuration](https://github.com/mindersec/minder/blob/main/identity/config/stacklok.yaml).
 
 ## PostgreSQL installation
 
