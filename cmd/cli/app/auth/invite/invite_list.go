@@ -24,6 +24,7 @@ var inviteListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List pending invitations",
 	Long:  `List shows all pending invitations for the current minder user`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)

@@ -6,6 +6,7 @@ package service
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -26,21 +27,25 @@ func TestCreate(t *testing.T) {
 
 	projectID := uuid.New()
 	entityID := uuid.New()
-	ruleTypeID := uuid.New()
 	expiresAt := time.Now().Add(24 * time.Hour)
 
 	input := Exception{
-		EntityID:   entityID,
-		RuleTypeID: ruleTypeID,
-		ExpiresAt:  expiresAt,
+		EntityID:       entityID,
+		ProfileName:    "default",
+		RuleName:       "vulnerability",
+		Reason:         "Accepted risk",
+		ReasonProvided: true,
+		ExpiresAt:      expiresAt,
 	}
 
 	expected := db.Exception{
-		ID:         uuid.New(),
-		ProjectID:  projectID,
-		EntityID:   entityID,
-		RuleTypeID: ruleTypeID,
-		ExpiresAt:  expiresAt,
+		ID:          uuid.New(),
+		ProjectID:   projectID,
+		EntityID:    entityID,
+		ProfileName: "default",
+		RuleName:    "vulnerability",
+		Reason:      "Accepted risk",
+		ExpiresAt:   expiresAt,
 	}
 
 	store.EXPECT().
@@ -51,21 +56,14 @@ func TestCreate(t *testing.T) {
 		}, nil)
 
 	store.EXPECT().
-		GetRuleTypeByID(gomock.Any(), db.GetRuleTypeByIDParams{
-			Projects: []uuid.UUID{projectID},
-			ID:       ruleTypeID,
-		}).
-		Return(db.RuleType{
-			ID:        ruleTypeID,
-			ProjectID: projectID,
-		}, nil)
-
-	store.EXPECT().
 		CreateException(gomock.Any(), db.CreateExceptionParams{
-			ProjectID:  projectID,
-			EntityID:   entityID,
-			RuleTypeID: ruleTypeID,
-			ExpiresAt:  expiresAt,
+			ProjectID:      projectID,
+			EntityID:       entityID,
+			ProfileName:    "default",
+			RuleName:       "vulnerability",
+			Reason:         "Accepted risk",
+			ReasonProvided: true,
+			ExpiresAt:      expiresAt,
 		}).
 		Return(expected, nil)
 
@@ -80,9 +78,146 @@ func TestCreate(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expected.ID, got.ID)
 	require.Equal(t, expected.EntityID, got.EntityID)
-	require.Equal(t, expected.RuleTypeID, got.RuleTypeID)
+	require.Equal(t, expected.ProfileName, got.ProfileName)
+	require.Equal(t, expected.RuleName, got.RuleName)
+	require.Equal(t, expected.Reason, got.Reason)
 	require.Equal(t, expected.ExpiresAt, got.ExpiresAt)
 	require.Equal(t, expected.CreatedAt, got.CreatedAt)
+}
+
+func TestCreateReasonMaxLength(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	store := mockdb.NewMockStore(ctrl)
+	svc := NewService(store)
+
+	projectID := uuid.New()
+	entityID := uuid.New()
+	expiresAt := time.Now().Add(24 * time.Hour)
+	reason := strings.Repeat("a", MaxReasonLength)
+
+	input := Exception{
+		EntityID:       entityID,
+		ProfileName:    "default",
+		RuleName:       "vulnerability",
+		Reason:         reason,
+		ReasonProvided: true,
+		ExpiresAt:      expiresAt,
+	}
+
+	expected := db.Exception{
+		ID:          uuid.New(),
+		ProjectID:   projectID,
+		EntityID:    entityID,
+		ProfileName: "default",
+		RuleName:    "vulnerability",
+		Reason:      reason,
+		ExpiresAt:   expiresAt,
+	}
+
+	store.EXPECT().
+		GetEntityByID(gomock.Any(), entityID).
+		Return(db.EntityInstance{
+			ID:        entityID,
+			ProjectID: projectID,
+		}, nil)
+
+	store.EXPECT().
+		CreateException(gomock.Any(), db.CreateExceptionParams{
+			ProjectID:      projectID,
+			EntityID:       entityID,
+			ProfileName:    "default",
+			RuleName:       "vulnerability",
+			Reason:         reason,
+			ReasonProvided: true,
+			ExpiresAt:      expiresAt,
+		}).
+		Return(expected, nil)
+
+	ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+		Project: engcontext.Project{
+			ID: projectID,
+		},
+	})
+
+	got, err := svc.Create(ctx, input)
+
+	require.NoError(t, err)
+	require.Equal(t, reason, got.Reason)
+}
+
+func TestCreateReasonTooLong(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	store := mockdb.NewMockStore(ctrl)
+	svc := NewService(store)
+
+	input := Exception{
+		Reason: strings.Repeat("a", MaxReasonLength+1),
+	}
+
+	got, err := svc.Create(context.Background(), input)
+
+	require.ErrorContains(t, err, "reason must not exceed")
+	require.Nil(t, got)
+}
+
+func TestCreateReasonOmitted(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	store := mockdb.NewMockStore(ctrl)
+	svc := NewService(store)
+
+	projectID := uuid.New()
+	entityID := uuid.New()
+	expiresAt := time.Now().Add(24 * time.Hour)
+
+	input := Exception{
+		EntityID:    entityID,
+		ProfileName: "default",
+		RuleName:    "vulnerability",
+		ExpiresAt:   expiresAt,
+	}
+
+	expected := db.Exception{
+		ID:          uuid.New(),
+		ProjectID:   projectID,
+		EntityID:    entityID,
+		ProfileName: "default",
+		RuleName:    "vulnerability",
+		Reason:      "Previously accepted risk",
+		ExpiresAt:   expiresAt,
+	}
+
+	store.EXPECT().
+		GetEntityByID(gomock.Any(), entityID).
+		Return(db.EntityInstance{
+			ID:        entityID,
+			ProjectID: projectID,
+		}, nil)
+
+	store.EXPECT().
+		CreateException(gomock.Any(), db.CreateExceptionParams{
+			ProjectID:      projectID,
+			EntityID:       entityID,
+			ProfileName:    "default",
+			RuleName:       "vulnerability",
+			Reason:         "",
+			ReasonProvided: false,
+			ExpiresAt:      expiresAt,
+		}).
+		Return(expected, nil)
+
+	ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+		Project: engcontext.Project{
+			ID: projectID,
+		},
+	})
+
+	got, err := svc.Create(ctx, input)
+
+	require.NoError(t, err)
+	require.Equal(t, "Previously accepted risk", got.Reason)
 }
 
 func TestCreateEntityWrongProject(t *testing.T) {
@@ -93,12 +228,12 @@ func TestCreateEntityWrongProject(t *testing.T) {
 
 	projectID := uuid.New()
 	entityID := uuid.New()
-	ruleTypeID := uuid.New()
 
 	input := Exception{
-		EntityID:   entityID,
-		RuleTypeID: ruleTypeID,
-		ExpiresAt:  time.Now().Add(24 * time.Hour),
+		EntityID:    entityID,
+		ProfileName: "default",
+		RuleName:    "vulnerability",
+		ExpiresAt:   time.Now().Add(24 * time.Hour),
 	}
 
 	store.EXPECT().
@@ -120,7 +255,7 @@ func TestCreateEntityWrongProject(t *testing.T) {
 	require.Nil(t, got)
 }
 
-func TestCreateRuleTypeWrongProject(t *testing.T) {
+func TestCreateEntityLookupError(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
 	store := mockdb.NewMockStore(ctrl)
@@ -128,27 +263,15 @@ func TestCreateRuleTypeWrongProject(t *testing.T) {
 
 	projectID := uuid.New()
 	entityID := uuid.New()
-	ruleTypeID := uuid.New()
 
 	input := Exception{
-		EntityID:   entityID,
-		RuleTypeID: ruleTypeID,
-		ExpiresAt:  time.Now().Add(24 * time.Hour),
+		EntityID:  entityID,
+		ExpiresAt: time.Now().Add(24 * time.Hour),
 	}
 
 	store.EXPECT().
 		GetEntityByID(gomock.Any(), entityID).
-		Return(db.EntityInstance{
-			ID:        entityID,
-			ProjectID: projectID,
-		}, nil)
-
-	store.EXPECT().
-		GetRuleTypeByID(gomock.Any(), db.GetRuleTypeByIDParams{
-			Projects: []uuid.UUID{projectID},
-			ID:       ruleTypeID,
-		}).
-		Return(db.RuleType{}, errors.New("rule type not found"))
+		Return(db.EntityInstance{}, errors.New("entity not found"))
 
 	ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
 		Project: engcontext.Project{
@@ -170,30 +293,22 @@ func TestCreateError(t *testing.T) {
 
 	projectID := uuid.New()
 	entityID := uuid.New()
-	ruleTypeID := uuid.New()
 	expiresAt := time.Now().Add(24 * time.Hour)
 	dbErr := errors.New("database error")
 
 	input := Exception{
-		EntityID:   entityID,
-		RuleTypeID: ruleTypeID,
-		ExpiresAt:  expiresAt,
+		EntityID:       entityID,
+		ProfileName:    "default",
+		RuleName:       "vulnerability",
+		Reason:         "Accepted risk",
+		ReasonProvided: true,
+		ExpiresAt:      expiresAt,
 	}
 
 	store.EXPECT().
 		GetEntityByID(gomock.Any(), entityID).
 		Return(db.EntityInstance{
 			ID:        entityID,
-			ProjectID: projectID,
-		}, nil)
-
-	store.EXPECT().
-		GetRuleTypeByID(gomock.Any(), db.GetRuleTypeByIDParams{
-			Projects: []uuid.UUID{projectID},
-			ID:       ruleTypeID,
-		}).
-		Return(db.RuleType{
-			ID:        ruleTypeID,
 			ProjectID: projectID,
 		}, nil)
 
@@ -222,11 +337,13 @@ func TestList(t *testing.T) {
 	projectID := uuid.New()
 	expected := []db.Exception{
 		{
-			ID:         uuid.New(),
-			ProjectID:  projectID,
-			EntityID:   uuid.New(),
-			RuleTypeID: uuid.New(),
-			ExpiresAt:  time.Now().Add(24 * time.Hour),
+			ID:          uuid.New(),
+			ProjectID:   projectID,
+			EntityID:    uuid.New(),
+			ProfileName: "default",
+			RuleName:    "vulnerability",
+			Reason:      "Accepted risk",
+			ExpiresAt:   time.Now().Add(24 * time.Hour),
 		},
 	}
 
@@ -240,7 +357,9 @@ func TestList(t *testing.T) {
 	require.Len(t, got, 1)
 	require.Equal(t, expected[0].ID, got[0].ID)
 	require.Equal(t, expected[0].EntityID, got[0].EntityID)
-	require.Equal(t, expected[0].RuleTypeID, got[0].RuleTypeID)
+	require.Equal(t, expected[0].ProfileName, got[0].ProfileName)
+	require.Equal(t, expected[0].RuleName, got[0].RuleName)
+	require.Equal(t, expected[0].Reason, got[0].Reason)
 	require.Equal(t, expected[0].ExpiresAt, got[0].ExpiresAt)
 	require.Equal(t, expected[0].CreatedAt, got[0].CreatedAt)
 }

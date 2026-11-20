@@ -46,6 +46,7 @@ func SetViperDefaults(v *viper.Viper) {
 	v.SetEnvPrefix("reminder")
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 	config.SetViperStructDefaults(v, "", Config{})
+	bindEntityRecurrenceEnv(v)
 }
 
 // RegisterReminderFlags registers the flags for the minder cli

@@ -16,25 +16,37 @@ const createException = `-- name: CreateException :one
 INSERT INTO exceptions (
     project_id,
     entity_id,
-    rule_type_id,
+    profile_name,
+    rule_name,
+    reason,
     expires_at
 ) VALUES (
     $1,
     $2,
     $3,
-    $4
+    $4,
+    $5,
+    $6
 )
-ON CONFLICT (entity_id, rule_type_id)
+ON CONFLICT (entity_id, lower(profile_name), lower(rule_name))
 DO UPDATE SET
-    expires_at = EXCLUDED.expires_at
-RETURNING id, project_id, entity_id, rule_type_id, expires_at, created_at
+    expires_at = EXCLUDED.expires_at,
+    reason = CASE
+      WHEN $7::boolean
+      THEN EXCLUDED.reason
+      ELSE exceptions.reason
+    END
+RETURNING id, project_id, entity_id, profile_name, rule_name, reason, expires_at, created_at
 `
 
 type CreateExceptionParams struct {
-	ProjectID  uuid.UUID `json:"project_id"`
-	EntityID   uuid.UUID `json:"entity_id"`
-	RuleTypeID uuid.UUID `json:"rule_type_id"`
-	ExpiresAt  time.Time `json:"expires_at"`
+	ProjectID      uuid.UUID `json:"project_id"`
+	EntityID       uuid.UUID `json:"entity_id"`
+	ProfileName    string    `json:"profile_name"`
+	RuleName       string    `json:"rule_name"`
+	Reason         string    `json:"reason"`
+	ExpiresAt      time.Time `json:"expires_at"`
+	ReasonProvided bool      `json:"reason_provided"`
 }
 
 // CreateException adds an exception for a project
@@ -42,15 +54,20 @@ func (q *Queries) CreateException(ctx context.Context, arg CreateExceptionParams
 	row := q.db.QueryRowContext(ctx, createException,
 		arg.ProjectID,
 		arg.EntityID,
-		arg.RuleTypeID,
+		arg.ProfileName,
+		arg.RuleName,
+		arg.Reason,
 		arg.ExpiresAt,
+		arg.ReasonProvided,
 	)
 	var i Exception
 	err := row.Scan(
 		&i.ID,
 		&i.ProjectID,
 		&i.EntityID,
-		&i.RuleTypeID,
+		&i.ProfileName,
+		&i.RuleName,
+		&i.Reason,
 		&i.ExpiresAt,
 		&i.CreatedAt,
 	)
@@ -75,7 +92,7 @@ func (q *Queries) DeleteException(ctx context.Context, arg DeleteExceptionParams
 }
 
 const listExceptions = `-- name: ListExceptions :many
-SELECT id, project_id, entity_id, rule_type_id, expires_at, created_at
+SELECT id, project_id, entity_id, profile_name, rule_name, reason, expires_at, created_at
 FROM exceptions
 WHERE project_id = $1
   AND expires_at > NOW()
@@ -96,7 +113,9 @@ func (q *Queries) ListExceptions(ctx context.Context, projectID uuid.UUID) ([]Ex
 			&i.ID,
 			&i.ProjectID,
 			&i.EntityID,
-			&i.RuleTypeID,
+			&i.ProfileName,
+			&i.RuleName,
+			&i.Reason,
 			&i.ExpiresAt,
 			&i.CreatedAt,
 		); err != nil {

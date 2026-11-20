@@ -30,18 +30,51 @@ import (
 // OCI is the struct that contains the OCI client
 type OCI struct {
 	cred provifv1.Credential
+	// registryAuth authenticates registry calls (tags, manifests, referrers).
+	// When nil, registry calls are anonymous.
+	registryAuth authn.Authenticator
 
 	registry string
 	baseURL  string
 }
 
+// Option configures an OCI client
+type Option func(*OCI)
+
+// WithRegistryAuthenticator sets the authenticator used for registry calls
+// such as listing tags and fetching manifests. Without it, those calls are
+// made anonymously.
+func WithRegistryAuthenticator(auth authn.Authenticator) Option {
+	return func(o *OCI) {
+		o.registryAuth = auth
+	}
+}
+
 // New creates a new OCI client
-func New(cred provifv1.Credential, registry, baseURL string) *OCI {
-	return &OCI{
+func New(cred provifv1.Credential, registry, baseURL string, opts ...Option) *OCI {
+	o := &OCI{
 		cred:     cred,
 		registry: registry,
 		baseURL:  baseURL,
 	}
+	for _, opt := range opts {
+		opt(o)
+	}
+	return o
+}
+
+// remoteOptions returns the options shared by every registry call.
+func (o *OCI) remoteOptions(ctx context.Context, extra ...remote.Option) []remote.Option {
+	auth := o.registryAuth
+	if auth == nil {
+		auth = authn.Anonymous
+	}
+	opts := []remote.Option{
+		remote.WithContext(ctx),
+		remote.WithUserAgent(constants.ServerUserAgent),
+		remote.WithAuth(auth),
+	}
+	return append(opts, extra...)
 }
 
 // CanImplement returns true/false depending on whether the OCI client can implement the specified trait
@@ -59,9 +92,9 @@ func (o *OCI) ListTags(ctx context.Context, contname string) ([]string, error) {
 		return nil, fmt.Errorf("parsing repo %q: %w", src, err)
 	}
 
-	puller, err := remote.NewPuller()
+	puller, err := remote.NewPuller(o.remoteOptions(ctx)...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating registry client: %w", err)
 	}
 
 	lister, err := puller.Lister(ctx, repo)
@@ -99,7 +132,7 @@ func (o *OCI) GetDigest(ctx context.Context, contname, tag string) (string, erro
 		return "", fmt.Errorf("failed to get reference: %w", err)
 	}
 
-	return getDigestFromRef(ctx, ref)
+	return o.getDigestFromRef(ctx, ref)
 }
 
 // GetReferrer returns the referrer for the given tag of the given container in the given namespace
@@ -110,7 +143,7 @@ func (o *OCI) GetReferrer(ctx context.Context, contname, tag, artifactType strin
 		return "", fmt.Errorf("failed to get reference: %w", err)
 	}
 
-	dig, err := getDigestFromRef(ctx, ref)
+	dig, err := o.getDigestFromRef(ctx, ref)
 	if err != nil {
 		return "", fmt.Errorf("failed to get digest: %w", err)
 	}
@@ -123,8 +156,7 @@ func (o *OCI) GetReferrer(ctx context.Context, contname, tag, artifactType strin
 	}
 
 	refer, err := remote.Referrers(digname,
-		remote.WithContext(ctx), remote.WithUserAgent(constants.ServerUserAgent),
-		remote.WithFilter("artifactType", artifactType))
+		o.remoteOptions(ctx, remote.WithFilter("artifactType", artifactType))...)
 	if err != nil {
 		return "", fmt.Errorf("failed to get referrer: %w", err)
 	}
@@ -139,7 +171,7 @@ func (o *OCI) getImage(ctx context.Context, contname, tag string) (v1.Image, err
 		return nil, fmt.Errorf("failed to get reference: %w", err)
 	}
 
-	img, err := remote.Image(ref, remote.WithContext(ctx), remote.WithUserAgent(constants.ServerUserAgent))
+	img, err := remote.Image(ref, o.remoteOptions(ctx)...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get image: %w", err)
 	}
@@ -173,7 +205,7 @@ func (o *OCI) GetRawManifest(ctx context.Context, contname, digest string) (*pro
 		return nil, fmt.Errorf("failed to parse digest reference: %w", err)
 	}
 
-	desc, err := remote.Get(ref, remote.WithContext(ctx), remote.WithUserAgent(constants.ServerUserAgent))
+	desc, err := remote.Get(ref, o.remoteOptions(ctx)...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get manifest: %w", err)
 	}
@@ -276,7 +308,7 @@ func (ov *OCI) getTagVersion(ctx context.Context, contname, tag string) (*minder
 		remote.WithUserAgent(constants.ServerUserAgent),
 	)
 	if err != nil {
-		if isNotFound(err) {
+		if IsNotFound(err) {
 			return nil, fmt.Errorf("failed to get descriptor for tag %s: %w: %w", tag, provifv1.ErrArtifactTagNotFound, err)
 		}
 		return nil, fmt.Errorf("failed to get descriptor for tag %s: %w", tag, err)
@@ -338,9 +370,9 @@ func resolveCreatedAt(man *v1.Manifest, configFile func() (*v1.ConfigFile, error
 	return cfg.Created.Time, nil
 }
 
-// isNotFound returns true when err is a registry 404 / MANIFEST_UNKNOWN,
-// meaning the tag was deleted after it appeared in the listing.
-func isNotFound(err error) bool {
+// IsNotFound returns true when err is a registry 404 / MANIFEST_UNKNOWN,
+// meaning the tag does not exist (for example, it was deleted upstream).
+func IsNotFound(err error) bool {
 	var terr *transport.Error
 	return errors.As(err, &terr) && terr.StatusCode == http.StatusNotFound
 }
@@ -362,15 +394,32 @@ func (o *OCI) getReference(contname, tag string) (name.Reference, error) {
 
 // getDigestFromRef returns the digest of a container image reference
 // TODO: Move this to a more appropriate location
-// TODO(#6972): Implement authentication
-func getDigestFromRef(ctx context.Context, ref name.Reference) (string, error) {
-	// Use the tag's top-level digest (the index for multi-arch tags), not a platform image's.
-	desc, err := remote.Get(ref, remote.WithContext(ctx), remote.WithUserAgent(constants.ServerUserAgent))
-	if err != nil {
-		return "", fmt.Errorf("failed to get descriptor: %w", err)
+func (o *OCI) getDigestFromRef(ctx context.Context, ref name.Reference) (string, error) {
+	opts := o.remoteOptions(ctx)
+
+	// HEAD returns the tag's top-level digest (the index for multi-arch tags) without
+	// fetching the manifest, and does not count toward Docker Hub's pull rate limit.
+	desc, err := remote.Head(ref, opts...)
+	if err == nil {
+		return desc.Digest.String(), nil
 	}
 
-	return desc.Digest.String(), nil
+	// A *transport.Error means the registry answered with a non-2xx status (404, 401,
+	// 429, 5xx). Return it as-is: a GET would fail the same way, and after a 429 it
+	// would count against the very rate limit that was just hit.
+	var terr *transport.Error
+	if errors.As(err, &terr) {
+		return "", fmt.Errorf("failed to head descriptor: %w", err)
+	}
+
+	// Otherwise HEAD succeeded but the response was unusable, e.g. a registry that
+	// omits Docker-Content-Digest on HEAD. Only then fall back to GET.
+	gdesc, gerr := remote.Get(ref, opts...)
+	if gerr != nil {
+		return "", fmt.Errorf("failed to get descriptor (HEAD: %v): %w", err, gerr)
+	}
+
+	return gdesc.Digest.String(), nil
 }
 
 // resolveIndexCreatedAt returns the creation time for a multi-platform image

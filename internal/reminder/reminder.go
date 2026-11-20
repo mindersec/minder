@@ -39,7 +39,8 @@ type reminder struct {
 	stop     chan struct{}
 	stopOnce sync.Once
 
-	repositoryCursor uuid.UUID
+	entityTypes []db.Entities
+	cursors     map[db.Entities]uuid.UUID
 
 	ticker *time.Ticker
 
@@ -49,6 +50,9 @@ type reminder struct {
 	metricsServerDone chan struct{}
 }
 
+// defaultEntityTypes are the entity types reminders are sent for.
+var defaultEntityTypes = []db.Entities{db.EntitiesRepository}
+
 // NewReminder creates a new reminder instance
 func NewReminder(ctx context.Context, store db.Store, config *reminderconfig.Config) (Interface, error) {
 	r := &reminder{
@@ -56,12 +60,17 @@ func NewReminder(ctx context.Context, store db.Store, config *reminderconfig.Con
 		cfg:               config,
 		stop:              make(chan struct{}),
 		metricsServerDone: make(chan struct{}),
+		entityTypes:       defaultEntityTypes,
+		cursors:           make(map[db.Entities]uuid.UUID, len(defaultEntityTypes)),
 	}
 
 	// Set to a random UUID to start
-	r.repositoryCursor = uuid.New()
 	logger := zerolog.Ctx(ctx)
-	logger.Info().Msgf("initial repository cursor: %s", r.repositoryCursor)
+	for _, entityType := range r.entityTypes {
+		r.cursors[entityType] = uuid.New()
+		logger.Info().Str("entity_type", string(entityType)).
+			Msgf("initial cursor: %s", r.cursors[entityType])
+	}
 
 	pub, err := r.getMessagePublisher(ctx)
 	if err != nil {
@@ -150,20 +159,30 @@ func (r *reminder) Stop() {
 }
 
 func (r *reminder) sendReminders(ctx context.Context) error {
-	logger := zerolog.Ctx(ctx)
+	var errs []error
+	for _, entityType := range r.entityTypes {
+		if err := r.sendRemindersForEntityType(ctx, entityType); err != nil {
+			errs = append(errs, fmt.Errorf("error sending %s reminders: %w", entityType, err))
+		}
+	}
 
-	// Fetch a batch of repositories
-	repos, repoToLastUpdated, err := r.getRepositoryBatch(ctx)
+	return errors.Join(errs...)
+}
+
+func (r *reminder) sendRemindersForEntityType(ctx context.Context, entityType db.Entities) error {
+	logger := zerolog.Ctx(ctx).With().Str("entity_type", string(entityType)).Logger()
+
+	repos, repoToLastUpdated, err := r.getEntityBatch(ctx, entityType)
 	if err != nil {
-		return fmt.Errorf("error fetching repository batch: %w", err)
+		return fmt.Errorf("error fetching entity batch: %w", err)
 	}
 
 	if len(repos) == 0 {
-		logger.Debug().Msg("no repositories to send reminders for")
+		logger.Debug().Msg("no entities to send reminders for")
 		return nil
 	}
 
-	logger.Info().Msgf("created repository batch of size: %d", len(repos))
+	logger.Info().Msgf("created entity batch of size: %d", len(repos))
 
 	messages, err := createReminderMessages(ctx, repos)
 	if err != nil {
@@ -197,33 +216,34 @@ func (r *reminder) sendReminders(ctx context.Context) error {
 	return nil
 }
 
-func (r *reminder) getRepositoryBatch(ctx context.Context) ([]db.EntityInstance, map[uuid.UUID]time.Time, error) {
-	logger := zerolog.Ctx(ctx)
+func (r *reminder) getEntityBatch(
+	ctx context.Context, entityType db.Entities,
+) ([]db.EntityInstance, map[uuid.UUID]time.Time, error) {
+	logger := zerolog.Ctx(ctx).With().Str("entity_type", string(entityType)).Logger()
 
-	logger.Debug().Msgf("fetching repositories after cursor: %s", r.repositoryCursor)
+	logger.Debug().Msgf("fetching entities after cursor: %s", r.cursors[entityType])
 
-	// Fetch repository entities after cursor
 	repos, err := r.store.ListEntitiesAfterID(ctx, db.ListEntitiesAfterIDParams{
-		EntityType: db.EntitiesRepository,
-		ID:         r.repositoryCursor,
+		EntityType: entityType,
+		ID:         r.cursors[entityType],
 		Limit:      int64(r.cfg.RecurrenceConfig.BatchSize),
 	})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	eligibleRepos, eligibleReposLastUpdated, err := r.getEligibleRepositories(ctx, repos)
+	eligibleRepos, eligibleReposLastUpdated, err := r.getEligibleEntities(ctx, repos)
 	if err != nil {
 		return nil, nil, err
 	}
-	logger.Debug().Msgf("%d/%d repositories are eligible for reminders", len(eligibleRepos), len(repos))
+	logger.Debug().Msgf("%d/%d entities are eligible for reminders", len(eligibleRepos), len(repos))
 
-	r.updateRepositoryCursor(ctx, repos)
+	r.updateCursor(ctx, entityType, repos)
 
 	return eligibleRepos, eligibleReposLastUpdated, nil
 }
 
-func (r *reminder) getEligibleRepositories(ctx context.Context, repos []db.EntityInstance) (
+func (r *reminder) getEligibleEntities(ctx context.Context, repos []db.EntityInstance) (
 	[]db.EntityInstance, map[uuid.UUID]time.Time, error,
 ) {
 	eligibleRepos := make([]db.EntityInstance, 0, len(repos))
@@ -254,38 +274,37 @@ func (r *reminder) getEligibleRepositories(ctx context.Context, repos []db.Entit
 	return eligibleRepos, idToLastUpdate, nil
 }
 
-func (r *reminder) updateRepositoryCursor(ctx context.Context, repos []db.EntityInstance) {
-	logger := zerolog.Ctx(ctx)
+func (r *reminder) updateCursor(ctx context.Context, entityType db.Entities, repos []db.EntityInstance) {
+	logger := zerolog.Ctx(ctx).With().Str("entity_type", string(entityType)).Logger()
 
 	if len(repos) == 0 {
-		r.repositoryCursor = uuid.Nil
+		r.cursors[entityType] = uuid.Nil
 	} else {
-		r.repositoryCursor = repos[len(repos)-1].ID
-		r.adjustCursorForEndOfList(ctx)
+		r.cursors[entityType] = repos[len(repos)-1].ID
+		r.adjustCursorForEndOfList(ctx, entityType)
 	}
 
-	logger.Debug().Msgf("updated repository cursor to: %s", r.repositoryCursor)
+	logger.Debug().Msgf("updated cursor to: %s", r.cursors[entityType])
 }
 
-func (r *reminder) adjustCursorForEndOfList(ctx context.Context) {
-	logger := zerolog.Ctx(ctx)
+func (r *reminder) adjustCursorForEndOfList(ctx context.Context, entityType db.Entities) {
+	logger := zerolog.Ctx(ctx).With().Str("entity_type", string(entityType)).Logger()
 
-	// Check if any repository entities exist after the cursor
+	cursor := r.cursors[entityType]
 	exists, err := r.store.EntityExistsAfterID(ctx, db.EntityExistsAfterIDParams{
-		EntityType: db.EntitiesRepository,
-		ID:         r.repositoryCursor,
+		EntityType: entityType,
+		ID:         cursor,
 	})
 	if err != nil {
-		logger.Error().Err(err).Msgf("unable to check if repository exists after cursor: %s"+
-			", resetting cursor to zero uuid", r.repositoryCursor)
-		r.repositoryCursor = uuid.Nil
+		logger.Error().Err(err).Msgf("unable to check if entity exists after cursor: %s"+
+			", resetting cursor to zero uuid", cursor)
+		r.cursors[entityType] = uuid.Nil
 		return
 	}
 
 	if !exists {
-		logger.Info().Msgf("cursor %s is at the end of the list, resetting cursor to zero uuid",
-			r.repositoryCursor)
-		r.repositoryCursor = uuid.Nil
+		logger.Info().Msgf("cursor %s is at the end of the list, resetting cursor to zero uuid", cursor)
+		r.cursors[entityType] = uuid.Nil
 	}
 }
 

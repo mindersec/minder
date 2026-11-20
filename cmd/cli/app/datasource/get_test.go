@@ -147,6 +147,11 @@ func TestDataSourceGetCommand(t *testing.T) {
 			},
 			ExpectedError: "server error",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"datasource", "get", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder datasource get"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, DataSourceCmd)

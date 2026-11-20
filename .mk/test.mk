@@ -47,7 +47,7 @@ lint-buf:
 
 .PHONY: lint-deadcode
 lint-deadcode: ## analyze unreachable functions across command entrypoints
-	@OUT=$$(deadcode -test -filter="github.com/mindersec/minder/cmd/..." ./cmd/...); \
+	@OUT=$$(deadcode -test -filter="github.com/mindersec/minder/cmd/..." ./cmd/...) || exit 1; \
 	if [ -n "$$OUT" ]; then \
 		echo "Unreachable code detected:"; \
 		echo "$$OUT"; \

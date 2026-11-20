@@ -17,6 +17,7 @@ var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete a repository",
 	Long:  `The repo delete subcommand is used to delete a registered repository within Minder.`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)

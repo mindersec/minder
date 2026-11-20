@@ -225,6 +225,7 @@ func (s *Server) allowedAdminDelete(ctx context.Context, relation minder.Relatio
 		minder.Relation_RELATION_PROFILE_DELETE,
 		minder.Relation_RELATION_DATA_SOURCE_DELETE,
 		minder.Relation_RELATION_ENTITY_DELETE,
+		minder.Relation_RELATION_EXCEPTION_DELETE,
 	}
 	return slices.Contains(adminIds, userId) && slices.Contains(deleteOps, relation)
 }

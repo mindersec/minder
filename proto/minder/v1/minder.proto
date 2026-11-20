@@ -68,6 +68,9 @@ enum Relation {
     RELATION_ENTITY_REGISTER = 43 [(name) = "entity_register"];
     RELATION_ENTITY_UPDATE = 44 [(name) = "entity_update"];
     RELATION_ENTITY_DELETE = 45 [(name) = "entity_delete"];
+    RELATION_EXCEPTION_GET = 46 [(name) = "exception_get"];
+    RELATION_EXCEPTION_UPSERT = 47 [(name) = "exception_upsert"];
+    RELATION_EXCEPTION_DELETE = 48 [(name) = "exception_delete"];
 }
 
 extend google.protobuf.EnumValueOptions {
@@ -4301,6 +4304,49 @@ service EntityInstanceService {
     }
 }
 
+// ExceptionService provides API endpoints for managing exceptions.
+service ExceptionService {
+    // ListExceptions returns active exceptions for the current project.
+    rpc ListExceptions(ListExceptionsRequest) returns (ListExceptionsResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/exceptions"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_EXCEPTION_GET
+        };
+    }
+
+    // CreateException creates or updates (upserts) an exception identified by
+    // the entity, profile name, and rule name. If an exception already exists
+    // for that identity, it is updated. When updating, a supplied reason
+    // replaces the existing reason; an omitted reason preserves it.
+    rpc CreateException(CreateExceptionRequest) returns (CreateExceptionResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/exception"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_EXCEPTION_UPSERT
+        };
+    }
+
+    // DeleteException deletes an exception.
+    rpc DeleteException(DeleteExceptionRequest) returns (DeleteExceptionResponse) {
+        option (google.api.http) = {
+            delete: "/api/v1/exception/{id}"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_EXCEPTION_DELETE
+        };
+    }
+}
+
 // ListEntitiesRequest is the request message for the ListEntities method
 message ListEntitiesRequest {
     // context is the context in which the entities are listed
@@ -4420,6 +4466,110 @@ message RegisterEntityResponse {
         (google.api.field_behavior) = REQUIRED
     ];
 }
+
+// Exception represents an exception for an entity and rule instance.
+message Exception {
+    // id is the unique identifier of the exception.
+    string id = 1;
+
+    // entity is the entity associated with the exception.
+    EntityInstance entity = 2;
+
+    // expires_at is when the exception expires.
+    google.protobuf.Timestamp expires_at = 3;
+
+    // created_at is when the exception was created.
+    google.protobuf.Timestamp created_at = 4;
+
+    // profile_name identifies the profile containing the rule.
+    string profile_name = 5;
+
+    // rule_name identifies the specific rule within the profile.
+    string rule_name = 6;
+
+    // reason is a short description explaining why the exception was created.
+    string reason = 7;
+}
+
+// ListExceptionsRequest requests active exceptions for a project.
+message ListExceptionsRequest {
+    // context identifies the project.
+    Context context = 1;
+}
+
+// ListExceptionsResponse contains active exceptions.
+message ListExceptionsResponse {
+    // exceptions is the list of active exceptions.
+    repeated Exception exceptions = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+}
+
+// CreateExceptionRequest specifies an exception to create.
+message CreateExceptionRequest {
+    // context identifies the project.
+    Context context = 1;
+
+    // entity_id is the ID of the entity being excepted.
+    string entity_id = 2 [
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // expires_at is when the exception expires.
+    google.protobuf.Timestamp expires_at = 3 [
+        (buf.validate.field).timestamp.gt_now = true,
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // profile_name identifies the profile containing the rule.
+    string profile_name = 4 [
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z][-/[:word:]]*$",
+            max_len: 200,
+        },
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // rule_name identifies the specific rule within the profile.
+    string rule_name = 5 [
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z][-/'()[:word:] :]*$",
+            max_len: 200,
+        },
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // reason is an optional short description explaining the exception.
+    optional string reason = 6 [
+        (buf.validate.field).string = {
+            max_len: 500,
+        }
+    ];
+}
+
+// CreateExceptionResponse contains the created exception.
+message CreateExceptionResponse {
+    // exception is the created exception.
+    Exception exception = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+}
+
+// DeleteExceptionRequest specifies the exception to delete.
+message DeleteExceptionRequest {
+    // context identifies the project.
+    Context context = 1;
+
+    // id is the ID of the exception to delete.
+    string id = 2 [
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = REQUIRED
+    ];
+}
+
+// DeleteExceptionResponse is the response to deleting an exception.
+message DeleteExceptionResponse {}
 
 // UpstreamEntityRef providers enough information for the
 // provider to identify the entity in the upstream system.

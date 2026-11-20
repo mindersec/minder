@@ -1752,6 +1752,20 @@ func (mr *MockGitHubMockRecorder) GetBranchProtection(arg0, arg1, arg2, arg3 any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBranchProtection", reflect.TypeOf((*MockGitHub)(nil).GetBranchProtection), arg0, arg1, arg2, arg3)
 }
 
+// GetContainerAuthenticator mocks base method.
+func (m *MockGitHub) GetContainerAuthenticator(owner string) authn.Authenticator {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetContainerAuthenticator", owner)
+	ret0, _ := ret[0].(authn.Authenticator)
+	return ret0
+}
+
+// GetContainerAuthenticator indicates an expected call of GetContainerAuthenticator.
+func (mr *MockGitHubMockRecorder) GetContainerAuthenticator(owner any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContainerAuthenticator", reflect.TypeOf((*MockGitHub)(nil).GetContainerAuthenticator), owner)
+}
+
 // GetCredential mocks base method.
 func (m *MockGitHub) GetCredential() v11.GitHubCredential {
 	m.ctrl.T.Helper()

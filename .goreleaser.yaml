@@ -39,6 +39,8 @@ builds:
       - amd64
       - arm64
     main: ./cmd/cli
+    # Pin binary mtimes to the commit time so rebuilding a tag is byte-identical.
+    mod_timestamp: "{{ .CommitTimestamp }}"
   - id: mindev
     binary: mindev
     env:
@@ -60,6 +62,7 @@ builds:
       - amd64
       - arm64
     main: ./cmd/dev
+    mod_timestamp: "{{ .CommitTimestamp }}"
 # This section defines the release format.
 archives:
   - formats: tar.gz # we can use binary, but it seems there's an issue where goreleaser skips the sboms
@@ -67,6 +70,19 @@ archives:
     format_overrides:
       - goos: windows
         formats: zip
+    # Use the commit date for every archive entry's mtime so archives are
+    # reproducible. Listing files explicitly replaces GoReleaser's defaults
+    # (LICENSE*, README*, CHANGELOG*), which would otherwise keep the mtimes
+    # from the checkout.
+    builds_info:
+      mtime: "{{ .CommitDate }}"
+    files:
+      - src: LICENSE
+        info:
+          mtime: "{{ .CommitDate }}"
+      - src: README.md
+        info:
+          mtime: "{{ .CommitDate }}"
 # This section defines how to release to winget.
 winget:
   - name: minder
@@ -120,6 +136,9 @@ release:
   # If set to auto, will mark the release as not ready for production
   # in case there is an indicator for this in the tag e.g. v1.0.0-rc1
   prerelease: auto
+  # Overwrite assets that a previous, failed run already uploaded, so a
+  # release can be re-run without deleting them by hand.
+  replace_existing_artifacts: true
   github:
     owner: mindersec
     name: minder

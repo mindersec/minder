@@ -6,9 +6,24 @@ package config
 import (
 	"testing"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 )
+
+func TestSetViperStructDefaultsSkipTag(t *testing.T) {
+	t.Parallel()
+
+	type cfg struct {
+		Kept    string            `mapstructure:"kept" default:"x"`
+		Skipped map[string]string `mapstructure:"skipped" viperdefault:"skip"`
+	}
+
+	v := viper.New()
+	SetViperStructDefaults(v, "", cfg{})
+
+	assert.ElementsMatch(t, []string{"kept"}, v.AllKeys())
+}
 
 func TestGetKeysWithNullValueFromYAML(t *testing.T) {
 	t.Parallel()

@@ -101,6 +101,11 @@ func TestInviteListCommand(t *testing.T) {
 			},
 			ExpectedError: "server error",
 		},
+		{
+			Name:          "unexpected positional argument",
+			Args:          []string{"auth", "invite", "list", "unexpected-arg"},
+			ExpectedError: "unknown command",
+		},
 	}
 
 	cli.RunCmdTests(t, tests, auth.AuthCmd)

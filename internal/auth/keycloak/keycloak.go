@@ -22,10 +22,10 @@ import (
 
 // KeyCloak is an implementation of the auth.IdentityProvider interface.
 type KeyCloak struct {
-	name  string
-	url   url.URL
-	realm string
-	cfg   serverconfig.IdentityConfig
+	name      string
+	issuerURL url.URL
+	realm     string
+	cfg       serverconfig.IdentityConfig
 
 	kcClient client.ClientWithResponsesInterface
 }
@@ -53,11 +53,11 @@ func NewKeyCloak(name string, cfg serverconfig.IdentityConfig) (*KeyCloak, error
 	}
 
 	return &KeyCloak{
-		name:     name,
-		url:      *parsedIssuerUrl,
-		realm:    cfg.Realm,
-		cfg:      cfg,
-		kcClient: kcClient,
+		name:      name,
+		issuerURL: *parsedIssuerUrl,
+		realm:     cfg.Realm,
+		cfg:       cfg,
+		kcClient:  kcClient,
 	}, nil
 }
 
@@ -73,7 +73,7 @@ func (k *KeyCloak) String() string {
 
 // URL implements auth.IdentityProvider.
 func (k *KeyCloak) URL() url.URL {
-	return k.url
+	return k.issuerURL
 }
 
 // Resolve implements auth.IdentityProvider.
