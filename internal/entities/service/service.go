@@ -199,7 +199,9 @@ func (s *entityService) GetEntityByID(
 	entityID uuid.UUID,
 	projectID uuid.UUID,
 ) (*pb.EntityInstance, error) {
-	// Get entity from database, scoped to the project
+	// Get entity from database, scoped to the project.
+	// TODO(#4419): EntityWithPropertiesByID below fetches the entity again.
+	// Collapse this into a single project-scoped fetch once it takes a project.
 	_, err := s.store.GetEntityByIDAndProject(ctx, db.GetEntityByIDAndProjectParams{
 		ID:        entityID,
 		ProjectID: projectID,
