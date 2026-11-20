@@ -198,6 +198,11 @@ func TestServer_RegisterRepository_EntityRefProvider(t *testing.T) {
 			Name:         "fails when no provider can list repositories",
 			ExpectedCode: codes.NotFound,
 		},
+		{
+			Name:         "fails when the named provider does not exist",
+			ProviderName: "no-such-provider",
+			ExpectedCode: codes.NotFound,
+		},
 	}
 
 	for _, scenario := range scenarios {

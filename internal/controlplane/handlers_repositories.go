@@ -143,7 +143,8 @@ func (s *Server) repoProviderFromName(
 	if providerName != "" {
 		provider, err := s.providerStore.GetByName(ctx, projectID, providerName)
 		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
+			pErr := providers.ErrProviderNotFoundBy{}
+			if errors.Is(err, sql.ErrNoRows) || errors.As(err, &pErr) {
 				return nil, util.UserVisibleError(codes.NotFound, "provider not found")
 			}
 			return nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
@@ -159,7 +160,12 @@ func (s *Server) repoProviderFromName(
 		}
 		return nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
 	}
-	if len(provs) > 1 {
+	switch {
+	case len(provs) == 0:
+		// GetByTraitInHierarchy returns an error rather than an empty list,
+		// but don't rely on that to avoid indexing an empty slice.
+		return nil, util.UserVisibleError(codes.NotFound, "no suitable provider found, please enroll a provider")
+	case len(provs) > 1:
 		return nil, util.UserVisibleError(codes.InvalidArgument,
 			"more than one provider can register repositories in this project; please specify a provider")
 	}
