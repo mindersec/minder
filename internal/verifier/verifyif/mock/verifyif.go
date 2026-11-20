@@ -70,3 +70,42 @@ func (mr *MockArtifactVerifierMockRecorder) VerifyContainer(ctx, owner, artifact
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyContainer", reflect.TypeOf((*MockArtifactVerifier)(nil).VerifyContainer), ctx, owner, artifact, checksumref)
 }
+
+// MockArtifactVerifierProvider is a mock of ArtifactVerifierProvider interface.
+type MockArtifactVerifierProvider struct {
+	ctrl     *gomock.Controller
+	recorder *MockArtifactVerifierProviderMockRecorder
+	isgomock struct{}
+}
+
+// MockArtifactVerifierProviderMockRecorder is the mock recorder for MockArtifactVerifierProvider.
+type MockArtifactVerifierProviderMockRecorder struct {
+	mock *MockArtifactVerifierProvider
+}
+
+// NewMockArtifactVerifierProvider creates a new mock instance.
+func NewMockArtifactVerifierProvider(ctrl *gomock.Controller) *MockArtifactVerifierProvider {
+	mock := &MockArtifactVerifierProvider{ctrl: ctrl}
+	mock.recorder = &MockArtifactVerifierProviderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockArtifactVerifierProvider) EXPECT() *MockArtifactVerifierProviderMockRecorder {
+	return m.recorder
+}
+
+// ArtifactVerifier mocks base method.
+func (m *MockArtifactVerifierProvider) ArtifactVerifier() (verifyif.ArtifactVerifier, bool) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ArtifactVerifier")
+	ret0, _ := ret[0].(verifyif.ArtifactVerifier)
+	ret1, _ := ret[1].(bool)
+	return ret0, ret1
+}
+
+// ArtifactVerifier indicates an expected call of ArtifactVerifier.
+func (mr *MockArtifactVerifierProviderMockRecorder) ArtifactVerifier() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArtifactVerifier", reflect.TypeOf((*MockArtifactVerifierProvider)(nil).ArtifactVerifier))
+}

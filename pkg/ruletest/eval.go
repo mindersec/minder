@@ -39,12 +39,13 @@ func (tr *testCaseRunner) builtinEval(
 	var mockFSDict *starlark.Dict
 	var datasourcesList *starlark.List
 	var providerTraitsPresentList *starlark.List
+	var artifactVal *ArtifactValue
 
 	err := starlark.UnpackArgs("eval", args, kwargs,
 		"rule", &ruleName, "entity?", &entityDict,
 		"profile?", &profileDict, "params?", &paramsDict, "mock_http?", &mockHttpDict,
 		"mock_fs?", &mockFSDict, "data_sources?", &datasourcesList,
-		"provider_traits_present?", &providerTraitsPresentList)
+		"provider_traits_present?", &providerTraitsPresentList, "artifacts?", &artifactVal)
 	if err != nil {
 		return nil, err
 	}
@@ -100,6 +101,9 @@ func (tr *testCaseRunner) builtinEval(
 	tkOpts := []tkv1.Option{tkv1.WithHandlerFunc(mockHandler.ServeHTTP)}
 	if mockFSDict != nil {
 		tkOpts = append(tkOpts, tkv1.WithGitFiles(mockFSMap))
+	}
+	if artifactVal != nil {
+		tkOpts = append(tkOpts, tkv1.WithArtifact(artifactVal.Fixture))
 	}
 	if providerTraitsPresentList != nil {
 		tkOpts = append(tkOpts, tkv1.WithCanImplement(func(trait minderv1.ProviderType) bool {
