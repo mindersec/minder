@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 # SPDX-License-Identifier: Apache-2.0
 
-version: '3.2'
 services:
   postgres:
     container_name: postgres_container
@@ -21,9 +20,8 @@ services:
     networks:
       - app_net
   migration:
-    build:
-      context: ../../
-      dockerfile: ./docker/minder/Dockerfile
+    # Built with ko by `make dbschema`, like `make run-docker` does.
+    image: ko://github.com/mindersec/minder/cmd/server
     command:
       [
         "migrate",
