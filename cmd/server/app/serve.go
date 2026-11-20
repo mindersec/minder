@@ -24,6 +24,7 @@ import (
 	"github.com/mindersec/minder/internal/auth/jwt/dynamic"
 	"github.com/mindersec/minder/internal/auth/jwt/merged"
 	"github.com/mindersec/minder/internal/auth/keycloak"
+	"github.com/mindersec/minder/internal/auth/oidc"
 	"github.com/mindersec/minder/internal/authz"
 	cpmetrics "github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/db"
@@ -110,11 +111,26 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("unable to prepare authz client for run: %w", err)
 		}
 
-		kc, err := keycloak.NewKeyCloak("", cfg.Identity.Server)
-		if err != nil {
-			return fmt.Errorf("unable to create keycloak identity provider: %w", err)
+		var baseProvider auth.IdentityProvider
+		var idManager auth.IdentityManager
+
+		if cfg.Identity.Server.Type == "oidc" {
+			oidcProv, err := oidc.NewOIDCProvider(ctx, "", cfg.Identity.Server, nil)
+			if err != nil {
+				return fmt.Errorf("unable to create generic OIDC identity provider: %w", err)
+			}
+			baseProvider = oidcProv
+			idManager = auth.NewNoopIdentityManager()
+		} else {
+			kc, err := keycloak.NewKeyCloak("", cfg.Identity.Server)
+			if err != nil {
+				return fmt.Errorf("unable to create keycloak identity provider: %w", err)
+			}
+			baseProvider = kc
+			idManager = kc
 		}
-		idClient, err := auth.NewIdentityClient(kc, &githubactions.GitHubActions{})
+
+		idClient, err := auth.NewIdentityClient(baseProvider, &githubactions.GitHubActions{})
 		if err != nil {
 			return fmt.Errorf("unable to create identity client: %w", err)
 		}
@@ -132,7 +148,7 @@ var serveCmd = &cobra.Command{
 			restClientCache,
 			authzc,
 			idClient,
-			kc,
+			idManager,
 			cpmetrics.NewMetrics(),
 			providerMetrics,
 			[]message.HandlerMiddleware{telemetryMiddleware.TelemetryStoreMiddleware},

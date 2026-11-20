@@ -31,6 +31,8 @@ type IdentityConfigWrapper struct {
 
 // IdentityConfig is the configuration for the identity provider in minder server
 type IdentityConfig struct {
+	// Type specifies the identity provider type ("keycloak" or "oidc")
+	Type string `mapstructure:"type" default:"keycloak"`
 	// IssuerUrl is the base URL for calling APIs on the identity server.  Note that this URL
 	// is used for direct communication with the identity server, and is not the URL that
 	// is included in the JWT tokens.  It is named 'issuer_url' for historical compatibility.
@@ -71,8 +73,8 @@ func (sic *IdentityConfig) DiscoverOIDCEndpoints(ctx context.Context) (*OIDCConf
 		return nil, fmt.Errorf("failed to parse issuer URL: %w", err)
 	}
 
-	// Keycloak specific path for discovery if realm is set
-	if sic.Realm != "" {
+	// Keycloak specific path for discovery if realm is set and provider type is not oidc
+	if sic.Type != "oidc" && sic.Realm != "" {
 		discoveryUrl = discoveryUrl.JoinPath("realms", sic.Realm)
 	}
 	discoveryUrl = discoveryUrl.JoinPath(oidc.DiscoveryEndpoint)
