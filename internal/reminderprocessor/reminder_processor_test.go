@@ -4,6 +4,7 @@
 package reminderprocessor
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -11,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
+	reconcilermessages "github.com/mindersec/minder/internal/reconcilers/messages"
 	remindermessages "github.com/mindersec/minder/internal/reminder/messages"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 	eventermock "github.com/mindersec/minder/pkg/eventer/interfaces/mock"
@@ -70,4 +72,36 @@ func TestReminderProcessor_reminderMessageHandler_InvalidMessage(t *testing.T) {
 	err := rp.reminderMessageHandler(msg)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "error unmarshalling reminder event")
+}
+
+func TestReminderProcessor_reminderMessageHandler_ArtifactEntity(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	mockEvt := eventermock.NewMockInterface(ctrl)
+	rp := NewReminderProcessor(mockEvt)
+
+	projectID := uuid.New()
+	providerID := uuid.New()
+	artifactID := uuid.New()
+
+	msg, err := remindermessages.NewEntityReminderMessage(providerID, artifactID, projectID)
+	require.NoError(t, err)
+
+	var published *message.Message
+	mockEvt.EXPECT().Publish(constants.TopicQueueReconcileRepoInit, gomock.Any()).
+		DoAndReturn(func(_ string, msgs ...*message.Message) error {
+			require.Len(t, msgs, 1)
+			published = msgs[0]
+			return nil
+		})
+
+	require.NoError(t, rp.reminderMessageHandler(msg))
+	require.NotNil(t, published)
+
+	var evt reconcilermessages.RepoReconcilerEvent
+	require.NoError(t, json.Unmarshal(published.Payload, &evt))
+	require.Equal(t, reconcilermessages.RepoReconcilerEvent{
+		Project: projectID, Provider: providerID, EntityID: artifactID,
+	}, evt)
 }

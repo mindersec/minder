@@ -12,10 +12,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	mockdb "github.com/mindersec/minder/database/mock"
 	df "github.com/mindersec/minder/database/mock/fixtures"
 	"github.com/mindersec/minder/internal/entities/properties/service"
+	mockentities "github.com/mindersec/minder/internal/entities/service/mock"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
 	mockrepo "github.com/mindersec/minder/internal/repositories/mock"
 	rf "github.com/mindersec/minder/internal/repositories/mock/fixtures"
@@ -31,11 +34,29 @@ var (
 )
 
 type testCase struct {
-	name          string
-	mockStoreFunc df.MockStoreBuilder
-	mockReposFunc rf.RepoMockBuilder
-	messageFunc   func(*testing.T) *message.Message
-	err           bool
+	name             string
+	mockStoreFunc    df.MockStoreBuilder
+	mockReposFunc    rf.RepoMockBuilder
+	mockEntitiesFunc func(*mockentities.MockEntityService)
+	messageFunc      func(*testing.T) *message.Message
+	err              bool
+}
+
+var artifactID = uuid.New()
+
+func deleteMessage(entityType pb.Entity, entityID uuid.UUID) func(*testing.T) *message.Message {
+	return func(t *testing.T) *message.Message {
+		t.Helper()
+		m := message.NewMessage(uuid.New().String(), nil)
+		err := messages.NewMinderEvent().
+			WithProviderID(providerID).
+			WithProjectID(projectID).
+			WithEntityType(entityType).
+			WithEntityID(entityID).
+			ToMessage(m)
+		require.NoError(t, err, "invalid message")
+		return m
+	}
 }
 
 func TestHandleEntityDelete(t *testing.T) {
@@ -112,6 +133,33 @@ func TestHandleEntityDelete(t *testing.T) {
 			err: true,
 		},
 		{
+			name: "artifact is deleted through the entity service",
+			mockEntitiesFunc: func(m *mockentities.MockEntityService) {
+				m.EXPECT().DeleteEntityByID(gomock.Any(), artifactID, projectID).Return(nil)
+			},
+			messageFunc: deleteMessage(pb.Entity_ENTITY_ARTIFACTS, artifactID),
+		},
+		{
+			name: "artifact already deleted - expect no error",
+			mockEntitiesFunc: func(m *mockentities.MockEntityService) {
+				m.EXPECT().DeleteEntityByID(gomock.Any(), artifactID, projectID).
+					Return(status.Error(codes.NotFound, "entity not found"))
+			},
+			messageFunc: deleteMessage(pb.Entity_ENTITY_ARTIFACTS, artifactID),
+		},
+		{
+			name: "artifact delete failure",
+			mockEntitiesFunc: func(m *mockentities.MockEntityService) {
+				m.EXPECT().DeleteEntityByID(gomock.Any(), artifactID, projectID).Return(errors.New("oops"))
+			},
+			messageFunc: deleteMessage(pb.Entity_ENTITY_ARTIFACTS, artifactID),
+			err:         true,
+		},
+		{
+			name:        "unsupported entity type is rejected without deleting",
+			messageFunc: deleteMessage(pb.Entity_ENTITY_PULL_REQUESTS, uuid.New()),
+		},
+		{
 			name:          "bad message",
 			mockStoreFunc: nil,
 			messageFunc: func(_ *testing.T) *message.Message {
@@ -159,6 +207,11 @@ func setUp(t *testing.T, tt testCase, ctrl *gomock.Controller) *Reconciler {
 		repoService = tt.mockReposFunc(ctrl)
 	}
 
+	entities := mockentities.NewMockEntityService(ctrl)
+	if tt.mockEntitiesFunc != nil {
+		tt.mockEntitiesFunc(entities)
+	}
+
 	evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 		Driver:    "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{},
@@ -171,6 +224,7 @@ func setUp(t *testing.T, tt testCase, ctrl *gomock.Controller) *Reconciler {
 		nil, // crypto.Engine not used in these tests
 		nil, // manager.ProviderManager not used in these tests
 		repoService,
+		entities,
 	)
 	require.NoError(t, err)
 
