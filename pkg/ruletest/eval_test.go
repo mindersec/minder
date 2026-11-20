@@ -10,8 +10,10 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"go.starlark.net/starlark"
+	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/mindersec/minder/internal/engine/eval/templates"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 	engerrs "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
@@ -172,5 +174,29 @@ func TestBuiltinEval_InvalidArgs(t *testing.T) {
 				t.Errorf("error %q does not contain expected string %q", err.Error(), tt.wantErr)
 			}
 		})
+	}
+}
+
+func TestMapToProto_PullRequest(t *testing.T) {
+	t.Parallel()
+
+	got, err := mapToProto("pull_request", map[string]any{
+		"repo_owner": "mindersec",
+		"repo_name":  "minder",
+		"number":     42,
+		"author_id":  1234,
+	})
+	if err != nil {
+		t.Fatalf("mapToProto() error = %v", err)
+	}
+
+	want := &pbinternal.PullRequest{
+		RepoOwner: "mindersec",
+		RepoName:  "minder",
+		Number:    42,
+		AuthorId:  1234,
+	}
+	if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
+		t.Errorf("mapToProto() mismatch (-want +got):\n%s", diff)
 	}
 }
