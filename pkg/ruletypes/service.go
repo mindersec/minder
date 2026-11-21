@@ -15,11 +15,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/open-policy-agent/opa/v1/ast"
+	"google.golang.org/grpc/codes"
 
 	"github.com/mindersec/minder/internal/db"
 	regoeval "github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/marketplaces/namespaces"
+	"github.com/mindersec/minder/internal/remediationparams"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/schemaupdate"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -339,6 +341,29 @@ func (s *ruleTypeService) validateAndDetectRegoVersion(ctx context.Context, rule
 	}
 }
 
+// validateRemediationParams validates method-specific pull request
+// remediation parameters at rule type creation and update time. Without this,
+// invalid configurations are only rejected when the remediation is constructed
+// during evaluation, so the rule type would be stored but fail every time.
+func validateRemediationParams(rem *pb.RuleType_Definition_Remediate) error {
+	prRem := rem.GetPullRequest()
+	if prRem == nil {
+		return nil
+	}
+
+	var params map[string]any
+	if prRem.GetParams() != nil {
+		params = prRem.GetParams().AsMap()
+	}
+
+	if err := remediationparams.ValidatePullRequestParams(prRem.GetMethod(), params); err != nil {
+		return util.UserVisibleError(codes.InvalidArgument,
+			"invalid params for pull request remediation method %q: %v", prRem.GetMethod(), err)
+	}
+
+	return nil
+}
+
 // validateProviderTraits validates that a rule type's declared
 // provider_traits are known trait names. This checks against the static set
 // of provider types Minder defines, not against providers currently
@@ -488,6 +513,10 @@ func (s *ruleTypeService) validateRuleTypeCommon(ctx context.Context, ruleType *
 
 	regoVersion, err := s.validateAndDetectRegoVersion(ctx, ruleType)
 	if err != nil {
+		return "", errors.Join(ErrRuleTypeInvalid, err)
+	}
+
+	if err := validateRemediationParams(ruleType.GetDef().GetRemediate()); err != nil {
 		return "", errors.Join(ErrRuleTypeInvalid, err)
 	}
 

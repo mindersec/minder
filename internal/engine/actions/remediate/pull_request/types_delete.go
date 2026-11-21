@@ -12,25 +12,19 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/remediationparams"
 )
 
 const (
 	// minderDeleteModification deletes files matching the given patterns
-	minderDeleteModification = "minder.delete"
+	minderDeleteModification = remediationparams.MethodDelete
 )
 
 var _ fsModifier = (*deleteModification)(nil)
 
-type deleteConfig struct {
-	Patterns []struct {
-		Pattern string `json:"pattern"`
-		Type    string `json:"type"`
-	} `json:"patterns"`
-}
-
 type deleteModification struct {
 	fsChangeSet
-	config deleteConfig
+	config remediationparams.DeleteConfig
 }
 
 var _ modificationConstructor = newDeleteModification
@@ -38,53 +32,21 @@ var _ modificationConstructor = newDeleteModification
 func newDeleteModification(
 	params *modificationConstructorParams,
 ) (fsModifier, error) {
-	if params.prCfg.GetParams() == nil {
-		return nil, fmt.Errorf("delete modification requires params")
+	var confMap map[string]any
+	if params.prCfg.GetParams() != nil {
+		confMap = params.prCfg.Params.AsMap()
 	}
 
-	confMap := params.prCfg.Params.AsMap()
-	patternsRaw, ok := confMap["patterns"]
-	if !ok {
-		return nil, fmt.Errorf("delete modification requires patterns")
-	}
-
-	patternsList, ok := patternsRaw.([]any)
-	if !ok {
-		return nil, fmt.Errorf("patterns must be a list")
-	}
-
-	var conf deleteConfig
-	for i, p := range patternsList {
-		pm, ok := p.(map[string]any)
-		if !ok {
-			return nil, fmt.Errorf("patterns[%d] must be an object", i)
-		}
-		pattern, _ := pm["pattern"].(string)
-		typ, _ := pm["type"].(string)
-		if pattern == "" {
-			return nil, fmt.Errorf("patterns[%d] missing required field: pattern", i)
-		}
-		if typ == "" {
-			return nil, fmt.Errorf("patterns[%d] missing required field: type", i)
-		}
-		if typ != string(patternTypeGlob) {
-			return nil, fmt.Errorf("patterns[%d] unsupported type %q (only %q is supported)", i, typ, patternTypeGlob)
-		}
-		conf.Patterns = append(conf.Patterns, struct {
-			Pattern string `json:"pattern"`
-			Type    string `json:"type"`
-		}{Pattern: pattern, Type: typ})
-	}
-
-	if len(conf.Patterns) == 0 {
-		return nil, fmt.Errorf("delete modification requires at least one valid pattern")
+	conf, err := remediationparams.ParseDeleteConfig(confMap)
+	if err != nil {
+		return nil, err
 	}
 
 	return &deleteModification{
 		fsChangeSet: fsChangeSet{
 			fs: params.bfs,
 		},
-		config: conf,
+		config: *conf,
 	}, nil
 }
 

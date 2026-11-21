@@ -12,13 +12,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc/codes"
 
 	mockdb "github.com/mindersec/minder/database/mock"
 	df "github.com/mindersec/minder/database/mock/fixtures"
 	dsf "github.com/mindersec/minder/internal/datasources/service/mock/fixtures"
 	db "github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	mockrulesvc "github.com/mindersec/minder/pkg/ruletypes/mock"
 	sf "github.com/mindersec/minder/pkg/ruletypes/mock/fixtures"
 )
 
@@ -69,6 +72,7 @@ func TestCreateRuleType(t *testing.T) {
 		dataSourcesServiceFunc dsf.DataSourcesSvcMockBuilder
 		request                *minderv1.CreateRuleTypeRequest
 		expectedWarnings       []string
+		expectedNiceStatus     *util.NiceStatus
 		error                  bool
 	}{
 		{
@@ -150,6 +154,24 @@ func TestCreateRuleType(t *testing.T) {
 			},
 			error: true,
 		},
+		{
+			name: "user-visible service error is passed through",
+			mockStoreFunc: df.NewMockStore(
+				df.WithRollbackTransaction(),
+				WithSuccessfulGetProjectByID(projectID),
+			),
+			ruleTypeServiceFunc: func(ctrl *gomock.Controller) sf.RuleTypeSvcMock {
+				mock := mockrulesvc.NewMockRuleTypeService(ctrl)
+				mock.EXPECT().
+					CreateRuleType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil, util.UserVisibleError(codes.InvalidArgument, "invalid remediation params"))
+				return mock
+			},
+			request: &minderv1.CreateRuleTypeRequest{
+				RuleType: &minderv1.RuleType{},
+			},
+			expectedNiceStatus: util.UserVisibleError(codes.InvalidArgument, "invalid remediation params"),
+		},
 	}
 
 	for _, tt := range tests {
@@ -185,6 +207,11 @@ func TestCreateRuleType(t *testing.T) {
 				Provider: engcontext.Provider{Name: "testing"},
 			})
 			resp, err := srv.CreateRuleType(ctx, tt.request)
+			if tt.expectedNiceStatus != nil {
+				require.Equal(t, tt.expectedNiceStatus, err)
+				require.Nil(t, resp)
+				return
+			}
 			if tt.error {
 				require.Error(t, err)
 				require.Nil(t, resp)
@@ -209,6 +236,7 @@ func TestUpdateRuleType(t *testing.T) {
 		dataSourcesServiceFunc dsf.DataSourcesSvcMockBuilder
 		request                *minderv1.UpdateRuleTypeRequest
 		expectedWarnings       []string
+		expectedNiceStatus     *util.NiceStatus
 		error                  bool
 	}{
 		{
@@ -277,6 +305,24 @@ func TestUpdateRuleType(t *testing.T) {
 			},
 			error: true,
 		},
+		{
+			name: "user-visible service error is passed through",
+			mockStoreFunc: df.NewMockStore(
+				df.WithRollbackTransaction(),
+				WithSuccessfulGetProjectByID(projectID),
+			),
+			ruleTypeServiceFunc: func(ctrl *gomock.Controller) sf.RuleTypeSvcMock {
+				mock := mockrulesvc.NewMockRuleTypeService(ctrl)
+				mock.EXPECT().
+					UpdateRuleType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil, util.UserVisibleError(codes.InvalidArgument, "invalid remediation params"))
+				return mock
+			},
+			request: &minderv1.UpdateRuleTypeRequest{
+				RuleType: &minderv1.RuleType{},
+			},
+			expectedNiceStatus: util.UserVisibleError(codes.InvalidArgument, "invalid remediation params"),
+		},
 	}
 
 	for _, tt := range tests {
@@ -312,6 +358,11 @@ func TestUpdateRuleType(t *testing.T) {
 				Provider: engcontext.Provider{Name: "testing"},
 			})
 			resp, err := srv.UpdateRuleType(ctx, tt.request)
+			if tt.expectedNiceStatus != nil {
+				require.Equal(t, tt.expectedNiceStatus, err)
+				require.Nil(t, resp)
+				return
+			}
 			if tt.error {
 				require.Error(t, err)
 				require.Nil(t, resp)

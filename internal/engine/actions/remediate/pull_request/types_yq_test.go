@@ -209,8 +209,16 @@ func TestNewYqExecuteValidatesConfig(t *testing.T) {
 			params: newModificationParams(withParams(evalOutputPattern(`{{ toJson .EvalResultOutput.files }}`))),
 		},
 		{
-			name:   "no patterns is allowed",
-			params: newModificationParams(withParams(map[string]any{})),
+			name:    "missing patterns is rejected",
+			params:  newModificationParams(withParams(map[string]any{})),
+			wantErr: "yq modification requires at least one valid pattern",
+		},
+		{
+			name: "empty patterns list is rejected",
+			params: newModificationParams(withParams(map[string]any{
+				"patterns": []any{},
+			})),
+			wantErr: "yq modification requires at least one valid pattern",
 		},
 		{
 			name: "unsupported type",
@@ -471,23 +479,6 @@ updates:
 						require.Equal(t, file.modifiedContents, entry.Content)
 					}
 				}
-			},
-		},
-		{
-			// this won't do anything but won't crash
-			name: "No config",
-			yqParams: func(t *testing.T) *modificationConstructorParams {
-				t.Helper()
-				return newModificationParams()
-			},
-			testFiles: testFileMap{},
-			fs: func(t *testing.T, _ testFileMap) billy.Filesystem {
-				t.Helper()
-				return newTestFS(t)
-			},
-			checkEntries: func(t *testing.T, _ testFileMap, entries []*fsEntry) {
-				t.Helper()
-				require.Len(t, entries, 0)
 			},
 		},
 		{
