@@ -152,6 +152,11 @@ func TestRoleUpdateCommand(t *testing.T) {
 			},
 			ExpectedError: "invite not found",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"project", "role", "update", "-j", testProject, "-s", testSubject, "-r", testRole, "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder project role update"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, RoleCmd)

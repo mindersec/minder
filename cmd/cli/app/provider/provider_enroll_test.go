@@ -322,6 +322,11 @@ func TestEnrollProviderCmd(t *testing.T) {
 			},
 			ExpectedError: "it seems you are using the legacy github provider",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"provider", "enroll", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder provider enroll"`,
+		},
 	}
 
 	_ = zeroUUID

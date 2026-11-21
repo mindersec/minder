@@ -160,6 +160,11 @@ func TestRoleGrantCommand(t *testing.T) {
 			},
 			ExpectedError: "invitation already exists",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"project", "role", "grant", "-j", testProject, "-s", testSubject, "-r", testRole, "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder project role grant"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, RoleCmd)
