@@ -170,3 +170,15 @@ func TestNewRuleDataIngest(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateParams(t *testing.T) {
+	t.Parallel()
+
+	invalid := map[string]any{"tag_regex": "("}
+
+	require.ErrorContains(t, ValidateParams(artifact.ArtifactRuleDataIngestType, invalid),
+		"error compiling tag regex")
+	require.NoError(t, ValidateParams(artifact.ArtifactRuleDataIngestType, map[string]any{"tag_regex": "^v"}))
+	require.NoError(t, ValidateParams(rest.RestRuleDataIngestType, invalid))
+	require.NoError(t, ValidateParams("", invalid))
+}

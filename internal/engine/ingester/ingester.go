@@ -78,3 +78,13 @@ func NewRuleDataIngest(rt *pb.RuleType, provider interfaces.Provider) (interface
 		return nil, fmt.Errorf("unsupported rule type engine: %s", rt.Def.Ingest.Type)
 	}
 }
+
+// ValidateParams validates rule parameters for the given ingest type.
+func ValidateParams(ingestType string, params map[string]any) error {
+	switch ingestType {
+	case artifact.ArtifactRuleDataIngestType:
+		return artifact.ValidateParams(params)
+	default:
+		return nil
+	}
+}
