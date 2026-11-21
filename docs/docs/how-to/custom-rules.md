@@ -118,7 +118,7 @@ multiple repositories in Minder. Thus, Minder has a templating system that
 allows you to base multiple parts of the rule type on the entity you're
 evaluating (remember the in_entity part of the rule type?). The fields you may
 use are part of the entity's protobuf, which can be found in
-[our documentation](https://mindersec.github.io/ref/proto#repository).
+[our documentation](../ref/proto.mdx#minder-v1-Repository).
 
 Now, we want to tell Minder what to actually evaluate from that state. This is
 the evaluation step. In our case, we want to verify that delete_branch_on_merge

@@ -34,7 +34,7 @@ Minder rule type:
 The JQ evaluator performs a series of JSON equality comparisons between ingested
 JSON data and desired values provided either as a `constant` or data selected
 from the `def` (`rule_schema`) of the profile. Each comparison
-[must include the `ingested` value and one of the `profile` or `constant` fields](https://mindersec.github.io/ref/proto#minder-v1-RuleType-Definition-Eval-JQComparison)
+[must include the `ingested` value and one of the `profile` or `constant` fields](../ref/proto.mdx#minder-v1-RuleType-Definition-Eval-JQComparison)
 for the comparison.
 
 If a field is not present or is `null` for either the ingested data or the

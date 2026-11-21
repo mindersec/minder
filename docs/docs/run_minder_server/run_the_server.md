@@ -147,7 +147,7 @@ Congratulations! You've set up a Minder server! Now you're all ready to
 contribute to Minder.
 
 For more information about the development process, please see the
-[Developer guide](https://mindersec.github.io/developer_guide/get-hacking).
+[Developer guide](../developer_guide/get-hacking.md).
 
 For more information on contributing, please see our
 [Contributing guide](https://github.com/mindersec/minder/blob/main/CONTRIBUTING.md).
