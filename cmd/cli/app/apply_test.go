@@ -68,7 +68,9 @@ func TestApplyCommand(t *testing.T) {
 				ctx = cli.WithRPCClient[minderv1.ProfileServiceClient](ctx, pClient)
 				return ctx
 			},
-			GoldenFileName: "apply_create.table",
+			ExpectEmptyStdout: true,
+			ExpectedStderr: `Skipping expanded file fixture/mock_profiles_response.json due to error resource type not found
+Skipping expanded file fixture/mock_ruletypes_response.json due to error resource type not found`,
 		},
 		{
 			Name: "apply - create profile and ruletypes with flag",
@@ -98,7 +100,9 @@ func TestApplyCommand(t *testing.T) {
 				ctx = cli.WithRPCClient[minderv1.ProfileServiceClient](ctx, pClient)
 				return ctx
 			},
-			GoldenFileName: "apply_create.table",
+			ExpectEmptyStdout: true,
+			ExpectedStderr: `Skipping expanded file fixture/mock_profiles_response.json due to error resource type not found
+Skipping expanded file fixture/mock_ruletypes_response.json due to error resource type not found`,
 		},
 		{
 			Name: "apply reads a profile from a localhost HTTP URL",

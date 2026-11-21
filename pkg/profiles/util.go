@@ -45,7 +45,7 @@ func (e *RuleValidationError) Error() string {
 
 // ReadProfileFromFile reads a pipeline profile from a file and returns it as a protobuf
 func ReadProfileFromFile(fpath string) (*pb.Profile, error) {
-	decoder, closer := fileconvert.DecoderForFile(fpath)
+	decoder, closer := fileconvert.DecoderForFile(nil, fpath)
 	if decoder == nil {
 		return nil, fmt.Errorf("error opening file")
 	}

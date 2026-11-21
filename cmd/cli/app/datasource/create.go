@@ -61,7 +61,7 @@ func createCommand(cmd *cobra.Command, _ []string) error {
 		return cli.MessageAndError("Error validating file flag", err)
 	}
 
-	files, err := util.ExpandFileArgs(fileFlag...)
+	files, err := util.ExpandFileArgs(nil, fileFlag...)
 	if err != nil {
 		return cli.MessageAndError("Error expanding file args", err)
 	}

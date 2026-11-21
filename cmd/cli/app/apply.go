@@ -40,7 +40,7 @@ func applyCommand(cmd *cobra.Command, args []string) error {
 
 	gitURLs, _ := cmd.Flags().GetStringSlice("git")
 	for _, rawURL := range gitURLs {
-		gitObjects, err := fileconvert.ResourcesFromGit(cmd.Context(), cmd.Printf, rawURL)
+		gitObjects, err := fileconvert.ResourcesFromGit(cmd.Context(), cmd.PrintErrf, rawURL)
 		if err != nil {
 			return cli.MessageAndError("Error reading resources from git", err)
 		}
@@ -51,7 +51,7 @@ func applyCommand(cmd *cobra.Command, args []string) error {
 	argFiles, _ := cmd.Flags().GetStringSlice("file")
 	fileNames = append(fileNames, argFiles...)
 
-	fileObjects, err := fileconvert.ResourcesFromPaths(cmd.Context(), cmd.Printf, fileNames...)
+	fileObjects, err := fileconvert.ResourcesFromPaths(cmd.Context(), nil, cmd.PrintErrf, fileNames...)
 	if err != nil {
 		return cli.MessageAndError("Error reading resources", err)
 	}
