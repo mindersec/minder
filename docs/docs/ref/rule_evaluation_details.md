@@ -234,6 +234,18 @@ Minder supports four remediation actions:
      Targets from all selectors are merged and deduplicated, so each file is
      patched once.
 
+     `exact` selects a literal path: `{"type": "exact", "pattern":
+     ".github/dependabot.yaml", "create_if_needed": true}`. Exact paths must
+     be repository-relative, use `/` separators, and contain no empty, `.` or
+     `..` components, backslashes, colons, or NUL bytes. Glob metacharacters
+     are literal. Creation defaults to false; a missing file then errors.
+     With creation enabled, a missing file is evaluated as a YAML null document
+     and created with its parent directories when remediation is applied.
+     Existing YAML comments are preserved; other read errors propagate.
+     Creation is enabled if any exact selector for that target opts in,
+     regardless of selector order. The option has no effect on glob or
+     eval_output selectors. Exact patterns do not expand Go templates.
+
      For example, a Rego rule can return the exact files that need patching
      with `output := {"files": files_to_patch}`, where `files_to_patch` was
      computed with `file.ls_glob`, `file.ls`, or `file.walk`. The remediation
