@@ -27,6 +27,7 @@ var updateCmd = &cobra.Command{
 	Short: "Updates a provider's configuration",
 	Long: `The minder provider update command allows a user to update a provider's
 configuration after enrollement.`,
+	Args: cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)

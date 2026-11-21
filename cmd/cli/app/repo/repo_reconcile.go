@@ -18,6 +18,7 @@ var reconcileCmd = &cobra.Command{
 	Short: "Reconcile (Sync) a repository with Minder.",
 	Long: `The reconcile command is used to trigger a reconciliation (sync) of a repository against
 profiles and rules in a project.`,
+	Args: cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)

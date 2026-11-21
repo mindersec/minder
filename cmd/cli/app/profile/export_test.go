@@ -131,6 +131,11 @@ func TestExportCommand(t *testing.T) {
 			},
 			ExpectedError: "database error",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"profile", "export", "-n", testName, "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder profile export"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, ProfileCmd)

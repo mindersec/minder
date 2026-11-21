@@ -393,6 +393,11 @@ func TestUpdateProviderCommand(t *testing.T) {
 			},
 			ExpectedError: "internal server error",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"provider", "update", "-n", "github-app", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder provider update"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, ProviderCmd)

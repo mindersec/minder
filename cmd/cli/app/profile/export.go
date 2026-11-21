@@ -24,6 +24,7 @@ var exportCmd = &cobra.Command{
 	Use:   "export",
 	Short: "Export profile and associated resources",
 	Long:  `The profile export subcommand lets you retrieve the definition of a profile and its associated resources.`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %s", err)

@@ -18,6 +18,7 @@ var denyCmd = &cobra.Command{
 	Short: "Deny a role to a subject on a project within the minder control plane",
 	Long: `The minder project role deny command removes a user from a role grant
 on a particular project.`,
+	Args: cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		return viper.BindPFlags(cmd.Flags())
 	},

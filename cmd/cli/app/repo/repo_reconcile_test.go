@@ -90,6 +90,11 @@ func TestReconcileCommand(t *testing.T) {
 			},
 			ExpectedError: "entity not found",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"repo", "reconcile", "-n", repoName, "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder repo reconcile"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, RepoCmd)

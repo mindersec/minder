@@ -25,6 +25,7 @@ to a user (subject) on a particular project, or send an invitation to an email a
 
 Note: Invitation codes are one-time bearer tokens. Anyone with access to the code
 or URL can use it to join the project. Share invitation codes only over trusted channels.`,
+	Args: cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)
