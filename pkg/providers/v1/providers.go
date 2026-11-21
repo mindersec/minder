@@ -230,7 +230,8 @@ type IssuePublisher interface {
 		number int,
 	) (*github.Issue, error)
 
-	// CloseIssue closes an existing issue
+	// CloseIssue closes an existing issue. If comment is non-empty,
+	// it is posted on the issue before closing it.
 	CloseIssue(
 		ctx context.Context,
 		owner, repo string,

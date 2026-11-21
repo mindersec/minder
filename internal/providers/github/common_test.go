@@ -1920,3 +1920,125 @@ func TestCloseSecurityAdvisory(t *testing.T) {
 		})
 	}
 }
+
+// recordedRequest captures the essentials of an outgoing API request.
+type recordedRequest struct {
+	method string
+	path   string
+	body   string
+}
+
+// recordingTransport serves queued responses and records the requests
+// made to it, erroring on any request beyond the queued responses.
+type recordingTransport struct {
+	requests  []recordedRequest
+	responses []*http.Response
+	next      int
+}
+
+func (t *recordingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	var body string
+	if req.Body != nil {
+		raw, err := io.ReadAll(req.Body)
+		if err != nil {
+			return nil, err
+		}
+		body = string(raw)
+	}
+	t.requests = append(t.requests, recordedRequest{
+		method: req.Method,
+		path:   req.URL.Path,
+		body:   body,
+	})
+	if t.next >= len(t.responses) {
+		return nil, errors.New("unexpected request: no mocked response left")
+	}
+	resp := t.responses[t.next]
+	t.next++
+	return resp, nil
+}
+
+func closeIssueTestResponse(status int, body string) *http.Response {
+	return &http.Response{
+		StatusCode: status,
+		Body:       io.NopCloser(strings.NewReader(body)),
+		Header:     make(http.Header),
+	}
+}
+
+func TestCloseIssue(t *testing.T) {
+	t.Parallel()
+
+	const (
+		owner    = "test-owner"
+		repo     = "test-repo"
+		number   = 42
+		issueURL = "/repos/test-owner/test-repo/issues/42"
+	)
+
+	tests := []struct {
+		name          string
+		comment       string
+		responses     []*http.Response
+		wantRequests  []recordedRequest
+		expectedError string
+	}{
+		{
+			name:    "closes without commenting when comment is empty",
+			comment: "",
+			responses: []*http.Response{
+				closeIssueTestResponse(http.StatusOK, `{"number": 42, "state": "closed"}`),
+			},
+			wantRequests: []recordedRequest{
+				{method: http.MethodPatch, path: issueURL, body: `{"state":"closed"}` + "\n"},
+			},
+		},
+		{
+			name:    "posts comment before closing when comment is provided",
+			comment: "fixed by policy",
+			responses: []*http.Response{
+				closeIssueTestResponse(http.StatusCreated, `{"body": "fixed by policy"}`),
+				closeIssueTestResponse(http.StatusOK, `{"number": 42, "state": "closed"}`),
+			},
+			wantRequests: []recordedRequest{
+				{method: http.MethodPost, path: issueURL + "/comments", body: `{"body":"fixed by policy"}` + "\n"},
+				{method: http.MethodPatch, path: issueURL, body: `{"state":"closed"}` + "\n"},
+			},
+		},
+		{
+			name:    "comment failure prevents the issue from being closed",
+			comment: "fixed by policy",
+			responses: []*http.Response{
+				closeIssueTestResponse(http.StatusInternalServerError, `{"message": "Internal Server Error"}`),
+			},
+			wantRequests: []recordedRequest{
+				{method: http.MethodPost, path: issueURL + "/comments", body: `{"body":"fixed by policy"}` + "\n"},
+			},
+			expectedError: "failed to add comment to issue 42",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			th := setupTest(t)
+			transport := &recordingTransport{responses: tt.responses}
+			th.gh.client = github.NewClient(&http.Client{Transport: transport})
+
+			issue, err := th.gh.CloseIssue(context.Background(), owner, repo, number, tt.comment)
+
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.ErrorContains(t, err, tt.expectedError)
+				assert.Nil(t, issue)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, issue)
+				assert.Equal(t, "closed", issue.GetState())
+			}
+
+			assert.Equal(t, tt.wantRequests, transport.requests)
+		})
+	}
+}
