@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// Package apply provides the apply command for the medctl CLI
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
@@ -33,12 +32,10 @@ const redocusaurus = [
 const config = {
   title: 'Minder docs',
   tagline: 'Documentation site for Minder',
-  // This doesn't seem to exist?
   favicon: 'img/favicon.png',
   themes: ['@docusaurus/theme-mermaid', 'docusaurus-theme-redoc'],
 
   // Set the production url of your site here
-  // TODO: pivot this to be under https://mindersec.dev/docs
   url: 'https://docs.mindersec.dev/',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
