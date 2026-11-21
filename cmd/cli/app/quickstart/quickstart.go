@@ -136,6 +136,7 @@ var cmd = &cobra.Command{
 	Use:    "quickstart",
 	Short:  "Quickstart minder",
 	Long:   "The quickstart command provide the means to quickly get started with minder",
+	Args:   cobra.NoArgs,
 	Hidden: true,
 	RunE:   cli.GRPCClientWrapRunE(quickstartCommand),
 }

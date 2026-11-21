@@ -135,4 +135,10 @@ func TestOfflineUseCommand(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "couldn't get realm URL")
 	})
+
+	t.Run("rejects unexpected positional arguments", func(t *testing.T) {
+		_, _, err := runOfflineTokenCmd(t, "auth", "offline-token", "use", "unexpected-arg")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `unknown command "unexpected-arg" for "minder auth offline-token use"`)
+	})
 }

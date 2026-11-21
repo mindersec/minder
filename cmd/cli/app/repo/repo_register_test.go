@@ -326,6 +326,11 @@ func TestRegisterCommand(t *testing.T) {
 			ExpectEmptyStdout: true,
 			ExpectedStderr:    "Enabling auto registration succeeded.\nSuccessfully enabled: [" + providerName + "]\nUse `minder repo list` to check the list of registered repositories.\n",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"repo", "register", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder repo register"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, RepoCmd)

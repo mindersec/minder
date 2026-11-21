@@ -161,4 +161,10 @@ func TestOfflineRevokeCommand(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "couldn't revoke token")
 	})
+
+	t.Run("rejects unexpected positional arguments", func(t *testing.T) {
+		_, _, err := runOfflineTokenCmd(t, "auth", "offline-token", "revoke", "unexpected-arg")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `unknown command "unexpected-arg" for "minder auth offline-token revoke"`)
+	})
 }

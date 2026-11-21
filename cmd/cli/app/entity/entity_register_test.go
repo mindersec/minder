@@ -135,6 +135,11 @@ func TestRegisterCommand(t *testing.T) {
 			},
 			ExpectedError: "provider not found",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"entity", "register", "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder entity register"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, EntityCmd)

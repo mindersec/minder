@@ -30,6 +30,7 @@ var editCmd = &cobra.Command{
 	Use:   "edit",
 	Short: "Edit an existing profile",
 	Long:  `The profile edit subcommand lets you fetch an existing profile, edit it in your $EDITOR, and apply the updates.`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %s", err)

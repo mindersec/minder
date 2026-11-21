@@ -25,6 +25,7 @@ var repoRegisterCmd = &cobra.Command{
 	Use:   "register",
 	Short: "Register a repository",
 	Long:  `The repo register subcommand is used to register a repo within Minder.`,
+	Args:  cobra.NoArgs,
 
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
