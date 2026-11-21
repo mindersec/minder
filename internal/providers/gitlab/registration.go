@@ -71,6 +71,12 @@ func (c *gitlabClient) DeregisterEntity(
 		return errors.New("unsupported entity type")
 	}
 
+	if entType != minderv1.Entity_ENTITY_REPOSITORIES {
+		// Only repositories are explicitly registered with webhooks.
+		// Pull requests and releases are handled via origination.
+		return nil
+	}
+
 	upstreamID := props.GetProperty(properties.PropertyUpstreamID).GetString()
 	if upstreamID == "" {
 		return errors.New("missing upstream ID")

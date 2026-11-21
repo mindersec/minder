@@ -289,6 +289,21 @@ func TestDeregisterEntity(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name:       "test deregister non-repository entity is a no-op",
+			entityType: minderv1.Entity_ENTITY_PULL_REQUESTS,
+			props: properties.NewProperties(map[string]any{
+				properties.PropertyUpstreamID: upstreamID,
+				RepoPropertyHookID:            "test-hook-id",
+			}),
+			mockHandler: func(t *testing.T) http.HandlerFunc {
+				t.Helper()
+				return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					t.Error("unexpected request for non-repository entity")
+					w.WriteHeader(http.StatusInternalServerError)
+				})
+			},
+		},
+		{
 			name:       "test deregister entity with unsupported entity type",
 			entityType: minderv1.Entity_ENTITY_UNSPECIFIED,
 			props: properties.NewProperties(map[string]any{

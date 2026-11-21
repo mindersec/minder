@@ -177,6 +177,7 @@ func AllInOneServerService(
 			ctx,
 			cryptoEngine,
 			store,
+			propSvc,
 			evt,
 			cfg.Provider.GitLab,
 			cfg.WebhookConfig,

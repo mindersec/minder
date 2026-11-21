@@ -21,6 +21,7 @@ import (
 
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
+	propssvc "github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/providers/gitlab"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -36,6 +37,7 @@ var tokenExpirationThreshold = -10 * time.Minute
 type providerClassManager struct {
 	store    db.Store
 	crypteng crypto.Engine
+	propsSvc propssvc.PropertiesService
 	// gitlab provider config
 	glpcfg        *server.GitLabConfig
 	gitConfig     server.GitConfig
@@ -50,10 +52,10 @@ type providerClassManager struct {
 	previousWebhookSecrets []string
 }
 
-// NewGitLabProviderClassManager creates a new provider class manager for the dockerhub provider
+// NewGitLabProviderClassManager creates a new provider class manager for the GitLab provider
 func NewGitLabProviderClassManager(
-	ctx context.Context, crypteng crypto.Engine, store db.Store, pub interfaces.Publisher,
-	cfg *server.GitLabConfig, wgCfg server.WebhookConfig,
+	ctx context.Context, crypteng crypto.Engine, store db.Store, propSvc propssvc.PropertiesService,
+	pub interfaces.Publisher, cfg *server.GitLabConfig, wgCfg server.WebhookConfig,
 	gitConfig server.GitConfig,
 ) (*providerClassManager, error) {
 	webhookURLBase := wgCfg.ExternalWebhookURL
@@ -83,6 +85,7 @@ func NewGitLabProviderClassManager(
 	return &providerClassManager{
 		store:                  store,
 		crypteng:               crypteng,
+		propsSvc:               propSvc,
 		pub:                    pub,
 		glpcfg:                 cfg,
 		gitConfig:              gitConfig,
@@ -136,8 +139,37 @@ func (g *providerClassManager) Build(ctx context.Context, config *db.Provider) (
 }
 
 // Delete implements the ProviderClassManager interface
-// TODO: Implement this
-func (*providerClassManager) Delete(_ context.Context, _ *db.Provider) error {
+func (g *providerClassManager) Delete(ctx context.Context, config *db.Provider) error {
+	provider, err := g.Build(ctx, config)
+	if err != nil {
+		return fmt.Errorf("unable to build provider for cleanup: %w", err)
+	}
+
+	entities, err := g.store.GetEntitiesByProvider(ctx, config.ID)
+	if err != nil {
+		return fmt.Errorf("unable to retrieve list of entities to deregister: %w", err)
+	}
+
+	for _, ent := range entities {
+		ewp, err := g.propsSvc.EntityWithPropertiesByID(ctx, ent.ID, nil)
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).
+				Str("provider_id", config.ID.String()).
+				Str("entity_id", ent.ID.String()).
+				Msg("error getting entity with properties")
+			continue
+		}
+
+		if err := provider.DeregisterEntity(ctx, ewp.Entity.Type, ewp.Properties); err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).
+				Str("provider_id", config.ID.String()).
+				Str("entity_type", ewp.Entity.Type.String()).
+				Str("entity_id", ent.ID.String()).
+				Msg("error deregistering entity")
+			continue
+		}
+	}
+
 	return nil
 }
 
