@@ -4,13 +4,21 @@
 package gitlab
 
 import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 
+	"github.com/mindersec/minder/internal/providers/credentials"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/entities/properties"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 func TestFormatRepositoryUpstreamID(t *testing.T) {
@@ -259,4 +267,169 @@ func TestRepoV1FromProperties(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "error fetching is_fork property")
 	})
+}
+
+func TestGetPropertiesForRepo_HTTPInteractions(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+
+	// 12345: Valid repo with license
+	mux.HandleFunc("/projects/12345", func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodGet, r.Method)
+		assert.Equal(t, "true", r.URL.Query().Get("license"))
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(&gitlab.Project{
+			ID:            12345,
+			Name:          "demo-app",
+			DefaultBranch: "main",
+			Visibility:    gitlab.PrivateVisibility,
+			Archived:      false,
+			HTTPURLToRepo: "https://gitlab.example.com/group/demo-app.git",
+			Namespace: &gitlab.ProjectNamespace{
+				Path: "group",
+			},
+			License: &gitlab.ProjectLicense{
+				Name: "BSD-3-Clause",
+			},
+		})
+	})
+
+	// 123: 500 server error
+	mux.HandleFunc("/projects/123", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	})
+
+	// 777: Malformed JSON response
+	mux.HandleFunc("/projects/777", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("{invalid-json-body"))
+	})
+
+	// 555: Missing namespace (triggers conversion error)
+	mux.HandleFunc("/projects/555", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(&gitlab.Project{
+			ID:        555,
+			Name:      "no-namespace",
+			Namespace: nil,
+		})
+	})
+
+	ts := httptest.NewServer(mux)
+	t.Cleanup(ts.Close)
+
+	cli := newTestGitlabClientWithServer(t, ts.URL)
+
+	tests := []struct {
+		name            string
+		inputProps      map[string]any
+		expectedProps   map[string]any
+		wantErrIs       error
+		wantErrContains string
+	}{
+		{
+			name: "successful repo properties fetch from gitlab server",
+			inputProps: map[string]any{
+				properties.PropertyUpstreamID: "12345",
+				"custom-existing-prop":        "keep-me",
+			},
+			expectedProps: map[string]any{
+				properties.PropertyUpstreamID:    "12345",
+				properties.PropertyName:          "group/demo-app",
+				RepoPropertyNamespace:            "group",
+				RepoPropertyProjectName:          "demo-app",
+				RepoPropertyLicense:              "BSD-3-Clause",
+				properties.RepoPropertyIsPrivate: true,
+				"custom-existing-prop":           "keep-me",
+			},
+		},
+		{
+			name:            "missing upstream ID in getByProps returns error",
+			inputProps:      map[string]any{},
+			wantErrContains: "upstream ID not found or invalid",
+		},
+		{
+			name: "project not found returns ErrEntityNotFound",
+			inputProps: map[string]any{
+				properties.PropertyUpstreamID: "999999",
+			},
+			wantErrIs: provifv1.ErrEntityNotFound,
+		},
+		{
+			name: "server returns 500 internal server error",
+			inputProps: map[string]any{
+				properties.PropertyUpstreamID: "123",
+			},
+			wantErrContains: "failed to get projects",
+		},
+		{
+			name: "server returns malformed JSON body",
+			inputProps: map[string]any{
+				properties.PropertyUpstreamID: "777",
+			},
+			wantErrContains: "failed to decode response",
+		},
+		{
+			name: "server returns project without namespace triggers conversion error",
+			inputProps: map[string]any{
+				properties.PropertyUpstreamID: "555",
+			},
+			wantErrContains: "failed to convert project to properties",
+		},
+	}
+
+	for _, tt := range tests {
+		tc := tt
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			res, err := cli.getPropertiesForRepo(context.Background(), properties.NewProperties(tc.inputProps))
+			if tc.wantErrIs != nil {
+				require.ErrorIs(t, err, tc.wantErrIs)
+				return
+			}
+			if tc.wantErrContains != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.wantErrContains)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, res)
+
+			for k, v := range tc.expectedProps {
+				prop := res.GetProperty(k)
+				require.NotNil(t, prop, "expected property %s to be present", k)
+				switch exp := v.(type) {
+				case string:
+					assert.Equal(t, exp, prop.GetString(), "mismatch for property %s", k)
+				case bool:
+					assert.Equal(t, exp, prop.GetBool(), "mismatch for property %s", k)
+				case int64:
+					assert.Equal(t, exp, prop.GetInt64(), "mismatch for property %s", k)
+				default:
+					assert.Equal(t, exp, prop.RawValue(), "mismatch for property %s", k)
+				}
+			}
+		})
+	}
+}
+
+func newTestGitlabClientWithServer(t *testing.T, serverURL string) *gitlabClient {
+	t.Helper()
+
+	cli, err := New(
+		context.Background(),
+		credentials.NewGitLabTokenCredential("glpat-test-secret-token"),
+		&minderv1.GitLabProviderConfig{
+			Endpoint: serverURL,
+		},
+		"https://example.com/webhook",
+		"webhook-secret",
+		server.GitConfig{},
+	)
+	require.NoError(t, err)
+	return cli
 }
