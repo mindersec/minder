@@ -106,7 +106,6 @@ func TestListEvaluationHistoryIgnoresSessionTimeZone(t *testing.T) {
 	t.Parallel()
 
 	projID, _, esID, evalTime := createLatestEvaluation(t)
-	q := queriesInSessionTimeZone(t, nonUTCTimeZone)
 
 	before := sql.NullTime{Time: evalTime.Add(-time.Minute).UTC(), Valid: true}
 	after := sql.NullTime{Time: evalTime.Add(time.Minute).UTC(), Valid: true}
@@ -132,6 +131,10 @@ func TestListEvaluationHistoryIgnoresSessionTimeZone(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+
+			// Each subtest needs its own connection: a connection can't be
+			// used by parallel subtests at the same time.
+			q := queriesInSessionTimeZone(t, nonUTCTimeZone)
 
 			params := tt.params
 			params.Projectid = projID
