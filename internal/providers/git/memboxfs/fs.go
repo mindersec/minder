@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"path"
 
 	billy "github.com/go-git/go-billy/v5"
 )
@@ -63,12 +64,39 @@ func (f *LimitedFs) Lstat(filename string) (fs.FileInfo, error) {
 
 // MkdirAll implements billy.Filesystem.
 func (f *LimitedFs) MkdirAll(filename string, perm fs.FileMode) error {
-	// TODO: account for path segments correctly
-	f.currentFiles++
-	if f.currentFiles >= f.MaxFiles {
+	missing := f.missingPathSegments(filename)
+	if missing > 0 && f.currentFiles+int64(missing) >= f.MaxFiles {
 		return fmt.Errorf("%w: %s", ErrTooManyFiles, filename)
 	}
-	return f.Fs.MkdirAll(filename, perm)
+	if err := f.Fs.MkdirAll(filename, perm); err != nil {
+		return err
+	}
+	f.currentFiles += int64(missing)
+	return nil
+}
+
+// missingPathSegments counts the directories along filename's path that do
+// not exist yet. The walk stops at the first existing ancestor, whatever its
+// type: if an existing ancestor is not a directory, the delegated MkdirAll
+// fails on its own and the budget stays untouched.
+func (f *LimitedFs) missingPathSegments(filename string) int {
+	missing := 0
+	for p := filename; ; {
+		if _, err := f.Fs.Stat(p); err != nil {
+			missing++
+			parent := path.Dir(p)
+			if parent == p {
+				// Reached the filesystem root; stop defensively even if the
+				// root itself does not exist in the backing filesystem.
+				break
+			}
+			p = parent
+			continue
+		}
+		// p exists, so neither it nor its ancestors are missing.
+		return missing
+	}
+	return missing
 }
 
 // Open implements billy.Filesystem.
