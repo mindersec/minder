@@ -14,7 +14,6 @@ import (
 	"path"
 
 	"github.com/google/go-containerregistry/pkg/authn"
-	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/internal/db"
@@ -60,7 +59,9 @@ var _ provifv1.OCITagVersionProvider = (*dockerHubImageLister)(nil)
 
 // New creates a new Docker Hub client
 func New(cred provifv1.OAuth2TokenCredential, cfg *minderv1.DockerHubProviderConfig) (*dockerHubImageLister, error) {
-	cli := oauth2.NewClient(context.Background(), cred.GetAsOAuth2TokenSource())
+	// The Docker Hub API needs a JWT exchanged for the personal access token;
+	// the registry (GetAuthenticator) takes the token itself.
+	cli := newHubClient(cred.GetAsOAuth2TokenSource(), hubUsername(cfg, cfg.GetNamespace()), hubAuthTokenURL)
 
 	u, err := url.Parse("https://hub.docker.com/v2/repositories")
 	if err != nil {
@@ -133,12 +134,16 @@ func (d *dockerHubImageLister) GetAuthenticator() (authn.Authenticator, error) {
 		return nil, fmt.Errorf("failed to get token: %w", err)
 	}
 
-	username := d.cfg.GetUsername()
-	if username == "" {
-		username = d.namespace
-	}
+	return &authn.Basic{Username: hubUsername(d.cfg, d.namespace), Password: tok.AccessToken}, nil
+}
 
-	return &authn.Basic{Username: username, Password: tok.AccessToken}, nil
+// hubUsername returns the configured username, or the namespace when no
+// username is set.
+func hubUsername(cfg *minderv1.DockerHubProviderConfig, namespace string) string {
+	if username := cfg.GetUsername(); username != "" {
+		return username
+	}
+	return namespace
 }
 
 // CanImplement returns true if the provider can implement the specified trait
