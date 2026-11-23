@@ -59,9 +59,13 @@ func (r *Reconciler) handleEntityDeleteEvent(msg *message.Message) error {
 	if event.EntityType == pb.Entity_ENTITY_ARTIFACTS {
 		return r.deleteArtifact(ctx, event)
 	}
+	return r.deleteRepository(ctx, event)
+}
 
-	// Remove the entry in the DB. There's no need to clean any webhook we created for this repository, as GitHub
-	// will automatically remove them when the repository is deleted.
+// deleteRepository deletes a repository entity. There's no need to clean any
+// webhook we created for this repository, as GitHub will automatically remove
+// them when the repository is deleted.
+func (r *Reconciler) deleteRepository(ctx context.Context, event messages.MinderEvent) error {
 	err := r.repos.DeleteByID(ctx, event.EntityID, event.ProjectID)
 	if errors.Is(err, service.ErrEntityNotFound) {
 		zerolog.Ctx(ctx).Debug().Err(err).
