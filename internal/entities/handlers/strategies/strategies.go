@@ -6,6 +6,7 @@ package strategies
 
 import (
 	"context"
+	"fmt"
 
 	watermill "github.com/ThreeDotsLabs/watermill/message"
 
@@ -19,6 +20,21 @@ type MessageCreateStrategy interface {
 		ctx context.Context, ewp *models.EntityWithProperties,
 	) (*watermill.Message, error)
 	GetName() string
+}
+
+// UpstreamEntityNotFoundError is returned by a GetEntityStrategy when the
+// entity exists in Minder but the provider reports it no longer exists upstream.
+type UpstreamEntityNotFoundError struct {
+	Entity *models.EntityWithProperties
+	Err    error
+}
+
+func (e *UpstreamEntityNotFoundError) Error() string {
+	return fmt.Sprintf("entity %s not found upstream: %v", e.Entity.Entity.ID, e.Err)
+}
+
+func (e *UpstreamEntityNotFoundError) Unwrap() error {
+	return e.Err
 }
 
 // GetEntityStrategy is the interface for getting entities
