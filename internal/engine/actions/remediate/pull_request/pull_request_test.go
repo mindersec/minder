@@ -826,10 +826,6 @@ func TestPullRequestRemediate(t *testing.T) {
 			}
 
 			require.NoError(t, err, "unexpected error creating remediate engine")
-			// TODO(jakub): providerBuilder should be an interface so we can pass in mock more easily
-			engine.ghCli = mockClient
-
-			require.NoError(t, err, "unexpected error creating remediate engine")
 			require.NotNil(t, engine, "expected non-nil remediate engine")
 
 			tt.mockSetup(t, mockClient)

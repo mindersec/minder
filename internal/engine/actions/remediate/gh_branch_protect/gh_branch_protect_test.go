@@ -7,7 +7,6 @@ package gh_branch_protect
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/google/go-github/v63/github"
@@ -16,19 +15,12 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/internal/engine/interfaces"
-	"github.com/mindersec/minder/internal/providers/credentials"
-	"github.com/mindersec/minder/internal/providers/github/clients"
 	mock_ghclient "github.com/mindersec/minder/internal/providers/github/mock"
-	"github.com/mindersec/minder/internal/providers/github/properties"
-	"github.com/mindersec/minder/internal/providers/ratecache"
-	"github.com/mindersec/minder/internal/providers/telemetry"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/profiles/models"
-	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (
-	ghApiUrl         = "https://api.github.com"
 	reviewCountPatch = `{"required_pull_request_reviews":{"required_approving_review_count":{{ .Profile.required_approving_review_count }}}}`
 
 	repoOwner = "stacklok"
@@ -36,25 +28,6 @@ const (
 )
 
 var TestActionTypeValid interfaces.ActionType = "remediate-test"
-
-func testGithubProvider(baseURL string) (provifv1.GitHub, error) {
-	if !strings.HasSuffix(baseURL, "/") {
-		baseURL = baseURL + "/"
-	}
-
-	return clients.NewRestClient(
-		&pb.GitHubProviderConfig{
-			Endpoint: &baseURL,
-		},
-		nil,
-		nil,
-		&ratecache.NoopRestClientCache{},
-		credentials.NewGitHubTokenCredential("token"),
-		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
-		properties.NewPropertyFetcherFactory(),
-		"",
-	)
-}
 
 type protectionRequestMatcher struct {
 	exp *github.ProtectionRequest
@@ -318,18 +291,14 @@ func TestBranchProtectionRemediate(t *testing.T) {
 
 			mockClient := mock_ghclient.NewMockGitHub(ctrl)
 
-			prov, err := testGithubProvider(ghApiUrl)
-			require.NoError(t, err)
+			// The mock implements provifv1.GitHub, so it can be passed
+			// to the constructor directly.
 			engine, err := NewGhBranchProtectRemediator(
-				tt.newRemArgs.actionType, tt.newRemArgs.ghp, prov, tt.remArgs.remAction)
+				tt.newRemArgs.actionType, tt.newRemArgs.ghp, mockClient, tt.remArgs.remAction)
 			if tt.wantInitErr {
 				require.Error(t, err, "expected error")
 				return
 			}
-
-			require.NoError(t, err, "unexpected error creating remediate engine")
-			// TODO(jakub): providerBuilder should be an interface so we can pass in mock more easily
-			engine.cli = mockClient
 
 			require.NoError(t, err, "unexpected error creating remediate engine")
 			require.NotNil(t, engine, "expected non-nil remediate engine")
