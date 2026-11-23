@@ -9,9 +9,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/go-git/go-billy/v5/memfs"
+	"github.com/stretchr/testify/require"
 )
 
 func newTestLimitedFs(maxFiles int64) *LimitedFs {

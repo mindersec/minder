@@ -117,8 +117,8 @@ func (f *LimitedFs) OpenFile(filename string, flag int, perm fs.FileMode) (billy
 }
 
 // ReadDir implements billy.Filesystem.
-func (f *LimitedFs) ReadDir(path string) ([]fs.FileInfo, error) {
-	return f.Fs.ReadDir(path)
+func (f *LimitedFs) ReadDir(dirname string) ([]fs.FileInfo, error) {
+	return f.Fs.ReadDir(dirname)
 }
 
 // Readlink implements billy.Filesystem.
