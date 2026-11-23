@@ -4,6 +4,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,6 +18,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	mockdb "github.com/mindersec/minder/database/mock"
 	df "github.com/mindersec/minder/database/mock/fixtures"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/entities"
@@ -720,6 +722,12 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 	}
 }
 
+func providerOfClass(class db.ProviderClass) []func(*mockdb.MockStore) {
+	return []func(*mockdb.MockStore){
+		df.WithSuccessfulGetProviderByID(db.Provider{ID: providerID, Class: class}, providerID),
+	}
+}
+
 func TestRefreshByIDHandler_UpstreamNotFound(t *testing.T) {
 	t.Parallel()
 
@@ -746,10 +754,11 @@ func TestRefreshByIDHandler_UpstreamNotFound(t *testing.T) {
 		handlerBuilderFn  handlerBuilder
 		messageBuilder    func() *message.HandleEntityAndDoMessage
 		setupPropSvcMocks func() fixtures.MockPropertyServiceBuilder
+		storeMocks        []func(*mockdb.MockStore)
 		expectDelete      bool
 	}{
 		{
-			name:             "artifact not found upstream publishes a delete",
+			name:             "Docker Hub artifact not found upstream publishes a delete",
 			handlerBuilderFn: refreshByIDHandlerBuilder,
 			messageBuilder:   byID(artifactID),
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
@@ -758,6 +767,20 @@ func TestRefreshByIDHandler_UpstreamNotFound(t *testing.T) {
 					fixtures.WithFailedRetrieveAllPropertiesForEntity(service.ErrEntityNotFound),
 				)
 			},
+			storeMocks:   providerOfClass(db.ProviderClassDockerhub),
+			expectDelete: true,
+		},
+		{
+			name:             "Quay artifact not found upstream publishes a delete",
+			handlerBuilderFn: refreshByIDHandlerBuilder,
+			messageBuilder:   byID(artifactID),
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityWithPropertiesByID(artifactID, &artifactEwp),
+					fixtures.WithFailedRetrieveAllPropertiesForEntity(service.ErrEntityNotFound),
+				)
+			},
+			storeMocks:   providerOfClass(db.ProviderClassQuay),
 			expectDelete: true,
 		},
 		{
@@ -771,7 +794,44 @@ func TestRefreshByIDHandler_UpstreamNotFound(t *testing.T) {
 						fmt.Errorf("error fetching properties for entity: %w", service.ErrEntityNotFound)),
 				)
 			},
+			storeMocks:   providerOfClass(db.ProviderClassDockerhub),
 			expectDelete: true,
+		},
+		{
+			name:             "GitHub artifact not found upstream is still only logged",
+			handlerBuilderFn: refreshByIDHandlerBuilder,
+			messageBuilder:   byID(artifactID),
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityWithPropertiesByID(artifactID, &artifactEwp),
+					fixtures.WithFailedRetrieveAllPropertiesForEntity(service.ErrEntityNotFound),
+				)
+			},
+			storeMocks: providerOfClass(db.ProviderClassGithub),
+		},
+		{
+			name:             "GitHub App artifact not found upstream is still only logged",
+			handlerBuilderFn: refreshByIDHandlerBuilder,
+			messageBuilder:   byID(artifactID),
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityWithPropertiesByID(artifactID, &artifactEwp),
+					fixtures.WithFailedRetrieveAllPropertiesForEntity(service.ErrEntityNotFound),
+				)
+			},
+			storeMocks: providerOfClass(db.ProviderClassGithubApp),
+		},
+		{
+			name:             "artifact not found upstream is only logged when its provider lookup fails",
+			handlerBuilderFn: refreshByIDHandlerBuilder,
+			messageBuilder:   byID(artifactID),
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityWithPropertiesByID(artifactID, &artifactEwp),
+					fixtures.WithFailedRetrieveAllPropertiesForEntity(service.ErrEntityNotFound),
+				)
+			},
+			storeMocks: []func(*mockdb.MockStore){df.WithFailedGetProviderByID(sql.ErrNoRows)},
 		},
 		{
 			name:             "repository not found upstream is still only logged",
@@ -836,7 +896,7 @@ func TestRefreshByIDHandler_UpstreamNotFound(t *testing.T) {
 			handlerMsg := watermill.NewMessage(uuid.New().String(), nil)
 			require.NoError(t, tt.messageBuilder().ToMessage(handlerMsg))
 
-			mockStore := df.NewMockStore(df.WithRollbackTransaction())(ctrl)
+			mockStore := df.NewMockStore(append(tt.storeMocks, df.WithRollbackTransaction())...)(ctrl)
 			stubEventer := &stubeventer.StubEventer{}
 			handler := tt.handlerBuilderFn(stubEventer, mockStore, tt.setupPropSvcMocks()(ctrl),
 				mock_manager.NewMockProviderManager(ctrl))

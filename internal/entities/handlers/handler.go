@@ -7,6 +7,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"slices"
 
 	watermill "github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog"
@@ -129,7 +130,8 @@ func (b *handleEntityAndDoBase) handleRefreshEntityAndDo(msg *watermill.Message)
 }
 
 // handleUpstreamGone publishes a delete for an artifact whose upstream tag no
-// longer exists, and reports whether it did. Other entity types keep the
+// longer exists, and reports whether it did. Other entity types, and
+// artifacts from providers outside deletesOnUpstreamNotFound, keep the
 // existing log-and-drop behavior.
 //
 // The artifact is deleted on the first not-found, with no retry count or
@@ -138,6 +140,14 @@ func (b *handleEntityAndDoBase) handleRefreshEntityAndDo(msg *watermill.Message)
 // whose registry briefly returns 404, e.g. during a re-push or mirror sync.
 // Such an artifact has to be registered again: manually for DockerHub and
 // Quay, which send no push events. Revisit this if spurious deletes show up.
+// deletesOnUpstreamNotFound lists the provider classes whose artifact
+// not-found reliably means the tag is gone. GitHub is excluded because its
+// packages API also returns 404 when the token loses access to a package.
+var deletesOnUpstreamNotFound = []db.ProviderClass{
+	db.ProviderClassDockerhub,
+	db.ProviderClassQuay,
+}
+
 func (b *handleEntityAndDoBase) handleUpstreamGone(ctx context.Context, err error) bool {
 	var notFound *strategies.UpstreamEntityNotFoundError
 	if b.upstreamGoneHandlerName == "" || !errors.As(err, &notFound) ||
@@ -149,6 +159,15 @@ func (b *handleEntityAndDoBase) handleUpstreamGone(ctx context.Context, err erro
 		Str("entityID", notFound.Entity.Entity.ID.String()).
 		Str("projectID", notFound.Entity.Entity.ProjectID.String()).
 		Logger()
+
+	prov, err := b.store.GetProviderByID(ctx, notFound.Entity.Entity.ProviderID)
+	if err != nil {
+		l.Error().Err(err).Msg("error getting provider for artifact gone upstream")
+		return false
+	}
+	if !slices.Contains(deletesOnUpstreamNotFound, prov.Class) {
+		return false
+	}
 
 	msg, err := msgStrategies.NewToMinderEntity().CreateMessage(ctx, notFound.Entity)
 	if err != nil {
