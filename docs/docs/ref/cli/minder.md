@@ -8,7 +8,7 @@ Minder controls the hosted minder service
 ### Synopsis
 
 For more information about minder, please visit:
-https://mindersec.github.io/
+https://docs.mindersec.dev/
 
 ### Options
 

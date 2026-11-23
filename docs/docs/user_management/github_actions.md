@@ -8,7 +8,7 @@ authenticating GitHub Actions.  GitHub Actions are [identified by the `sub`
 claim on the GitHub-issued JWT](https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/about-security-hardening-with-openid-connect#example-subject-claims).
 Unlike human users, GitHub Actions _cannot_ accept an invitation, so
 permissions must be assigned directly with `project role grant` or the
-[PermissionsService.AssignRole](https://mindersec.github.io/ref/proto#minder-v1-PermissionsService)
+[PermissionsService.AssignRole](../ref/proto.mdx#minder-v1-PermissionsService)
 API.  Unlike human users, GitHub Actions are identified using the format
 
 ```

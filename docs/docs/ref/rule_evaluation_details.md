@@ -1,7 +1,7 @@
 # Rule Evaluation in Depth
 
 When evaluating a rule,
-[Minder executes the rule in multiple phases](https://mindersec.github.io/understand/key_concepts#phases-of-evaluation).
+[Minder executes the rule in multiple phases](../understand/key_concepts.md#phases-of-evaluation).
 This page contains detailed documentation about the execution of each phase.
 Minder performs rule evaluation across all relevant policies when it detects
 that an entity has changed.
@@ -83,7 +83,7 @@ following data for rule evaluatino:
 ## Evaluate
 
 The evaluation phase in Minder evaluates the ingested data according to the
-[specified rule type and parameters](https://mindersec.github.io/ref/proto#minder-v1-RuleType-Definition-Eval).
+[specified rule type and parameters](./proto.mdx#minder-v1-RuleType-Definition-Eval).
 Here's how it works:
 
 ### Evaluation Process
@@ -166,7 +166,7 @@ output data from the rule evalution may be passed to the following steps.
 ## Remediate
 
 A rule can optionally define a
-[remediation action](https://mindersec.github.io/ref/proto#minder-v1-RuleType-Definition-Remediate)
+[remediation action](./proto.mdx#minder-v1-RuleType-Definition-Remediate)
 to take when rule evaluation fails. The goal of remediation is to change the
 state of the entity so that it it now passes the rule evaluation. The
 remediation phase can optionally use inputs from the evaluation phase to
@@ -209,7 +209,7 @@ Minder supports four remediation actions:
    Pull requests support the following content modification types:
 
    - `minder.content`:
-     [define a list of file `path`s and `content`s](https://mindersec.github.io/ref/proto#minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content)
+     [define a list of file `path`s and `content`s](./proto.mdx#minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content)
      which should be updated. Currently only supports the `replace` action on
      files. Both `path` and `content` may use Go templates to parameterize their
      outputs
@@ -279,7 +279,7 @@ Minder supports four remediation actions:
 2. **REST Call** (`rest`)
 
    The
-   [REST remediation](https://mindersec.github.io/ref/proto#minder-v1-RestType)
+   [REST remediation](./proto.mdx#minder-v1-RestType)
    calls the specified `endpoint` using the defined HTTP `method`, passing the
    supplied `body`. Currently, `headers` are not supported.
 
@@ -295,7 +295,7 @@ Minder supports four remediation actions:
 3. **GitHub Branch Protection** (`gh_branch_protect`)
 
    The
-   [branch protection remediation](https://mindersec.github.io/ref/proto#minder-v1-RuleType-Definition-Remediate-GhBranchProtectionType)
+   [branch protection remediation](./proto.mdx#minder-v1-RuleType-Definition-Remediate-GhBranchProtectionType)
    takes a Go-templated JSON object in `patch` to merge with the existing
    protection branch protection settings. Branch protection has been implemented
    as a special remediation due to the peculiarities of the GitHub branch
@@ -319,7 +319,7 @@ request is open at a time for a particular rule applied to a specific entity.
 
 4. **Issue** (`issue`)
 
-   The [issue remediation](https://mindersec.github.io/ref/proto#minder-v1-RuleType-Definition-Remediate-IssueRemediation)
+   The [issue remediation](./proto.mdx#minder-v1-RuleType-Definition-Remediate-IssueRemediation)
    creates issues when rule evaluation fails. The remediation supports 
    configuring the issue title, body, labels, and assignees.
 
@@ -346,7 +346,7 @@ request is open at a time for a particular rule applied to a specific entity.
 ## Alert Types
 
 When remediation has completed, Minder will execute any
-[alerts defined for the rule type](https://mindersec.github.io/ref/proto#minder-v1-RuleType-Definition-Alert).
+[alerts defined for the rule type](./proto.mdx#minder-v1-RuleType-Definition-Alert).
 Minder currently defines two alert types, which operate similarly to the
 [remediation actions](#remediation-types) except that alerts do not directly
 attempt to fix the detected problem, but rather notify human maintainers to

@@ -90,7 +90,7 @@ winget:
     license: Apache-2.0
     license_url: "https://github.com/mindersec/minder/blob/main/LICENSE"
     copyright: Minder
-    homepage: https://mindersec.github.io/
+    homepage: https://docs.mindersec.dev/
     short_description: 'minder is the client CLI for interacting with Minder'
     publisher_support_url: "https://github.com/mindersec/minder/issues/new/choose"
     package_identifier: "mindersec.minder"

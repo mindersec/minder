@@ -1,6 +1,6 @@
 ### What Is a *data source*?
 
-A *data source* in Minder is a component that enriches your existing entities with additional information. (For broader context, see [Data Sources in Minder](https://mindersec.github.io/understand/key_concepts#data-sources).) 
+A *data source* in Minder is a component that enriches your existing entities with additional information. (For broader context, see [Data Sources in Minder](./key_concepts.md#data-sources).) 
 
 While providers in Minder typically create or manage entities (e.g., repositories, issues, PRs, or services) and handle their lifecycle (registration, webhooks, etc.), *data sources* contribute extra context or data points about those already-created entities.
 

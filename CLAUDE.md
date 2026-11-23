@@ -423,10 +423,10 @@ make cli-docs       # Generate CLI documentation
 
 ## Additional Resources
 
-- **Documentation**: https://mindersec.github.io/
-- **API Reference**: https://mindersec.github.io/ref/api
-- **Proto Reference**: https://mindersec.github.io/ref/proto
-- **CLI Reference**: https://mindersec.github.io/ref/cli/minder
+- **Documentation**: https://docs.mindersec.dev/
+- **API Reference**: https://docs.mindersec.dev/ref/api
+- **Proto Reference**: https://docs.mindersec.dev/ref/proto
+- **CLI Reference**: https://docs.mindersec.dev/ref/cli/minder
 - **Rules & Profiles**: https://github.com/mindersec/minder-rules-and-profiles
 - **Discord**: https://discord.gg/RkzVuTp3WK
 - **Contributing**: See CONTRIBUTING.md

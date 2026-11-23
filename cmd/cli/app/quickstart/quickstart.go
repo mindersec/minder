@@ -107,9 +107,9 @@ For more information about Minder, see the following resources:
 GitHub:
 * https://github.com/mindersec/minder
 Official documentation:
-* https://mindersec.github.io
+* https://docs.mindersec.dev
 CLI commands:
-* https://mindersec.github.io/ref/cli/minder
+* https://docs.mindersec.dev/ref/cli/minder
 Minder Rules & profiles:
 * https://github.com/mindersec/minder-rules-and-profiles
 
