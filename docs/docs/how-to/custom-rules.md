@@ -214,6 +214,31 @@ def:
 This will create a comment on your GitHub pull request listing each of the evaluation 
 failure messages.
 
+`.EvalResultOutput` comes from the Rego evaluation:
+
+- If the policy defines a rule named `output`, its value is used. This lets you
+  control exactly what the template receives.
+- Otherwise, a `constraints` policy uses its `violations`. With the default
+  `violation_format: text`, each violation is a plain string, so use
+  `{{ . }}` instead of `{{ .msg }}`. The example above needs
+  `violation_format: json`, which makes each violation an object with a `msg`
+  field.
+- Otherwise, a `deny-by-default` policy uses its `message`.
+
+For example, a `constraints` policy can provide the comment text through
+`output`, independently of how its violations are formatted:
+
+```rego
+violations contains {"msg": msg} if {
+  # ... conditions ...
+  msg := "Please describe the change in the pull request body"
+}
+
+output contains {"msg": v.msg} if {
+  some v in violations
+}
+```
+
 ### Remediation
 
 Minder has the ability to auto-fix issues that it finds in your supply chain,
