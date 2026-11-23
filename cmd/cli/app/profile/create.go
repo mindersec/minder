@@ -20,6 +20,7 @@ var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a profile",
 	Long:  `The profile create subcommand lets you create new profiles for a project within Minder.`,
+	Args:  cobra.NoArgs,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %s", err)

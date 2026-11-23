@@ -56,6 +56,11 @@ func TestCreateCommand(t *testing.T) {
 			},
 			ExpectedError: "server error",
 		},
+		{
+			Name:          "rejects unexpected positional arguments",
+			Args:          []string{"profile", "create", "-f", fixtureFile, "unexpected-arg"},
+			ExpectedError: `unknown command "unexpected-arg" for "minder profile create"`,
+		},
 	}
 
 	cli.RunCmdTests(t, tests, ProfileCmd)
