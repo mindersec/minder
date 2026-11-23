@@ -119,7 +119,7 @@ func (q *Queries) GetProfileStatusByProject(ctx context.Context, projectID uuid.
 
 const listOldestRuleEvaluationsByEntityID = `-- name: ListOldestRuleEvaluationsByEntityID :many
 
-SELECT ere.entity_instance_id, MIN(es.evaluation_time)::timestamp AS oldest_last_updated
+SELECT ere.entity_instance_id, MIN(es.evaluation_time)::timestamptz AS oldest_last_updated
 FROM evaluation_rule_entities AS ere
     INNER JOIN latest_evaluation_statuses AS les ON ere.id = les.rule_entity_id
     INNER JOIN evaluation_statuses AS es ON les.evaluation_history_id = es.id
@@ -159,7 +159,7 @@ func (q *Queries) ListOldestRuleEvaluationsByEntityID(ctx context.Context, entit
 
 const listOldestRuleEvaluationsByRepositoryId = `-- name: ListOldestRuleEvaluationsByRepositoryId :many
 
-SELECT ere.entity_instance_id::uuid AS repository_id, MIN(es.evaluation_time)::timestamp AS oldest_last_updated
+SELECT ere.entity_instance_id::uuid AS repository_id, MIN(es.evaluation_time)::timestamptz AS oldest_last_updated
 FROM evaluation_rule_entities AS ere
     INNER JOIN latest_evaluation_statuses AS les ON ere.id = les.rule_entity_id
     INNER JOIN evaluation_statuses AS es ON les.evaluation_history_id = es.id

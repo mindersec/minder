@@ -141,8 +141,8 @@ SELECT s.id::uuid AS evaluation_id,
   LEFT JOIN remediation_events re ON re.evaluation_id = s.id
   LEFT JOIN alert_events ae ON ae.evaluation_id = s.id
   LEFT JOIN evaluation_outputs eo ON eo.id = s.id AND sqlc.arg(include_outputs)::boolean
- WHERE (sqlc.narg(next)::timestamp without time zone IS NULL OR sqlc.narg(next) > s.evaluation_time)
-   AND (sqlc.narg(prev)::timestamp without time zone IS NULL OR sqlc.narg(prev) < s.evaluation_time)
+ WHERE (sqlc.narg(next)::timestamptz IS NULL OR sqlc.narg(next) > s.evaluation_time)
+   AND (sqlc.narg(prev)::timestamptz IS NULL OR sqlc.narg(prev) < s.evaluation_time)
    -- inclusion filters
    AND (sqlc.slice(entityTypes)::entities[] IS NULL OR ere.entity_type = ANY(sqlc.slice(entityTypes)::entities[]))
    AND (sqlc.slice(entityNames)::text[] IS NULL OR ei.name = ANY(sqlc.slice(entityNames)::text[]))
@@ -158,8 +158,8 @@ SELECT s.id::uuid AS evaluation_id,
    AND (sqlc.slice(notAlerts)::alert_status_types[] IS NULL OR ae.status != ALL(sqlc.slice(notAlerts)::alert_status_types[]))
    AND (sqlc.slice(notStatuses)::eval_status_types[] IS NULL OR s.status != ALL(sqlc.slice(notStatuses)::eval_status_types[]))
    -- time range filter
-   AND (sqlc.narg(fromts)::timestamp without time zone IS NULL OR s.evaluation_time >= sqlc.narg(fromts))
-   AND (sqlc.narg(tots)::timestamp without time zone IS NULL OR  s.evaluation_time < sqlc.narg(tots))
+   AND (sqlc.narg(fromts)::timestamptz IS NULL OR s.evaluation_time >= sqlc.narg(fromts))
+   AND (sqlc.narg(tots)::timestamptz IS NULL OR  s.evaluation_time < sqlc.narg(tots))
    -- implicit filter by project id
    AND j.id = sqlc.arg(projectId)
    -- implicit filter by profile labels
@@ -170,8 +170,8 @@ SELECT s.id::uuid AS evaluation_id,
    )
    AND (sqlc.slice(notLabels)::text[] IS NULL OR NOT p.labels && sqlc.slice(notLabels)::text[]) -- exclude only specified labels
  ORDER BY
- CASE WHEN sqlc.narg(next)::timestamp without time zone IS NULL THEN s.evaluation_time END ASC,
- CASE WHEN sqlc.narg(prev)::timestamp without time zone IS NULL THEN s.evaluation_time END DESC
+ CASE WHEN sqlc.narg(next)::timestamptz IS NULL THEN s.evaluation_time END ASC,
+ CASE WHEN sqlc.narg(prev)::timestamptz IS NULL THEN s.evaluation_time END DESC
  LIMIT sqlc.arg(size)::bigint;
 
 -- name: ListEvaluationHistoryStaleRecords :many

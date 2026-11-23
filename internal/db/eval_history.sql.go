@@ -298,8 +298,8 @@ SELECT s.id::uuid AS evaluation_id,
   LEFT JOIN remediation_events re ON re.evaluation_id = s.id
   LEFT JOIN alert_events ae ON ae.evaluation_id = s.id
   LEFT JOIN evaluation_outputs eo ON eo.id = s.id AND $1::boolean
- WHERE ($2::timestamp without time zone IS NULL OR $2 > s.evaluation_time)
-   AND ($3::timestamp without time zone IS NULL OR $3 < s.evaluation_time)
+ WHERE ($2::timestamptz IS NULL OR $2 > s.evaluation_time)
+   AND ($3::timestamptz IS NULL OR $3 < s.evaluation_time)
    -- inclusion filters
    AND ($4::entities[] IS NULL OR ere.entity_type = ANY($4::entities[]))
    AND ($5::text[] IS NULL OR ei.name = ANY($5::text[]))
@@ -315,8 +315,8 @@ SELECT s.id::uuid AS evaluation_id,
    AND ($14::alert_status_types[] IS NULL OR ae.status != ALL($14::alert_status_types[]))
    AND ($15::eval_status_types[] IS NULL OR s.status != ALL($15::eval_status_types[]))
    -- time range filter
-   AND ($16::timestamp without time zone IS NULL OR s.evaluation_time >= $16)
-   AND ($17::timestamp without time zone IS NULL OR  s.evaluation_time < $17)
+   AND ($16::timestamptz IS NULL OR s.evaluation_time >= $16)
+   AND ($17::timestamptz IS NULL OR  s.evaluation_time < $17)
    -- implicit filter by project id
    AND j.id = $18
    -- implicit filter by profile labels
@@ -327,8 +327,8 @@ SELECT s.id::uuid AS evaluation_id,
    )
    AND ($20::text[] IS NULL OR NOT p.labels && $20::text[]) -- exclude only specified labels
  ORDER BY
- CASE WHEN $2::timestamp without time zone IS NULL THEN s.evaluation_time END ASC,
- CASE WHEN $3::timestamp without time zone IS NULL THEN s.evaluation_time END DESC
+ CASE WHEN $2::timestamptz IS NULL THEN s.evaluation_time END ASC,
+ CASE WHEN $3::timestamptz IS NULL THEN s.evaluation_time END DESC
  LIMIT $21::bigint
 `
 
