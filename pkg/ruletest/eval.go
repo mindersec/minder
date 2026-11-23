@@ -288,7 +288,7 @@ func buildDataSourceRegistry(
 }
 
 func loadDataSource(path string) (*minderv1.DataSource, error) {
-	decoder, closer := fileconvert.DecoderForFile(path)
+	decoder, closer := fileconvert.DecoderForFile(nil, path)
 	if decoder == nil {
 		return nil, fmt.Errorf("error opening file: %s", path)
 	}

@@ -22,24 +22,18 @@ import (
 // Printer provides an interface for passing a printf-like function.
 type Printer func(string, ...any)
 
-// ResourcesFromPaths collects resources from paths, canceling any remote
-// file requests when ctx is canceled.
-func ResourcesFromPaths(ctx context.Context, printer Printer, paths ...string) ([]minderv1.ResourceMeta, error) {
-	return ResourcesFromFSPaths(ctx, nil, printer, paths...)
-}
-
-// ResourcesFromFSPaths collects resources from paths in sysFS, canceling any remote
+// ResourcesFromPaths collects resources from paths or URLs in sysFS, canceling any remote
 // file requests when ctx is canceled. When sysFS is nil, the local operating system
 // filesystem is used.
-func ResourcesFromFSPaths(ctx context.Context, sysFS fs.FS, printer Printer, paths ...string) ([]minderv1.ResourceMeta, error) {
-	files, err := util.ExpandFSFileArgs(sysFS, paths...)
+func ResourcesFromPaths(ctx context.Context, sysFS fs.FS, printer Printer, paths ...string) ([]minderv1.ResourceMeta, error) {
+	files, err := util.ExpandFileArgs(sysFS, paths...)
 	if err != nil {
 		return nil, fmt.Errorf("error expanding args: %w", err)
 	}
 
 	objects := make([]minderv1.ResourceMeta, 0, len(files))
 	for _, file := range files {
-		resources, err := ReadFromFSPath(ctx, sysFS, printer, file)
+		resources, err := ReadFromPath(ctx, sysFS, printer, file)
 		if err != nil && !errors.Is(err, minderv1.ErrNotAResource) {
 			return nil, err
 		}
@@ -50,14 +44,10 @@ func ResourcesFromFSPaths(ctx context.Context, sysFS fs.FS, printer Printer, pat
 }
 
 // ReadFromPath reads one file and cancels remote requests when ctx is canceled.
-// If "-" is passed as the filename, stdin will be read as a YAML document.
-func ReadFromPath(ctx context.Context, printer Printer, file util.ExpandedFile) ([]minderv1.ResourceMeta, error) {
-	return ReadFromFSPath(ctx, nil, printer, file)
-}
-
-// ReadFromFSPath reads one file from sysFS and cancels remote requests when ctx is canceled.
 // When sysFS is nil, the local operating system filesystem is used.
-func ReadFromFSPath(ctx context.Context, sysFS fs.FS, printer Printer, file util.ExpandedFile) ([]minderv1.ResourceMeta, error) {
+// If "-" is passed as the filename, stdin will be read as a YAML document.
+// If the filename is an HTTP URL, it will be fetched over the network.
+func ReadFromPath(ctx context.Context, sysFS fs.FS, printer Printer, file util.ExpandedFile) ([]minderv1.ResourceMeta, error) {
 	objects := []minderv1.ResourceMeta{}
 	var input Decoder
 	if file.Path == "-" {
@@ -78,7 +68,7 @@ func ReadFromFSPath(ctx context.Context, sysFS fs.FS, printer Printer, file util
 		input = builder(reader)
 	} else {
 		var closer io.Closer
-		input, closer = DecoderForFSFile(sysFS, file.Path)
+		input, closer = DecoderForFile(sysFS, file.Path)
 		if input == nil {
 			// Not a valid file type, skip it.
 			return objects, nil

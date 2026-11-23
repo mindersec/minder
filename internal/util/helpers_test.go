@@ -190,7 +190,7 @@ func TestExpandFileArgsHTTPURL(t *testing.T) {
 	t.Parallel()
 	const input = "https://example.com/policy.yaml?raw=1"
 
-	got, err := util.ExpandFileArgs(input)
+	got, err := util.ExpandFileArgs(nil, input)
 	require.NoError(t, err)
 	assert.Equal(t, []util.ExpandedFile{{Path: input, Expanded: false}}, got)
 	assert.Equal(t, ".yaml", util.FileArgExt(input))
@@ -208,6 +208,23 @@ func TestIsHTTPURLValidatesHTTPURLs(t *testing.T) {
 // TestExpandFileArgs tests the ExpandFileArgs function.
 func TestExpandFileArgs(t *testing.T) {
 	t.Parallel()
+	testDir := t.TempDir()
+	assert.NoError(t, os.MkdirAll(fmt.Sprintf("%s/testdir", testDir), 0750))
+
+	files := map[string]string{
+		"testfile.txt":      "test file",
+		"testdir/file1.txt": "file 1",
+		"testdir/file2.txt": "file 2",
+		"-":                 "dash file",
+	}
+	for filePath, contents := range files {
+		assert.NoError(t, os.WriteFile(fmt.Sprintf("%s/%s", testDir, filePath), []byte(contents), 0600))
+	}
+	cwd, err := os.Getwd()
+	require.NoError(t, err)
+	relTestDir, err := filepath.Rel(cwd, testDir)
+	require.NoError(t, err)
+
 	tests := []struct {
 		name     string
 		files    []string
@@ -240,6 +257,15 @@ func TestExpandFileArgs(t *testing.T) {
 			wantErr:  false,
 		},
 		{
+			name:  "Parent-relative", // This test does not actually use the testDir
+			files: []string{relTestDir + "/testdir", "../engine/executor.go"},
+			expected: []util.ExpandedFile{
+				{Path: fmt.Sprintf("%s/testdir/file1.txt", relTestDir), Expanded: true},
+				{Path: fmt.Sprintf("%s/testdir/file2.txt", relTestDir), Expanded: true},
+				{Path: "../engine/executor.go", Expanded: false},
+			},
+		},
+		{
 			name:     "Non-existent file",
 			files:    []string{"nonexistent.txt"},
 			expected: nil,
@@ -249,56 +275,25 @@ func TestExpandFileArgs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			// Create a temporary directory
-			testDir := t.TempDir()
-			if err := setupTestFiles(testDir); err != nil {
-				t.Fatalf("Failed to set up test files: %v", err)
-			}
-			// Update file paths to include the unique directory
 			for i, file := range tt.files {
-				tt.files[i] = fmt.Sprintf("%s/%s", testDir, file)
+				if file[0] != '.' {
+					tt.files[i] = fmt.Sprintf("%s/%s", testDir, file)
+				}
 			}
 			for i, file := range tt.expected {
-				tt.expected[i].Path = fmt.Sprintf("%s/%s", testDir, file.Path)
+				if file.Path[0] != '.' {
+					tt.expected[i].Path = fmt.Sprintf("%s/%s", testDir, file.Path)
+				}
 			}
-			combinedFiles := tt.files
-			got, err := util.ExpandFileArgs(combinedFiles...)
+			got, err := util.ExpandFileArgs(nil, tt.files...)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ExpandFileArgs() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if !slices.EqualFunc(got, tt.expected, func(a, b util.ExpandedFile) bool {
-				return a.Path == b.Path && a.Expanded == b.Expanded
-			}) {
+			if !slices.Equal(got, tt.expected) {
 				t.Errorf("ExpandFileArgs() = %v, want %v", got, tt.expected)
 			}
 		})
 	}
-}
-
-// setupTestFiles creates test files and directories for the unit tests.
-func setupTestFiles(testDir string) error {
-	if err := os.MkdirAll(fmt.Sprintf("%s/testdir", testDir), 0750); err != nil {
-		return fmt.Errorf("failed to create directory '%s/testdir': %w", testDir, err)
-	}
-
-	if err := os.WriteFile(fmt.Sprintf("%s/testfile.txt", testDir), []byte("test file"), 0600); err != nil {
-		return fmt.Errorf("failed to create file '%s/testfile.txt': %w", testDir, err)
-	}
-
-	if err := os.WriteFile(fmt.Sprintf("%s/testdir/file1.txt", testDir), []byte("file 1"), 0600); err != nil {
-		return fmt.Errorf("failed to create file '%s/testdir/file1.txt': %w", testDir, err)
-	}
-
-	if err := os.WriteFile(fmt.Sprintf("%s/testdir/file2.txt", testDir), []byte("file 2"), 0600); err != nil {
-		return fmt.Errorf("failed to create file '%s/testdir/file2.txt': %w", testDir, err)
-	}
-
-	// Create a file named "-"
-	if err := os.WriteFile(fmt.Sprintf("%s/-", testDir), []byte("dash file"), 0600); err != nil {
-		return fmt.Errorf("failed to create file '%s/-': %w", testDir, err)
-	}
-
-	return nil
 }
 
 func TestGetConfigValue(t *testing.T) {
@@ -383,4 +378,3 @@ func TestGetConfigValue(t *testing.T) {
 		})
 	}
 }
-

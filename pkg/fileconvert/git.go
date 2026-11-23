@@ -73,5 +73,5 @@ func ResourcesFromGit(ctx context.Context, printer Printer, rawURL string) ([]mi
 		return nil, fmt.Errorf("error cloning git repository %s: %w", repoURL, err)
 	}
 
-	return ResourcesFromFSPaths(ctx, iofs.New(fs), printer, subDir)
+	return ResourcesFromPaths(ctx, iofs.New(fs), printer, subDir)
 }

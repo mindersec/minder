@@ -30,7 +30,7 @@ func execOnOneRuleType(
 	proj string,
 	exec func(context.Context, string, *minderv1.RuleType) (*minderv1.RuleType, error),
 ) error {
-	resources, err := fileconvert.ReadFromPath(cmd.Context(), cmd.PrintErrf, f)
+	resources, err := fileconvert.ReadFromPath(cmd.Context(), nil, cmd.PrintErrf, f)
 	if err != nil {
 		return err
 	}
