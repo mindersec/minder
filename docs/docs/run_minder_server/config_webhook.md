@@ -52,3 +52,38 @@ minder-server webhook update -p github
 Note that the command simply replaces the webhook secret on the provider side.
 You will still need to update the webhook secret in the server configuration to
 match the provider's secret.
+
+## Docker Hub push webhook secret
+
+:::note
+
+Docker Hub push webhooks are not handled yet. This setting is in place for
+upcoming support, tracked in
+[#7203](https://github.com/mindersec/minder/issues/7203).
+
+:::
+
+Docker Hub does not sign webhook deliveries or let you add custom headers, so
+Minder authenticates Docker Hub webhooks with a token in the webhook URL
+instead. The token is derived from a server-side secret and the provider's ID,
+so each Docker Hub provider gets its own webhook URL.
+
+Set the secret under `provider.dockerhub` in your `server-config.yaml`:
+
+```yaml
+provider:
+  dockerhub:
+    webhook_secret: 'a-random-secret-string'
+    # Or read the secret from a file instead:
+    # webhook_secret_file: /secrets/dockerhub_webhook_secret
+```
+
+The `dockerhub` section is optional. Without a webhook secret, Minder accepts no
+Docker Hub webhook tokens.
+
+To rotate the secret, put the new secret in `webhook_secret` (or
+`webhook_secret_file`) and list the old secret(s) in a file referenced by
+`previous_webhook_secret_file`, as for the GitHub webhook secret above. Tokens
+derived from a previous secret are still accepted, so existing Docker Hub
+webhooks keep working until their URLs are updated. Remove the old secrets once
+every webhook uses a URL derived from the new secret.

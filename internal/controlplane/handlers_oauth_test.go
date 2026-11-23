@@ -168,7 +168,8 @@ func Test_NewOAuthConfig(t *testing.T) {
 				metrics.NewNoopMetrics(),
 				nil,
 			)
-			dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(nil, nil)
+			dockerhubProviderManager, err := dockerhub.NewDockerHubProviderClassManager(context.Background(), nil, nil, nil)
+			require.NoError(t, err)
 
 			providerAuthManager, err := manager.NewAuthManager(githubProviderManager, dockerhubProviderManager)
 			require.NoError(t, err)
@@ -761,7 +762,8 @@ func TestProviderCallback(t *testing.T) {
 				metrics.NewNoopMetrics(),
 				nil,
 			)
-			dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(nil, nil)
+			dockerhubProviderManager, err := dockerhub.NewDockerHubProviderClassManager(context.Background(), nil, nil, nil)
+			require.NoError(t, err)
 
 			authManager, err := manager.NewAuthManager(githubProviderManager, dockerhubProviderManager)
 			require.NoError(t, err)

@@ -9,6 +9,7 @@ type ProviderConfig struct {
 	GitHub    *GitHubConfig    `mapstructure:"github"`
 	Git       GitConfig        `mapstructure:"git"`
 	GitLab    *GitLabConfig    `mapstructure:"gitlab"`
+	DockerHub *DockerHubConfig `mapstructure:"dockerhub"`
 }
 
 // GitConfig provides server-side configuration for Git operations like "clone"

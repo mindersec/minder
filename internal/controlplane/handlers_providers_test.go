@@ -88,7 +88,9 @@ func testServer(t *testing.T, ctrl *gomock.Controller) *mockServer {
 		metrics.NewNoopMetrics(),
 		nil,
 	)
-	dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(mockCryptoEngine, mockStore)
+	dockerhubProviderManager, err := dockerhub.NewDockerHubProviderClassManager(
+		context.Background(), mockCryptoEngine, mockStore, nil)
+	require.NoError(t, err)
 
 	providerManager, closer, err := manager.NewProviderManager(context.Background(), providerStore, githubProviderManager, dockerhubProviderManager)
 	require.NoError(t, err)
