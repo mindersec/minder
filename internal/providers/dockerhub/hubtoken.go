@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -20,8 +21,16 @@ import (
 // that the Docker Hub API (hub.docker.com/v2) expects as a Bearer token.
 const hubAuthTokenURL = "https://hub.docker.com/v2/auth/token" //nolint:gosec // G101: an endpoint URL, not a credential
 
-// hubTokenFallbackTTL is used when the returned JWT has no readable exp claim.
-const hubTokenFallbackTTL = 5 * time.Minute
+const (
+	// hubTokenFallbackTTL is used when the returned JWT has no readable
+	// iat/exp claims.
+	hubTokenFallbackTTL = 5 * time.Minute
+	// hubTokenMaxTTL caps how long a JWT is reused, so a token Docker Hub
+	// revokes early is replaced within this time.
+	hubTokenMaxTTL = 15 * time.Minute
+	// maxTokenResponseSize bounds how much of the token response is read.
+	maxTokenResponseSize = 64 << 10
+)
 
 // hubTokenSource is an oauth2.TokenSource that exchanges the provider's
 // personal access token for a Docker Hub API JWT. The Docker Hub API rejects
@@ -80,7 +89,7 @@ func (s *hubTokenSource) Token() (*oauth2.Token, error) {
 	var out struct {
 		AccessToken string `json:"access_token"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+	if err := json.NewDecoder(io.LimitReader(resp.Body, maxTokenResponseSize)).Decode(&out); err != nil {
 		return nil, fmt.Errorf("error decoding Docker Hub token response: %w", err)
 	}
 	if out.AccessToken == "" {
@@ -94,19 +103,23 @@ func (s *hubTokenSource) Token() (*oauth2.Token, error) {
 	}, nil
 }
 
-// jwtExpiry reads the exp claim of a JWT without verifying it, so the token
-// can be reused until it expires. It falls back to a short lifetime.
+// jwtExpiry returns when to stop reusing a JWT. It reads the iat and exp
+// claims without verifying them and applies their difference, the lifetime
+// Docker Hub gave the token, from the local now. That keeps clock skew between
+// this host and Docker Hub out of the result. The lifetime is capped at
+// hubTokenMaxTTL, and hubTokenFallbackTTL is used when the claims can't be read.
 func jwtExpiry(token string, now time.Time) time.Time {
-	parts := strings.Split(token, ".")
-	if len(parts) == 3 {
+	ttl := hubTokenFallbackTTL
+	if parts := strings.Split(token, "."); len(parts) == 3 {
 		if payload, err := base64.RawURLEncoding.DecodeString(parts[1]); err == nil {
 			var claims struct {
+				Iat int64 `json:"iat"`
 				Exp int64 `json:"exp"`
 			}
-			if json.Unmarshal(payload, &claims) == nil && claims.Exp > 0 {
-				return time.Unix(claims.Exp, 0)
+			if json.Unmarshal(payload, &claims) == nil && claims.Iat > 0 && claims.Exp > claims.Iat {
+				ttl = min(time.Duration(claims.Exp-claims.Iat)*time.Second, hubTokenMaxTTL)
 			}
 		}
 	}
-	return now.Add(hubTokenFallbackTTL)
+	return now.Add(ttl)
 }
