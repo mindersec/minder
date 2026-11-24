@@ -29,6 +29,9 @@ endif
 
 .PHONY: run-docker
 run-docker: run-docker-teardown ## run the app under docker compose
+	@# docker-compose.yaml bind-mounts flags-config.yaml. If it doesn't exist,
+	@# Docker creates a root-owned directory in its place, which the server can't read.
+	@touch flags-config.yaml
 	@echo "Running docker compose up $(services)..."
 	@echo "Building the minder-server image (KO_DOCKER_REPO=$(KO_DOCKER_REPO))..."
 

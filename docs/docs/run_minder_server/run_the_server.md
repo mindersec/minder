@@ -79,6 +79,15 @@ dependent services (`keycloak` and `postgres`) by running:
 make run-docker
 ```
 
+The Postgres container is published on host port `5432`. If something else on
+your machine already uses that port (for example, a local PostgreSQL install),
+choose another one with `POSTGRES_HOST_PORT`. Minder's own containers still
+connect to Postgres on port `5432` inside the Docker network:
+
+```bash
+POSTGRES_HOST_PORT=5433 make run-docker
+```
+
 As this command runs, you will see it build the Minder server container and then
 start the dependent containers. If you run
 
@@ -159,9 +168,12 @@ A list of good first issues can be found in the
 
 ### Setting up a webhook
 
-With the basic setup, GitHub is unable to notify Minder when certain events
-occur in your repositories. MORE DETAILS WOULD BE NICE. Configuring a Webhook
-will allow GitHub to communicate back to the Minder instance. Details on how to
+With the basic setup, GitHub is unable to notify Minder when events such as
+pushes or new pull requests occur in your repositories. Minder evaluates a
+repository when you register it, but won't react to later changes, and rules
+that run on pull requests won't be evaluated. Configuring a webhook will allow
+GitHub to communicate back to the Minder instance. When running locally, Minder
+must be reachable from the internet, for example through ngrok. Details on how to
 set this up can be found in the [Configuring a webhook](./config_webhook.md)
 guide.
 
