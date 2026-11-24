@@ -68,9 +68,9 @@ def:
   in_entity: "artifact"
   rule_schema: {}
   ingest:
-    type: fake
+    type: builtin
   eval:
-    type: other
+    type: vulncheck
 `,
 			want: &minderv1.RuleType{
 				Type:    string(minderv1.RuleTypeResource),
@@ -80,10 +80,10 @@ def:
 					InEntity:   "artifact",
 					RuleSchema: &structpb.Struct{},
 					Ingest: &minderv1.RuleType_Definition_Ingest{
-						Type: "fake",
+						Type: "builtin",
 					},
 					Eval: &minderv1.RuleType_Definition_Eval{
-						Type: "other",
+						Type: "vulncheck",
 					},
 				},
 			},
@@ -345,7 +345,7 @@ def:
   ingest:
     type: git
   eval:
-    type: other
+    type: vulncheck
 `
 	tests := []struct {
 		name         string
@@ -534,7 +534,7 @@ def:
   ingest:
     type: git
   eval:
-    type: other
+    type: vulncheck
 `
 	const regoTmpl = `# METADATA
 #
@@ -606,7 +606,7 @@ func TestRuleTypeEnumRoundTrip(t *testing.T) {
 			InEntity:   "repository",
 			RuleSchema: &structpb.Struct{},
 			Ingest:     &minderv1.RuleType_Definition_Ingest{Type: "git"},
-			Eval:       &minderv1.RuleType_Definition_Eval{Type: "other"},
+			Eval:       &minderv1.RuleType_Definition_Eval{Type: "vulncheck"},
 		},
 		Severity:     &minderv1.Severity{Value: minderv1.Severity_VALUE_CRITICAL},
 		ReleasePhase: minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_DEPRECATED,

@@ -129,9 +129,9 @@ def:
   in_entity: artifact
   rule_schema: {}
   ingest:
-    type: fake
+    type: builtin
   eval:
-    type: other
+    type: vulncheck
 `
 	nonResourceYaml := `
 foo: bar
