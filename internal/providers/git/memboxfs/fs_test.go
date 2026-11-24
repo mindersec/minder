@@ -25,11 +25,7 @@ func newLimitedFs(maxFiles, maxBytes int64) *LimitedFs {
 // TestLimitedFs_FileCountLimit checks that every operation which adds an entry
 // to the filesystem is subject to the MaxFiles limit, and that the returned
 // error can be matched with errors.Is (the git provider relies on this to map
-// the failure to ErrRepositoryTooLarge).
-//
-// The exact boundary (whether MaxFiles or MaxFiles-1 entries are allowed) is
-// deliberately not asserted here; the tests only check that entries well below
-// the limit succeed and entries beyond it fail.
+// the failure to ErrRepositoryTooLarge). Exactly MaxFiles entries are allowed.
 func TestLimitedFs_FileCountLimit(t *testing.T) {
 	t.Parallel()
 
@@ -89,19 +85,13 @@ func TestLimitedFs_FileCountLimit(t *testing.T) {
 
 			lfs := newLimitedFs(maxFiles, 1024)
 
-			// Entries comfortably below the limit must succeed.
-			for i := 0; i < maxFiles-1; i++ {
+			for i := 0; i < maxFiles; i++ {
 				require.NoError(t, sc.add(lfs, i), "entry %d should be within the limit", i)
 			}
 
-			// Keep adding entries; by the time we are past MaxFiles, the limit
-			// must have been hit with ErrTooManyFiles.
-			var lastErr error
-			for i := maxFiles - 1; i <= maxFiles; i++ {
-				lastErr = sc.add(lfs, i)
-			}
-			require.Error(t, lastErr)
-			assert.ErrorIs(t, lastErr, ErrTooManyFiles)
+			err := sc.add(lfs, maxFiles)
+			require.Error(t, err)
+			assert.ErrorIs(t, err, ErrTooManyFiles)
 		})
 	}
 }
@@ -360,4 +350,30 @@ func assertContent(t *testing.T, lfs billy.Filesystem, name, want string) {
 	got, err := io.ReadAll(f)
 	require.NoError(t, err)
 	assert.Equal(t, want, string(got))
+}
+
+// TestLimitedFs_FailedCreateDoesNotCount checks that when the underlying
+// filesystem fails to create an entry, no file is returned and the entry is
+// not counted against MaxFiles.
+func TestLimitedFs_FailedCreateDoesNotCount(t *testing.T) {
+	t.Parallel()
+
+	lfs := newLimitedFs(1, 1024)
+	require.NoError(t, lfs.Fs.MkdirAll("dir", 0o755))
+
+	// "dir" is a directory, so creating a file with that name fails.
+	f, err := lfs.Create("dir")
+	require.Error(t, err)
+	assert.NotErrorIs(t, err, ErrTooManyFiles)
+	assert.Nil(t, f)
+
+	f, err = lfs.OpenFile("dir", os.O_CREATE|os.O_WRONLY, 0o644)
+	require.Error(t, err)
+	assert.NotErrorIs(t, err, ErrTooManyFiles)
+	assert.Nil(t, f)
+
+	// The failed creates didn't use up the single allowed entry.
+	f, err = lfs.Create("file")
+	require.NoError(t, err)
+	require.NoError(t, f.Close())
 }
