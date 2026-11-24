@@ -2016,6 +2016,17 @@ func TestCloseIssue(t *testing.T) {
 			},
 			expectedError: "failed to add comment to issue 42",
 		},
+		{
+			name:    "close issue edit api error returns error",
+			comment: "",
+			responses: []*http.Response{
+				closeIssueTestResponse(http.StatusInternalServerError, `{"message": "Internal Server Error"}`),
+			},
+			wantRequests: []recordedRequest{
+				{method: http.MethodPatch, path: issueURL, body: `{"state":"closed"}` + "\n"},
+			},
+			expectedError: "Internal Server Error",
+		},
 	}
 
 	for _, tt := range tests {
