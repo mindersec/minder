@@ -2016,6 +2016,30 @@ func TestCloseIssue(t *testing.T) {
 			},
 			expectedError: "failed to add comment to issue 42",
 		},
+		{
+			name:    "close issue edit api error returns error",
+			comment: "",
+			responses: []*http.Response{
+				closeIssueTestResponse(http.StatusInternalServerError, `{"message": "Internal Server Error"}`),
+			},
+			wantRequests: []recordedRequest{
+				{method: http.MethodPatch, path: issueURL, body: `{"state":"closed"}` + "\n"},
+			},
+			expectedError: "Internal Server Error",
+		},
+		{
+			name:    "comment succeeded but close issue edit api error returns error",
+			comment: "fixed by policy",
+			responses: []*http.Response{
+				closeIssueTestResponse(http.StatusCreated, `{"body": "fixed by policy"}`),
+				closeIssueTestResponse(http.StatusInternalServerError, `{"message": "Internal Server Error"}`),
+			},
+			wantRequests: []recordedRequest{
+				{method: http.MethodPost, path: issueURL + "/comments", body: `{"body":"fixed by policy"}` + "\n"},
+				{method: http.MethodPatch, path: issueURL, body: `{"state":"closed"}` + "\n"},
+			},
+			expectedError: "Internal Server Error",
+		},
 	}
 
 	for _, tt := range tests {
@@ -2036,6 +2060,68 @@ func TestCloseIssue(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, issue)
 				assert.Equal(t, "closed", issue.GetState())
+			}
+
+			assert.Equal(t, tt.wantRequests, transport.requests)
+		})
+	}
+}
+
+func TestClosePullRequest(t *testing.T) {
+	t.Parallel()
+
+	const (
+		owner  = "test-owner"
+		repo   = "test-repo"
+		number = 101
+		prURL  = "/repos/test-owner/test-repo/pulls/101"
+	)
+
+	tests := []struct {
+		name          string
+		responses     []*http.Response
+		wantRequests  []recordedRequest
+		expectedError string
+	}{
+		{
+			name: "closes pull request successfully",
+			responses: []*http.Response{
+				closeIssueTestResponse(http.StatusOK, `{"number": 101, "state": "closed"}`),
+			},
+			wantRequests: []recordedRequest{
+				{method: http.MethodPatch, path: prURL, body: `{"state":"closed"}` + "\n"},
+			},
+		},
+		{
+			name: "close pull request edit api error returns error",
+			responses: []*http.Response{
+				closeIssueTestResponse(http.StatusInternalServerError, `{"message": "Internal Server Error"}`),
+			},
+			wantRequests: []recordedRequest{
+				{method: http.MethodPatch, path: prURL, body: `{"state":"closed"}` + "\n"},
+			},
+			expectedError: "Internal Server Error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			th := setupTest(t)
+			transport := &recordingTransport{responses: tt.responses}
+			th.gh.client = github.NewClient(&http.Client{Transport: transport})
+
+			pr, err := th.gh.ClosePullRequest(context.Background(), owner, repo, number)
+
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.ErrorContains(t, err, tt.expectedError)
+				assert.Nil(t, pr)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, pr)
+				assert.Equal(t, "closed", pr.GetState())
 			}
 
 			assert.Equal(t, tt.wantRequests, transport.requests)
