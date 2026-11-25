@@ -15,11 +15,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// neverExpires is an eviction time no test outlives. Tests that read an entry
+// right after setting it use it, so that a slow or CPU-throttled runner can't
+// expire the entry first. Only the eviction tests use a short eviction time.
+const neverExpires = time.Hour
+
 func TestExpirationCacheCache_GetSet(t *testing.T) {
 	t.Parallel()
 
 	cache := NewExpiringCache[int](context.Background(), &ExpiringCacheConfig{
-		EvictionTime: 10 * time.Millisecond,
+		EvictionTime: neverExpires,
 	})
 	defer cache.Close()
 
@@ -95,7 +100,7 @@ func TestExpirationCacheCache_contextCancellation(t *testing.T) {
 	defer cancel()
 
 	cache := NewExpiringCache[int](ctx, &ExpiringCacheConfig{
-		EvictionTime: 10 * time.Millisecond,
+		EvictionTime: neverExpires,
 	})
 
 	cache.Set("foo", 42)
@@ -148,7 +153,7 @@ func TestExpirationCache_Delete(t *testing.T) {
 	t.Parallel()
 
 	cache := NewExpiringCache[int](context.Background(), &ExpiringCacheConfig{
-		EvictionTime: 10 * time.Millisecond,
+		EvictionTime: neverExpires,
 	})
 	defer cache.Close()
 
@@ -182,7 +187,7 @@ func TestExpirationCache_Size(t *testing.T) {
 	t.Parallel()
 
 	cache := NewExpiringCache[int](context.Background(), &ExpiringCacheConfig{
-		EvictionTime: 10 * time.Millisecond,
+		EvictionTime: neverExpires,
 	})
 	defer cache.Close()
 
