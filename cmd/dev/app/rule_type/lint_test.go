@@ -101,6 +101,10 @@ func TestValidateRestRemediationBody(t *testing.T) {
 			rest: &minderv1.RestType{Body: body(`{"allow_forking": {{ .Profile.allow_forking }}}`)},
 		},
 		{
+			name: "templated body can use the remediator's template functions",
+			rest: &minderv1.RestType{Body: body(`{"settings": {{ toJson .Profile.settings }}}`)},
+		},
+		{
 			name:    "trailing comma",
 			rest:    &minderv1.RestType{Body: body(`{"required_approving_review_count": 1,}`)},
 			wantErr: "body is not a valid JSON object",

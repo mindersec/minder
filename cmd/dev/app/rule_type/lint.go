@@ -146,7 +146,7 @@ func validateRestRemediationBody(r *minderv1.RestType) error {
 		return nil
 	}
 
-	tmpl, err := template.New("body").Parse(body)
+	tmpl, err := template.New("body").Funcs(util.TemplateFuncs).Parse(body)
 	if err != nil {
 		return fmt.Errorf("body is not a valid template: %w", err)
 	}
