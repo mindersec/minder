@@ -101,14 +101,16 @@ type packageJson struct {
 	} `json:"dist"`
 }
 
-func (pj *packageJson) IndentedString(indent int, oldDepLine string, _ *pbinternal.Dependency) string {
+// IndentedString returns the "version", "resolved" and "integrity" lines of
+// the package's package-lock.json entry. The review comment starts at the
+// entry's "version" line, so the package path line isn't part of the
+// suggestion; indent is the indentation of that package path line.
+func (pj *packageJson) IndentedString(indent int, _ string, _ *pbinternal.Dependency) string {
 	padding := fmt.Sprintf("%*s", indent, "")
 	innerPadding := padding + "  " // Add 2 extra spaces
 
-	// use the old dependency to get the correct package path
-	data := fmt.Sprintf("%s\n", oldDepLine)
 	// format each line with leadingWhitespace and 2 extra spaces
-	data += innerPadding + fmt.Sprintf("\"version\": \"%s\",\n", pj.Version)
+	data := innerPadding + fmt.Sprintf("\"version\": \"%s\",\n", pj.Version)
 	data += innerPadding + fmt.Sprintf("\"resolved\": \"%s\",\n", pj.Dist.Tarball)
 	data += innerPadding + fmt.Sprintf("\"integrity\": \"%s\",", pj.Dist.Integrity)
 

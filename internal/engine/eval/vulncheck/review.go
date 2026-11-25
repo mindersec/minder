@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 	"text/template"
 
@@ -49,6 +50,10 @@ func countLeadingWhitespace(line string) int {
 	return count
 }
 
+// errDepNotInPatch is returned by locateDepInPr when the dependency can't be
+// found in the file's patch, so there is no line to attach a comment to.
+var errDepNotInPatch = errors.New("dependency not found in PR patch")
+
 func locateDepInPr(
 	ctx context.Context,
 	client interfaces.RESTProvider,
@@ -65,37 +70,39 @@ func locateDepInPr(
 	}
 	defer resp.Body.Close()
 
+	// An error response would otherwise be searched as if it were the patch.
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, fmt.Errorf("unexpected status code fetching patch: %d", resp.StatusCode)
+	}
+
 	content, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("could not read response body: %w", err)
 	}
 
-	loc := reviewLocation{}
 	lines := strings.Split(string(content), "\n")
 	for i, line := range lines {
+		lineToChange := i + 1
+		candidate := line
 		// if the dependency is an NPM dependency, we need to look for the next line
 		// since the patch diff part covers the version, but not the name. This
 		// was causing 422 issues with GitHub when trying to submit a review.
 		// Also, to ensure we are grabbing the correct line, we need to check if the
 		// versions align.
 		if dep.Dep.Ecosystem == pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM && i+1 < len(lines) {
-			line = strings.Join([]string{line, lines[i+1], dep.Dep.Version}, "\n")
-			loc.lineToChange = i + 2
-		} else {
-			loc.lineToChange = i + 1
+			candidate = strings.Join([]string{line, lines[i+1], dep.Dep.Version}, "\n")
+			lineToChange = i + 2
 		}
-		if patch.LineHasDependency(line) {
-			loc.leadingWhitespace = countLeadingWhitespace(line)
-			loc.line = line
-			break
+		if patch.LineHasDependency(candidate) {
+			return &reviewLocation{
+				lineToChange:      lineToChange,
+				leadingWhitespace: countLeadingWhitespace(line),
+				line:              line,
+			}, nil
 		}
 	}
 
-	if loc.lineToChange == 0 {
-		return nil, fmt.Errorf("could not locate dependency in PR")
-	}
-
-	return &loc, nil
+	return nil, errDepNotInPatch
 }
 
 func reviewBodyWithSuggestion(comment string) string {
@@ -225,7 +232,17 @@ func (ra *reviewPrHandler) trackVulnerableDep(
 	patch patchLocatorFormatter,
 ) error {
 	location, err := locateDepInPr(ctx, ra.cli, dep, patch)
-	if err != nil {
+	if errors.Is(err, errDepNotInPatch) {
+		// Still report the vulnerability in the review and the status
+		// comment, but don't attach a comment or suggestion to a line that
+		// doesn't contain the dependency.
+		ra.logger.Warn().
+			Str("dep-name", dep.Dep.Name).
+			Str("file", dep.File.Name).
+			Msg("vulnerable dependency not found in PR patch, not adding a review comment")
+		ra.trackDep(dep, vulnResp, patch)
+		return nil
+	} else if err != nil {
 		return fmt.Errorf("could not locate dependency in PR: %w", err)
 	}
 
@@ -268,13 +285,21 @@ func (ra *reviewPrHandler) trackVulnerableDep(
 		Str("dep-name", dep.Dep.Name).
 		Msg("vulnerable dependency found")
 
+	ra.trackDep(dep, vulnResp, patch)
+
+	return nil
+}
+
+func (ra *reviewPrHandler) trackDep(
+	dep *pbinternal.PrDependencies_ContextualDependency,
+	vulnResp *VulnerabilityResponse,
+	patch patchLocatorFormatter,
+) {
 	ra.trackedDeps = append(ra.trackedDeps, dependencyVulnerabilities{
 		Dependency:      dep.Dep,
 		Vulnerabilities: vulnResp.Vulns,
 		PatchVersion:    patch.GetPatchedVersion(),
 	})
-
-	return nil
 }
 
 func (ra *reviewPrHandler) submit(ctx context.Context) error {
@@ -302,14 +327,21 @@ func (ra *reviewPrHandler) submit(ctx context.Context) error {
 	return nil
 }
 
+// foundVulnerabilities reports whether this pass found vulnerable
+// dependencies, including ones that couldn't be located in the patch and
+// so have no review comment.
+func (ra *reviewPrHandler) foundVulnerabilities() bool {
+	return len(ra.comments) > 0 || len(ra.trackedDeps) > 0
+}
+
 func (ra *reviewPrHandler) setStatus() {
-	if len(ra.comments) > 0 {
-		// if this pass produced comments, request changes
+	if ra.foundVulnerabilities() {
+		// if this pass found vulnerable dependencies, request changes
 		ra.text = github.String(vulnsFoundText)
 		ra.status = ra.failStatus
 		ra.logger.Debug().Msg("vulnerabilities found")
 	} else {
-		// if this pass produced no comments, resolve the minder review
+		// if this pass found no vulnerable dependencies, resolve the minder review
 		ra.status = github.String("COMMENT")
 		ra.text = github.String(noVulsFoundText)
 		ra.logger.Debug().Msg("no vulnerabilities found")
@@ -373,7 +405,7 @@ func (ra *reviewPrHandler) submitReview(ctx context.Context, mci magicCommentInf
 func (ra *reviewPrHandler) createReview(ctx context.Context) (int64, error) {
 	var err error
 
-	if len(ra.comments) == 0 {
+	if !ra.foundVulnerabilities() {
 		return 0, nil
 	}
 
@@ -381,6 +413,11 @@ func (ra *reviewPrHandler) createReview(ctx context.Context) (int64, error) {
 		CommitID: github.String(ra.pr.CommitSha),
 		Event:    ra.status,
 		Comments: ra.comments,
+	}
+	if len(ra.comments) == 0 {
+		// None of the vulnerable dependencies could be located in the
+		// patch, so the review needs a body instead of inline comments.
+		review.Body = ra.text
 	}
 
 	r, err := ra.cli.CreateReview(

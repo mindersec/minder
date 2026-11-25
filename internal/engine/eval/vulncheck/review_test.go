@@ -131,7 +131,7 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 		Do(gomock.Any(), gomock.Any()).
 		Return(&http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(fmt.Sprintf(`"%s": {`, patchPackage.Name))),
+			Body:       npmLockPatchBody("mongodb", "0.5.0"),
 		}, nil)
 
 	vulnResp := VulnerabilityResponse{
@@ -160,9 +160,9 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 			Comments: []*github.DraftReviewComment{
 				{
 					Path:      github.String(dep.File.Name),
-					StartLine: github.Int(1),
-					Line:      github.Int(4),
-					Body:      github.String("```suggestion\n\n  \"version\": \"0.6.0\",\n  \"resolved\": \"https://registry.npmjs.org/mongodb/-/mongodb-0.6.0.tgz\",\n  \"integrity\": \"sha512-+1+2+3+4+5+6+7+8+9+0\",\n```\n"),
+					StartLine: github.Int(4),
+					Line:      github.Int(6),
+					Body:      github.String("```suggestion\n      \"version\": \"0.6.0\",\n      \"resolved\": \"https://registry.npmjs.org/mongodb/-/mongodb-0.6.0.tgz\",\n      \"integrity\": \"sha512-+1+2+3+4+5+6+7+8+9+0\",\n```\n"),
 				},
 			},
 		}).Return(&github.PullRequestReview{HTMLURL: github.String(minderReviewUrl)}, nil)
@@ -236,7 +236,7 @@ func TestReviewPrHandlerVulnerabilitiesErrLookUpPackage(t *testing.T) {
 		Do(gomock.Any(), gomock.Any()).
 		Return(&http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(fmt.Sprintf(`"%s": {`, patchPackage.Name))),
+			Body:       npmLockPatchBody("mongodb", "0.5.0"),
 		}, nil)
 
 	vulnResp := VulnerabilityResponse{
@@ -258,7 +258,7 @@ func TestReviewPrHandlerVulnerabilitiesErrLookUpPackage(t *testing.T) {
 			Comments: []*github.DraftReviewComment{
 				{
 					Path: github.String(dep.File.Name),
-					Line: github.Int(1),
+					Line: github.Int(4),
 					Body: github.String(pkgRepoInfoNotFound),
 				},
 			}}).Return(
@@ -316,7 +316,7 @@ func TestReviewPrHandlerVulnerabilitiesWithNoPatchVersion(t *testing.T) {
 		},
 	}
 
-	patchPackage := &packageJson{}
+	patchPackage := &packageJson{Name: "mongodb"}
 	mockClient.EXPECT().
 		NewRequest("GET", server.URL, nil).
 		Return(http.NewRequest("GET", server.URL, nil))
@@ -324,7 +324,7 @@ func TestReviewPrHandlerVulnerabilitiesWithNoPatchVersion(t *testing.T) {
 		Do(gomock.Any(), gomock.Any()).
 		Return(&http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(fmt.Sprintf(`"%s": {`, patchPackage.Name))),
+			Body:       npmLockPatchBody("mongodb", "0.5.0"),
 		}, nil)
 
 	vulnResp := VulnerabilityResponse{
@@ -355,7 +355,7 @@ func TestReviewPrHandlerVulnerabilitiesWithNoPatchVersion(t *testing.T) {
 			Comments: []*github.DraftReviewComment{
 				{
 					Path: github.String(dep.File.Name),
-					Line: github.Int(1),
+					Line: github.Int(4),
 					Body: github.String(expCommentBody),
 				},
 			},
@@ -422,7 +422,7 @@ func TestReviewPrHandlerVulnerabilitiesDismissReview(t *testing.T) {
 		},
 	}
 
-	patchPackage := &packageJson{}
+	patchPackage := &packageJson{Name: "mongodb"}
 	mockClient.EXPECT().
 		NewRequest("GET", server.URL, nil).
 		Return(http.NewRequest("GET", server.URL, nil))
@@ -430,7 +430,7 @@ func TestReviewPrHandlerVulnerabilitiesDismissReview(t *testing.T) {
 		Do(gomock.Any(), gomock.Any()).
 		Return(&http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(fmt.Sprintf(`"%s": {`, patchPackage.Name))),
+			Body:       npmLockPatchBody("mongodb", "0.5.0"),
 		}, nil)
 
 	statusReport := createStatusReport(vulnsFoundText, commitSHA, minderReviewID, dependencyVulnerabilities{
@@ -463,7 +463,7 @@ func TestReviewPrHandlerVulnerabilitiesDismissReview(t *testing.T) {
 			Comments: []*github.DraftReviewComment{
 				{
 					Path: github.String(dep.File.Name),
-					Line: github.Int(1),
+					Line: github.Int(4),
 					Body: github.String(expCommentBody),
 				},
 			}}).Return(
@@ -593,7 +593,7 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 		Do(gomock.Any(), gomock.Any()).
 		Return(&http.Response{
 			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(fmt.Sprintf(`"%s": {`, patchPackage.Name))),
+			Body:       npmLockPatchBody("mongodb", "0.5.0"),
 		}, nil)
 
 	vulnResp := VulnerabilityResponse{
@@ -621,12 +621,12 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 			Comments: []*github.DraftReviewComment{
 				{
 					Path:      github.String(dep.File.Name),
-					StartLine: github.Int(1),
-					Line:      github.Int(4),
-					Body: github.String("```suggestion\n\n" +
-						"  \"version\": \"0.6.0\",\n" +
-						"  \"resolved\": \"https://registry.npmjs.org/mongodb/-/mongodb-0.6.0.tgz\",\n" +
-						"  \"integrity\": \"sha512-+1+2+3+4+5+6+7+8+9+0\",\n" +
+					StartLine: github.Int(4),
+					Line:      github.Int(6),
+					Body: github.String("```suggestion\n" +
+						"      \"version\": \"0.6.0\",\n" +
+						"      \"resolved\": \"https://registry.npmjs.org/mongodb/-/mongodb-0.6.0.tgz\",\n" +
+						"      \"integrity\": \"sha512-+1+2+3+4+5+6+7+8+9+0\",\n" +
 						"```\n"),
 				},
 			},
@@ -790,4 +790,172 @@ func createStatusReport(reviewText, sha string, reviewID int64, deps ...dependen
 		CommitSHA:           sha,
 		ReviewID:            reviewID,
 	}
+}
+
+// npmLockPatchBody returns a package-lock.json excerpt with an entry for the
+// given package, as served from a PR file's patch URL. The package path is on
+// line 3 and its "version" line on line 4.
+func npmLockPatchBody(name, version string) io.ReadCloser {
+	return io.NopCloser(strings.NewReader(fmt.Sprintf(`{
+  "packages": {
+    "node_modules/%s": {
+      "version": "%s",
+      "resolved": "https://registry.npmjs.org/%s/-/%s-%s.tgz",
+      "integrity": "sha512-old",
+`, name, version, name, name, version)))
+}
+
+func TestLocateDepInPr(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		statusCode int
+		body       string
+		wantLine   int
+		wantIndent int
+		wantErr    error
+	}{
+		{
+			name:       "dependency found",
+			statusCode: http.StatusOK,
+			body:       "{\n  \"packages\": {\n    \"node_modules/mongodb\": {\n      \"version\": \"0.5.0\",\n",
+			wantLine:   4,
+			wantIndent: 4,
+		},
+		{
+			name:       "dependency not in patch",
+			statusCode: http.StatusOK,
+			body:       "{\n  \"packages\": {\n    \"node_modules/express\": {\n      \"version\": \"4.0.0\",\n",
+			wantErr:    errDepNotInPatch,
+		},
+		{
+			name:       "other version of the dependency",
+			statusCode: http.StatusOK,
+			body:       "{\n  \"packages\": {\n    \"node_modules/mongodb\": {\n      \"version\": \"6.0.0\",\n",
+			wantErr:    errDepNotInPatch,
+		},
+		{
+			name:       "error response",
+			statusCode: http.StatusNotFound,
+			body:       "{\n  \"node_modules/mongodb\": {\n    \"version\": \"0.5.0\",\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			mockClient := mock_ghclient.NewMockGitHub(ctrl)
+			mockClient.EXPECT().
+				NewRequest("GET", "https://example.com/patch", nil).
+				Return(http.NewRequest("GET", "https://example.com/patch", nil))
+			mockClient.EXPECT().
+				Do(gomock.Any(), gomock.Any()).
+				Return(&http.Response{
+					StatusCode: tt.statusCode,
+					Body:       io.NopCloser(strings.NewReader(tt.body)),
+				}, nil)
+
+			dep := &pbinternal.PrDependencies_ContextualDependency{
+				Dep: &pbinternal.Dependency{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
+					Name:      "mongodb",
+					Version:   "0.5.0",
+				},
+				File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
+					Name:     "package-lock.json",
+					PatchUrl: "https://example.com/patch",
+				},
+			}
+
+			loc, err := locateDepInPr(context.Background(), mockClient, dep, &packageJson{Name: "mongodb"})
+			switch {
+			case tt.wantErr != nil:
+				require.ErrorIs(t, err, tt.wantErr)
+				require.Nil(t, loc)
+			case tt.statusCode != http.StatusOK:
+				require.ErrorContains(t, err, "unexpected status code")
+				require.NotErrorIs(t, err, errDepNotInPatch)
+				require.Nil(t, loc)
+			default:
+				require.NoError(t, err)
+				assert.Equal(t, tt.wantLine, loc.lineToChange)
+				assert.Equal(t, tt.wantIndent, loc.leadingWhitespace)
+			}
+		})
+	}
+}
+
+// A vulnerable dependency that can't be located in the patch is still
+// reported, but without a review comment on an unrelated line.
+func TestReviewPrHandlerVulnerableDepNotInPatch(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockClient := mock_ghclient.NewMockGitHub(ctrl)
+	pr := &pbinternal.PullRequest{
+		Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/43",
+		CommitSha: commitSHA,
+		Number:    43,
+		RepoOwner: "jakubtestorg",
+		RepoName:  "bad-npm",
+		AuthorId:  githubSubmitterID,
+	}
+
+	mockClient.EXPECT().GetUserId(gomock.Any()).Return(int64(githubMinderID), nil)
+	handler, err := newReviewPrHandler(context.TODO(), pr, mockClient)
+	require.NoError(t, err)
+
+	dep := &pbinternal.PrDependencies_ContextualDependency{
+		Dep: &pbinternal.Dependency{
+			Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
+			Name:      "mongodb",
+			Version:   "0.5.0",
+		},
+		File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
+			Name:     "package-lock.json",
+			PatchUrl: "https://example.com/patch",
+		},
+	}
+	mockClient.EXPECT().
+		NewRequest("GET", dep.File.PatchUrl, nil).
+		Return(http.NewRequest("GET", dep.File.PatchUrl, nil))
+	mockClient.EXPECT().
+		Do(gomock.Any(), gomock.Any()).
+		Return(&http.Response{
+			StatusCode: http.StatusOK,
+			Body:       npmLockPatchBody("express", "4.0.0"),
+		}, nil)
+
+	vulnResp := VulnerabilityResponse{[]Vulnerability{{ID: "mongodb", Fixed: "0.6.0"}}}
+	err = handler.trackVulnerableDep(context.TODO(), dep, &vulnResp, &packageJson{Name: "mongodb", Version: "0.6.0"})
+	require.NoError(t, err)
+	assert.Empty(t, handler.comments, "no review comment should point at a line without the dependency")
+	require.Len(t, handler.trackedDeps, 1)
+
+	// The review still requests changes, with a body instead of inline comments.
+	mockClient.EXPECT().
+		ListIssueComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
+		Return(nil, nil)
+	var review *github.PullRequestReviewRequest
+	mockClient.EXPECT().
+		CreateReview(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
+		DoAndReturn(func(_ context.Context, _, _ string, _ int, r *github.PullRequestReviewRequest,
+		) (*github.PullRequestReview, error) {
+			review = r
+			return &github.PullRequestReview{ID: github.Int64(1)}, nil
+		})
+	mockClient.EXPECT().
+		CreateIssueComment(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
+		Return(&github.IssueComment{}, nil)
+
+	require.NoError(t, handler.submit(context.Background()))
+	require.NotNil(t, review)
+	assert.Equal(t, "REQUEST_CHANGES", review.GetEvent())
+	assert.Empty(t, review.Comments)
+	assert.NotEmpty(t, review.GetBody(), "a review without inline comments needs a body")
 }
