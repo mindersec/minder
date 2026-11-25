@@ -14,6 +14,8 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/util"
+	"google.golang.org/grpc/codes"
 )
 
 // MaxReasonLength is the maximum number of characters allowed in an exception reason.
@@ -129,11 +131,15 @@ func (s *exceptionService) Delete(
 	id uuid.UUID,
 	projectID uuid.UUID,
 ) error {
-	if err := s.store.DeleteException(ctx, db.DeleteExceptionParams{
+	rowsAffected, err := s.store.DeleteException(ctx, db.DeleteExceptionParams{
 		ID:        id,
 		ProjectID: projectID,
-	}); err != nil {
+	})
+	if err != nil {
 		return fmt.Errorf("failed to delete exception: %w", err)
+	}
+	if rowsAffected == 0 {
+		return util.UserVisibleError(codes.NotFound, "exception with id %s not found in project %s", id, projectID)
 	}
 
 	return nil

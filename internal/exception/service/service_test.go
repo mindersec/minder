@@ -17,6 +17,8 @@ import (
 	mockdb "github.com/mindersec/minder/database/mock"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestCreate(t *testing.T) {
@@ -397,7 +399,7 @@ func TestDelete(t *testing.T) {
 			ID:        id,
 			ProjectID: projectID,
 		}).
-		Return(nil)
+		Return(int64(1), nil)
 
 	err := svc.Delete(context.Background(), id, projectID)
 
@@ -419,9 +421,31 @@ func TestDeleteError(t *testing.T) {
 			ID:        id,
 			ProjectID: projectID,
 		}).
-		Return(dbErr)
+		Return(int64(0), dbErr)
 
 	err := svc.Delete(context.Background(), id, projectID)
 
 	require.ErrorIs(t, err, dbErr)
+}
+
+func TestDeleteNotFound(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	store := mockdb.NewMockStore(ctrl)
+	svc := NewService(store)
+
+	id := uuid.New()
+	projectID := uuid.New()
+
+	store.EXPECT().
+		DeleteException(gomock.Any(), db.DeleteExceptionParams{
+			ID:        id,
+			ProjectID: projectID,
+		}).
+		Return(int64(0), nil)
+
+	err := svc.Delete(context.Background(), id, projectID)
+
+	require.Error(t, err)
+	require.Equal(t, codes.NotFound, status.Code(err))
 }

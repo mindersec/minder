@@ -34,7 +34,7 @@ WHERE project_id = sqlc.arg(project_id)
 ORDER BY created_at DESC;
 
 -- DeleteException removes an exception from a project
--- name: DeleteException :exec
+-- name: DeleteException :execrows
 DELETE FROM exceptions
 WHERE id = sqlc.arg(id)
   AND project_id = sqlc.arg(project_id);

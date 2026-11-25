@@ -580,11 +580,12 @@ func (mr *MockStoreMockRecorder) DeleteEvaluationOutputsByEvaluationIDs(ctx, eva
 }
 
 // DeleteException mocks base method.
-func (m *MockStore) DeleteException(ctx context.Context, arg db.DeleteExceptionParams) error {
+func (m *MockStore) DeleteException(ctx context.Context, arg db.DeleteExceptionParams) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteException", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // DeleteException indicates an expected call of DeleteException.
