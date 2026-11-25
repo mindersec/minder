@@ -21,13 +21,6 @@ import (
 	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
-// FormatReleaseUpstreamID returns the upstream ID for a gitlab release
-// This is done so we don't have to deal with conversions in the provider
-// when dealing with entities
-func FormatReleaseUpstreamID(id int) string {
-	return fmt.Sprintf("%d", id)
-}
-
 func (c *gitlabClient) getPropertiesForRelease(
 	ctx context.Context, getByProps *properties.Properties,
 ) (*properties.Properties, error) {
