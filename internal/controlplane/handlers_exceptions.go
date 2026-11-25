@@ -18,7 +18,7 @@ import (
 // ListExceptions lists active exceptions for the current project.
 func (s *Server) ListExceptions(
 	ctx context.Context,
-	in *pb.ListExceptionsRequest,
+	_ *pb.ListExceptionsRequest,
 ) (*pb.ListExceptionsResponse, error) {
 	projectID := GetProjectID(ctx)
 

@@ -11,11 +11,11 @@ import (
 	"unicode/utf8"
 
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/util"
-	"google.golang.org/grpc/codes"
 )
 
 // MaxReasonLength is the maximum number of characters allowed in an exception reason.
