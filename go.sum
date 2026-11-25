@@ -2,8 +2,8 @@ al.essio.dev/pkg/shellescape v1.6.0 h1:NxFcEqzFSEVCGN2yq7Huv/9hyCEGVa/TncnOOBBeX
 al.essio.dev/pkg/shellescape v1.6.0/go.mod h1:6sIqp7X2P6mThCQ7twERpZTuigpr6KbZWtls1U8I890=
 buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260825204119-511051f7f437.2 h1:NbnlmV26O7oZ1iM5tsCI+GEx+3ZSdrhvnKQ/eWSrLiY=
 buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260825204119-511051f7f437.2/go.mod h1:TCt1lluMFnctISJXvkIQ4x3ABrPuUKCWKyjKdkJNBpw=
-buf.build/go/protovalidate v1.4.0 h1:UjLrYbt5VX7+TMOs2+pG5FhZhIG1mSfK4EIopbb4LcM=
-buf.build/go/protovalidate v1.4.0/go.mod h1:8vJfzNT6NIG2qm3uFsJDXMlRmG+bQJzbcIn1Aa0vPGs=
+buf.build/go/protovalidate v1.4.1 h1:G/AHf1EKrY9E0gXXxkPavEppwZe/7oAVq4rBbSWu0hQ=
+buf.build/go/protovalidate v1.4.1/go.mod h1:rwfPjgeCqK+DsDsBtLUNT1l5uoXl/0KFA632z3wlyCQ=
 buf.build/go/protoyaml v0.8.0 h1:n6q7ygZTZo4kLzKXsymkiLharUgHfd507Ymi4t5xhY8=
 buf.build/go/protoyaml v0.8.0/go.mod h1:3XRN/7BQCQNlhIgwzE46QTHLuUScH2d76lAFLCQEFWo=
 cel.dev/cel-go v0.33.2 h1:eAcEdBguc6AFrGbPOyE0g168Uey4kKFW9J6qsBLSeMU=
