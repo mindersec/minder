@@ -11,24 +11,77 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/google/uuid"
+	"github.com/rs/zerolog"
+
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/providers/credentials"
+	"github.com/mindersec/minder/internal/providers/gitlab/webhooksecret"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 type providerClassManager struct {
 	store    db.Store
 	crypteng crypto.Engine
+
+	currentWebhookSecret   string
+	previousWebhookSecrets []string
 }
 
-// NewDockerHubProviderClassManager creates a new provider class manager for the dockerhub provider
-func NewDockerHubProviderClassManager(crypteng crypto.Engine, store db.Store) *providerClassManager {
-	return &providerClassManager{
+// NewDockerHubProviderClassManager creates a new provider class manager for the dockerhub provider.
+// cfg is optional: without a webhook secret, no webhook token is valid.
+func NewDockerHubProviderClassManager(
+	ctx context.Context,
+	crypteng crypto.Engine,
+	store db.Store,
+	cfg *serverconfig.DockerHubConfig,
+) (*providerClassManager, error) {
+	m := &providerClassManager{
 		store:    store,
 		crypteng: crypteng,
 	}
+	if cfg == nil {
+		return m, nil
+	}
+
+	whSecret, err := cfg.GetWebhookSecret()
+	if err != nil {
+		return nil, fmt.Errorf("error getting webhook secret: %w", err)
+	}
+	m.currentWebhookSecret = whSecret
+
+	if cfg.PreviousWebhookSecretFile != "" {
+		previousSecrets, err := cfg.GetPreviousWebhookSecrets()
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("previous secrets not loaded")
+		}
+		m.previousWebhookSecrets = previousSecrets
+	}
+
+	return m, nil
+}
+
+// webhookToken returns the token that authenticates push webhooks for the
+// given provider. It is derived from the current webhook secret.
+func (m *providerClassManager) webhookToken(providerID uuid.UUID) (string, error) {
+	return webhooksecret.New(m.currentWebhookSecret, providerID.String())
+}
+
+// validWebhookToken reports whether token authenticates push webhooks for
+// the given provider, under the current or any previous webhook secret.
+func (m *providerClassManager) validWebhookToken(providerID uuid.UUID, token string) bool {
+	if webhooksecret.Verify(m.currentWebhookSecret, providerID.String(), token) {
+		return true
+	}
+	for _, prev := range m.previousWebhookSecrets {
+		if webhooksecret.Verify(prev, providerID.String(), token) {
+			return true
+		}
+	}
+	return false
 }
 
 // GetSupportedClasses implements the ProviderClassManager interface

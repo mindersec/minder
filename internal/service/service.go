@@ -157,10 +157,15 @@ func AllInOneServerService(
 	provmans := []manager.ProviderClassManager{githubProviderManager}
 
 	if flags.Bool(ctx, featureFlagClient, flags.DockerHubProvider) {
-		dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(
+		dockerhubProviderManager, err := dockerhub.NewDockerHubProviderClassManager(
+			ctx,
 			cryptoEngine,
 			store,
+			cfg.Provider.DockerHub,
 		)
+		if err != nil {
+			return fmt.Errorf("failed to create dockerhub provider manager: %w", err)
+		}
 		provmans = append(provmans, dockerhubProviderManager)
 	}
 

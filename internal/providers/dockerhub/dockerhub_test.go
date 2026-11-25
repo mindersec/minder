@@ -442,7 +442,8 @@ func TestWebhookHandler(t *testing.T) {
 func TestProviderClassManager(t *testing.T) {
 	t.Parallel()
 
-	pcm := NewDockerHubProviderClassManager(nil, nil)
+	pcm, err := NewDockerHubProviderClassManager(context.Background(), nil, nil, nil)
+	require.NoError(t, err)
 	require.NotNil(t, pcm)
 
 	t.Run("GetSupportedClasses", func(t *testing.T) {

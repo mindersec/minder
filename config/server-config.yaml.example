@@ -75,6 +75,11 @@ provider:
     app_id: 1234
     user_id: 1234
     private_key: ".secrets/github-app.pem"
+  # Optional. Secret used to derive the per-provider tokens in Docker Hub push
+  # webhook URLs. Docker Hub push webhooks are not handled yet.
+  # dockerhub:
+  #   webhook_secret: "a-random-secret-string"
+  #   previous_webhook_secret_file: ./previous_dockerhub_secrets
 
 events:
   driver: go-channel
