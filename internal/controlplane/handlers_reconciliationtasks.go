@@ -42,18 +42,14 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 	}
 
 	var entityType db.Entities
-	var topic string
 
 	switch entity.GetType() {
 	case pb.Entity_ENTITY_REPOSITORIES:
 		entityType = db.EntitiesRepository
-		topic = constants.TopicQueueReconcileRepoInit
 	case pb.Entity_ENTITY_ARTIFACTS:
 		entityType = db.EntitiesArtifact
-		topic = constants.TopicQueueReconcileEntityAdd
 	case pb.Entity_ENTITY_PULL_REQUESTS:
 		entityType = db.EntitiesPullRequest
-		topic = constants.TopicQueueReconcileEntityAdd
 	case pb.Entity_ENTITY_UNSPECIFIED,
 		pb.Entity_ENTITY_BUILD_ENVIRONMENTS,
 		pb.Entity_ENTITY_RELEASE,
@@ -84,13 +80,13 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 		entity.Id = dbEntity.ID.String()
 	}
 
-	msg, err := getEntityReconciliationMessage(ctx, s.store, entity.GetId(), entityCtx)
+	msg, err := getEntityReconciliationMessage(ctx, s.store, entity.GetId(), entityType, entityCtx)
 	if err != nil {
 		return nil, err
 	}
 
 	// This is a non-fatal error, so we'll just log it and continue with the next ones
-	if err := s.evt.Publish(topic, msg); err != nil {
+	if err := s.evt.Publish(constants.TopicQueueReconcileRepoInit, msg); err != nil {
 		log.Printf("error publishing reconciler event: %v", err)
 	}
 
@@ -98,7 +94,7 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 }
 
 func getEntityReconciliationMessage(ctx context.Context, store db.Store,
-	entityIdString string, entityCtx engcontext.EntityContext) (*message.Message, error) {
+	entityIdString string, entityType db.Entities, entityCtx engcontext.EntityContext) (*message.Message, error) {
 	entityUUID, err := uuid.Parse(entityIdString)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error parsing entity id: %v", err)
@@ -117,28 +113,24 @@ func getEntityReconciliationMessage(ctx context.Context, store db.Store,
 		return nil, status.Errorf(codes.NotFound, "entity not found")
 	}
 
+	// Verify the entity matches the requested type, otherwise a request for
+	// one entity type could be routed as another.
+	if ent.EntityType != entityType {
+		return nil, status.Errorf(codes.NotFound, "entity not found")
+	}
+
 	// Telemetry logging
 	logger.BusinessRecord(ctx).ProviderID = ent.ProviderID
 	logger.BusinessRecord(ctx).Project = ent.ProjectID
 	logger.BusinessRecord(ctx).Entity = ent.ID
-
 	if ent.EntityType == db.EntitiesRepository {
 		logger.BusinessRecord(ctx).Repository = ent.ID
-		msg, err := reconcilers.NewRepoReconcilerMessage(ent.ProviderID, ent.ID, ent.ProjectID)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "error getting reconciler message: %v", err)
-		}
-		return msg, nil
 	}
 
-	// For non-repository entities, use MinderEvent
-	minderEvt := reconcilers.NewMinderEvent().
-		WithProviderID(ent.ProviderID).
-		WithProjectID(ent.ProjectID).
-		WithEntityID(ent.ID)
-
-	msg := message.NewMessage(uuid.New().String(), nil)
-	if err := minderEvt.ToMessage(msg); err != nil {
+	// This message and topic are type-agnostic: the reconciler forwards the
+	// entity ID to the refresh-and-evaluate handler for any entity type.
+	msg, err := reconcilers.NewRepoReconcilerMessage(ent.ProviderID, ent.ID, ent.ProjectID)
+	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error getting reconciler message: %v", err)
 	}
 	return msg, nil
