@@ -6,6 +6,7 @@ package rule_type
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -24,6 +25,7 @@ import (
 	"github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/fileconvert"
 )
 
 // CmdLint is the command for linting a rule type definition
@@ -58,41 +60,41 @@ func lintCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error expanding file args: %w", err)
 	}
 
-	var errors []error
+	var lintErrors []error
 	for _, f := range files {
 		if shouldSkipFile(f.Path) {
 			continue
 		}
 
-		rt, err := readRuleTypeFromFile(f.Path)
-		if err != nil && f.Expanded && minderv1.YouMayHaveTheWrongResource(err) {
+		rt, err := readRuleTypeForLint(f.Path)
+		if err != nil && f.Expanded && isNotRuleType(f.Path, err) {
 			cmd.PrintErrf("Skipping file %s: not a rule type\n", f.Path)
 			continue
 		}
 		if err != nil {
-			errors = append(errors, fmt.Errorf("error reading rule type from file %s: %w", f.Path, err))
+			lintErrors = append(lintErrors, fmt.Errorf("error reading rule type from file %s: %w", f.Path, err))
 			continue
 		}
 
 		if err := rt.Validate(); err != nil {
-			errors = append(errors, fmt.Errorf("error validating rule type from file %s: %w", f.Path, err))
+			lintErrors = append(lintErrors, fmt.Errorf("error validating rule type from file %s: %w", f.Path, err))
 			continue
 		}
 		// get file name without extension
 		ruleName := strings.TrimSuffix(filepath.Base(f.Path), filepath.Ext(f.Path))
 		if rt.Name != ruleName {
-			errors = append(errors, fmt.Errorf("rule type name does not match file name: %s != %s", rt.Name, ruleName))
+			lintErrors = append(lintErrors, fmt.Errorf("rule type name does not match file name: %s != %s", rt.Name, ruleName))
 			continue
 		}
 
 		if err := validateDefinition(ctx, rt, f.Path, rtpathStr, skipRego, cmd.OutOrStdout()); err != nil {
-			errors = append(errors, err)
+			lintErrors = append(lintErrors, err)
 			continue
 		}
 	}
 
-	if len(errors) > 0 {
-		for _, err := range errors {
+	if len(lintErrors) > 0 {
+		for _, err := range lintErrors {
 			cmd.PrintErrf("%s\n", err)
 		}
 		return fmt.Errorf("failed linting rule type")
@@ -122,16 +124,52 @@ func validateDefinition(
 }
 
 func shouldSkipFile(f string) bool {
-	// if the file is not json or yaml, skip it
+	// if the file is not json, yaml or rego, skip it
 	// Get file extension
 	ext := filepath.Ext(f)
 	switch ext {
-	case ".yaml", ".yml", ".json":
+	case ".yaml", ".yml", ".json", ".rego":
 		return false
 	default:
-		fmt.Fprintf(os.Stderr, "Skipping file %s: not a yaml or json file\n", f)
+		fmt.Fprintf(os.Stderr, "Skipping file %s: not a yaml, json or rego file\n", f)
 		return true
 	}
+}
+
+// readRuleTypeForLint reads a rule type from a file. Rego files are decoded the
+// same way `minder ruletype create` decodes them.
+func readRuleTypeForLint(fpath string) (*minderv1.RuleType, error) {
+	if filepath.Ext(fpath) != ".rego" {
+		return readRuleTypeFromFile(fpath)
+	}
+
+	decoder, closer := fileconvert.DecoderForFile(nil, fpath)
+	if decoder == nil {
+		return nil, fmt.Errorf("error opening file: %s", fpath)
+	}
+	defer closer.Close()
+
+	return fileconvert.ReadResourceTyped[*minderv1.RuleType](decoder)
+}
+
+// isNotRuleType reports whether a file that failed to load was never meant to be
+// a rule type, so that it can be skipped when found in a directory.
+func isNotRuleType(fpath string, err error) bool {
+	if minderv1.YouMayHaveTheWrongResource(err) || errors.Is(err, fileconvert.ErrNoRegoMetadata) {
+		return true
+	}
+	return filepath.Ext(fpath) == ".rego" && isAnnotatedPolicy(fpath)
+}
+
+// isAnnotatedPolicy reports whether a Rego file has readable METADATA that sets
+// nothing specific to rule types, such as an annotated helper policy.
+func isAnnotatedPolicy(fpath string) bool {
+	contents, err := os.ReadFile(filepath.Clean(fpath))
+	if err != nil {
+		return false
+	}
+	isRuleType, err := fileconvert.HasRuleTypeMetadata(contents)
+	return err == nil && !isRuleType
 }
 
 // validateRestRemediationBody checks the body of a rest remediation the way the
