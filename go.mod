@@ -395,7 +395,7 @@ require (
 	github.com/go-openapi/errors v0.22.9 // indirect
 	github.com/go-openapi/jsonpointer v1.0.2 // indirect
 	github.com/go-openapi/jsonreference v1.0.3 // indirect
-	github.com/go-openapi/loads v0.25.3
+	github.com/go-openapi/loads v0.25.4
 	github.com/go-openapi/runtime v0.33.3 // indirect
 	github.com/go-openapi/spec v1.0.1
 	github.com/go-openapi/strfmt v0.27.4 // indirect
