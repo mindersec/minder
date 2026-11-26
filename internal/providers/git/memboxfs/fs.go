@@ -36,6 +36,17 @@ var ErrTooManyFiles = fmt.Errorf("too many files")
 
 var _ billy.Filesystem = (*LimitedFs)(nil)
 
+// reserveFile counts a new filesystem entry against MaxFiles, which is the
+// maximum number of entries allowed. Callers must release the reservation
+// (decrement currentFiles) if creating the entry fails.
+func (f *LimitedFs) reserveFile(name string) error {
+	if f.currentFiles >= f.MaxFiles {
+		return fmt.Errorf("%w: %s", ErrTooManyFiles, name)
+	}
+	f.currentFiles++
+	return nil
+}
+
 // Chroot implements billy.Filesystem.
 func (*LimitedFs) Chroot(_ string) (billy.Filesystem, error) {
 	return nil, ErrNotImplemented
@@ -43,12 +54,15 @@ func (*LimitedFs) Chroot(_ string) (billy.Filesystem, error) {
 
 // Create implements billy.Filesystem.
 func (f *LimitedFs) Create(filename string) (billy.File, error) {
-	f.currentFiles++
-	if f.currentFiles >= f.MaxFiles {
-		return nil, fmt.Errorf("%w: %s", ErrTooManyFiles, filename)
+	if err := f.reserveFile(filename); err != nil {
+		return nil, err
 	}
 	file, err := f.Fs.Create(filename)
-	return &fileWrapper{f: file, fs: f}, err
+	if err != nil {
+		f.currentFiles--
+		return nil, err
+	}
+	return &fileWrapper{f: file, fs: f}, nil
 }
 
 // Join implements billy.Filesystem.
@@ -64,11 +78,14 @@ func (f *LimitedFs) Lstat(filename string) (fs.FileInfo, error) {
 // MkdirAll implements billy.Filesystem.
 func (f *LimitedFs) MkdirAll(filename string, perm fs.FileMode) error {
 	// TODO: account for path segments correctly
-	f.currentFiles++
-	if f.currentFiles >= f.MaxFiles {
-		return fmt.Errorf("%w: %s", ErrTooManyFiles, filename)
+	if err := f.reserveFile(filename); err != nil {
+		return err
 	}
-	return f.Fs.MkdirAll(filename, perm)
+	if err := f.Fs.MkdirAll(filename, perm); err != nil {
+		f.currentFiles--
+		return err
+	}
+	return nil
 }
 
 // Open implements billy.Filesystem.
@@ -78,14 +95,20 @@ func (f *LimitedFs) Open(filename string) (billy.File, error) {
 
 // OpenFile implements billy.Filesystem.
 func (f *LimitedFs) OpenFile(filename string, flag int, perm fs.FileMode) (billy.File, error) {
-	if flag&os.O_CREATE != 0 {
-		f.currentFiles++
-		if f.currentFiles >= f.MaxFiles {
-			return nil, fmt.Errorf("%w: %s", ErrTooManyFiles, filename)
+	creating := flag&os.O_CREATE != 0
+	if creating {
+		if err := f.reserveFile(filename); err != nil {
+			return nil, err
 		}
 	}
 	file, err := f.Fs.OpenFile(filename, flag, perm)
-	return &fileWrapper{f: file, fs: f}, err
+	if err != nil {
+		if creating {
+			f.currentFiles--
+		}
+		return nil, err
+	}
+	return &fileWrapper{f: file, fs: f}, nil
 }
 
 // ReadDir implements billy.Filesystem.
@@ -122,21 +145,27 @@ func (f *LimitedFs) Stat(filename string) (fs.FileInfo, error) {
 
 // Symlink implements billy.Filesystem.
 func (f *LimitedFs) Symlink(target string, link string) error {
-	f.currentFiles++
-	if f.currentFiles >= f.MaxFiles {
-		return fmt.Errorf("%w: %s", ErrTooManyFiles, link)
+	if err := f.reserveFile(link); err != nil {
+		return err
 	}
-	return f.Fs.Symlink(target, link)
+	if err := f.Fs.Symlink(target, link); err != nil {
+		f.currentFiles--
+		return err
+	}
+	return nil
 }
 
 // TempFile implements billy.Filesystem.
 func (f *LimitedFs) TempFile(dir string, prefix string) (billy.File, error) {
-	f.currentFiles++
-	if f.currentFiles >= f.MaxFiles {
-		return nil, fmt.Errorf("%w: %s/%s", ErrTooManyFiles, dir, prefix)
+	if err := f.reserveFile(dir + "/" + prefix); err != nil {
+		return nil, err
 	}
 	file, err := f.Fs.TempFile(dir, prefix)
-	return &fileWrapper{f: file, fs: f}, err
+	if err != nil {
+		f.currentFiles--
+		return nil, err
+	}
+	return &fileWrapper{f: file, fs: f}, nil
 }
 
 type fileWrapper struct {
