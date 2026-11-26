@@ -79,6 +79,28 @@ Note that these are known patterns in the OPA community, so we're not doing
 anything out of the ordinary here. Instead, we leverage best practices that have
 already been established.
 
+## Rego input
+
+Rego policies read the following fields from `input`:
+
+| Field              | Contents                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------ |
+| `input.profile`    | The rule's `def` values from the profile, validated against the rule type's `rule_schema`. |
+| `input.params`     | The rule's `params` values from the profile, validated against the `param_schema`.         |
+| `input.ingested`   | The data fetched by the rule type's ingester.                                              |
+| `input.properties` | The entity's properties, as reported by the provider.                                      |
+
+`params` are also available to ingesters, for example as `{{ .Params.x }}` in a
+REST ingester's endpoint. Use them for settings that change what is ingested,
+and `def` for settings that only change how the ingested data is evaluated.
+
+When a profile sets no `params`, `input.params` is an empty object, so a rule
+can fall back to a default:
+
+```rego
+branch := object.get(input.params, "branch", "main")
+```
+
 ## Custom Rego functions
 
 Given the context in which Minder operates, we did need to add some custom

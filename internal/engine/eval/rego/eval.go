@@ -52,6 +52,10 @@ type Evaluator struct {
 type Input struct {
 	// Profile is the values set for the profile
 	Profile map[string]any `json:"profile"`
+	// Params is the rule's params, as set in the profile and validated
+	// against the rule type's param_schema. It is never null, so that
+	// object.get(input.params, ...) works when no params are set.
+	Params map[string]any `json:"params"`
 	// Ingested is the values set for the ingested data
 	Ingested any `json:"ingested"`
 	// Properties contains the entity's properties as defined by
@@ -149,9 +153,21 @@ func (e *Evaluator) SetShortFailureMessage(msg string) error {
 	return nil
 }
 
+var _ interfaces.ParamsEvaluator = (*Evaluator)(nil)
+
 // Eval implements the Evaluator interface.
 func (e *Evaluator) Eval(
 	ctx context.Context, pol map[string]any, entity protoreflect.ProtoMessage, res *interfaces.Ingested,
+) (*interfaces.EvaluationResult, error) {
+	return e.EvalWithParams(ctx, pol, nil, entity, res)
+}
+
+// EvalWithParams implements the ParamsEvaluator interface. The rule's params
+// are available to Rego as input.params, alongside the rule's def as
+// input.profile.
+func (e *Evaluator) EvalWithParams(
+	ctx context.Context, pol map[string]any, params map[string]any,
+	entity protoreflect.ProtoMessage, res *interfaces.Ingested,
 ) (*interfaces.EvaluationResult, error) {
 	// The rego engine is actually able to handle nil
 	// objects quite gracefully, so we don't need to check
@@ -179,8 +195,13 @@ func (e *Evaluator) Eval(
 		return nil, fmt.Errorf("could not prepare Rego: %w", err)
 	}
 
+	if params == nil {
+		params = map[string]any{}
+	}
+
 	input := &Input{
 		Profile:      pol,
+		Params:       params,
 		Ingested:     obj,
 		OutputFormat: e.cfg.ViolationFormat,
 	}

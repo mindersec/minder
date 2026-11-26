@@ -34,6 +34,17 @@ type Evaluator interface {
 	Eval(ctx context.Context, profile map[string]any, entity protoreflect.ProtoMessage, data *Ingested) (*EvaluationResult, error)
 }
 
+// ParamsEvaluator is an optional interface for evaluators that also use the
+// rule's params, the values set in the profile under `params` and validated
+// against the rule type's `param_schema`. When an evaluator implements it, the
+// rule engine calls EvalWithParams instead of Eval.
+type ParamsEvaluator interface {
+	EvalWithParams(
+		ctx context.Context, profile map[string]any, params map[string]any,
+		entity protoreflect.ProtoMessage, data *Ingested,
+	) (*EvaluationResult, error)
+}
+
 // Option is a function that takes an evaluator and does some
 // unspecified operation to it, returning an error in case of failure.
 type Option func(Evaluator) error

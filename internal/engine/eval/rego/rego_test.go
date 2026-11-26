@@ -1079,3 +1079,73 @@ allow if {
 
 	assert.Equal(t, "Repository is not compliant", res.Output, "output should be the short failure message")
 }
+
+// The rule's params are available to Rego as input.params, alongside the
+// rule's def as input.profile.
+func TestDenyByDefaultEvaluationWithParams(t *testing.T) {
+	t.Parallel()
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `package minder
+
+import rego.v1
+
+default allow := false
+
+allow if {
+	input.params.data == input.ingested.data
+	input.profile.other == "def"
+}
+`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	pol := map[string]any{"other": "def"}
+	params := map[string]any{"data": "foo"}
+
+	// Matches
+	_, err = e.EvalWithParams(context.Background(), pol, params, nil, &interfaces.Ingested{
+		Object: map[string]any{"data": "foo"},
+	})
+	require.NoError(t, err, "could not evaluate")
+
+	// Doesn't match
+	_, err = e.EvalWithParams(context.Background(), pol, params, nil, &interfaces.Ingested{
+		Object: map[string]any{"data": "bar"},
+	})
+	require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
+}
+
+// When no params are set, input.params is an empty object rather than null,
+// so rules can fall back to defaults with object.get.
+func TestEvaluationWithoutParamsUsesEmptyObject(t *testing.T) {
+	t.Parallel()
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `package minder
+
+import rego.v1
+
+default allow := false
+
+allow if {
+	object.get(input.params, "data", "fallback") == input.ingested.data
+}
+`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	ingested := &interfaces.Ingested{Object: map[string]any{"data": "fallback"}}
+
+	_, err = e.Eval(context.Background(), map[string]any{}, nil, ingested)
+	require.NoError(t, err, "Eval without params should see an empty input.params")
+
+	_, err = e.EvalWithParams(context.Background(), map[string]any{}, nil, nil, ingested)
+	require.NoError(t, err, "EvalWithParams with nil params should see an empty input.params")
+}

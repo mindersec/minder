@@ -124,6 +124,42 @@ allow if {
 				require.NoError(t, err, "os.WriteFile() failed")
 			},
 		},
+		{
+			name: "params are available as input.params",
+			ent: &minderv1.Repository{
+				CloneUrl: "foo",
+			},
+			ruleType: paramsRuleType(),
+			ri: ruleInstance{
+				Def:    map[string]any{},
+				Params: map[string]any{"file": "SECURITY.md"},
+			},
+			wantErr: false,
+			dirSetup: func(t *testing.T, tdir string) {
+				t.Helper()
+
+				err := os.WriteFile(tdir+"/SECURITY.md", []byte("hello"), 0600)
+				require.NoError(t, err, "os.WriteFile() failed")
+			},
+		},
+		{
+			name: "params select a missing file",
+			ent: &minderv1.Repository{
+				CloneUrl: "foo",
+			},
+			ruleType: paramsRuleType(),
+			ri: ruleInstance{
+				Def:    map[string]any{},
+				Params: map[string]any{"file": "README.md"},
+			},
+			wantErr: true,
+			dirSetup: func(t *testing.T, tdir string) {
+				t.Helper()
+
+				err := os.WriteFile(tdir+"/SECURITY.md", []byte("hello"), 0600)
+				require.NoError(t, err, "os.WriteFile() failed")
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -260,5 +296,46 @@ default allow := false
 			assert.Equal(t, tt.wantSupported, rte.SupportedByProvider())
 			assert.Equal(t, tt.wantUnknown, rte.UnknownProviderTraits())
 		})
+	}
+}
+
+// paramsRuleType returns a rule type whose Rego reads the file to check from
+// the rule's params.
+func paramsRuleType() *minderv1.RuleType {
+	return &minderv1.RuleType{
+		Context: &minderv1.Context{
+			Project: ptr.Ptr("test"),
+		},
+		Def: &minderv1.RuleType_Definition{
+			InEntity:   minderv1.RepositoryEntity.String(),
+			RuleSchema: &structpb.Struct{},
+			ParamSchema: &structpb.Struct{Fields: map[string]*structpb.Value{
+				"type": structpb.NewStringValue("object"),
+				"properties": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
+					"file": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
+						"type": structpb.NewStringValue("string"),
+					}}),
+				}}),
+			}},
+			Ingest: &minderv1.RuleType_Definition_Ingest{
+				Type: "git",
+			},
+			Eval: &minderv1.RuleType_Definition_Eval{
+				Type: "rego",
+				Rego: &minderv1.RuleType_Definition_Eval_Rego{
+					Type: "deny-by-default",
+					Def: `package minder
+
+import rego.v1
+
+default allow := false
+
+allow if {
+	file.exists(input.params.file)
+}
+`,
+				},
+			},
+		},
 	}
 }
