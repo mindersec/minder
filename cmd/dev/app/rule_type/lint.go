@@ -5,11 +5,14 @@ package rule_type
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
+	"text/template/parse"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/spf13/cobra"
@@ -17,6 +20,7 @@ import (
 	"github.com/styrainc/regal/pkg/rules"
 	"gopkg.in/yaml.v3"
 
+	"github.com/mindersec/minder/internal/engine/actions/remediate/rest"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -81,11 +85,9 @@ func lintCmdRun(cmd *cobra.Command, _ []string) error {
 			continue
 		}
 
-		if rt.Def.Eval.Type == rego.RegoEvalType && !skipRego {
-			if err := validateRegoRule(ctx, rt.Def.Eval.Rego, rtpathStr, cmd.OutOrStdout()); err != nil {
-				errors = append(errors, fmt.Errorf("failed validating rego rule from file %s: %w", f.Path, err))
-				continue
-			}
+		if err := validateDefinition(ctx, rt, f.Path, rtpathStr, skipRego, cmd.OutOrStdout()); err != nil {
+			errors = append(errors, err)
+			continue
 		}
 	}
 
@@ -94,6 +96,26 @@ func lintCmdRun(cmd *cobra.Command, _ []string) error {
 			cmd.PrintErrf("%s\n", err)
 		}
 		return fmt.Errorf("failed linting rule type")
+	}
+
+	return nil
+}
+
+// validateDefinition runs the checks that depend on the rule type's evaluation
+// and remediation engines.
+func validateDefinition(
+	ctx context.Context, rt *minderv1.RuleType, path, rtpath string, skipRego bool, out io.Writer,
+) error {
+	if rt.Def.Eval.Type == rego.RegoEvalType && !skipRego {
+		if err := validateRegoRule(ctx, rt.Def.Eval.Rego, rtpath, out); err != nil {
+			return fmt.Errorf("failed validating rego rule from file %s: %w", path, err)
+		}
+	}
+
+	if rt.Def.GetRemediate().GetType() == rest.RemediateType {
+		if err := validateRestRemediationBody(rt.Def.GetRemediate().GetRest()); err != nil {
+			return fmt.Errorf("failed validating rest remediation from file %s: %w", path, err)
+		}
 	}
 
 	return nil
@@ -110,6 +132,37 @@ func shouldSkipFile(f string) bool {
 		fmt.Fprintf(os.Stderr, "Skipping file %s: not a yaml or json file\n", f)
 		return true
 	}
+}
+
+// validateRestRemediationBody checks the body of a rest remediation the way the
+// remediator uses it: the body is a text template, and once rendered it is
+// decoded as a JSON object. A body without template actions renders to itself,
+// so it must already be a JSON object. A body with template actions depends on
+// the entity and profile it is rendered for, so only its template syntax is
+// checked here.
+func validateRestRemediationBody(r *minderv1.RestType) error {
+	body := r.GetBody()
+	if body == "" {
+		return nil
+	}
+
+	tmpl, err := template.New("body").Funcs(util.TemplateFuncs).Parse(body)
+	if err != nil {
+		return fmt.Errorf("body is not a valid template: %w", err)
+	}
+	if tmpl.Tree != nil {
+		for _, node := range tmpl.Root.Nodes {
+			if node.Type() != parse.NodeText {
+				return nil
+			}
+		}
+	}
+
+	var obj map[string]any
+	if err := json.Unmarshal([]byte(body), &obj); err != nil {
+		return fmt.Errorf("body is not a valid JSON object: %w", err)
+	}
+	return nil
 }
 
 func validateRegoRule(ctx context.Context, r *minderv1.RuleType_Definition_Eval_Rego, path string, out io.Writer) error {

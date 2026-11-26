@@ -73,3 +73,64 @@ allow {
 		})
 	}
 }
+
+func TestValidateRestRemediationBody(t *testing.T) {
+	t.Parallel()
+
+	body := func(s string) *string { return &s }
+
+	tests := []struct {
+		name    string
+		rest    *minderv1.RestType
+		wantErr string
+	}{
+		{
+			name: "no rest remediation",
+			rest: nil,
+		},
+		{
+			name: "no body",
+			rest: &minderv1.RestType{Endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Name}}"},
+		},
+		{
+			name: "static JSON object",
+			rest: &minderv1.RestType{Body: body(`{"security_and_analysis": {"secret_scanning": {"status": "enabled"}}}`)},
+		},
+		{
+			name: "templated body is only checked for template syntax",
+			rest: &minderv1.RestType{Body: body(`{"allow_forking": {{ .Profile.allow_forking }}}`)},
+		},
+		{
+			name: "templated body can use the remediator's template functions",
+			rest: &minderv1.RestType{Body: body(`{"settings": {{ toJson .Profile.settings }}}`)},
+		},
+		{
+			name:    "trailing comma",
+			rest:    &minderv1.RestType{Body: body(`{"required_approving_review_count": 1,}`)},
+			wantErr: "body is not a valid JSON object",
+		},
+		{
+			name:    "JSON array instead of an object",
+			rest:    &minderv1.RestType{Body: body(`["enabled"]`)},
+			wantErr: "body is not a valid JSON object",
+		},
+		{
+			name:    "unterminated template action",
+			rest:    &minderv1.RestType{Body: body(`{"allow_forking": {{ .Profile.allow_forking }`)},
+			wantErr: "body is not a valid template",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := validateRestRemediationBody(tt.rest)
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
