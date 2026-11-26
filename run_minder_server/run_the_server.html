@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.10.2">
 <title data-rh="true">Installing a development version | Minder docs</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://docs.mindersec.dev/img/Minder_darkMode.png"><meta data-rh="true" name="twitter:image" content="https://docs.mindersec.dev/img/Minder_darkMode.png"><meta data-rh="true" property="og:url" content="https://docs.mindersec.dev/run_minder_server/run_the_server"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Installing a development version | Minder docs"><meta data-rh="true" name="description" content="This guide shows you how to run a Minder server locally. It is intended for"><meta data-rh="true" property="og:description" content="This guide shows you how to run a Minder server locally. It is intended for"><link data-rh="true" rel="icon" href="/img/favicon.png"><link data-rh="true" rel="canonical" href="https://docs.mindersec.dev/run_minder_server/run_the_server"><link data-rh="true" rel="alternate" href="https://docs.mindersec.dev/run_minder_server/run_the_server" hreflang="en"><link data-rh="true" rel="alternate" href="https://docs.mindersec.dev/run_minder_server/run_the_server" hreflang="x-default"><link data-rh="true" rel="preconnect" href="https://F7OP01WFHV-dsn.algolia.net" crossorigin="anonymous"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Installing a development version","item":"https://docs.mindersec.dev/run_minder_server/run_the_server"}]}</script><link rel="search" type="application/opensearchdescription+xml" title="Minder docs" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.bdfa33c7.css">
-<script src="/assets/js/runtime~main.12214a04.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.8155c69b.js" defer="defer"></script>
 <script src="/assets/js/main.367f2fbf.js" defer="defer"></script>
 </head>
 <body>
@@ -60,6 +60,11 @@ because you will need them again below.</p>
 <code>server-config.yaml</code> file updated. Start <code>minder-server</code> along with its
 dependent services (<code>keycloak</code> and <code>postgres</code>) by running:</p>
 <div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#F8F8F2"><span class="token plain">make run-docker</span><br></div></code></pre></div></div>
+<p>The Postgres container is published on host port <code>5432</code>. If something else on
+your machine already uses that port (for example, a local PostgreSQL install),
+choose another one with <code>POSTGRES_HOST_PORT</code>. Minder&#x27;s own containers still
+connect to Postgres on port <code>5432</code> inside the Docker network:</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#F8F8F2"><span class="token plain">POSTGRES_HOST_PORT=5433 make run-docker</span><br></div></code></pre></div></div>
 <p>As this command runs, you will see it build the Minder server container and then
 start the dependent containers. If you run</p>
 <div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#F8F8F2"><span class="token plain">docker ps</span><br></div></code></pre></div></div>
@@ -109,9 +114,12 @@ contribute to Minder.</p>
 <a href="https://github.com/mindersec/minder/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22good%20first%20issue%22" target="_blank" rel="noopener noreferrer" class="">Minder GitHub project</a>.</p>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="optional-steps">Optional steps<a href="#optional-steps" class="hash-link" aria-label="Direct link to Optional steps" title="Direct link to Optional steps" translate="no">​</a></h2>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="setting-up-a-webhook">Setting up a webhook<a href="#setting-up-a-webhook" class="hash-link" aria-label="Direct link to Setting up a webhook" title="Direct link to Setting up a webhook" translate="no">​</a></h3>
-<p>With the basic setup, GitHub is unable to notify Minder when certain events
-occur in your repositories. MORE DETAILS WOULD BE NICE. Configuring a Webhook
-will allow GitHub to communicate back to the Minder instance. Details on how to
+<p>With the basic setup, GitHub is unable to notify Minder when events such as
+pushes or new pull requests occur in your repositories. Minder evaluates a
+repository when you register it, but won&#x27;t react to later changes, and rules
+that run on pull requests won&#x27;t be evaluated. Configuring a webhook will allow
+GitHub to communicate back to the Minder instance. When running locally, Minder
+must be reachable from the internet, for example through ngrok. Details on how to
 set this up can be found in the <a class="" href="/run_minder_server/config_webhook">Configuring a webhook</a>
 guide.</p>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="running-minder-server-directly">Running Minder server directly<a href="#running-minder-server-directly" class="hash-link" aria-label="Direct link to Running Minder server directly" title="Direct link to Running Minder server directly" translate="no">​</a></h3>
