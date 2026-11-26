@@ -232,6 +232,48 @@ func TestPyPiReplyLineHasDependency(t *testing.T) {
 			expectRetval: true,
 		},
 		{
+			name: "Match, extras are not part of the name",
+			line: "requests[security]==2.19.0",
+			reply: &PyPiReply{
+				Info: struct {
+					Name    string `json:"name"`
+					Version string `json:"version"`
+				}{
+					Name:    "requests",
+					Version: "3.4.5",
+				},
+			},
+			expectRetval: true,
+		},
+		{
+			name: "Match, compatible release",
+			line: "requests~=2.19",
+			reply: &PyPiReply{
+				Info: struct {
+					Name    string `json:"name"`
+					Version string `json:"version"`
+				}{
+					Name:    "requests",
+					Version: "3.4.5",
+				},
+			},
+			expectRetval: true,
+		},
+		{
+			name: "No match, extras of another package",
+			line: "requests-oauthlib[signedtoken]==1.3.1",
+			reply: &PyPiReply{
+				Info: struct {
+					Name    string `json:"name"`
+					Version string `json:"version"`
+				}{
+					Name:    "requests",
+					Version: "3.4.5",
+				},
+			},
+			expectRetval: false,
+		},
+		{
 			name: "Match, less or equal version",
 			line: "requests<=2.19.0",
 			reply: &PyPiReply{
@@ -292,9 +334,8 @@ func TestPyPiReplyLineHasDependency(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			require.Equal(t, tt.expectRetval, tt.reply.LineHasDependency(tt.line), "expected reply to match mock data")
 		})
-
-		require.Equal(t, tt.expectRetval, tt.reply.LineHasDependency(tt.line), "expected reply to match mock data")
 	}
 }
 

@@ -328,6 +328,72 @@ func TestPyPiParse(t *testing.T) {
 			},
 		},
 		{
+			description: "Extras are not part of the package name",
+			content: `
++requests[security]==2.19.0
++Django[argon2,bcrypt]>=4.2,<5
++celery[redis]`,
+			expectedCount: 3,
+			expectedDependencies: []*pbinternal.Dependency{
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "requests",
+					Version:   "2.19.0",
+				},
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "Django",
+					Version:   "4.2",
+				},
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "celery",
+					Version:   "",
+				},
+			},
+		},
+		{
+			description: "Compatible release and arbitrary equality",
+			content: `
++urllib3~=1.26.0
++flask ~= 2.0
++pyyaml===5.3`,
+			expectedCount: 3,
+			expectedDependencies: []*pbinternal.Dependency{
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "urllib3",
+					Version:   "1.26.0",
+				},
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "flask",
+					Version:   "2.0",
+				},
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "pyyaml",
+					Version:   "5.3",
+				},
+			},
+		},
+		{
+			description: "pip options are not requirements",
+			content: `
++-r other.txt
++-e git+https://github.com/x/y.git#egg=y
++--hash=sha256:abc
++cryptography==41.0.0`,
+			expectedCount: 1,
+			expectedDependencies: []*pbinternal.Dependency{
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "cryptography",
+					Version:   "41.0.0",
+				},
+			},
+		},
+		{
 			description: "No additions",
 			content: `
  Flask
