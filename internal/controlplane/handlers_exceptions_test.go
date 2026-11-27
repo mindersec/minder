@@ -225,6 +225,34 @@ func TestCreateException(t *testing.T) {
 			wantCode: codes.InvalidArgument,
 		},
 		{
+			name: "entity not found",
+			request: &pb.CreateExceptionRequest{
+				EntityId:  entityID.String(),
+				ExpiresAt: timestamppb.New(expiresAt),
+			},
+			setup: func(exceptionMock *mockexceptionsvc.MockService, _ *mockentitysvc.MockEntityService) {
+				exceptionMock.EXPECT().
+					Create(gomock.Any(), gomock.Any()).
+					Return(nil, status.Error(codes.NotFound, "entity not found"))
+			},
+			wantErr:  true,
+			wantCode: codes.NotFound,
+		},
+		{
+			name: "entity in another project",
+			request: &pb.CreateExceptionRequest{
+				EntityId:  entityID.String(),
+				ExpiresAt: timestamppb.New(expiresAt),
+			},
+			setup: func(exceptionMock *mockexceptionsvc.MockService, _ *mockentitysvc.MockEntityService) {
+				exceptionMock.EXPECT().
+					Create(gomock.Any(), gomock.Any()).
+					Return(nil, status.Error(codes.NotFound, "entity not found"))
+			},
+			wantErr:  true,
+			wantCode: codes.NotFound,
+		},
+		{
 			name: "service error",
 			request: &pb.CreateExceptionRequest{
 				EntityId:  entityID.String(),

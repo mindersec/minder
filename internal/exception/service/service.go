@@ -6,6 +6,8 @@ package service
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 	"unicode/utf8"
@@ -69,11 +71,11 @@ func (s *exceptionService) Create(
 
 	// Verify that the entity belongs to the project.
 	entity, err := s.store.GetEntityByID(ctx, exception.EntityID)
+	if errors.Is(err, sql.ErrNoRows) || (err == nil && entity.ProjectID != projectID) {
+		return nil, util.UserVisibleError(codes.NotFound, "entity %s not found", exception.EntityID)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get entity: %w", err)
-	}
-	if entity.ProjectID != projectID {
-		return nil, fmt.Errorf("entity does not belong to project")
 	}
 	created, err := s.store.CreateException(ctx, db.CreateExceptionParams{
 		ProjectID:      projectID,
