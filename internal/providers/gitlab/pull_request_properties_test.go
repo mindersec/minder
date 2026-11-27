@@ -4,7 +4,10 @@
 package gitlab
 
 import (
+	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,6 +15,7 @@ import (
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/mindersec/minder/pkg/entities/properties"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 func TestFormatPullRequestUpstreamID(t *testing.T) {
@@ -288,4 +292,287 @@ func TestPullRequestV1FromProperties(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to get author ID")
 	})
+}
+
+func TestGetPropertiesForPullRequest(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+
+	// Project metadata endpoints
+	mux.HandleFunc("/projects/200", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(&gitlab.Project{
+			ID:            200,
+			Name:          "repo",
+			HTTPURLToRepo: "https://gitlab.example.com/org/repo.git",
+			Namespace: &gitlab.ProjectNamespace{
+				Path: "org",
+			},
+		})
+	})
+
+	mux.HandleFunc("/projects/300", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(&gitlab.Project{
+			ID:            300,
+			Name:          "repo-fork",
+			HTTPURLToRepo: "https://gitlab.example.com/fork-user/repo-fork.git",
+			Namespace: &gitlab.ProjectNamespace{
+				Path: "fork-user",
+			},
+		})
+	})
+
+	mux.HandleFunc("/projects/999", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	})
+
+	// MR endpoints
+	// MR 77: standard same-project MR
+	mux.HandleFunc("/projects/200/merge_requests/77", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(&gitlab.MergeRequest{
+			BasicMergeRequest: gitlab.BasicMergeRequest{
+				ID:              9001,
+				IID:             77,
+				SHA:             "commit-sha-77",
+				TargetBranch:    "main",
+				SourceBranch:    "dev",
+				WebURL:          "https://gitlab.example.com/org/repo/-/merge_requests/77",
+				SourceProjectID: 200,
+				Author: &gitlab.BasicUser{
+					ID: 1234,
+				},
+			},
+		})
+	})
+
+	// MR 78: forked project MR
+	mux.HandleFunc("/projects/200/merge_requests/78", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(&gitlab.MergeRequest{
+			BasicMergeRequest: gitlab.BasicMergeRequest{
+				ID:              9002,
+				IID:             78,
+				SHA:             "fork-commit-sha",
+				TargetBranch:    "main",
+				SourceBranch:    "feature-fork",
+				WebURL:          "https://gitlab.example.com/upstream/repo/-/merge_requests/78",
+				SourceProjectID: 300,
+				Author: &gitlab.BasicUser{
+					ID: 5566,
+				},
+			},
+		})
+	})
+
+	// MR 79: source project fetch failure (source project 999 fails with 500)
+	mux.HandleFunc("/projects/200/merge_requests/79", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(&gitlab.MergeRequest{
+			BasicMergeRequest: gitlab.BasicMergeRequest{
+				ID:              9003,
+				IID:             79,
+				SourceProjectID: 999,
+			},
+		})
+	})
+
+	// MR 88: ID mismatch (returns ID 8888 instead of requested upstream ID)
+	mux.HandleFunc("/projects/200/merge_requests/88", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(&gitlab.MergeRequest{
+			BasicMergeRequest: gitlab.BasicMergeRequest{
+				ID: 8888,
+			},
+		})
+	})
+
+	// MR 404: not found
+	mux.HandleFunc("/projects/200/merge_requests/404", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	})
+
+	// MR 500: internal server error
+	mux.HandleFunc("/projects/200/merge_requests/500", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	})
+
+	// MR 999: malformed JSON
+	mux.HandleFunc("/projects/200/merge_requests/999", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte("{invalid-json"))
+	})
+
+	// Project 201 fails project fetch
+	mux.HandleFunc("/projects/201/merge_requests/77", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(&gitlab.MergeRequest{
+			BasicMergeRequest: gitlab.BasicMergeRequest{
+				ID:  9001,
+				IID: 77,
+			},
+		})
+	})
+	mux.HandleFunc("/projects/201", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	})
+
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+
+	cli := newTestGitlabClientWithServer(t, server.URL)
+
+	testCases := []struct {
+		name            string
+		props           map[string]any
+		expectedProps   map[string]any
+		wantErrContains string
+		wantErrIs       error
+	}{
+		{
+			name: "successful pull request properties fetch same project",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "9001",
+				PullRequestNumber:             "77",
+				PullRequestProjectID:          "200",
+			},
+			expectedProps: map[string]any{
+				properties.PropertyUpstreamID:      "9001",
+				properties.PropertyName:            "org/repo/77",
+				properties.PullRequestCommitSHA:    "commit-sha-77",
+				properties.PullRequestBaseBranch:   "main",
+				properties.PullRequestTargetBranch: "dev",
+				PullRequestAuthor:                  int64(1234),
+			},
+		},
+		{
+			name: "successful pull request properties fetch from forked project",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "9002",
+				PullRequestNumber:             "78",
+				PullRequestProjectID:          "200",
+			},
+			expectedProps: map[string]any{
+				properties.PropertyUpstreamID:        "9002",
+				properties.PropertyName:              "org/repo/78",
+				properties.PullRequestBaseCloneURL:   "https://gitlab.example.com/org/repo.git",
+				properties.PullRequestTargetCloneURL: "https://gitlab.example.com/fork-user/repo-fork.git",
+			},
+		},
+		{
+			name: "missing upstream ID in properties returns error",
+			props: map[string]any{
+				PullRequestNumber:    "77",
+				PullRequestProjectID: "200",
+			},
+			wantErrContains: "upstream ID not found or invalid",
+		},
+		{
+			name: "missing merge request number in properties returns error",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "9001",
+				PullRequestProjectID:          "200",
+			},
+			wantErrContains: "merge request number not found or invalid",
+		},
+		{
+			name: "missing project ID in properties returns error",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "9001",
+				PullRequestNumber:             "77",
+			},
+			wantErrContains: "project ID not found or invalid",
+		},
+		{
+			name: "merge request endpoint returns 404 returns ErrEntityNotFound",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "9001",
+				PullRequestNumber:             "404",
+				PullRequestProjectID:          "200",
+			},
+			wantErrIs: provifv1.ErrEntityNotFound,
+		},
+		{
+			name: "merge request endpoint returns 500 server error",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "9001",
+				PullRequestNumber:             "500",
+				PullRequestProjectID:          "200",
+			},
+			wantErrContains: "failed to get merge request",
+		},
+		{
+			name: "merge request endpoint returns malformed JSON",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "9001",
+				PullRequestNumber:             "999",
+				PullRequestProjectID:          "200",
+			},
+			wantErrContains: "failed to decode response",
+		},
+		{
+			name: "upstream ID mismatch with returned merge request ID returns error",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "9001",
+				PullRequestNumber:             "88",
+				PullRequestProjectID:          "200",
+			},
+			wantErrContains: "merge request ID mismatch: 8888 != 9001",
+		},
+		{
+			name: "project fetch failure returns error",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "9001",
+				PullRequestNumber:             "77",
+				PullRequestProjectID:          "201",
+			},
+			wantErrContains: "failed to get project",
+		},
+		{
+			name: "target forked project fetch failure returns error",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "9003",
+				PullRequestNumber:             "79",
+				PullRequestProjectID:          "200",
+			},
+			wantErrContains: "failed to get target project",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			p := properties.NewProperties(tc.props)
+			res, err := cli.getPropertiesForPullRequest(context.Background(), p)
+
+			if tc.wantErrIs != nil {
+				require.ErrorIs(t, err, tc.wantErrIs)
+				return
+			}
+			if tc.wantErrContains != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.wantErrContains)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, res)
+
+			for k, v := range tc.expectedProps {
+				prop := res.GetProperty(k)
+				require.NotNil(t, prop, "expected property %s to be present", k)
+				switch exp := v.(type) {
+				case string:
+					assert.Equal(t, exp, prop.GetString(), "mismatch for property %s", k)
+				case int64:
+					assert.Equal(t, exp, prop.GetInt64(), "mismatch for property %s", k)
+				default:
+					assert.Equal(t, exp, prop.RawValue(), "mismatch for property %s", k)
+				}
+			}
+		})
+	}
 }

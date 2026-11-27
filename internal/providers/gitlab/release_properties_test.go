@@ -4,6 +4,11 @@
 package gitlab
 
 import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -290,4 +295,313 @@ func TestReleaseEntityV1FromProperties(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "project name not found")
 	})
+}
+
+func TestGetCommitBranchRefs(t *testing.T) {
+	t.Parallel()
+
+	var attempts int32
+	mux := http.NewServeMux()
+
+	// c0ffee: succeeds after transient 500 error
+	mux.HandleFunc("/projects/123/repository/commits/c0ffee/refs", func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "branch", r.URL.Query().Get("type"))
+		w.Header().Set("Content-Type", "application/json")
+		count := atomic.AddInt32(&attempts, 1)
+		if count == 1 {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		_ = json.NewEncoder(w).Encode([]*gitlablib.CommitRef{
+			{Name: "main", Type: "branch"},
+			{Name: "release-v1.0", Type: "branch"},
+		})
+	})
+
+	// badcommit: fails after exceeding retries on persistent server error
+	mux.HandleFunc("/projects/123/repository/commits/badcommit/refs", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	})
+
+	// badjson: returns decode error when response is malformed
+	mux.HandleFunc("/projects/123/repository/commits/badjson/refs", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{not valid array}`))
+	})
+
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+
+	cli := newTestGitlabClientWithServer(t, server.URL)
+
+	tests := []struct {
+		name            string
+		commitSHA       string
+		wantRefsCount   int
+		wantFirstRef    string
+		wantErrContains string
+	}{
+		{
+			name:          "succeeds after transient 500 error",
+			commitSHA:     "c0ffee",
+			wantRefsCount: 2,
+			wantFirstRef:  "main",
+		},
+		{
+			name:            "fails after exceeding retries on server error",
+			commitSHA:       "badcommit",
+			wantErrContains: "failed to get commit refs",
+		},
+		{
+			name:            "returns decode error when response is malformed",
+			commitSHA:       "badjson",
+			wantErrContains: "failed to decode response for commit refs",
+		},
+	}
+
+	for _, tt := range tests {
+		tc := tt
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			refs, err := cli.getCommitBranchRefs(context.Background(), "123", tc.commitSHA)
+			if tc.wantErrContains != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.wantErrContains)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Len(t, refs, tc.wantRefsCount)
+			assert.Equal(t, tc.wantFirstRef, refs[0].Name)
+		})
+	}
+}
+
+func TestGetPropertiesForRelease_HTTPInteractions(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+
+	// 100: successful release fetch
+	mux.HandleFunc("/projects/100/releases/v2.5.0", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(&gitlablib.Release{
+			TagName: "v2.5.0",
+			Name:    "Release v2.5.0",
+			Commit: gitlablib.Commit{
+				ID: "sha1234567890abcdef",
+			},
+		})
+	})
+	mux.HandleFunc("/projects/100", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(&gitlablib.Project{
+			ID:   100,
+			Name: "service-repo",
+			Namespace: &gitlablib.ProjectNamespace{
+				Path: "org-group",
+			},
+		})
+	})
+	mux.HandleFunc("/projects/100/repository/commits/sha1234567890abcdef/refs", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode([]*gitlablib.CommitRef{
+			{Name: "main", Type: "branch"},
+		})
+	})
+
+	// 404: release endpoint returns 404
+	mux.HandleFunc("/projects/404/releases/v2.5.0", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	})
+
+	// 500: release endpoint returns malformed JSON
+	mux.HandleFunc("/projects/500/releases/v2.5.0", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{invalid-json`))
+	})
+
+	// 600: project fetch failure (release succeeds, project fails with 500)
+	mux.HandleFunc("/projects/600/releases/v2.5.0", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(&gitlablib.Release{
+			TagName: "v2.5.0",
+			Commit:  gitlablib.Commit{ID: "abc"},
+		})
+	})
+	mux.HandleFunc("/projects/600", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	})
+
+	// 700: commit refs fetch failure (release & project succeed, commit refs fail with 500)
+	mux.HandleFunc("/projects/700/releases/v2.5.0", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(&gitlablib.Release{
+			TagName: "v2.5.0",
+			Commit:  gitlablib.Commit{ID: "abc"},
+		})
+	})
+	mux.HandleFunc("/projects/700", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(&gitlablib.Project{
+			ID:        700,
+			Name:      "repo",
+			Namespace: &gitlablib.ProjectNamespace{Path: "ns"},
+		})
+	})
+	mux.HandleFunc("/projects/700/repository/commits/abc/refs", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	})
+
+	// 800: empty commit refs returned (release & project succeed, empty refs array)
+	mux.HandleFunc("/projects/800/releases/v2.5.0", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(&gitlablib.Release{
+			TagName: "v2.5.0",
+			Commit:  gitlablib.Commit{ID: "sha123"},
+		})
+	})
+	mux.HandleFunc("/projects/800", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(&gitlablib.Project{
+			ID:        800,
+			Name:      "repo",
+			Namespace: &gitlablib.ProjectNamespace{Path: "ns"},
+		})
+	})
+	mux.HandleFunc("/projects/800/repository/commits/sha123/refs", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode([]*gitlablib.CommitRef{})
+	})
+
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+
+	cli := newTestGitlabClientWithServer(t, server.URL)
+
+	tests := []struct {
+		name            string
+		props           map[string]any
+		expectedProps   map[string]any
+		wantErrContains string
+	}{
+		{
+			name: "successful release properties fetch",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "999",
+				ReleasePropertyProjectID:      "100",
+				ReleasePropertyTag:            "v2.5.0",
+			},
+			expectedProps: map[string]any{
+				properties.PropertyUpstreamID: "999",
+				ReleasePropertyProjectID:      "100",
+				ReleasePropertyTag:            "v2.5.0",
+				ReleasePropertyBranch:         "main",
+				RepoPropertyNamespace:         "org-group",
+				RepoPropertyProjectName:       "service-repo",
+			},
+		},
+		{
+			name: "missing upstream ID in input properties returns error",
+			props: map[string]any{
+				ReleasePropertyProjectID: "100",
+				ReleasePropertyTag:       "v2.5.0",
+			},
+			wantErrContains: "upstream ID not found or invalid",
+		},
+		{
+			name: "missing project ID in input properties returns error",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "999",
+				ReleasePropertyTag:            "v2.5.0",
+			},
+			wantErrContains: "project ID not found or invalid",
+		},
+		{
+			name: "missing tag in input properties returns error",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "999",
+				ReleasePropertyProjectID:      "100",
+			},
+			wantErrContains: "tag name not found or invalid",
+		},
+		{
+			name: "release endpoint returns 404 error",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "999",
+				ReleasePropertyProjectID:      "404",
+				ReleasePropertyTag:            "v2.5.0",
+			},
+			wantErrContains: "failed to get release using upstream ID",
+		},
+		{
+			name: "release endpoint returns malformed JSON",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "999",
+				ReleasePropertyProjectID:      "500",
+				ReleasePropertyTag:            "v2.5.0",
+			},
+			wantErrContains: "failed to decode response for release using upstream ID",
+		},
+		{
+			name: "project fetch failure returns error",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "999",
+				ReleasePropertyProjectID:      "600",
+				ReleasePropertyTag:            "v2.5.0",
+			},
+			wantErrContains: "failed to get project",
+		},
+		{
+			name: "commit refs fetch failure returns error",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "999",
+				ReleasePropertyProjectID:      "700",
+				ReleasePropertyTag:            "v2.5.0",
+			},
+			wantErrContains: "failed to get commit refs",
+		},
+		{
+			name: "empty commit refs returned returns error",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "999",
+				ReleasePropertyProjectID:      "800",
+				ReleasePropertyTag:            "v2.5.0",
+			},
+			wantErrContains: "no commit refs found for release",
+		},
+	}
+
+	for _, tt := range tests {
+		tc := tt
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			res, err := cli.getPropertiesForRelease(context.Background(), properties.NewProperties(tc.props))
+			if tc.wantErrContains != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.wantErrContains)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, res)
+
+			for k, v := range tc.expectedProps {
+				prop := res.GetProperty(k)
+				require.NotNil(t, prop, "expected property %s to be present", k)
+				switch exp := v.(type) {
+				case string:
+					assert.Equal(t, exp, prop.GetString(), "mismatch for property %s", k)
+				case int64:
+					assert.Equal(t, exp, prop.GetInt64(), "mismatch for property %s", k)
+				default:
+					assert.Equal(t, exp, prop.RawValue(), "mismatch for property %s", k)
+				}
+			}
+		})
+	}
 }
