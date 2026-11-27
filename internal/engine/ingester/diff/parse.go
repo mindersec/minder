@@ -144,10 +144,40 @@ func goParse(patch string) ([]*pbinternal.Dependency, error) {
 	var deps []*pbinternal.Dependency
 	scanner := bufio.NewScanner(strings.NewReader(patch))
 
-	// Iterate over the lines of the go.mod patch and parse the dependencies
+	// block is the go.mod directive block ("require", "replace", ...) the
+	// current line is in, or "" when it isn't known. Block headers and their
+	// closing parentheses appear as context or added lines; a hunk can start
+	// inside a block whose header isn't part of the patch.
+	block := ""
 	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "@@") {
+			block = ""
+			continue
+		}
+		// Removed lines are not in the new go.mod.
+		if strings.HasPrefix(line, "-") {
+			continue
+		}
+		added := strings.HasPrefix(line, "+") && !strings.HasPrefix(line, "+++")
+		content := line
+		if strings.HasPrefix(line, "+") || strings.HasPrefix(line, " ") {
+			content = line[1:]
+		}
+		if b, ok := goModBlockStart(content); ok {
+			block = b
+			continue
+		}
+		if strings.TrimSpace(content) == ")" {
+			block = ""
+			continue
+		}
+		if !added {
+			continue
+		}
+
 		// Parse the line and extract a dependency
-		dep := extractGoDepFromPatchLine(scanner.Text())
+		dep := extractGoDepFromLine(content, block)
 
 		// If we failed to extract a dependency, or if it's already in the slice, skip it
 		if dep == nil || slices.ContainsFunc(deps, func(n *pbinternal.Dependency) bool {
@@ -168,42 +198,62 @@ func goParse(patch string) ([]*pbinternal.Dependency, error) {
 	return deps, nil
 }
 
-func extractGoDepFromPatchLine(line string) *pbinternal.Dependency {
-	// Look for lines that add dependencies.
+// goModBlockStart reports whether line opens a go.mod directive block, such
+// as "require (", and returns the directive.
+func goModBlockStart(line string) (string, bool) {
+	fields := strings.Fields(line)
+	if len(fields) != 2 || fields[1] != "(" {
+		return "", false
+	}
+	return fields[0], true
+}
+
+// extractGoDepFromLine returns the dependency a go.mod line adds, or nil.
+// line is the line without its diff marker, and block is the directive block
+// it is in, or "" when unknown. Only require and replace directives name
+// dependencies; exclude, retract, tool and godebug lines don't.
+func extractGoDepFromLine(line, block string) *pbinternal.Dependency {
 	// We ignore lines that contain "// indirect" because they are transitive dependencies, and therefore
 	// not actionable.
-	if strings.HasPrefix(line, "+") && !strings.HasPrefix(line, "+++") && !strings.Contains(line, "// indirect") {
-		// Extract the part after the '+' sign.
-		lineContent := line[1:]
-
-		fields := strings.Fields(lineContent)
-		if len(fields) < 2 {
-			// No match
-			return nil
-		}
-
-		dep := &pbinternal.Dependency{
-			Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_GO,
-		}
-		if fields[0] == "require" && fields[1] != "(" && len(fields) >= 3 {
-			dep.Name = fields[1]
-			dep.Version = fields[2]
-		} else if strings.HasPrefix(lineContent, "\t") {
-			dep.Name = fields[0]
-			dep.Version = fields[1]
-		} else if fields[0] == "replace" && strings.Contains(lineContent, "=>") && len(fields) >= 5 {
-			// For lines with version replacements, the new version is after the "=>"
-			// Assuming format is module path version => newModulePath newVersion
-			dep.Name = fields[3]
-			dep.Version = fields[4]
-		} else {
-			// No match
-			return nil
-		}
-		// Return the dependency
-		return dep
+	if strings.Contains(line, "// indirect") {
+		return nil
 	}
-	// No match
+	if i := strings.Index(line, "//"); i != -1 {
+		line = line[:i]
+	}
+	fields := strings.Fields(line)
+	if len(fields) == 0 {
+		return nil
+	}
+
+	directive, args := fields[0], fields[1:]
+	if strings.HasPrefix(line, " ") || strings.HasPrefix(line, "\t") {
+		// An indented line is inside a block. When the block header isn't in
+		// the patch, only a replacement has "=>" in it.
+		directive, args = block, fields
+		if directive == "" {
+			directive = "require"
+			if slices.Contains(fields, "=>") {
+				directive = "replace"
+			}
+		}
+	}
+
+	switch directive {
+	case "require":
+		if len(args) < 2 {
+			return nil
+		}
+		return &pbinternal.Dependency{Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_GO, Name: args[0], Version: args[1]}
+	case "replace":
+		// module [version] => replacement [version]. The replacement is what
+		// is built; without a version it is a local directory, not a module.
+		arrow := slices.Index(args, "=>")
+		if arrow == -1 || len(args[arrow+1:]) != 2 {
+			return nil
+		}
+		return &pbinternal.Dependency{Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_GO, Name: args[arrow+1], Version: args[arrow+2]}
+	}
 	return nil
 }
 
