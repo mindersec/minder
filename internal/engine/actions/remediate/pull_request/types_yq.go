@@ -19,6 +19,7 @@ import (
 	gologging "gopkg.in/op/go-logging.v1"
 
 	"github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/remediationparams"
 	textutil "github.com/mindersec/minder/internal/util"
 )
 
@@ -31,11 +32,9 @@ func init() {
 	yqlib.InitExpressionParser()
 }
 
-type patternType string
-
 const (
-	patternTypeGlob       patternType = "glob"
-	patternTypeEvalOutput patternType = "eval_output"
+	patternTypeGlob       = remediationparams.PatternTypeGlob
+	patternTypeEvalOutput = remediationparams.PatternTypeEvalOutput
 
 	maxExpressionSize  int = 3000
 	maxTargetListSize  int = 256 * 1024
@@ -48,20 +47,10 @@ const (
 
 var _ fsModifier = (*yqExecute)(nil)
 
-type yqPattern struct {
-	Pattern string `json:"pattern"`
-	Type    string `json:"type"`
-}
-
-type yqExecuteConfig struct {
-	Expression string      `json:"expression"`
-	Patterns   []yqPattern `json:"patterns"`
-}
-
 type yqExecute struct {
 	fsChangeSet
 
-	config yqExecuteConfig
+	config remediationparams.YQConfig
 }
 
 var _ modificationConstructor = newYqExecute
@@ -75,18 +64,8 @@ func newYqExecute(
 		confMap = params.prCfg.Params.AsMap()
 	}
 
-	rawConfig, err := json.Marshal(confMap)
+	conf, err := remediationparams.ParseYQConfig(confMap)
 	if err != nil {
-		return nil, fmt.Errorf("cannot marshal config")
-	}
-
-	var conf yqExecuteConfig
-	err = json.Unmarshal(rawConfig, &conf)
-	if err != nil {
-		return nil, fmt.Errorf("cannot unmarshal config: %w", err)
-	}
-
-	if err := validateYqPatterns(conf.Patterns); err != nil {
 		return nil, err
 	}
 
@@ -95,32 +74,8 @@ func newYqExecute(
 			fs: params.bfs,
 		},
 
-		config: conf,
+		config: *conf,
 	}, nil
-}
-
-func validateYqPatterns(patterns []yqPattern) error {
-	for i, pattern := range patterns {
-		if pattern.Pattern == "" {
-			return fmt.Errorf("patterns[%d] missing required field: pattern", i)
-		}
-		if pattern.Type == "" {
-			return fmt.Errorf("patterns[%d] missing required field: type", i)
-		}
-
-		switch pattern.Type {
-		case string(patternTypeGlob):
-		case string(patternTypeEvalOutput):
-			if _, err := textutil.NewSafeTextTemplate(&pattern.Pattern, "eval_output_pattern"); err != nil {
-				return fmt.Errorf("patterns[%d] invalid eval_output template: %w", i, err)
-			}
-		default:
-			return fmt.Errorf("patterns[%d] unsupported type %q (supported: %q, %q)",
-				i, pattern.Type, patternTypeGlob, patternTypeEvalOutput)
-		}
-	}
-
-	return nil
 }
 
 // templateParams are the parameters for template expansion for the expression and target patterns

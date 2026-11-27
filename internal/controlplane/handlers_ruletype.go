@@ -183,6 +183,9 @@ func (s *Server) CreateRuleType(
 		return s.ruleTypes.CreateRuleType(ctx, projectID, uuid.Nil, crt.GetRuleType(), qtx)
 	})
 	if err != nil {
+		if userErr, ok := errors.AsType[*util.NiceStatus](err); ok {
+			return nil, userErr
+		}
 		if errors.Is(err, ruletypes.ErrRuleTypeInvalid) {
 			return nil, util.UserVisibleError(codes.InvalidArgument, "invalid rule type definition: %s", err)
 		} else if errors.Is(err, ruletypes.ErrRuleAlreadyExists) {
@@ -226,6 +229,9 @@ func (s *Server) UpdateRuleType(
 		return s.ruleTypes.UpdateRuleType(ctx, projectID, uuid.Nil, urt.GetRuleType(), qtx)
 	})
 	if err != nil {
+		if userErr, ok := errors.AsType[*util.NiceStatus](err); ok {
+			return nil, userErr
+		}
 		if errors.Is(err, ruletypes.ErrRuleTypeInvalid) {
 			return nil, util.UserVisibleError(codes.InvalidArgument, "invalid rule type definition: %s", err)
 		} else if errors.Is(err, ruletypes.ErrRuleNotFound) {

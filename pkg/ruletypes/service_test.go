@@ -13,10 +13,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/mindersec/minder/internal/db"
 	dbf "github.com/mindersec/minder/internal/db/fixtures"
+	"github.com/mindersec/minder/internal/remediationparams"
+	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/flags"
@@ -29,13 +32,14 @@ func TestRuleTypeService(t *testing.T) {
 	t.Parallel()
 
 	scenarios := []struct {
-		Name           string
-		RuleType       *pb.RuleType
-		DBSetup        dbf.DBMockBuilder
-		ExpectedError  string
-		TestMethod     method
-		SubscriptionID uuid.UUID
-		FeatureFlags   map[string]any
+		Name                string
+		RuleType            *pb.RuleType
+		DBSetup             dbf.DBMockBuilder
+		ExpectedError       string
+		ExpectedUserVisible bool
+		TestMethod          method
+		SubscriptionID      uuid.UUID
+		FeatureFlags        map[string]any
 	}{
 		{
 			Name:          "CreateRuleType rejects nil rule",
@@ -406,6 +410,67 @@ func TestRuleTypeService(t *testing.T) {
 			ExpectedError: ruletypes.ErrRuleTypeInvalid.Error(),
 			TestMethod:    update,
 		},
+		{
+			Name: "CreateRuleType rejects yq remediation without patterns",
+			RuleType: newRuleType(withBasicStructure, withPullRequestRemediation(remediationparams.MethodYQEvaluate, map[string]any{
+				"expression": `.on = "workflow_dispatch"`,
+			})),
+			ExpectedError:       "yq modification requires at least one valid pattern",
+			ExpectedUserVisible: true,
+			TestMethod:          create,
+		},
+		{
+			Name: "UpdateRuleType rejects yq remediation without patterns",
+			RuleType: newRuleType(withBasicStructure, withPullRequestRemediation(remediationparams.MethodYQEvaluate, map[string]any{
+				"expression": `.on = "workflow_dispatch"`,
+			})),
+			ExpectedError:       "yq modification requires at least one valid pattern",
+			ExpectedUserVisible: true,
+			TestMethod:          update,
+		},
+		{
+			Name: "CreateRuleType rejects invalid yq eval_output template",
+			RuleType: newRuleType(withBasicStructure, withPullRequestRemediation(remediationparams.MethodYQEvaluate, map[string]any{
+				"expression": `.on = "workflow_dispatch"`,
+				"patterns": []any{
+					map[string]any{"pattern": "{{ toJson .EvalResultOutput.files", "type": "eval_output"},
+				},
+			})),
+			ExpectedError:       "patterns[0] invalid eval_output template",
+			ExpectedUserVisible: true,
+			TestMethod:          create,
+		},
+		{
+			Name: "CreateRuleType rejects delete remediation with empty patterns",
+			RuleType: newRuleType(withBasicStructure, withPullRequestRemediation(remediationparams.MethodDelete, map[string]any{
+				"patterns": []any{},
+			})),
+			ExpectedError:       "delete modification requires at least one valid pattern",
+			ExpectedUserVisible: true,
+			TestMethod:          create,
+		},
+		{
+			Name: "CreateRuleType accepts valid yq remediation",
+			RuleType: newRuleType(withBasicStructure, withPullRequestRemediation(remediationparams.MethodYQEvaluate, map[string]any{
+				"expression": `.on = "workflow_dispatch"`,
+				"patterns": []any{
+					map[string]any{"pattern": ".github/workflows/*.yml", "type": "glob"},
+					map[string]any{"pattern": "{{ toJson .EvalResultOutput.files }}", "type": "eval_output"},
+				},
+			})),
+			DBSetup:    dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreate, withSuccessfulDeleteRuleTypeDataSource),
+			TestMethod: create,
+		},
+		{
+			Name: "UpdateRuleType accepts valid delete remediation",
+			RuleType: newRuleType(withBasicStructure, withPullRequestRemediation(remediationparams.MethodDelete, map[string]any{
+				"patterns": []any{
+					map[string]any{"pattern": ".github/workflows/*.yml", "type": "glob"},
+				},
+			})),
+			DBSetup:    dbf.NewDBMock(withHierarchyGet, withSuccessfulGet, withSuccessfulUpdate, withSuccessfulDeleteRuleTypeDataSource),
+			TestMethod: update,
+		},
 	}
 
 	for _, scenario := range scenarios {
@@ -473,6 +538,13 @@ func TestRuleTypeService(t *testing.T) {
 			} else {
 				require.Nil(t, res)
 				require.ErrorContains(t, err, scenario.ExpectedError)
+
+				if scenario.ExpectedUserVisible {
+					niceErr, ok := errors.AsType[*util.NiceStatus](err)
+					require.True(t, ok)
+					require.Equal(t, codes.InvalidArgument, niceErr.Code)
+					require.Contains(t, niceErr.Details, scenario.ExpectedError)
+				}
 			}
 		})
 	}
@@ -594,6 +666,29 @@ func withIncompatibleDef(ruleType *pb.RuleType) {
 
 func withIncompatibleParams(ruleType *pb.RuleType) {
 	ruleType.Def.ParamSchema = incompatibleSchema
+}
+
+func withPullRequestRemediation(method string, params map[string]any) func(*pb.RuleType) {
+	return func(ruleType *pb.RuleType) {
+		var paramsStruct *structpb.Struct
+		if params != nil {
+			var err error
+			paramsStruct, err = structpb.NewStruct(params)
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		ruleType.Def.Remediate = &pb.RuleType_Definition_Remediate{
+			Type: "pull_request",
+			PullRequest: &pb.RuleType_Definition_Remediate_PullRequestRemediation{
+				Title:  "Fix issue",
+				Body:   "This pull request fixes the issue.",
+				Method: method,
+				Params: paramsStruct,
+			},
+		}
+	}
 }
 
 // withV0OnlyRego uses legacy partial-set syntax, which is invalid under Rego V1.

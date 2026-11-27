@@ -12,6 +12,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/remediationparams"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -19,11 +20,11 @@ import (
 // See minder.proto for more detailed documentation
 const (
 	// minderContentModification replaces the contents of a file with the given template
-	minderContentModification = "minder.content"
+	minderContentModification = remediationparams.MethodContent
 	// minderFrizbeeTagResolve replaces a github action tag with the appropriate checksum
-	minderFrizbeeTagResolve = "minder.actions.replace_tags_with_sha"
+	minderFrizbeeTagResolve = remediationparams.MethodReplaceTagsWithSHA
 	// minderYQEvaluate evaluates a yq expression
-	minderYQEvaluate = "minder.yq.evaluate"
+	minderYQEvaluate = remediationparams.MethodYQEvaluate
 
 	// ContentBytesLimit is the maximum number of bytes for the content
 	ContentBytesLimit = 5120
