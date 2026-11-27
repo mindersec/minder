@@ -84,6 +84,11 @@ func RegisterGatewayHTTPHandlers(ctx context.Context, gwmux *runtime.ServeMux, g
 	if err := pb.RegisterEntityInstanceServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
 		log.Fatal().Err(err).Msg("failed to register gateway")
 	}
+
+	// Register the Exception service
+	if err := pb.RegisterExceptionServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
+		log.Fatal().Err(err).Msg("failed to register gateway")
+	}
 }
 
 // RegisterGRPCServices registers the GRPC services
@@ -129,4 +134,7 @@ func RegisterGRPCServices(s *Server) {
 
 	// Register the EntityInstance service
 	pb.RegisterEntityInstanceServiceServer(s.grpcServer, s)
+
+	// Register the Exception service
+	pb.RegisterExceptionServiceServer(s.grpcServer, s)
 }

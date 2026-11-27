@@ -5,6 +5,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"strings"
 	"testing"
@@ -13,6 +14,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	mockdb "github.com/mindersec/minder/database/mock"
 	"github.com/mindersec/minder/internal/db"
@@ -251,8 +254,9 @@ func TestCreateEntityWrongProject(t *testing.T) {
 
 	got, err := svc.Create(ctx, input)
 
-	require.Error(t, err)
 	require.Nil(t, got)
+	require.Equal(t, codes.NotFound, status.Code(err))
+	require.ErrorContains(t, err, "not found")
 }
 
 func TestCreateEntityLookupError(t *testing.T) {
@@ -271,7 +275,7 @@ func TestCreateEntityLookupError(t *testing.T) {
 
 	store.EXPECT().
 		GetEntityByID(gomock.Any(), entityID).
-		Return(db.EntityInstance{}, errors.New("entity not found"))
+		Return(db.EntityInstance{}, sql.ErrNoRows)
 
 	ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
 		Project: engcontext.Project{
@@ -281,8 +285,41 @@ func TestCreateEntityLookupError(t *testing.T) {
 
 	got, err := svc.Create(ctx, input)
 
-	require.Error(t, err)
 	require.Nil(t, got)
+	require.Equal(t, codes.NotFound, status.Code(err))
+	require.ErrorContains(t, err, "not found")
+}
+
+func TestCreateEntityLookupUnexpectedError(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	store := mockdb.NewMockStore(ctrl)
+	svc := NewService(store)
+
+	projectID := uuid.New()
+	entityID := uuid.New()
+	dbErr := errors.New("database connection failed")
+
+	input := Exception{
+		EntityID:  entityID,
+		ExpiresAt: time.Now().Add(24 * time.Hour),
+	}
+
+	store.EXPECT().
+		GetEntityByID(gomock.Any(), entityID).
+		Return(db.EntityInstance{}, dbErr)
+
+	ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+		Project: engcontext.Project{
+			ID: projectID,
+		},
+	})
+
+	got, err := svc.Create(ctx, input)
+
+	require.ErrorIs(t, err, dbErr)
+	require.Nil(t, got)
+	require.Equal(t, codes.Unknown, status.Code(err))
 }
 
 func TestCreateError(t *testing.T) {
@@ -397,7 +434,7 @@ func TestDelete(t *testing.T) {
 			ID:        id,
 			ProjectID: projectID,
 		}).
-		Return(nil)
+		Return(int64(1), nil)
 
 	err := svc.Delete(context.Background(), id, projectID)
 
@@ -419,9 +456,31 @@ func TestDeleteError(t *testing.T) {
 			ID:        id,
 			ProjectID: projectID,
 		}).
-		Return(dbErr)
+		Return(int64(0), dbErr)
 
 	err := svc.Delete(context.Background(), id, projectID)
 
 	require.ErrorIs(t, err, dbErr)
+}
+
+func TestDeleteNotFound(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	store := mockdb.NewMockStore(ctrl)
+	svc := NewService(store)
+
+	id := uuid.New()
+	projectID := uuid.New()
+
+	store.EXPECT().
+		DeleteException(gomock.Any(), db.DeleteExceptionParams{
+			ID:        id,
+			ProjectID: projectID,
+		}).
+		Return(int64(0), nil)
+
+	err := svc.Delete(context.Background(), id, projectID)
+
+	require.Error(t, err)
+	require.Equal(t, codes.NotFound, status.Code(err))
 }

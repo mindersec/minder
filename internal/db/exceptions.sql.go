@@ -74,7 +74,7 @@ func (q *Queries) CreateException(ctx context.Context, arg CreateExceptionParams
 	return i, err
 }
 
-const deleteException = `-- name: DeleteException :exec
+const deleteException = `-- name: DeleteException :execrows
 DELETE FROM exceptions
 WHERE id = $1
   AND project_id = $2
@@ -86,9 +86,12 @@ type DeleteExceptionParams struct {
 }
 
 // DeleteException removes an exception from a project
-func (q *Queries) DeleteException(ctx context.Context, arg DeleteExceptionParams) error {
-	_, err := q.db.ExecContext(ctx, deleteException, arg.ID, arg.ProjectID)
-	return err
+func (q *Queries) DeleteException(ctx context.Context, arg DeleteExceptionParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteException, arg.ID, arg.ProjectID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
 
 const listExceptions = `-- name: ListExceptions :many

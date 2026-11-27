@@ -6,14 +6,18 @@ package service
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 	"unicode/utf8"
 
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/util"
 )
 
 // MaxReasonLength is the maximum number of characters allowed in an exception reason.
@@ -67,11 +71,11 @@ func (s *exceptionService) Create(
 
 	// Verify that the entity belongs to the project.
 	entity, err := s.store.GetEntityByID(ctx, exception.EntityID)
+	if errors.Is(err, sql.ErrNoRows) || (err == nil && entity.ProjectID != projectID) {
+		return nil, util.UserVisibleError(codes.NotFound, "entity %s not found", exception.EntityID)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get entity: %w", err)
-	}
-	if entity.ProjectID != projectID {
-		return nil, fmt.Errorf("entity does not belong to project")
 	}
 	created, err := s.store.CreateException(ctx, db.CreateExceptionParams{
 		ProjectID:      projectID,
@@ -129,11 +133,15 @@ func (s *exceptionService) Delete(
 	id uuid.UUID,
 	projectID uuid.UUID,
 ) error {
-	if err := s.store.DeleteException(ctx, db.DeleteExceptionParams{
+	rowsAffected, err := s.store.DeleteException(ctx, db.DeleteExceptionParams{
 		ID:        id,
 		ProjectID: projectID,
-	}); err != nil {
+	})
+	if err != nil {
 		return fmt.Errorf("failed to delete exception: %w", err)
+	}
+	if rowsAffected == 0 {
+		return util.UserVisibleError(codes.NotFound, "exception with id %s not found in project %s", id, projectID)
 	}
 
 	return nil

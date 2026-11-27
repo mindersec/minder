@@ -67,7 +67,7 @@ type Querier interface {
 	DeleteEvaluationHistoryByIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
 	DeleteEvaluationOutputsByEvaluationIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
 	// DeleteException removes an exception from a project
-	DeleteException(ctx context.Context, arg DeleteExceptionParams) error
+	DeleteException(ctx context.Context, arg DeleteExceptionParams) (int64, error)
 	DeleteExpiredSessionStates(ctx context.Context) (int64, error)
 	DeleteInstallationIDByAppID(ctx context.Context, appInstallationID int64) error
 	// DeleteInvitation deletes an invitation by its code. This is intended to be

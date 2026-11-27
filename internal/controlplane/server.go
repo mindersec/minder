@@ -51,6 +51,7 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	propSvc "github.com/mindersec/minder/internal/entities/properties/service"
 	entitySvc "github.com/mindersec/minder/internal/entities/service"
+	exceptionSvc "github.com/mindersec/minder/internal/exception/service"
 	"github.com/mindersec/minder/internal/history"
 	"github.com/mindersec/minder/internal/invites"
 	"github.com/mindersec/minder/internal/logger"
@@ -104,6 +105,7 @@ type Server struct {
 	repos               reposvc.RepositoryService
 	entityService       entitySvc.EntityService
 	entityCreator       entitySvc.EntityCreator
+	exceptions          exceptionSvc.Service
 	roles               roles.RoleService
 	profiles            profiles.ProfileService
 	history             history.EvaluationHistoryService
@@ -132,6 +134,7 @@ type Server struct {
 	pb.UnimplementedInviteServiceServer
 	pb.UnimplementedDataSourceServiceServer
 	pb.UnimplementedEntityInstanceServiceServer
+	pb.UnimplementedExceptionServiceServer
 }
 
 // NewServer creates a new server instance
@@ -162,6 +165,7 @@ func NewServer(
 	idManager auth.IdentityManager,
 	entityService entitySvc.EntityService,
 	entityCreator entitySvc.EntityCreator,
+	exceptions exceptionSvc.Service,
 	featureFlagClient flags.Interface,
 ) *Server {
 	return &Server{
@@ -185,6 +189,7 @@ func NewServer(
 		repos:               repoService,
 		entityService:       entityService,
 		entityCreator:       entityCreator,
+		exceptions:          exceptions,
 		props:               propertyService,
 		roles:               roleService,
 		ghProviders:         ghProviders,
