@@ -227,6 +227,39 @@ func TestListImages(t *testing.T) {
 		assert.Equal(t, []string{"backend-service", "worker-queue"}, images)
 	})
 
+	t.Run("follows next link across two pages", func(t *testing.T) {
+		t.Parallel()
+
+		mux := http.NewServeMux()
+		var serverURL string
+		mux.HandleFunc("/v2/repositories/paged-org", func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, http.MethodGet, r.Method)
+			w.Header().Set("Content-Type", "application/json")
+			if r.URL.Query().Get("page") == "2" {
+				_, _ = w.Write([]byte(`{"count": 3, "next": null, "results": [{"name": "page-two-image"}]}`))
+				return
+			}
+			next := serverURL + "/v2/repositories/paged-org?page=2"
+			_, _ = w.Write([]byte(`{"count": 3, "next": "` + next + `", "results": [{"name": "page-one-a"}, {"name": "page-one-b"}]}`))
+		})
+
+		server := httptest.NewServer(mux)
+		defer server.Close()
+		serverURL = server.URL
+
+		targetURL, err := url.Parse(server.URL + "/v2/repositories/paged-org")
+		require.NoError(t, err)
+
+		dh := &dockerHubImageLister{
+			cli:    server.Client(),
+			target: targetURL,
+		}
+
+		images, err := dh.ListImages(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, []string{"page-one-a", "page-one-b", "page-two-image"}, images)
+	})
+
 	t.Run("empty repository list returns empty slice", func(t *testing.T) {
 		t.Parallel()
 
