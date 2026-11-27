@@ -160,12 +160,12 @@ func TestProviderStore_GetByID(t *testing.T) {
 			tc.setup(env.mockStore)
 
 			got, err := env.store.GetByID(context.Background(), providerID)
-			if tc.wantIs != nil {
-				require.ErrorIs(t, err, tc.wantIs)
-			}
 			if tc.wantErr != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.wantErr)
+				if tc.wantIs != nil {
+					require.ErrorIs(t, err, tc.wantIs)
+				}
 				require.Nil(t, got)
 				return
 			}
@@ -215,12 +215,12 @@ func TestProviderStore_GetByIDProject(t *testing.T) {
 			tc.setup(env.mockStore)
 
 			got, err := env.store.GetByIDProject(context.Background(), providerID, projectID)
-			if tc.wantIs != nil {
-				require.ErrorIs(t, err, tc.wantIs)
-			}
 			if tc.wantErr != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.wantErr)
+				if tc.wantIs != nil {
+					require.ErrorIs(t, err, tc.wantIs)
+				}
 				require.Nil(t, got)
 				return
 			}
@@ -286,7 +286,7 @@ func TestProviderStore_GetByName(t *testing.T) {
 			wantCode: codes.InvalidArgument,
 		},
 		{
-			name:         "returns ErrProviderNotFoundBy when no providers match",
+			name: "returns ErrProviderNotFoundBy when no providers match",
 			providerName: "missing",
 			setup: func(m *mockdb.MockStore) {
 				m.EXPECT().GetParentProjects(gomock.Any(), projectID).Return(hierarchy, nil)
@@ -385,12 +385,12 @@ func TestProviderStore_GetByNameInSpecificProject(t *testing.T) {
 			tc.setup(env.mockStore)
 
 			got, err := env.store.GetByNameInSpecificProject(context.Background(), projectID, "github")
-			if tc.wantIs != nil {
-				require.ErrorIs(t, err, tc.wantIs)
-			}
 			if tc.wantErr != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.wantErr)
+				if tc.wantIs != nil {
+					require.ErrorIs(t, err, tc.wantIs)
+				}
 				require.Nil(t, got)
 				return
 			}
@@ -431,7 +431,7 @@ func TestProviderStore_GetByTraitInHierarchy(t *testing.T) {
 			wantCount: 1,
 		},
 		{
-			name:         "returns ErrProviderNotFoundBy with trait filter",
+			name: "returns ErrProviderNotFoundBy with trait filter",
 			providerName: "",
 			trait:        db.ProviderTypeGit,
 			setup: func(m *mockdb.MockStore) {
