@@ -160,9 +160,10 @@ func TestProviderStore_GetByID(t *testing.T) {
 			tc.setup(env.mockStore)
 
 			got, err := env.store.GetByID(context.Background(), providerID)
+			// Assert expected errors and error wrapping
 			if tc.wantErr != "" {
 				require.Error(t, err)
-				require.Contains(t, err.Error(), tc.wantErr)
+				require.ErrorContains(t, err, tc.wantErr)
 				if tc.wantIs != nil {
 					require.ErrorIs(t, err, tc.wantIs)
 				}
@@ -215,9 +216,10 @@ func TestProviderStore_GetByIDProject(t *testing.T) {
 			tc.setup(env.mockStore)
 
 			got, err := env.store.GetByIDProject(context.Background(), providerID, projectID)
+			// Assert expected errors and error wrapping
 			if tc.wantErr != "" {
 				require.Error(t, err)
-				require.Contains(t, err.Error(), tc.wantErr)
+				require.ErrorContains(t, err, tc.wantErr)
 				if tc.wantIs != nil {
 					require.ErrorIs(t, err, tc.wantIs)
 				}
@@ -385,9 +387,10 @@ func TestProviderStore_GetByNameInSpecificProject(t *testing.T) {
 			tc.setup(env.mockStore)
 
 			got, err := env.store.GetByNameInSpecificProject(context.Background(), projectID, "github")
+			// Assert expected errors and error wrapping
 			if tc.wantErr != "" {
 				require.Error(t, err)
-				require.Contains(t, err.Error(), tc.wantErr)
+				require.ErrorContains(t, err, tc.wantErr)
 				if tc.wantIs != nil {
 					require.ErrorIs(t, err, tc.wantIs)
 				}
