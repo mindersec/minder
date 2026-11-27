@@ -10,7 +10,6 @@ package tools
 //go:generate go install github.com/daixiang0/gci
 //go:generate go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt
 //go:generate go install golang.org/x/tools/cmd/goimports
-//go:generate go install golang.org/x/tools/cmd/deadcode
 //go:generate go install golang.org/x/lint/golint
 //go:generate go install github.com/go-critic/go-critic/cmd/gocritic
 //go:generate go install github.com/sqlc-dev/sqlc/cmd/sqlc
@@ -18,6 +17,7 @@ package tools
 //go:generate go install github.com/norwoodj/helm-docs/cmd/helm-docs
 //go:generate go install github.com/openfga/cli/cmd/fga
 //go:generate go install github.com/mikefarah/yq/v4
+//go:generate go install github.com/google/gnostic/cmd/protoc-gen-openapi
 //go:generate go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen
 
 // nolint
@@ -28,6 +28,7 @@ import (
 	_ "github.com/go-critic/go-critic/cmd/gocritic"
 	_ "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"
 	_ "github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt"
+	_ "github.com/google/gnostic/cmd/protoc-gen-openapi"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"
 	_ "github.com/mikefarah/yq/v4"
@@ -38,7 +39,6 @@ import (
 	_ "github.com/sqlc-dev/sqlc/cmd/sqlc"
 	_ "go.uber.org/mock/mockgen"
 	_ "golang.org/x/lint/golint"
-	_ "golang.org/x/tools/cmd/deadcode"
 	_ "golang.org/x/tools/cmd/goimports"
 	_ "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
 	_ "google.golang.org/protobuf/cmd/protoc-gen-go"
