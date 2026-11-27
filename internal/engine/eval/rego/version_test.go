@@ -19,6 +19,7 @@ func TestDetectRegoVersion(t *testing.T) {
 		name    string
 		def     string
 		want    ast.RegoVersion
+		wantStr string
 	}{
 		{
 			name: "v0 policy without imports",
@@ -31,6 +32,7 @@ allow {
 	file.exists("foo")
 }`,
 			want:    ast.RegoV0,
+			wantStr: "v0",
 		},
 		{
 			name: "v1 policy with import rego.v1",
@@ -45,6 +47,7 @@ allow if {
 	file.exists("foo")
 }`,
 			want:    ast.RegoV1,
+			wantStr: "v1",
 		},
 		{
 			name: "v1 policy with keyword syntax without rego.v1 import",
@@ -57,6 +60,7 @@ allow if {
 	"admin" in input.profile.roles
 }`,
 			want:    ast.RegoV1,
+			wantStr: "v1",
 		},
 		{
 			name: "v1 constraints policy",
@@ -70,6 +74,7 @@ violations contains {"msg": msg} if {
 	msg := "name is required"
 }`,
 			want:    ast.RegoV1,
+			wantStr: "v1",
 		},
 		{
 			name: "v0 constraints policy",
@@ -81,11 +86,13 @@ violations[{"msg": msg}] {
 	msg = "name is required"
 }`,
 			want:    ast.RegoV0,
+			wantStr: "v0",
 		},
 		{
 			name:    "empty string defaults to v0",
 			def:     "",
 			want:    ast.RegoV0,
+			wantStr: "v0",
 		},
 		{
 			name: "valid in both v0 and v1 returns v1",
@@ -94,6 +101,7 @@ package minder
 
 default allow := false`,
 			want:    ast.RegoV1,
+			wantStr: "v1",
 		},
 		{
 			name: "v0 function syntax",
@@ -104,6 +112,7 @@ format_message(name) = msg {
 	msg := sprintf("hello, %s", [name])
 }`,
 			want:    ast.RegoV0,
+			wantStr: "v0",
 		},
 		{
 			name: "v1 function syntax",
@@ -114,6 +123,7 @@ format_message(name) := msg if {
 	msg := sprintf("hello, %s", [name])
 }`,
 			want:    ast.RegoV1,
+			wantStr: "v1",
 		},
 		{
 			name: "v0 partial set with comprehension",
@@ -125,6 +135,7 @@ violations[msg] {
 	msg = sprintf("items: %v", [names])
 }`,
 			want:    ast.RegoV0,
+			wantStr: "v0",
 		},
 		{
 			name: "v1 every keyword",
@@ -137,6 +148,7 @@ allow if {
 	}
 }`,
 			want:    ast.RegoV1,
+			wantStr: "v1",
 		},
 		{
 			name: "syntax error falls back to v0",
@@ -145,6 +157,7 @@ package minder
 
 allow {`,
 			want:    ast.RegoV0,
+			wantStr: "v0",
 		},
 	}
 
@@ -153,6 +166,7 @@ allow {`,
 			t.Parallel()
 			got := rego.DetectRegoVersion(tt.def)
 			require.Equal(t, tt.want, got, "DetectRegoVersion() returned unexpected version")
+			require.Equal(t, tt.wantStr, rego.VersionToString(got))
 		})
 	}
 }

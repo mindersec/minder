@@ -25,6 +25,15 @@ func DetectRegoVersion(def string) ast.RegoVersion {
 	return ast.RegoV0
 }
 
+// VersionToString converts an ast.RegoVersion to the string stored in the
+// database.
+func VersionToString(v ast.RegoVersion) string {
+	if v == ast.RegoV1 {
+		return "v1"
+	}
+	return "v0"
+}
+
 // VersionFromString converts a stored database string back to an
 // ast.RegoVersion.
 func VersionFromString(s string) ast.RegoVersion {
