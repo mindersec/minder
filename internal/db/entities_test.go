@@ -182,6 +182,28 @@ func Test_EntityCrud(t *testing.T) {
 		require.Empty(t, entGet)
 	})
 
+	t.Run("GetEntityByIDAndProject is scoped to the project", func(t *testing.T) {
+		t.Parallel()
+
+		otherProj := createRandomProject(t, org.ID)
+		ent := createRandomRepository(t, proj.ID, prov)
+
+		entGet, err := testQueries.GetEntityByIDAndProject(context.Background(), GetEntityByIDAndProjectParams{
+			ID:        ent.ID,
+			ProjectID: proj.ID,
+		})
+		require.NoError(t, err)
+		require.Equal(t, ent.ID, entGet.ID)
+
+		// The same ID must not be found when looked up from another project.
+		entGet, err = testQueries.GetEntityByIDAndProject(context.Background(), GetEntityByIDAndProjectParams{
+			ID:        ent.ID,
+			ProjectID: otherProj.ID,
+		})
+		require.ErrorIs(t, err, sql.ErrNoRows)
+		require.Empty(t, entGet)
+	})
+
 	t.Run("No such entity", func(t *testing.T) {
 		t.Parallel()
 

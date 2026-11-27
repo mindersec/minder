@@ -66,12 +66,12 @@ func (s *exceptionService) Create(
 	projectID := entityCtx.Project.ID
 
 	// Verify that the entity belongs to the project.
-	entity, err := s.store.GetEntityByID(ctx, exception.EntityID)
+	_, err := s.store.GetEntityByIDAndProject(ctx, db.GetEntityByIDAndProjectParams{
+		ID:        exception.EntityID,
+		ProjectID: projectID,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get entity: %w", err)
-	}
-	if entity.ProjectID != projectID {
-		return nil, fmt.Errorf("entity does not belong to project")
 	}
 	created, err := s.store.CreateException(ctx, db.CreateExceptionParams{
 		ProjectID:      projectID,

@@ -572,6 +572,35 @@ func (q *Queries) GetEntityByID(ctx context.Context, id uuid.UUID) (EntityInstan
 	return i, err
 }
 
+const getEntityByIDAndProject = `-- name: GetEntityByIDAndProject :one
+SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
+WHERE entity_instances.id = $1 AND entity_instances.project_id = $2
+LIMIT 1
+`
+
+type GetEntityByIDAndProjectParams struct {
+	ID        uuid.UUID `json:"id"`
+	ProjectID uuid.UUID `json:"project_id"`
+}
+
+// GetEntityByIDAndProject retrieves an entity by its ID, only if it belongs
+// to the given project. Use this when the entity ID comes from a user request,
+// so that an entity in another project can never be returned.
+func (q *Queries) GetEntityByIDAndProject(ctx context.Context, arg GetEntityByIDAndProjectParams) (EntityInstance, error) {
+	row := q.db.QueryRowContext(ctx, getEntityByIDAndProject, arg.ID, arg.ProjectID)
+	var i EntityInstance
+	err := row.Scan(
+		&i.ID,
+		&i.EntityType,
+		&i.Name,
+		&i.ProjectID,
+		&i.ProviderID,
+		&i.CreatedAt,
+		&i.OriginatedFrom,
+	)
+	return i, err
+}
+
 const getEntityByName = `-- name: GetEntityByName :one
 SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
 WHERE

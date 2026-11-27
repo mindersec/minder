@@ -131,6 +131,10 @@ type Querier interface {
 	GetEntitlementFeaturesByProjectID(ctx context.Context, projectID uuid.UUID) ([]string, error)
 	// GetEntityByID retrieves an entity by its ID for a project or hierarchy of projects.
 	GetEntityByID(ctx context.Context, id uuid.UUID) (EntityInstance, error)
+	// GetEntityByIDAndProject retrieves an entity by its ID, only if it belongs
+	// to the given project. Use this when the entity ID comes from a user request,
+	// so that an entity in another project can never be returned.
+	GetEntityByIDAndProject(ctx context.Context, arg GetEntityByIDAndProjectParams) (EntityInstance, error)
 	// GetEntityByName retrieves an entity by its name for a project or hierarchy of projects.
 	GetEntityByName(ctx context.Context, arg GetEntityByNameParams) (EntityInstance, error)
 	GetEvaluationHistory(ctx context.Context, arg GetEvaluationHistoryParams) (GetEvaluationHistoryRow, error)
