@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.10.2">
 <title data-rh="true">Rule Evaluation in Depth | Minder docs</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://docs.mindersec.dev/img/Minder_darkMode.png"><meta data-rh="true" name="twitter:image" content="https://docs.mindersec.dev/img/Minder_darkMode.png"><meta data-rh="true" property="og:url" content="https://docs.mindersec.dev/ref/rule_evaluation_details"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Rule Evaluation in Depth | Minder docs"><meta data-rh="true" name="description" content="When evaluating a rule,"><meta data-rh="true" property="og:description" content="When evaluating a rule,"><link data-rh="true" rel="icon" href="/img/favicon.png"><link data-rh="true" rel="canonical" href="https://docs.mindersec.dev/ref/rule_evaluation_details"><link data-rh="true" rel="alternate" href="https://docs.mindersec.dev/ref/rule_evaluation_details" hreflang="en"><link data-rh="true" rel="alternate" href="https://docs.mindersec.dev/ref/rule_evaluation_details" hreflang="x-default"><link data-rh="true" rel="preconnect" href="https://F7OP01WFHV-dsn.algolia.net" crossorigin="anonymous"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Rule Evaluation in Depth","item":"https://docs.mindersec.dev/ref/rule_evaluation_details"}]}</script><link rel="search" type="application/opensearchdescription+xml" title="Minder docs" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.bdfa33c7.css">
-<script src="/assets/js/runtime~main.8155c69b.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.06ae6b00.js" defer="defer"></script>
 <script src="/assets/js/main.367f2fbf.js" defer="defer"></script>
 </head>
 <body>
@@ -229,6 +229,16 @@ template helper is available to serialize evaluation output. Paths
 selected with <code>eval_output</code> are treated as literal paths, not globs.
 Targets from all selectors are merged and deduplicated, so each file is
 patched once.</p>
+<p><code>exact</code> selects a literal path: <code>{&quot;type&quot;: &quot;exact&quot;, &quot;pattern&quot;: &quot;.github/dependabot.yaml&quot;, &quot;create_if_needed&quot;: true}</code>. Exact paths must
+be repository-relative, use <code>/</code> separators, and contain no empty, <code>.</code> or
+<code>..</code> components, backslashes, colons, or NUL bytes. Glob metacharacters
+are literal. Creation defaults to false; a missing file then errors.
+With creation enabled, a missing file is evaluated as a YAML null document
+and created with its parent directories when remediation is applied.
+Existing YAML comments are preserved; other read errors propagate.
+Creation is enabled if any exact selector for that target opts in,
+regardless of selector order. The option has no effect on glob or
+eval_output selectors. Exact patterns do not expand Go templates.</p>
 <p>For example, a Rego rule can return the exact files that need patching
 with <code>output := {&quot;files&quot;: files_to_patch}</code>, where <code>files_to_patch</code> was
 computed with <code>file.ls_glob</code>, <code>file.ls</code>, or <code>file.walk</code>. The remediation
