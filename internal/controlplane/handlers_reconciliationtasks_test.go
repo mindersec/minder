@@ -6,6 +6,7 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"testing"
 
 	"github.com/google/uuid"
@@ -17,7 +18,9 @@ import (
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	stubeventer "github.com/mindersec/minder/internal/events/stubs"
 	"github.com/mindersec/minder/internal/providers"
+	reconcilermessages "github.com/mindersec/minder/internal/reconcilers/messages"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 const ghProvider = "github"
@@ -191,7 +194,7 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 					GetEntityByID(gomock.Any(), repoUuid).
 					Return(db.EntityInstance{}, sql.ErrNoRows)
 			},
-			err: "repository not found",
+			err: "entity not found",
 		},
 		{
 			name: "sql conn done",
@@ -240,7 +243,7 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 				prov := entityContext.Provider.Name
 				setupTestingEntityContextValidation(store, projId, prov, uuid.New())
 			},
-			err: "error parsing repository id",
+			err: "error parsing entity id",
 		},
 		{
 			name: "invalid entity type",
@@ -263,6 +266,99 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 				setupTestingEntityContextValidation(store, projId, prov, uuid.New())
 			},
 			err: "entity type ENTITY_UNSPECIFIED is not supported",
+		},
+		{
+			name: "artifact reconciliation task created",
+			input: &pb.CreateEntityReconciliationTaskRequest{
+				Entity: &pb.EntityTypedId{
+					Type: pb.Entity_ENTITY_ARTIFACTS,
+					Id:   repoUuid.String(),
+				},
+			},
+			entityContext: &engcontext.EntityContext{
+				Project: engcontext.Project{
+					ID: uuid.New(),
+				},
+				Provider: engcontext.Provider{
+					Name: ghProvider,
+				},
+			},
+			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
+				projId := entityContext.Project.ID
+				prov := entityContext.Provider.Name
+				setupTestingEntityContextValidation(store, projId, prov, uuid.New())
+				store.EXPECT().
+					GetEntityByID(gomock.Any(), repoUuid).
+					Return(db.EntityInstance{
+						ID:         repoUuid,
+						EntityType: db.EntitiesArtifact,
+						ProviderID: uuid.New(),
+						ProjectID:  projId,
+					}, nil)
+			},
+			err: "",
+		},
+		{
+			name: "pull request reconciliation task created",
+			input: &pb.CreateEntityReconciliationTaskRequest{
+				Entity: &pb.EntityTypedId{
+					Type: pb.Entity_ENTITY_PULL_REQUESTS,
+					Id:   repoUuid.String(),
+				},
+			},
+			entityContext: &engcontext.EntityContext{
+				Project: engcontext.Project{
+					ID: uuid.New(),
+				},
+				Provider: engcontext.Provider{
+					Name: ghProvider,
+				},
+			},
+			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
+				projId := entityContext.Project.ID
+				prov := entityContext.Provider.Name
+				setupTestingEntityContextValidation(store, projId, prov, uuid.New())
+				store.EXPECT().
+					GetEntityByID(gomock.Any(), repoUuid).
+					Return(db.EntityInstance{
+						ID:         repoUuid,
+						EntityType: db.EntitiesPullRequest,
+						ProviderID: uuid.New(),
+						ProjectID:  projId,
+					}, nil)
+			},
+			err: "",
+		},
+		{
+			name: "requested entity type does not match database entity type",
+			input: &pb.CreateEntityReconciliationTaskRequest{
+				Entity: &pb.EntityTypedId{
+					Type: pb.Entity_ENTITY_ARTIFACTS,
+					Id:   repoUuid.String(),
+				},
+			},
+			entityContext: &engcontext.EntityContext{
+				Project: engcontext.Project{
+					ID: uuid.New(),
+				},
+				Provider: engcontext.Provider{
+					Name: ghProvider,
+				},
+			},
+			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
+				projId := entityContext.Project.ID
+				prov := entityContext.Provider.Name
+				setupTestingEntityContextValidation(store, projId, prov, uuid.New())
+				store.EXPECT().
+					GetEntityByID(gomock.Any(), repoUuid).
+					Return(db.EntityInstance{
+						ID:         repoUuid,
+						EntityType: db.EntitiesRepository,
+						ProviderID: uuid.New(),
+						ProjectID:  projId,
+					}, nil)
+			},
+			err: "entity not found",
 		},
 		{
 			name: "nil entity",
@@ -314,10 +410,13 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 
 			require.NoError(t, err)
 
-			messagesSent := 1
+			require.Equal(t, []string{constants.TopicQueueReconcileRepoInit}, stubEventer.Topics)
+			require.Len(t, stubEventer.Sent, 1)
 
-			// Length one indicates that the message was sent
-			require.Equal(t, messagesSent, len(stubEventer.Sent))
+			var evt reconcilermessages.RepoReconcilerEvent
+			require.NoError(t, json.Unmarshal(stubEventer.Sent[0].Payload, &evt))
+			require.Equal(t, repoUuid, evt.EntityID)
+			require.Equal(t, tt.entityContext.Project.ID, evt.Project)
 		})
 	}
 }

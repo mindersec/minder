@@ -41,11 +41,25 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 		return nil, status.Error(codes.InvalidArgument, "entity is required")
 	}
 
-	// TODO: Support other entity types, replace with switch and update remainder.
-	if entity.GetType() != pb.Entity_ENTITY_REPOSITORIES {
+	var entityType db.Entities
+
+	switch entity.GetType() {
+	case pb.Entity_ENTITY_REPOSITORIES:
+		entityType = db.EntitiesRepository
+	case pb.Entity_ENTITY_ARTIFACTS:
+		entityType = db.EntitiesArtifact
+	case pb.Entity_ENTITY_PULL_REQUESTS:
+		entityType = db.EntitiesPullRequest
+	case pb.Entity_ENTITY_UNSPECIFIED,
+		pb.Entity_ENTITY_BUILD_ENVIRONMENTS,
+		pb.Entity_ENTITY_RELEASE,
+		pb.Entity_ENTITY_PIPELINE_RUN,
+		pb.Entity_ENTITY_TASK_RUN,
+		pb.Entity_ENTITY_BUILD:
+		return nil, status.Errorf(codes.InvalidArgument, "entity type %s is not supported", entity.GetType())
+	default:
 		return nil, status.Errorf(codes.InvalidArgument, "entity type %s is not supported", entity.GetType())
 	}
-	entityType := db.EntitiesRepository
 
 	if entity.GetId() == "" {
 		// Look up ID given name
@@ -66,52 +80,58 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 		entity.Id = dbEntity.ID.String()
 	}
 
-	var msg *message.Message
-	var topic string
-
-	msg, err = getRepositoryReconciliationMessage(ctx, s.store, entity.GetId(), entityCtx)
+	msg, err := getEntityReconciliationMessage(ctx, s.store, entity.GetId(), entityType, entityCtx)
 	if err != nil {
 		return nil, err
 	}
-	topic = constants.TopicQueueReconcileRepoInit
 
 	// This is a non-fatal error, so we'll just log it and continue with the next ones
-	if err := s.evt.Publish(topic, msg); err != nil {
+	if err := s.evt.Publish(constants.TopicQueueReconcileRepoInit, msg); err != nil {
 		log.Printf("error publishing reconciler event: %v", err)
 	}
 
 	return &pb.CreateEntityReconciliationTaskResponse{}, nil
 }
 
-func getRepositoryReconciliationMessage(ctx context.Context, store db.Store,
-	repoIdString string, entityCtx engcontext.EntityContext) (*message.Message, error) {
-	repoUUID, err := uuid.Parse(repoIdString)
+func getEntityReconciliationMessage(ctx context.Context, store db.Store,
+	entityIdString string, entityType db.Entities, entityCtx engcontext.EntityContext) (*message.Message, error) {
+	entityUUID, err := uuid.Parse(entityIdString)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error parsing repository id: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "error parsing entity id: %v", err)
 	}
 
 	// Fetch entity by ID
-	ent, err := store.GetEntityByID(ctx, repoUUID)
+	ent, err := store.GetEntityByID(ctx, entityUUID)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, status.Errorf(codes.NotFound, "repository not found")
+		return nil, status.Errorf(codes.NotFound, "entity not found")
 	} else if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
+		return nil, status.Errorf(codes.Internal, "cannot read entity: %v", err)
 	}
 
 	// Verify project matches
 	if ent.ProjectID != entityCtx.Project.ID {
-		return nil, status.Errorf(codes.NotFound, "repository not found")
+		return nil, status.Errorf(codes.NotFound, "entity not found")
+	}
+
+	// Verify the entity matches the requested type, otherwise a request for
+	// one entity type could be routed as another.
+	if ent.EntityType != entityType {
+		return nil, status.Errorf(codes.NotFound, "entity not found")
 	}
 
 	// Telemetry logging
 	logger.BusinessRecord(ctx).ProviderID = ent.ProviderID
 	logger.BusinessRecord(ctx).Project = ent.ProjectID
-	logger.BusinessRecord(ctx).Repository = ent.ID
+	logger.BusinessRecord(ctx).Entity = ent.ID
+	if ent.EntityType == db.EntitiesRepository {
+		logger.BusinessRecord(ctx).Repository = ent.ID
+	}
 
+	// This message and topic are type-agnostic: the reconciler forwards the
+	// entity ID to the refresh-and-evaluate handler for any entity type.
 	msg, err := reconcilers.NewRepoReconcilerMessage(ent.ProviderID, ent.ID, ent.ProjectID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error getting reconciler message: %v", err)
 	}
-
 	return msg, nil
 }
