@@ -18,6 +18,9 @@ import (
 var (
 	versionRegex        = regexp.MustCompile(`^\+\s*"version"\s*:\s*"([^"\n]*)"\s*(?:,|$)`)
 	dependencyNameRegex = regexp.MustCompile(`\s*"([^"]+)"\s*:\s*{\s*`)
+	// packageNameRegex matches the "name" field of a package-lock.json entry,
+	// which npm writes for an aliased dependency ("my-lodash": "npm:lodash@4").
+	packageNameRegex = regexp.MustCompile(`^[+ ]?\s*"name"\s*:\s*"([^"]+)"`)
 )
 
 type ecosystemParser func(string) ([]*pbinternal.Dependency, error)
@@ -234,13 +237,22 @@ func npmParse(patch string) ([]*pbinternal.Dependency, error) {
 }
 
 // findDependencyName iterates over all the previous lines to find the JSON key containing the parent dependency name.
-// If the parent key does not correspond to a dependency (i.e. it could be the root project), then an empty string is
-// returned.
+// If the parent key does not correspond to a dependency (i.e. it could be the root project or a workspace package),
+// then an empty string is returned.
 func findDependencyName(i int, lines []string) string {
 	closingBraces := 0
+	// aliasName is the entry's own "name" field, which npm writes for an
+	// aliased dependency: the entry is installed under the alias, but the
+	// package is the one named there.
+	aliasName := ""
 	for j := i - 1; j >= 0; j-- {
 		if strings.Contains(lines[j], "}") {
 			closingBraces = closingBraces + 1
+		}
+		if closingBraces == 0 && aliasName == "" {
+			if m := packageNameRegex.FindStringSubmatch(lines[j]); m != nil {
+				aliasName = m[1]
+			}
 		}
 		if strings.Contains(lines[j], "{") {
 			if closingBraces == 0 {
@@ -248,6 +260,12 @@ func findDependencyName(i int, lines []string) string {
 				if len(matches) > 1 {
 					// extract the dependency name from the key, which is the dependency path
 					dependencyPath := matches[1]
+					if isLocalPackagePath(dependencyPath) {
+						return ""
+					}
+					if aliasName != "" {
+						return aliasName
+					}
 					return getDependencyName(dependencyPath)
 				}
 				return ""
@@ -256,6 +274,21 @@ func findDependencyName(i int, lines []string) string {
 		}
 	}
 	return ""
+}
+
+// isLocalPackagePath reports whether a package-lock.json key is a package in
+// the repository itself, such as a workspace ("packages/web"), rather than an
+// installed dependency. Installed dependencies are under node_modules/ in
+// lockfile v2 and v3, and are keyed by their name ("lodash", "@babel/core")
+// in v1.
+func isLocalPackagePath(dependencyPath string) bool {
+	if strings.HasPrefix(dependencyPath, "node_modules/") || strings.Contains(dependencyPath, "/node_modules/") {
+		return false
+	}
+	if strings.HasPrefix(dependencyPath, "@") {
+		return strings.Count(dependencyPath, "/") != 1
+	}
+	return strings.Contains(dependencyPath, "/")
 }
 
 func getDependencyName(dependencyPath string) string {
