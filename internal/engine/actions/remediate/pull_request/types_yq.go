@@ -7,8 +7,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"os"
+	"io"
+	"io/fs"
 	"path/filepath"
 	"strings"
 
@@ -34,6 +36,7 @@ func init() {
 type patternType string
 
 const (
+	patternTypeExact      patternType = "exact"
 	patternTypeGlob       patternType = "glob"
 	patternTypeEvalOutput patternType = "eval_output"
 
@@ -49,13 +52,19 @@ const (
 var _ fsModifier = (*yqExecute)(nil)
 
 type yqPattern struct {
-	Pattern string `json:"pattern"`
-	Type    string `json:"type"`
+	Pattern        string `json:"pattern"`
+	Type           string `json:"type"`
+	CreateIfNeeded bool   `json:"create_if_needed"`
 }
 
 type yqExecuteConfig struct {
 	Expression string      `json:"expression"`
 	Patterns   []yqPattern `json:"patterns"`
+}
+
+type yqTarget struct {
+	path   string
+	create bool
 }
 
 type yqExecute struct {
@@ -109,14 +118,18 @@ func validateYqPatterns(patterns []yqPattern) error {
 		}
 
 		switch pattern.Type {
+		case string(patternTypeExact):
+			if !validExactTargetPath(pattern.Pattern) {
+				return fmt.Errorf("invalid exact path %q: must be relative to the repository", pattern.Pattern)
+			}
 		case string(patternTypeGlob):
 		case string(patternTypeEvalOutput):
 			if _, err := textutil.NewSafeTextTemplate(&pattern.Pattern, "eval_output_pattern"); err != nil {
 				return fmt.Errorf("patterns[%d] invalid eval_output template: %w", i, err)
 			}
 		default:
-			return fmt.Errorf("patterns[%d] unsupported type %q (supported: %q, %q)",
-				i, pattern.Type, patternTypeGlob, patternTypeEvalOutput)
+			return fmt.Errorf("patterns[%d] unsupported type %q (supported: %q, %q, %q)",
+				i, pattern.Type, patternTypeGlob, patternTypeEvalOutput, patternTypeExact)
 		}
 	}
 
@@ -156,12 +169,12 @@ func (yq *yqExecute) createFsModEntries(ctx context.Context, ent proto.Message, 
 	}
 
 	for _, file := range matchingFiles {
-		newContent, err := yq.executeYq(file, expression)
+		newContent, err := yq.executeYq(file.path, expression, file.create)
 		if err != nil {
-			return fmt.Errorf("cannot execute yq on %s: %w", file, err)
+			return fmt.Errorf("cannot execute yq on %s: %w", file.path, err)
 		}
 		yq.entries = append(yq.entries, &fsEntry{
-			Path:    file,
+			Path:    file.path,
 			Content: newContent,
 			Mode:    filemode.Regular.String(),
 		})
@@ -186,70 +199,75 @@ func expandExpression(ctx context.Context, expressionText string, data templateP
 	return expressionBytes.String(), nil
 }
 
-func (yq *yqExecute) resolveTargets(ctx context.Context, data templateParams) ([]string, error) {
-	targets := make([]string, 0)
-	seen := make(map[string]struct{})
+func (yq *yqExecute) resolveTargets(ctx context.Context, data templateParams) ([]yqTarget, error) {
+	targets := make([]yqTarget, 0)
+	seen := make(map[string]int)
 
-	addTarget := func(path string) error {
+	addTarget := func(path string, create bool) error {
 		normalized, err := normalizeTargetPath(path)
 		if err != nil {
 			return err
 		}
-		if _, ok := seen[normalized]; ok {
+		if index, ok := seen[normalized]; ok {
+			targets[index].create = targets[index].create || create
 			return nil
 		}
-		seen[normalized] = struct{}{}
-		targets = append(targets, normalized)
+		seen[normalized] = len(targets)
+		targets = append(targets, yqTarget{path: normalized, create: create})
 		return nil
 	}
 
 	for _, pattern := range yq.config.Patterns {
+		var paths []string
+		var err error
+		create := false
 		switch pattern.Type {
+		case string(patternTypeExact):
+			if !validExactTargetPath(pattern.Pattern) {
+				return nil, fmt.Errorf("invalid exact path %q: must be relative to the repository", pattern.Pattern)
+			}
+			paths = []string{pattern.Pattern}
+			create = pattern.CreateIfNeeded
 		case string(patternTypeGlob):
-			patternMatches, err := util.Glob(yq.fs, pattern.Pattern)
-			if err != nil {
-				return nil, fmt.Errorf("cannot get matching files: %w", err)
-			}
-			for _, match := range patternMatches {
-				if err := addTarget(match); err != nil {
-					return nil, err
-				}
-			}
+			paths, err = util.Glob(yq.fs, pattern.Pattern)
 		case string(patternTypeEvalOutput):
-			paths, err := resolveEvalOutputPattern(ctx, pattern.Pattern, data)
-			if err != nil {
-				return nil, err
-			}
-			for _, path := range paths {
-				if err := addTarget(path); err != nil {
-					return nil, fmt.Errorf("invalid eval_output target: %w", err)
-				}
-			}
+			paths, err = resolveEvalOutputPattern(ctx, pattern.Pattern, data)
 		default:
 			return nil, fmt.Errorf("unsupported pattern type %q", pattern.Type)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("cannot resolve %s targets: %w", pattern.Type, err)
+		}
+		for _, path := range paths {
+			if err := addTarget(path, create); err != nil {
+				return nil, fmt.Errorf("invalid %s target: %w", pattern.Type, err)
+			}
 		}
 	}
 
 	if err := yq.validateTargets(targets); err != nil {
 		return nil, err
 	}
-
 	return targets, nil
 }
 
-func (yq *yqExecute) validateTargets(targets []string) error {
+func validExactTargetPath(path string) bool {
+	return fs.ValidPath(path) && path != "." && !strings.ContainsAny(path, "\\:\x00")
+}
+
+func (yq *yqExecute) validateTargets(targets []yqTarget) error {
 	for _, target := range targets {
-		info, err := yq.fs.Stat(target)
+		info, err := yq.fs.Stat(target.path)
 		if err != nil {
 			// Let executeYq decide how to handle missing files so that
 			// eval_output targets can later support create-if-missing.
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				continue
 			}
-			return fmt.Errorf("cannot stat target %s: %w", target, err)
+			return fmt.Errorf("cannot stat target %s: %w", target.path, err)
 		}
 		if info.IsDir() {
-			return fmt.Errorf("target %s is a directory", target)
+			return fmt.Errorf("target %s is a directory", target.path)
 		}
 	}
 
@@ -317,10 +335,17 @@ func (yq *yqExecute) modifyFs() ([]*fsEntry, error) {
 	return yq.entries, nil
 }
 
-func (yq *yqExecute) executeYq(filename, expression string) (string, error) {
+func (yq *yqExecute) executeYq(filename, expression string, create bool) (string, error) {
 	file, err := yq.fs.Open(filename)
+	var input io.Reader = file
 	if err != nil {
-		return "", fmt.Errorf("cannot read file %s: %w", filename, err)
+		if !create || !errors.Is(err, fs.ErrNotExist) {
+			return "", fmt.Errorf("cannot read file %s: %w", filename, err)
+		}
+		// An empty stream has no documents for yq to evaluate.
+		input = strings.NewReader("null\n")
+	} else {
+		defer file.Close()
 	}
 
 	out := new(bytes.Buffer)
@@ -335,7 +360,7 @@ func (yq *yqExecute) executeYq(filename, expression string) (string, error) {
 
 	decoder := yqlib.NewYamlDecoder(yqlib.NewDefaultYamlPreferences())
 	parser := yqlib.NewStreamEvaluator()
-	_, err = parser.Evaluate(filename, file, expressionNode, printer, decoder)
+	_, err = parser.Evaluate(filename, input, expressionNode, printer, decoder)
 	if err != nil {
 		return "", fmt.Errorf("cannot evaluate expression: %w", err)
 	}
