@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
 package providers
@@ -133,6 +133,7 @@ func TestProviderStore_GetByID(t *testing.T) {
 		name    string
 		setup   func(m *mockdb.MockStore)
 		wantErr string
+		wantIs  error
 	}{
 		{
 			name: "returns provider when found",
@@ -148,6 +149,7 @@ func TestProviderStore_GetByID(t *testing.T) {
 					Return(db.Provider{}, sql.ErrNoRows)
 			},
 			wantErr: "failed to find provider by ID",
+			wantIs:  sql.ErrNoRows,
 		},
 	}
 
@@ -158,6 +160,9 @@ func TestProviderStore_GetByID(t *testing.T) {
 			tc.setup(env.mockStore)
 
 			got, err := env.store.GetByID(context.Background(), providerID)
+			if tc.wantIs != nil {
+				require.ErrorIs(t, err, tc.wantIs)
+			}
 			if tc.wantErr != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.wantErr)
@@ -181,6 +186,7 @@ func TestProviderStore_GetByIDProject(t *testing.T) {
 		name    string
 		setup   func(m *mockdb.MockStore)
 		wantErr string
+		wantIs  error
 	}{
 		{
 			name: "returns provider scoped to project",
@@ -198,6 +204,7 @@ func TestProviderStore_GetByIDProject(t *testing.T) {
 					Return(db.Provider{}, sql.ErrNoRows)
 			},
 			wantErr: "failed to find provider by ID and project",
+			wantIs:  sql.ErrNoRows,
 		},
 	}
 
@@ -208,6 +215,9 @@ func TestProviderStore_GetByIDProject(t *testing.T) {
 			tc.setup(env.mockStore)
 
 			got, err := env.store.GetByIDProject(context.Background(), providerID, projectID)
+			if tc.wantIs != nil {
+				require.ErrorIs(t, err, tc.wantIs)
+			}
 			if tc.wantErr != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.wantErr)
@@ -235,7 +245,8 @@ func TestProviderStore_GetByName(t *testing.T) {
 		setup        func(m *mockdb.MockStore)
 		wantErr      string
 		wantCode     codes.Code
-		wantID       string
+		wantName     string
+		assertErr    func(t *testing.T, err error)
 	}{
 		{
 			name:         "returns single matching provider",
@@ -248,7 +259,7 @@ func TestProviderStore_GetByName(t *testing.T) {
 					Trait:    db.NullProviderType{},
 				}).Return([]db.Provider{{Name: "github"}}, nil)
 			},
-			wantID: "github",
+			wantName: "github",
 		},
 		{
 			name:         "returns first provider when name is empty",
@@ -261,7 +272,7 @@ func TestProviderStore_GetByName(t *testing.T) {
 					Trait:    db.NullProviderType{},
 				}).Return([]db.Provider{{Name: "first"}, {Name: "second"}}, nil)
 			},
-			wantID: "first",
+			wantName: "first",
 		},
 		{
 			name:         "returns InvalidArgument when named lookup is ambiguous",
@@ -282,6 +293,11 @@ func TestProviderStore_GetByName(t *testing.T) {
 				m.EXPECT().FindProviders(gomock.Any(), gomock.Any()).Return([]db.Provider{}, nil)
 			},
 			wantErr: "provider not found with filters: name: missing",
+			assertErr: func(t *testing.T, err error) {
+				var notFound ErrProviderNotFoundBy
+				require.ErrorAs(t, err, &notFound)
+				require.Equal(t, "missing", notFound.Name)
+			},
 		},
 		{
 			name:         "returns InvalidArgument when GetParentProjects fails",
@@ -312,6 +328,9 @@ func TestProviderStore_GetByName(t *testing.T) {
 			tc.setup(env.mockStore)
 
 			got, err := env.store.GetByName(context.Background(), projectID, tc.providerName)
+			if tc.assertErr != nil {
+				tc.assertErr(t, err)
+			}
 			if tc.wantErr != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.wantErr)
@@ -323,7 +342,7 @@ func TestProviderStore_GetByName(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			require.Equal(t, tc.wantID, got.Name)
+			require.Equal(t, tc.wantName, got.Name)
 		})
 	}
 }
@@ -337,6 +356,7 @@ func TestProviderStore_GetByNameInSpecificProject(t *testing.T) {
 		name    string
 		setup   func(m *mockdb.MockStore)
 		wantErr string
+		wantIs  error
 	}{
 		{
 			name: "returns provider in exact project",
@@ -354,6 +374,7 @@ func TestProviderStore_GetByNameInSpecificProject(t *testing.T) {
 					Return(db.Provider{}, sql.ErrNoRows)
 			},
 			wantErr: "cannot retrieve provider",
+			wantIs:  sql.ErrNoRows,
 		},
 	}
 
@@ -364,6 +385,9 @@ func TestProviderStore_GetByNameInSpecificProject(t *testing.T) {
 			tc.setup(env.mockStore)
 
 			got, err := env.store.GetByNameInSpecificProject(context.Background(), projectID, "github")
+			if tc.wantIs != nil {
+				require.ErrorIs(t, err, tc.wantIs)
+			}
 			if tc.wantErr != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.wantErr)
@@ -390,6 +414,7 @@ func TestProviderStore_GetByTraitInHierarchy(t *testing.T) {
 		setup        func(m *mockdb.MockStore)
 		wantCount    int
 		wantErr      string
+		assertErr    func(t *testing.T, err error)
 	}{
 		{
 			name:         "returns matching providers by trait and name",
@@ -414,6 +439,11 @@ func TestProviderStore_GetByTraitInHierarchy(t *testing.T) {
 				m.EXPECT().FindProviders(gomock.Any(), gomock.Any()).Return([]db.Provider{}, nil)
 			},
 			wantErr: "provider not found with filters: trait: git",
+			assertErr: func(t *testing.T, err error) {
+				var notFound ErrProviderNotFoundBy
+				require.ErrorAs(t, err, &notFound)
+				require.Equal(t, string(db.ProviderTypeGit), notFound.Trait)
+			},
 		},
 	}
 
@@ -424,6 +454,9 @@ func TestProviderStore_GetByTraitInHierarchy(t *testing.T) {
 			tc.setup(env.mockStore)
 
 			got, err := env.store.GetByTraitInHierarchy(context.Background(), projectID, tc.providerName, tc.trait)
+			if tc.assertErr != nil {
+				tc.assertErr(t, err)
+			}
 			if tc.wantErr != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.wantErr)
@@ -497,6 +530,7 @@ func TestProviderStore_Update(t *testing.T) {
 		name    string
 		setup   func(m *mockdb.MockStore)
 		wantErr string
+		wantIs  error
 	}{
 		{
 			name: "updates config while preserving traits and auth flows",
@@ -523,6 +557,7 @@ func TestProviderStore_Update(t *testing.T) {
 					Return(db.Provider{}, sql.ErrNoRows)
 			},
 			wantErr: "failed to find provider by ID",
+			wantIs:  sql.ErrNoRows,
 		},
 		{
 			name: "propagates update error",
@@ -543,6 +578,9 @@ func TestProviderStore_Update(t *testing.T) {
 			tc.setup(env.mockStore)
 
 			err := env.store.Update(context.Background(), providerID, projectID, newCfg)
+			if tc.wantIs != nil {
+				require.ErrorIs(t, err, tc.wantIs)
+			}
 			if tc.wantErr != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.wantErr)
