@@ -288,7 +288,7 @@ func TestProviderStore_GetByName(t *testing.T) {
 			wantCode: codes.InvalidArgument,
 		},
 		{
-			name: "returns ErrProviderNotFoundBy when no providers match",
+			name:         "returns ErrProviderNotFoundBy when no providers match",
 			providerName: "missing",
 			setup: func(m *mockdb.MockStore) {
 				m.EXPECT().GetParentProjects(gomock.Any(), projectID).Return(hierarchy, nil)
@@ -296,6 +296,7 @@ func TestProviderStore_GetByName(t *testing.T) {
 			},
 			wantErr: "provider not found with filters: name: missing",
 			assertErr: func(t *testing.T, err error) {
+				t.Helper()
 				var notFound ErrProviderNotFoundBy
 				require.ErrorAs(t, err, &notFound)
 				require.Equal(t, "missing", notFound.Name)
@@ -434,7 +435,7 @@ func TestProviderStore_GetByTraitInHierarchy(t *testing.T) {
 			wantCount: 1,
 		},
 		{
-			name: "returns ErrProviderNotFoundBy with trait filter",
+			name:         "returns ErrProviderNotFoundBy with trait filter",
 			providerName: "",
 			trait:        db.ProviderTypeGit,
 			setup: func(m *mockdb.MockStore) {
@@ -443,6 +444,7 @@ func TestProviderStore_GetByTraitInHierarchy(t *testing.T) {
 			},
 			wantErr: "provider not found with filters: trait: git",
 			assertErr: func(t *testing.T, err error) {
+				t.Helper()
 				var notFound ErrProviderNotFoundBy
 				require.ErrorAs(t, err, &notFound)
 				require.Equal(t, string(db.ProviderTypeGit), notFound.Trait)
