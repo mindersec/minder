@@ -22,10 +22,20 @@ import (
 	"github.com/mindersec/minder/internal/util/jsonyaml"
 )
 
+// pyVersionPattern matches a PEP 440 version, with the alternative spellings
+// the specification allows (https://peps.python.org/pep-0440/#appendix-b-parsing-version-strings-with-regular-expressions),
+// without its wildcard suffix (".*").
+const pyVersionPattern = `(?i:(?:\d+!)?\d+(?:\.\d+)*` +
+	`(?:[-_.]?(?:alpha|beta|preview|pre|rc|a|b|c)[-_.]?\d*)?` +
+	`(?:-\d+|[-_.]?(?:post|rev|r)[-_.]?\d*)?` +
+	`(?:[-_.]?dev[-_.]?\d*)?` +
+	`(?:\+[a-z0-9]+(?:[-_.][a-z0-9]+)*)?)`
+
 var (
 	// PyRequestsVersionRegexp is a regexp to match a line in a requirements.txt file, including the package version
-	// and the comparison operators
-	PyRequestsVersionRegexp = regexp.MustCompile(`\s*(===|~=|>=|<=|==|!=|>|<)\s*(\d+(\.\d+)*(\*)?)`)
+	// and the comparison operators. The version follows PEP 440, so pre-, post- and development releases, epochs and
+	// local versions ("4.2rc1", "2.0.post1", "1!2.0", "1.0+local") are matched whole.
+	PyRequestsVersionRegexp = regexp.MustCompile(`\s*(===|~=|>=|<=|==|!=|>|<)\s*(` + pyVersionPattern + `)`)
 	// PyRequestsNameRegexp is a regexp to match a line in a requirements.txt file, parsing out the package name
 	PyRequestsNameRegexp = regexp.MustCompile(`\s*(===|~=|>=|<=|==|!=|>|<)`)
 )
