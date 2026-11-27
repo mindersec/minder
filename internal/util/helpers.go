@@ -13,6 +13,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -24,10 +25,25 @@ import (
 var (
 	// PyRequestsVersionRegexp is a regexp to match a line in a requirements.txt file, including the package version
 	// and the comparison operators
-	PyRequestsVersionRegexp = regexp.MustCompile(`\s*(>=|<=|==|>|<|!=)\s*(\d+(\.\d+)*(\*)?)`)
+	PyRequestsVersionRegexp = regexp.MustCompile(`\s*(===|~=|>=|<=|==|!=|>|<)\s*(\d+(\.\d+)*(\*)?)`)
 	// PyRequestsNameRegexp is a regexp to match a line in a requirements.txt file, parsing out the package name
-	PyRequestsNameRegexp = regexp.MustCompile(`\s*(>=|<=|==|>|<|!=)`)
+	PyRequestsNameRegexp = regexp.MustCompile(`\s*(===|~=|>=|<=|==|!=|>|<)`)
 )
+
+// PyRequestsName returns the package name of a requirements.txt line that has
+// a version specifier, without any extras: "requests[security]==2.31.0" is
+// the requests package. It reports false if the line has no version specifier.
+func PyRequestsName(line string) (string, bool) {
+	nameMatch := PyRequestsNameRegexp.FindStringIndex(line)
+	if nameMatch == nil {
+		return "", false
+	}
+	name := line[:nameMatch[0]]
+	if i := strings.Index(name, "["); i != -1 {
+		name = name[:i]
+	}
+	return strings.TrimSpace(name), true
+}
 
 // TestWriter is a helper struct for testing
 type TestWriter struct {

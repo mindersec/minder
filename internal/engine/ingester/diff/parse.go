@@ -51,41 +51,26 @@ func requirementsParse(patch string) ([]*pbinternal.Dependency, error) {
 			continue
 		}
 
+		// Lines starting with - are pip options, such as -r other.txt, -e <url> or
+		// --hash=..., not requirements.
+		if strings.HasPrefix(line, "-") {
+			continue
+		}
+
 		matches := util.PyRequestsVersionRegexp.FindAllStringSubmatch(line, -1)
 		// For now, if no version is set, we just don't set the version. The evaluator
 		// will skip the dependency, but later we can query the package repository for the
 		// latest version
 		if matches == nil {
-			deps = pyReqAddPkgName(deps, line, "")
+			deps = pyReqAddPkgName(deps, pyReqStripExtras(line), "")
 			continue
 		}
 
-		// this is probably a bit confusing. What we're trying to do here is to find the
-		// lowest version in the line. If there is a > or >= operator, we use that, because
-		// then the lower version is set explicitly. If there is no > or >= operator, we
-		// just use the first version we find.
-		version := ""
-		var lowestVersion string
-		for _, match := range matches {
-			if len(match) < 3 {
-				continue
-			}
-			if version == "" {
-				version = match[2]
-			}
-			if match[1] == ">" || match[1] == ">=" || match[1] == "==" {
-				lowestVersion = match[2]
-			}
-		}
-		if lowestVersion != "" {
-			version = lowestVersion
-		}
+		version := pyReqLowestVersion(matches)
 
-		// Extract the name by grabbing everything up to the first operator
-		nameMatch := util.PyRequestsNameRegexp.FindStringIndex(line)
-		if nameMatch != nil {
-			// requests   ==2.19.0 is apparently a valid line, so we need to trim the whitespace
-			name := strings.TrimSpace(line[:nameMatch[0]])
+		// Extract the name by grabbing everything up to the first operator,
+		// without any extras such as [security]
+		if name, ok := util.PyRequestsName(line); ok {
 			deps = pyReqAddPkgName(deps, name, version)
 		}
 	}
@@ -108,6 +93,41 @@ func pyReqNormalizeLine(line string) string {
 		line = line[:idx]
 	}
 
+	return strings.TrimSpace(line)
+}
+
+// pyReqLowestVersion returns the lowest version a requirement's specifiers
+// allow. This is probably a bit confusing. If there is a lower bound (>, >=,
+// ~=) or an exact version (==, ===), we use that, because then the lower
+// version is set explicitly. Otherwise we just use the first version we find.
+func pyReqLowestVersion(matches [][]string) string {
+	version := ""
+	var lowestVersion string
+	for _, match := range matches {
+		if len(match) < 3 {
+			continue
+		}
+		if version == "" {
+			version = match[2]
+		}
+		switch match[1] {
+		// ~= is a compatible release: ~=1.26.0 means >=1.26.0, ==1.26.*
+		case ">", ">=", "~=", "==", "===":
+			lowestVersion = match[2]
+		}
+	}
+	if lowestVersion != "" {
+		return lowestVersion
+	}
+	return version
+}
+
+// pyReqStripExtras removes the extras from a requirement without a version
+// specifier: "requests[security]" is the requests package.
+func pyReqStripExtras(line string) string {
+	if i := strings.Index(line, "["); i != -1 {
+		line = line[:i]
+	}
 	return strings.TrimSpace(line)
 }
 

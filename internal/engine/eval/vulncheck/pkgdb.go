@@ -174,12 +174,10 @@ func (p *PyPiReply) IndentedString(_ int, oldDepLine string, oldDep *pbinternal.
 
 // LineHasDependency returns true if the requirement.txt line is for the same package as the receiver
 func (p *PyPiReply) LineHasDependency(line string) bool {
-	nameMatch := util.PyRequestsNameRegexp.FindStringIndex(line)
-	if nameMatch == nil {
+	name, ok := util.PyRequestsName(line)
+	if !ok {
 		return false
 	}
-
-	name := strings.TrimSpace(line[:nameMatch[0]])
 	return pyNormalizeName(name) == pyNormalizeName(p.Info.Name)
 }
 
