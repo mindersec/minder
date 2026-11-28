@@ -106,6 +106,77 @@ func TestGoParse(t *testing.T) {
 			expectedDependencies: []*pbinternal.Dependency{},
 		},
 		{
+			description: "Replace with versions on both sides",
+			content: `
++replace github.com/a/b v1.0.0 => github.com/c/d v2.0.0`,
+			expectedCount: 1,
+			expectedDependencies: []*pbinternal.Dependency{
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_GO,
+					Name:      "github.com/c/d",
+					Version:   "v2.0.0",
+				},
+			},
+		},
+		{
+			description: "Replace block reports the replacement",
+			content: `
+ replace (
++	github.com/old/lib v1.0.0 => github.com/new/lib v1.2.3
++	github.com/local/lib => ../local/lib
+ )`,
+			expectedCount: 1,
+			expectedDependencies: []*pbinternal.Dependency{
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_GO,
+					Name:      "github.com/new/lib",
+					Version:   "v1.2.3",
+				},
+			},
+		},
+		{
+			description: "Replace with a local directory",
+			content: `
++replace github.com/x/y v1.0.0 => ./y`,
+			expectedCount:        0,
+			expectedDependencies: []*pbinternal.Dependency{},
+		},
+		{
+			description: "Exclude and retract blocks are not dependencies",
+			content: `
+ exclude (
++	github.com/bad/mod v1.1.0
+ )
++exclude github.com/bad/other v1.0.0
+ retract (
++	v1.0.1 // published by mistake
++	[v1.2.0, v1.2.3]
+ )`,
+			expectedCount:        0,
+			expectedDependencies: []*pbinternal.Dependency{},
+		},
+		{
+			description: "Block state resets at a hunk header",
+			content: `
+ replace (
++	github.com/old/lib v1.0.0 => github.com/new/lib v1.2.3
+@@ -40,3 +41,4 @@
++	github.com/openfga/openfga v1.4.3`,
+			expectedCount: 2,
+			expectedDependencies: []*pbinternal.Dependency{
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_GO,
+					Name:      "github.com/new/lib",
+					Version:   "v1.2.3",
+				},
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_GO,
+					Name:      "github.com/openfga/openfga",
+					Version:   "v1.4.3",
+				},
+			},
+		},
+		{
 			description: "Bad Require",
 			content: `
 	k8s.io/klog/v2 v2.110.1 // indirect
