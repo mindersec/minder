@@ -314,7 +314,7 @@ func (s *ruleTypeService) UpsertRuleType(
 func (s *ruleTypeService) validateAndDetectRegoVersion(ctx context.Context, ruleType *pb.RuleType) (string, error) {
 	def := ruleType.GetDef().GetEval().GetRego().GetDef()
 	if def == "" {
-		return "v0", nil
+		return regoeval.VersionToString(ast.RegoV0), nil
 	}
 
 	var errV0 error
@@ -329,11 +329,11 @@ func (s *ruleTypeService) validateAndDetectRegoVersion(ctx context.Context, rule
 
 	switch {
 	case errV0 == nil && errV1 == nil:
-		return "v1", nil
+		return regoeval.VersionToString(ast.RegoV1), nil
 	case errV0 == nil:
-		return "v0", nil
+		return regoeval.VersionToString(ast.RegoV0), nil
 	case errV1 == nil:
-		return "v1", nil
+		return regoeval.VersionToString(ast.RegoV1), nil
 	default:
 		return "", fmt.Errorf("rego definition is invalid: %w", errV0)
 	}

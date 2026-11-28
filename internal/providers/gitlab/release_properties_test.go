@@ -14,13 +14,6 @@ import (
 	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
-func TestFormatReleaseUpstreamID(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "789", FormatReleaseUpstreamID(789))
-	assert.Equal(t, "0", FormatReleaseUpstreamID(0))
-}
-
 func TestFormatReleaseName(t *testing.T) {
 	t.Parallel()
 

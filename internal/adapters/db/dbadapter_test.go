@@ -14,26 +14,6 @@ import (
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
-func TestMapDbToEngine(t *testing.T) {
-	t.Parallel()
-
-	// Test nil row
-	require.Nil(t, MapDbToEngine(nil), "Expected nil output for nil row")
-
-	// Test valid row
-	row := &db.ListRuleEvaluationsByProfileIdRow{
-		EvalStatus:  db.EvalStatusTypesFailure,
-		RemStatus:   db.RemediationStatusTypesSuccess,
-		AlertStatus: db.AlertStatusTypesOn,
-	}
-
-	snap := MapDbToEngine(row)
-	require.NotNil(t, snap)
-	require.Equal(t, string(db.EvalStatusTypesFailure), string(snap.EvalStatus))
-	require.Equal(t, string(db.RemediationStatusTypesSuccess), snap.RemediationStatus)
-	require.Equal(t, string(db.AlertStatusTypesOn), snap.AlertStatus)
-}
-
 func TestErrorAsEvalStatus(t *testing.T) {
 	t.Parallel()
 

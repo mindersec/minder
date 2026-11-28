@@ -7,57 +7,10 @@ package cursor
 import (
 	"encoding/base64"
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
 )
-
-// cursorDelimiter is the delimiter used to encode/decode cursors
-const cursorDelimiter = ","
-
-// RepoCursor is a cursor for listing repositories
-type RepoCursor struct {
-	ProjectId string
-	Provider  string
-	RepoId    int64
-}
-
-func (c *RepoCursor) String() string {
-	if c == nil || c.ProjectId == "" || c.Provider == "" || c.RepoId <= 0 {
-		return ""
-	}
-	key := strings.Join([]string{c.ProjectId, c.Provider, strconv.Itoa(int(c.RepoId))}, cursorDelimiter)
-	return EncodeValue(key)
-}
-
-// NewRepoCursor creates a new RepoCursor from an encoded cursor
-func NewRepoCursor(encodedCursor string) (*RepoCursor, error) {
-	if encodedCursor == "" {
-		return &RepoCursor{}, nil
-	}
-
-	cursor, err := DecodeValue(encodedCursor)
-	if err != nil {
-		return nil, err
-	}
-
-	parts := strings.Split(cursor, cursorDelimiter)
-	if len(parts) != 3 {
-		return nil, fmt.Errorf("invalid cursor: %s", encodedCursor)
-	}
-	parsedRepoId, err := strconv.ParseInt(parts[2], 10, 64)
-	if err != nil {
-		return nil, err
-	}
-
-	return &RepoCursor{
-		ProjectId: parts[0],
-		Provider:  parts[1],
-		RepoId:    parsedRepoId,
-	}, nil
-}
 
 // EncodeValue encodes a string into a base64 encoded string
 func EncodeValue(value string) string {
