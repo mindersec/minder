@@ -24,6 +24,10 @@ type regoDecoder struct {
 
 var _ Decoder = (*regoDecoder)(nil)
 
+// ErrNoRegoMetadata is returned for a Rego file without a METADATA block, such as
+// a test or helper policy, which therefore does not describe a rule type.
+var ErrNoRegoMetadata = errors.New("could not find metadata in Rego file")
+
 // Decode extracts a Minder RuleType from a rego rule file.
 // The additional RuleType information is encoded as YAML comments at the
 // beginning of the file, following the METADATA format:
@@ -102,6 +106,29 @@ func (r *regoDecoder) Decode(v any) error {
 	return nil
 }
 
+// RuleType fields that standard OPA annotations do not have.
+var ruleTypeOnlyKeys = []string{"def", "guidance", "severity", "release_phase", "short_failure_message"}
+
+// HasRuleTypeMetadata reports whether the METADATA block of a Rego file sets any
+// field specific to rule types, either at the top level or under "custom". A
+// block without them annotates an ordinary policy. It returns an error if there
+// is no METADATA block or it is not valid YAML.
+func HasRuleTypeMetadata(contents []byte) (bool, error) {
+	metadata := map[string]any{}
+	if err := extractMetadata(contents, metadata); err != nil {
+		return false, err
+	}
+	custom, _ := metadata["custom"].(map[string]any)
+	for _, k := range ruleTypeOnlyKeys {
+		_, atTop := metadata[k]
+		_, inCustom := custom[k]
+		if atTop || inCustom {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // Standard OPA annotations that have no RuleType equivalent, dropped so strict
 // unmarshalling does not reject them.
 var opaAnnotationKeys = []string{
@@ -120,7 +147,7 @@ var (
 func extractMetadata(contents []byte, metadata map[string]any) error {
 	matches := metadataExtractor.FindSubmatch(contents)
 	if len(matches) == 0 {
-		return errors.New("could not find metadata in Rego file")
+		return ErrNoRegoMetadata
 	}
 	commented := matches[1]
 
