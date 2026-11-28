@@ -10,7 +10,7 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -87,7 +87,7 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 
 	// This is a non-fatal error, so we'll just log it and continue with the next ones
 	if err := s.evt.Publish(constants.TopicQueueReconcileRepoInit, msg); err != nil {
-		log.Printf("error publishing reconciler event: %v", err)
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error publishing reconciler event")
 	}
 
 	return &pb.CreateEntityReconciliationTaskResponse{}, nil
