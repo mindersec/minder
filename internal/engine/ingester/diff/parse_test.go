@@ -394,6 +394,75 @@ func TestPyPiParse(t *testing.T) {
 			},
 		},
 		{
+			description: "PEP 440 pre, post and development releases",
+			content: `
++django==4.2rc1
++requests==2.31.0.post1
++flask==2.3.dev4
++Werkzeug==2.0.0RC1`,
+			expectedCount: 4,
+			expectedDependencies: []*pbinternal.Dependency{
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "django",
+					Version:   "4.2rc1",
+				},
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "requests",
+					Version:   "2.31.0.post1",
+				},
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "flask",
+					Version:   "2.3.dev4",
+				},
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "Werkzeug",
+					Version:   "2.0.0RC1",
+				},
+			},
+		},
+		{
+			description: "PEP 440 epochs and local versions",
+			content: `
++pkg==1!2.0
++urllib3==2.0.0+local`,
+			expectedCount: 2,
+			expectedDependencies: []*pbinternal.Dependency{
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "pkg",
+					Version:   "1!2.0",
+				},
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "urllib3",
+					Version:   "2.0.0+local",
+				},
+			},
+		},
+		{
+			description: "Wildcards and environment markers are not part of the version",
+			content: `
++six==1.2.*
++click>=8.0 ; python_version >= "3.7"`,
+			expectedCount: 2,
+			expectedDependencies: []*pbinternal.Dependency{
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "six",
+					Version:   "1.2",
+				},
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Name:      "click",
+					Version:   "8.0",
+				},
+			},
+		},
+		{
 			description: "No additions",
 			content: `
  Flask
