@@ -703,3 +703,41 @@ func TestRepoCache(t *testing.T) {
 		})
 	}
 }
+
+func TestGoModPackageLineHasDependencyAndIndentedString(t *testing.T) {
+	t.Parallel()
+
+	dep := &pbinternal.Dependency{
+		Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_GO,
+		Name:      "github.com/pkg/errors",
+		Version:   "v0.9.0",
+	}
+	tests := []struct {
+		name       string
+		line       string
+		match      bool
+		suggestion string
+	}{
+		{name: "require directive keeps the keyword", line: "require github.com/pkg/errors v0.9.0",
+			match: true, suggestion: "require github.com/pkg/errors v0.9.1"},
+		{name: "require block keeps the tab", line: "\tgithub.com/pkg/errors v0.9.0",
+			match: true, suggestion: "\tgithub.com/pkg/errors v0.9.1"},
+		{name: "comment is kept", line: "\tgithub.com/pkg/errors v0.9.0 // pinned for #123",
+			match: true, suggestion: "\tgithub.com/pkg/errors v0.9.1 // pinned for #123"},
+		{name: "module with a longer path", line: "\tgithub.com/pkg/errors/v2 v0.9.0"},
+		{name: "longer version", line: "\tgithub.com/pkg/errors v0.9.01"},
+		{name: "replace directive", line: "replace github.com/pkg/errors v0.9.0 => ../errors"},
+		{name: "indirect dependency at another version", line: "\tgithub.com/pkg/errors v0.8.0 // indirect"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			gmp := &goModPackage{oldVersion: dep.Version, Name: dep.Name, Version: "v0.9.1"}
+			require.Equal(t, tt.match, gmp.LineHasDependency(tt.line))
+			if tt.match {
+				assert.Equal(t, tt.suggestion, gmp.IndentedString(countLeadingWhitespace(tt.line), tt.line, dep))
+			}
+		})
+	}
+}

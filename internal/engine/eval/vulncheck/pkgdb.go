@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/puzpuzpuz/xsync/v3"
@@ -373,12 +374,32 @@ type goModPackage struct {
 	DependencyHash string `json:"dependency_hash"`
 }
 
-func (gmp *goModPackage) IndentedString(indent int, _ string, _ *pbinternal.Dependency) string {
+// IndentedString returns the go.mod line with the version replaced by the
+// patched one. Only the version is changed, so a "require" keyword, the
+// line's indentation and any comment are kept. Without a line to edit it
+// returns "<name> <version>", indented by indent spaces.
+func (gmp *goModPackage) IndentedString(indent int, oldDepLine string, _ *pbinternal.Dependency) string {
+	if m := gmp.goModLineRegexp().FindStringSubmatchIndex(oldDepLine); m != nil {
+		// m[2]:m[3] is everything before the version, m[4]:m[5] the version
+		return oldDepLine[:m[3]] + gmp.Version + oldDepLine[m[5]:]
+	}
 	return fmt.Sprintf("%s%s %s", strings.Repeat(" ", indent), gmp.Name, gmp.Version)
 }
 
+// LineHasDependency returns true if the go.mod line requires the module at the
+// version being patched: "require <module> <version>", or "<module> <version>"
+// in a require block. Other modules whose path starts with the same text, other
+// versions and replace directives don't match.
 func (gmp *goModPackage) LineHasDependency(line string) bool {
-	return strings.Contains(line, gmp.Name) && strings.Contains(line, gmp.oldVersion)
+	return gmp.goModLineRegexp().MatchString(line)
+}
+
+// goModLineRegexp matches a go.mod line that requires the module at its old
+// version. Its first group is the text before the version, its second the
+// version.
+func (gmp *goModPackage) goModLineRegexp() *regexp.Regexp {
+	return regexp.MustCompile(`^(\s*(?:require\s+)?` + regexp.QuoteMeta(gmp.Name) + `\s+)(` +
+		regexp.QuoteMeta(gmp.oldVersion) + `)(?:\s*$|\s+//)`)
 }
 
 func (gmp *goModPackage) HasPatchedVersion() bool {
