@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/puzpuzpuz/xsync/v3"
+	"golang.org/x/mod/module"
 
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	"github.com/mindersec/minder/internal/util"
@@ -420,8 +421,13 @@ func (r *goProxyRepository) goProxyRequest(ctx context.Context, dep *pbinternal.
 	var u *url.URL
 	var err error
 
+	// The module proxy protocol escapes upper-case letters in module paths and
+	// versions ("github.com/BurntSushi/toml" is "github.com/!burnt!sushi/toml"),
+	// and the proxy answers 404 for the unescaped path.
+	modulePath := escapeModulePath(dep.Name)
+
 	if latest {
-		u, err = urlFromEndpointAndPaths(r.proxyEndpoint, dep.Name, "@latest")
+		u, err = urlFromEndpointAndPaths(r.proxyEndpoint, modulePath, "@latest")
 	} else {
 		var version string
 		if !strings.HasPrefix(patched, "v") {
@@ -429,7 +435,7 @@ func (r *goProxyRepository) goProxyRequest(ctx context.Context, dep *pbinternal.
 		} else {
 			version = patched
 		}
-		u, err = urlFromEndpointAndPaths(r.proxyEndpoint, dep.Name, "@v", version+".info")
+		u, err = urlFromEndpointAndPaths(r.proxyEndpoint, modulePath, "@v", escapeModuleVersion(version)+".info")
 	}
 
 	if err != nil {
@@ -444,10 +450,32 @@ func (r *goProxyRepository) goProxyRequest(ctx context.Context, dep *pbinternal.
 	return req, nil
 }
 
+// escapeModulePath escapes a module path for the module proxy and checksum
+// database protocols, which encode each upper-case letter as "!" followed by
+// its lower-case form ("github.com/BurntSushi/toml" is
+// "github.com/!burnt!sushi/toml"); both answer 404 or 400 for the unescaped
+// path. A string that isn't a valid module path is returned unchanged.
+func escapeModulePath(path string) string {
+	if escaped, err := module.EscapePath(path); err == nil {
+		return escaped
+	}
+	return path
+}
+
+// escapeModuleVersion is escapeModulePath for a module version.
+func escapeModuleVersion(version string) string {
+	if escaped, err := module.EscapeVersion(version); err == nil {
+		return escaped
+	}
+	return version
+}
+
 func (r *goProxyRepository) goSumRequest(ctx context.Context, depName, depVersion string) (*http.Request, error) {
+	// The checksum database escapes module paths and versions the same way as
+	// the module proxy.
 	u, err := urlFromEndpointAndPaths(r.sumEndpoint,
 		"lookup",
-		fmt.Sprintf("%s@%s", depName, depVersion))
+		fmt.Sprintf("%s@%s", escapeModulePath(depName), escapeModuleVersion(depVersion)))
 	if err != nil {
 		return nil, fmt.Errorf("could not parse endpoint: %w", err)
 	}

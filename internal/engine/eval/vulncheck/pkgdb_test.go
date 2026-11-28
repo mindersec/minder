@@ -703,3 +703,32 @@ func TestRepoCache(t *testing.T) {
 		})
 	}
 }
+
+// The module proxy and the checksum database escape upper-case letters in
+// module paths and versions, and answer 404 or 400 for the unescaped path.
+func TestGoProxyRequestsEscapeModulePaths(t *testing.T) {
+	t.Parallel()
+
+	repo := newGoProxySumRepository("https://proxy.golang.org", "https://sum.golang.org")
+	dep := &pbinternal.Dependency{Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_GO, Name: "github.com/BurntSushi/toml"}
+
+	req, err := repo.goProxyRequest(context.Background(), dep, "1.3.2", false)
+	require.NoError(t, err)
+	assert.Equal(t, "https://proxy.golang.org/github.com/!burnt!sushi/toml/@v/v1.3.2.info", req.URL.String())
+
+	req, err = repo.goProxyRequest(context.Background(), dep, "", true)
+	require.NoError(t, err)
+	assert.Equal(t, "https://proxy.golang.org/github.com/!burnt!sushi/toml/@latest", req.URL.String())
+
+	req, err = repo.goSumRequest(context.Background(), dep.Name, "v1.3.2")
+	require.NoError(t, err)
+	assert.Equal(t, "https://sum.golang.org/lookup/github.com/!burnt!sushi/toml@v1.3.2", req.URL.String())
+
+	// Versions are escaped too.
+	req, err = repo.goProxyRequest(context.Background(), dep, "v1.0.0-RC1", false)
+	require.NoError(t, err)
+	assert.Equal(t, "https://proxy.golang.org/github.com/!burnt!sushi/toml/@v/v1.0.0-!r!c1.info", req.URL.String())
+
+	// A name that isn't a valid module path is sent unchanged, as before.
+	assert.Equal(t, "non-existing-package", escapeModulePath("non-existing-package"))
+}
