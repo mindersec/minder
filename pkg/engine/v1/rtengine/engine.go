@@ -234,7 +234,12 @@ func (r *RuleTypeEngine) Eval(
 
 	// Process evaluation
 	logger.Info().Msg("entity evaluation - evaluation started")
-	res, err := r.ruleEvaluator.Eval(ctx, ruleDef, entity, ingestData)
+	var err error
+	if pe, ok := r.ruleEvaluator.(interfaces.ParamsEvaluator); ok {
+		res, err = pe.EvalWithParams(ctx, ruleDef, ruleParams, entity, ingestData)
+	} else {
+		res, err = r.ruleEvaluator.Eval(ctx, ruleDef, entity, ingestData)
+	}
 	logger.Info().Msg("entity evaluation - evaluation completed")
 	return res, err
 }
