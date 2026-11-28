@@ -569,6 +569,61 @@ func TestNpmParse(t *testing.T) {
 				},
 			},
 		},
+		{
+			description: "Aliased dependency reports the package it aliases",
+			content: `
++    "node_modules/my-lodash": {
++      "name": "lodash",
++      "version": "4.17.20",
++      "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.17.20.tgz",
++      "license": "MIT"
++    },
+`,
+			expectedCount: 1,
+			expectedDependencies: []*pbinternal.Dependency{
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
+					Name:      "lodash",
+					Version:   "4.17.20",
+				},
+			},
+		},
+		{
+			description: "Workspace packages are not dependencies",
+			content: `
++    "packages/web": {
++      "name": "@acme/web",
++      "version": "0.1.0",
++      "dependencies": {
++        "lodash": "^4.17.21"
++      }
++    },
++    "node_modules/@acme/web": {
++      "resolved": "packages/web",
++      "link": true
++    },
+`,
+			expectedCount:        0,
+			expectedDependencies: []*pbinternal.Dependency{},
+		},
+		{
+			description: "Name of a nested object is not an alias",
+			content: `
+     "node_modules/chalk": {
++      "funding": {
++        "name": "sponsor"
++      },
++      "version": "5.3.0",
+`,
+			expectedCount: 1,
+			expectedDependencies: []*pbinternal.Dependency{
+				{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
+					Name:      "chalk",
+					Version:   "5.3.0",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
